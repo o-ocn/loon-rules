@@ -1,0 +1,12 @@
+# ==============================================================================
+# Rule Name: AI-China-Direct (Custom)
+# Target Policy: DIRECT
+# Description: Mainland China AI services explicitly requiring DIRECT (DeepSeek, etc.)
+# ==============================================================================
+
+# --- DeepSeek ---
+DOMAIN-SUFFIX,deepseek.com
+DOMAIN-SUFFIX,deepseeksvc.com
+DOMAIN,api.deepseek.com
+DOMAIN,chat.deepseek.com
+DOMAIN,platform.deepseek.com

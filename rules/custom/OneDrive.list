@@ -1,0 +1,13 @@
+# ==============================================================================
+# Rule Name: OneDrive (Custom)
+# Target Policy: US
+# Description: Microsoft OneDrive services routing through US
+# ==============================================================================
+
+DOMAIN-SUFFIX,onedrive.live.com
+DOMAIN-SUFFIX,onedrive.com
+DOMAIN-SUFFIX,1drv.ms
+DOMAIN-SUFFIX,1drv.com
+DOMAIN-SUFFIX,sharepoint.com
+DOMAIN-SUFFIX,spoprod-a.akamaihd.net
+DOMAIN-KEYWORD,onedrive

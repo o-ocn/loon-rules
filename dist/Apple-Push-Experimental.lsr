@@ -1,0 +1,14 @@
+# NAME: Apple-Push-Experimental
+# DESCRIPTION: Independent experimental APNs rule, bound to Apple Push policy
+# RECOMMENDED POLICY: Apple Push
+# AUTHOR: o-ocn
+# UPDATED: 2026-09-27 18:49:25 UTC
+# TOTAL: 7
+# ==============================================================================
+DOMAIN-SUFFIX,push.apple.com
+DOMAIN,courier.push.apple.com
+IP-CIDR,17.249.0.0/16,no-resolve
+IP-CIDR,17.252.0.0/16,no-resolve
+IP-CIDR,17.57.144.0/22,no-resolve
+IP-CIDR,17.188.128.0/18,no-resolve
+IP-CIDR,17.188.20.0/23,no-resolve

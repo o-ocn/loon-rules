@@ -1,0 +1,13 @@
+# ==============================================================================
+# Rule Name: Discord (Custom)
+# Target Policy: US (or Final)
+# Description: Discord communication platform
+# ==============================================================================
+
+DOMAIN-SUFFIX,discord.com
+DOMAIN-SUFFIX,discordapp.com
+DOMAIN-SUFFIX,discordapp.net
+DOMAIN-SUFFIX,discord.gg
+DOMAIN-SUFFIX,discord.media
+DOMAIN-SUFFIX,discordstatus.com
+DOMAIN-KEYWORD,discord

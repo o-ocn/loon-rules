@@ -1,0 +1,10 @@
+# ==============================================================================
+# Rule Name: GoogleDrive (Custom)
+# Target Policy: HK
+# Description: Google Drive services routing through Hong Kong
+# ==============================================================================
+
+DOMAIN-SUFFIX,drive.google.com
+DOMAIN,docs.google.com
+DOMAIN,drive-thirdparty.google.com
+DOMAIN,filepickup.google.com

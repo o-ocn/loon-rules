@@ -1,0 +1,52 @@
+name: Sync Upstream and Build Loon Rules
+
+on:
+  schedule:
+    # Run every Sunday at 00:00 UTC (08:00 Beijing Time)
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force rebuilding all rulesets'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build Rulesets
+        run: |
+          python scripts/build.py
+
+      - name: Run Integrity and Anti-Collision Tests
+        run: |
+          python scripts/test_rules.py
+
+      - name: Commit and Push if Changed
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist/ sources.yml
+          if git diff --staged --quiet; then
+            echo "No rule changes detected. Skipping commit."
+          else
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            git commit -m "chore(rules): sync upstream and rebuild rules [$TIMESTAMP]"
+            git tag "release-$(date -u +"%Y%m%d-%H%M%S")"
+            git push origin HEAD --tags
+          fi

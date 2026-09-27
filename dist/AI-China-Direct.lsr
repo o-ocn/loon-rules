@@ -1,0 +1,12 @@
+# NAME: AI-China-Direct
+# DESCRIPTION: Mainland China AI services (DeepSeek, etc.) explicitly requiring DIRECT
+# RECOMMENDED POLICY: DIRECT
+# AUTHOR: o-ocn
+# UPDATED: 2026-09-27 18:49:25 UTC
+# TOTAL: 5
+# ==============================================================================
+DOMAIN-SUFFIX,deepseek.com
+DOMAIN-SUFFIX,deepseeksvc.com
+DOMAIN,api.deepseek.com
+DOMAIN,chat.deepseek.com
+DOMAIN,platform.deepseek.com

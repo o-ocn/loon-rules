@@ -1,0 +1,150 @@
+# Declarative Upstream Sources Configuration
+# All upstreams are strictly READ-ONLY.
+# Primary Upstream: blackmatrix7/ios_rule_script (GPL-2.0)
+# Secondary Reference: luestr/ShuntRules (Cites blackmatrix7)
+
+metadata:
+  primary_upstream:
+    name: "blackmatrix7/ios_rule_script"
+    repo: "https://github.com/blackmatrix7/ios_rule_script"
+    raw_base: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon"
+    license: "GPL-2.0"
+  secondary_upstream:
+    name: "luestr/ShuntRules"
+    repo: "https://github.com/luestr/ShuntRules"
+    note: "Used for rule composition reference; production files are fetched from verified git sources."
+
+rulesets:
+  AI-Overseas:
+    description: "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
+    bound_policy: "AI"
+    custom_first: true
+    sources:
+      - name: "OpenAI"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OpenAI/OpenAI.list"
+        filter_excluded:
+          - "DOMAIN-SUFFIX,algolia.net"
+          - "DOMAIN-SUFFIX,azureedge.net"
+          - "DOMAIN,browser-intake-datadoghq.com"
+          - "DOMAIN,static.cloudflareinsights.com"
+      - name: "Claude"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Claude/Claude.list"
+    local_custom: "rules/custom/AI-Overseas.list"
+
+  AI-China-Direct:
+    description: "Mainland China AI services (DeepSeek, etc.) explicitly requiring DIRECT"
+    bound_policy: "DIRECT"
+    custom_first: true
+    local_custom: "rules/custom/AI-China-Direct.list"
+
+  GoogleDrive:
+    description: "Google Drive service, bound to HK"
+    bound_policy: "HK"
+    custom_first: true
+    sources:
+      - name: "GoogleDrive"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleDrive/GoogleDrive.list"
+    local_custom: "rules/custom/GoogleDrive.list"
+
+  OneDrive:
+    description: "Microsoft OneDrive service, bound to US"
+    bound_policy: "US"
+    custom_first: true
+    sources:
+      - name: "OneDrive"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OneDrive/OneDrive.list"
+    local_custom: "rules/custom/OneDrive.list"
+
+  Google:
+    description: "General Google services, bound to US Test"
+    bound_policy: "US Test"
+    custom_first: true
+    sources:
+      - name: "Google"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Google/Google.list"
+        filter_excluded:
+          - "DOMAIN-SUFFIX,googledrive.com"
+          - "DOMAIN,googledrive.com"
+          - "DOMAIN-SUFFIX,drive.google.com"
+          - "DOMAIN,drive.google.com"
+    local_custom: "rules/custom/Google.list"
+
+  YouTube:
+    description: "YouTube streaming service, bound to US Test"
+    bound_policy: "US Test"
+    custom_first: true
+    sources:
+      - name: "YouTube"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list"
+    local_custom: "rules/custom/YouTube.list"
+
+  Telegram:
+    description: "Telegram messenger service, bound to Final (independent low-latency)"
+    bound_policy: "Final"
+    custom_first: true
+    sources:
+      - name: "Telegram"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Telegram/Telegram.list"
+    local_custom: "rules/custom/Telegram.list"
+
+  Twitter:
+    description: "Twitter / X platform, bound to Final"
+    bound_policy: "Final"
+    custom_first: true
+    sources:
+      - name: "Twitter"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Twitter/Twitter.list"
+        filter_excluded:
+          - "DOMAIN-SUFFIX,grok.com"
+          - "DOMAIN,grok.com"
+          - "DOMAIN-SUFFIX,x.ai"
+          - "DOMAIN,x.ai"
+    local_custom: "rules/custom/Twitter.list"
+
+  Discord:
+    description: "Discord communication platform, bound to US"
+    bound_policy: "US"
+    custom_first: true
+    sources:
+      - name: "Discord"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Discord/Discord.list"
+    local_custom: "rules/custom/Discord.list"
+
+  Apple-Direct:
+    description: "Apple baseline services requiring DIRECT (iCloud, CloudKit, App Store, Apple ID, HomeKit, Music)"
+    bound_policy: "DIRECT"
+    custom_first: true
+    sources:
+      - name: "AppleMusic"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list"
+    local_custom: "rules/custom/Apple-Direct.list"
+
+  Apple-Media-US:
+    description: "Apple US-restricted services (Apple TV+, Apple News, Fitness+, TestFlight)"
+    bound_policy: "US Test"
+    custom_first: true
+    sources:
+      - name: "AppleTV"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleTV/AppleTV.list"
+      - name: "AppleNews"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleNews/AppleNews.list"
+    local_custom: "rules/custom/Apple-Media-US.list"
+
+  Apple-Push-Experimental:
+    description: "Independent experimental APNs rule, bound to Apple Push policy"
+    bound_policy: "Apple Push"
+    custom_first: true
+    local_custom: "rules/custom/Apple-Push-Experimental.list"
+
+  China-Direct:
+    description: "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
+    bound_policy: "DIRECT"
+    custom_first: true
+    sources:
+      - name: "WeChat"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/WeChat/WeChat.list"
+      - name: "Alibaba"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Alibaba/Alibaba.list"
+      - name: "JingDong"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/JingDong/JingDong.list"
+    local_custom: "rules/custom/China-Direct.list"

@@ -1,0 +1,56 @@
+# ==============================================================================
+# Rule Name: China-Direct (Custom)
+# Target Policy: DIRECT
+# Description: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
+# ==============================================================================
+
+# --- WeChat / Tencent ---
+DOMAIN-SUFFIX,weixin.com
+DOMAIN-SUFFIX,wechat.com
+DOMAIN-SUFFIX,qpic.cn
+DOMAIN-SUFFIX,qlogo.cn
+DOMAIN-SUFFIX,qq.com
+DOMAIN-SUFFIX,tencent.com
+
+# --- Alibaba / Taobao / Xianyu (Flea Market) ---
+DOMAIN-SUFFIX,taobao.com
+DOMAIN-SUFFIX,tmall.com
+DOMAIN-SUFFIX,alibaba.com
+DOMAIN-SUFFIX,alicdn.com
+DOMAIN-SUFFIX,aliexpress.com
+DOMAIN-SUFFIX,aliyun.com
+DOMAIN-SUFFIX,2.taobao.com
+DOMAIN-SUFFIX,idlefish.com
+DOMAIN-SUFFIX,alipay.com
+DOMAIN-SUFFIX,alipayobjects.com
+
+# --- JD (Jingdong) ---
+DOMAIN-SUFFIX,jd.com
+DOMAIN-SUFFIX,360buy.com
+DOMAIN-SUFFIX,360buyimg.com
+DOMAIN-SUFFIX,jdcloud.com
+
+# --- Other Mainland Services ---
+DOMAIN-SUFFIX,douyin.com
+DOMAIN-SUFFIX,snssdk.com
+DOMAIN-SUFFIX,bilibili.com
+DOMAIN-SUFFIX,bilivideo.com
+DOMAIN-SUFFIX,12306.cn
+DOMAIN-SUFFIX,amap.com
+DOMAIN-SUFFIX,autonavi.com
+DOMAIN-SUFFIX,baidu.com
+DOMAIN-SUFFIX,bdimg.com
+DOMAIN-SUFFIX,zhihu.com
+DOMAIN-SUFFIX,zhimg.com
+DOMAIN-SUFFIX,xiaohongshu.com
+DOMAIN-SUFFIX,meituan.com
+DOMAIN-SUFFIX,dianping.com
+
+# --- LAN & Direct IP ranges ---
+IP-CIDR,192.168.0.0/16,no-resolve
+IP-CIDR,10.0.0.0/8,no-resolve
+IP-CIDR,172.16.0.0/12,no-resolve
+IP-CIDR,127.0.0.0/8,no-resolve
+IP-CIDR,100.64.0.0/10,no-resolve
+IP-CIDR,224.0.0.0/4,no-resolve
+IP-CIDR,255.255.255.255/32,no-resolve
