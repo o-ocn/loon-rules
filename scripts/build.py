@@ -96,19 +96,59 @@ def count_lsr_rules(filepath):
                 count += 1
     return count
 
-def load_upstream_lock(lock_file=UPSTREAM_LOCK_FILE):
+def load_upstream_lock(lock_file=UPSTREAM_LOCK_FILE, allow_missing=False):
     """
     Loads previously recorded valid upstream rule counts.
     Returns a dictionary mapping ruleset -> {source_name: rule_count}.
+
+    Strict validation:
+    - If lock_file is missing:
+        - If allow_missing=False: raises RuntimeError (daily builds must have a valid lock file).
+        - If allow_missing=True: returns empty dict {} to allow controlled baseline creation.
+    - If lock_file is corrupted (invalid JSON syntax, empty file, wrong data structure):
+        - Raises RuntimeError in all cases to prevent corrupted data from being silently accepted.
     """
-    if not lock_file or not os.path.isfile(lock_file):
-        return {}
+    if not lock_file:
+        raise ValueError("lock_file path must be provided.")
+
+    if not os.path.isfile(lock_file):
+        if allow_missing:
+            print(f"  [BASELINE] Upstream lock file '{lock_file}' not found. Initializing empty baseline under controlled mode.")
+            return {}
+        raise RuntimeError(
+            f"CRITICAL: Upstream lock file '{lock_file}' is missing! "
+            f"In established daily build mode, missing lock file is forbidden to prevent silent baseline bypass. "
+            f"Please run with '--init-baseline' to explicitly initialize baseline."
+        )
+
     try:
         with open(lock_file, "r", encoding="utf-8") as f:
-            return json.load(f)
+            content = f.read()
+        if not content.strip():
+            raise ValueError("Lock file is empty (0 bytes)")
+        data = json.loads(content)
     except Exception as e:
-        print(f"  [!] Warning: Failed to parse upstream lock file {lock_file}: {e}")
-        return {}
+        raise RuntimeError(
+            f"CRITICAL: Upstream lock file '{lock_file}' is corrupt or invalid JSON: {e}! Build halted."
+        ) from e
+
+    if not isinstance(data, dict):
+        raise RuntimeError(
+            f"CRITICAL: Upstream lock file '{lock_file}' root structure must be a JSON dictionary, got {type(data).__name__}! Build halted."
+        )
+
+    for rset, sdict in data.items():
+        if not isinstance(sdict, dict):
+            raise RuntimeError(
+                f"CRITICAL: Upstream lock file '{lock_file}' corrupted: entry for ruleset '{rset}' must be a dictionary! Build halted."
+            )
+        for sname, scnt in sdict.items():
+            if not isinstance(scnt, int) or scnt < 0:
+                raise RuntimeError(
+                    f"CRITICAL: Upstream lock file '{lock_file}' corrupted: rule count for '{rset}.{sname}' must be a non-negative integer, got {scnt}! Build halted."
+                )
+
+    return data
 
 def save_upstream_lock(lock_data, lock_file=UPSTREAM_LOCK_FILE):
     """
@@ -306,15 +346,24 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3):
                 continue
     raise RuntimeError(f"CRITICAL: Failed to fetch upstream rule from {url} after {max_retries} attempts: {last_err}") from last_err
 
-def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE):
+def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE, allow_new_baseline=False):
     print(f"[*] Starting Loon Rules Build at {datetime.now(timezone.utc).isoformat()}...")
     cfg = load_sources(sources_file)
     rulesets = cfg.get("rulesets", {})
     if not rulesets:
         raise ValueError("No rulesets defined in sources.yml")
 
+    env_allow = os.getenv("ALLOW_NEW_UPSTREAM_BASELINE", "").lower() in ("1", "true", "yes")
+    allow_new_baseline = allow_new_baseline or env_allow
+
     default_max_shrink = float(cfg.get("metadata", {}).get("max_shrink_ratio", 0.15))
-    lock_data = load_upstream_lock(lock_file)
+    has_upstream_sources = any(rcfg.get("sources") for rcfg in rulesets.values())
+
+    if has_upstream_sources:
+        lock_data = load_upstream_lock(lock_file, allow_missing=allow_new_baseline)
+    else:
+        lock_data = {}
+
     new_lock_data = {}
 
     staged_rules_by_set = {}
@@ -372,7 +421,13 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                             f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
                         )
             else:
-                print(f"  [BASELINE] Established initial valid count for upstream '{sname}' in '{name}': {src_count} rules.")
+                if not allow_new_baseline:
+                    raise RuntimeError(
+                        f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
+                        f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
+                        f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
+                    )
+                print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
 
             for line in raw_text.splitlines():
                 cleaned = clean_rule_line(line)
@@ -523,18 +578,30 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 print(f"[UNCHANGED] {name}.lsr (Identical hash)")
 
         # 7. Update upstream lock file only after all validations pass and dist is updated
-        merged_lock = dict(lock_data)
-        merged_lock.update(new_lock_data)
-        save_upstream_lock(merged_lock, lock_file)
-        print(f"[LOCKED] Upstream rule baselines saved to {lock_file}")
+        if has_upstream_sources:
+            save_upstream_lock(new_lock_data, lock_file)
+            print(f"[LOCKED] Upstream rule baselines saved to {lock_file}")
 
         print(f"\n[SUCCESS] Build complete. {updated_count} files updated in {dist_dir}.")
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)
 
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Build and validate Loon rulesets.")
+    parser.add_argument(
+        "--init-baseline",
+        "--allow-new-baseline",
+        dest="allow_new_baseline",
+        action="store_true",
+        help="Explicitly establish baselines for newly added upstreams or initialize missing lock file."
+    )
+    args = parser.parse_args()
+    build_rulesets(allow_new_baseline=args.allow_new_baseline)
+
 if __name__ == "__main__":
     try:
-        build_rulesets()
+        main()
     except Exception as err:
         print(f"\n[BUILD ABORTED] Error: {err}", file=sys.stderr)
         sys.exit(1)

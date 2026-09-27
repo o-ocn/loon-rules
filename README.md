@@ -19,8 +19,9 @@
 3. **策略精准解耦**：
    - 坚持 Google Drive 走香港（`HK`）、OneDrive 走美国（`US`）、普通 Google 优先美国（`US Test`）、Telegram 走独立低延迟策略（`Final`）。
 4. **只读上游与构建安全**：
-   - 以 `blackmatrix7/ios_rule_script` 为只读代码上游（GPL-2.0），以 `luestr/ShuntRules` 为结构分类参考。
-   - 本地规则具有最高优先权，构建流水线自动执行 Loon 语法校验、精确去重、跨策略冲突与父域覆盖检查。建立「最低规则数（`min_rules`）+ 相对上一版本缩水阈值（`max_shrink_ratio`）」双重上游异常保护，任一上游下载失败、内容异常或规则数异常缩水时立即终止构建并保留既有 `dist` 成品。
+   - **上游自动同步与参考声明**：**当前实际自动同步 blackmatrix7**（[blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)，遵循 GPL-2.0）；**luestr 仅作结构参考，不宣称已同步其规则**。
+   - 本地规则具有最高优先权，构建流水线自动执行 Loon 语法校验、精确去重、跨策略冲突与父域覆盖检查。
+   - 建立「最低规则数（`min_rules`）+ 相对上一版本缩水阈值（`max_shrink_ratio`）+ 逐上游锁定基线（`upstream_lock.json`）」三重上游异常保护机制。已建立基线的日常构建中，如果锁文件缺失、损坏或缺少现有上游的记录，必须停止发布并中断报错，严禁静默当作首次运行。为首次新增上游保留明确、受控的建基线流程（`--init-baseline`）。
 
 ---
 
@@ -95,7 +96,25 @@ loon-rules/
 
 ---
 
+## 构建与基线运维流程
+
+日常自动化构建与新增上游的受控建基线流程：
+
+* **日常自动化构建（默认严格模式）**：
+  ```bash
+  python scripts/build.py
+  ```
+  在常规构建与 GitHub Actions 流水线中，构建引擎强制要求 `scripts/upstream_lock.json` 完整存在且结构合法，并包含 `sources.yml` 中所有配置上游的基线数据。若锁文件缺失、损坏或上游未建立基线，构建会立即终止并停止发布，防止静默绕过异常缩水检查。
+
+* **新增上游受控建基线流程**：
+  ```bash
+  python scripts/build.py --init-baseline
+  ```
+  当开发者在 `sources.yml` 中明确新增上游规则源时，必须显式携带 `--init-baseline`（或设置环境变量 `ALLOW_NEW_UPSTREAM_BASELINE=1`）执行受控建基线。完成本地全量测试后，将更新后的 `sources.yml` 与 `scripts/upstream_lock.json` 一同提交至 Git 仓库。
+
+---
+
 ## 许可协议与致谢
 
 * 本项目规则解析与构建脚本遵循 **GPL-2.0** 协议开源，完整文本见 [`LICENSE`](LICENSE)。
-* 数据上游遵循 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的开源许可与规范。
+* **上游数据同步声明**：当前实际自动同步 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的开源规则集，严格遵循其 GPL-2.0 开源许可；[luestr/ShuntRules](https://github.com/luestr/ShuntRules) 仅作结构参考，不宣称已同步其规则。

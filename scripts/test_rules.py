@@ -318,6 +318,13 @@ rulesets:
                 f.write(existing_content)
 
             test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
+            initial_lock = {
+                "ShrinkTest": {
+                    "MockUpstream": 50
+                }
+            }
+            with open(test_lock_file, "w", encoding="utf-8") as f:
+                json.dump(initial_lock, f, indent=2)
 
             # Test sources config with max_shrink_ratio: 0.15 (15%) and min_rules: 10
             test_yaml = f"""
@@ -371,6 +378,15 @@ rulesets:
             os.makedirs(test_dist, exist_ok=True)
             test_sources_file = os.path.join(tmp_dir, "sources.yml")
             test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
+
+            # Establish baseline: MockUpstream had 50 valid rules
+            initial_lock = {
+                "ShrinkTest": {
+                    "MockUpstream": 50
+                }
+            }
+            with open(test_lock_file, "w", encoding="utf-8") as f:
+                json.dump(initial_lock, f, indent=2)
 
             # Create existing dist file with 50 valid rules
             existing_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 51)]
@@ -506,6 +522,273 @@ rulesets:
             self.assertEqual(initial_lock, lock_after, "Upstream lock was modified despite build failure!")
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_14_missing_lock_file_fails_in_daily_build(self):
+        """
+        Verify that in daily build mode (default, allow_new_baseline=False),
+        if the upstream lock file is missing, the build halts immediately with RuntimeError
+        and does NOT silently treat it as a first run or modify dist/.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_missing_lock_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            target_lsr = os.path.join(test_dist, "Sample.lsr")
+            existing_content = "# NAME: Sample\n# TOTAL: 1\nDOMAIN,existing.com\n"
+            with open(target_lsr, "w", encoding="utf-8") as f:
+                f.write(existing_content)
+
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+            non_existent_lock = os.path.join(tmp_dir, "non_existent_lock.json")
+
+            test_yaml = """
+rulesets:
+  Sample:
+    bound_policy: "DirectPolicy"
+    sources:
+      - name: "SampleUpstream"
+        url: "https://mock.example.com/sample.list"
+        min_rules: 1
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            with self.assertRaises(RuntimeError) as ctx:
+                build.build_rulesets(
+                    sources_file=test_sources_file,
+                    dist_dir=test_dist,
+                    lock_file=non_existent_lock,
+                    allow_new_baseline=False
+                )
+            self.assertIn("is missing", str(ctx.exception))
+            self.assertIn("daily build mode", str(ctx.exception))
+
+            # Dist file remains completely untouched
+            with open(target_lsr, "r", encoding="utf-8") as f:
+                self.assertEqual(f.read(), existing_content)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_15_corrupt_lock_file_fails_real_engine(self):
+        """
+        Verify that if the lock file is corrupt (malformed JSON, empty, or wrong structure),
+        the build halts with RuntimeError rather than catching the error and resetting baseline.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_corrupt_lock_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            target_lsr = os.path.join(test_dist, "Sample.lsr")
+            existing_content = "# NAME: Sample\n# TOTAL: 1\nDOMAIN,existing.com\n"
+            with open(target_lsr, "w", encoding="utf-8") as f:
+                f.write(existing_content)
+
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+            corrupt_lock = os.path.join(tmp_dir, "corrupt_lock.json")
+
+            test_yaml = """
+rulesets:
+  Sample:
+    bound_policy: "DirectPolicy"
+    sources:
+      - name: "SampleUpstream"
+        url: "https://mock.example.com/sample.list"
+        min_rules: 1
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            # Test 15a: Malformed JSON syntax
+            with open(corrupt_lock, "w", encoding="utf-8") as f:
+                f.write("{\n  \"Sample\": { invalid_json \n")
+
+            with self.assertRaises(RuntimeError) as ctx:
+                build.build_rulesets(
+                    sources_file=test_sources_file,
+                    dist_dir=test_dist,
+                    lock_file=corrupt_lock,
+                    allow_new_baseline=False
+                )
+            self.assertIn("corrupt or invalid JSON", str(ctx.exception))
+
+            # Test 15b: Empty file (0 bytes)
+            with open(corrupt_lock, "w", encoding="utf-8") as f:
+                f.write("")
+
+            with self.assertRaises(RuntimeError) as ctx:
+                build.build_rulesets(
+                    sources_file=test_sources_file,
+                    dist_dir=test_dist,
+                    lock_file=corrupt_lock,
+                    allow_new_baseline=False
+                )
+            self.assertIn("corrupt or invalid JSON", str(ctx.exception))
+
+            # Test 15c: Wrong root type (JSON array instead of dictionary)
+            with open(corrupt_lock, "w", encoding="utf-8") as f:
+                f.write("[\"invalid\", \"root\"]")
+
+            with self.assertRaises(RuntimeError) as ctx:
+                build.build_rulesets(
+                    sources_file=test_sources_file,
+                    dist_dir=test_dist,
+                    lock_file=corrupt_lock,
+                    allow_new_baseline=False
+                )
+            self.assertIn("must be a JSON dictionary", str(ctx.exception))
+
+            # Dist file remains completely untouched
+            with open(target_lsr, "r", encoding="utf-8") as f:
+                self.assertEqual(f.read(), existing_content)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_16_missing_upstream_record_fails_in_daily_build(self):
+        """
+        Verify that in daily build mode, if the lock file exists but lacks a record for an upstream,
+        the build halts with RuntimeError and does NOT silently establish an initial count.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_unbaselined_src_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
+
+            # Lock file contains baseline for UpstreamA, but NOT for UpstreamB
+            lock_content = {
+                "DualSet": {
+                    "UpstreamA": 50
+                }
+            }
+            with open(test_lock_file, "w", encoding="utf-8") as f:
+                json.dump(lock_content, f, indent=2)
+
+            test_yaml = """
+rulesets:
+  DualSet:
+    bound_policy: "DualPolicy"
+    sources:
+      - name: "UpstreamA"
+        url: "https://mock.example.com/upstream_a.list"
+        min_rules: 10
+      - name: "UpstreamB"
+        url: "https://mock.example.com/upstream_b.list"
+        min_rules: 10
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            mock_body = "# Mock\n" + "\n".join([f"DOMAIN,node-{i}.com" for i in range(1, 51)]) + "\n"
+            mock_resp = MagicMock()
+            mock_resp.status = 200
+            mock_resp.read.return_value = mock_body.encode("utf-8")
+            mock_resp.__enter__.return_value = mock_resp
+
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                with self.assertRaises(RuntimeError) as ctx:
+                    build.build_rulesets(
+                        sources_file=test_sources_file,
+                        dist_dir=test_dist,
+                        lock_file=test_lock_file,
+                        allow_new_baseline=False
+                    )
+                self.assertIn("Missing baseline lock record for upstream 'UpstreamB'", str(ctx.exception))
+                self.assertIn("unbaselined upstreams are forbidden", str(ctx.exception))
+
+            # Lock file was NOT modified
+            with open(test_lock_file, "r", encoding="utf-8") as f:
+                self.assertEqual(json.load(f), lock_content)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_17_controlled_new_upstream_baseline_flow(self):
+        """
+        Verify that when explicitly authorized via allow_new_baseline=True (--init-baseline),
+        the build successfully establishes baseline for new upstreams and updates the lock file.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_init_baseline_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
+
+            # Missing lock file scenario + allow_new_baseline=True
+            test_yaml = """
+rulesets:
+  NewSet:
+    bound_policy: "NewPolicy"
+    sources:
+      - name: "NewUpstream"
+        url: "https://mock.example.com/new_upstream.list"
+        min_rules: 5
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            mock_body = "# New\n" + "\n".join([f"DOMAIN,node-{i}.new.com" for i in range(1, 21)]) + "\n"
+            mock_resp = MagicMock()
+            mock_resp.status = 200
+            mock_resp.read.return_value = mock_body.encode("utf-8")
+            mock_resp.__enter__.return_value = mock_resp
+
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                build.build_rulesets(
+                    sources_file=test_sources_file,
+                    dist_dir=test_dist,
+                    lock_file=test_lock_file,
+                    allow_new_baseline=True
+                )
+
+            # Verify lock file was created and contains the new baseline count of 20
+            self.assertTrue(os.path.isfile(test_lock_file))
+            with open(test_lock_file, "r", encoding="utf-8") as f:
+                saved_lock = json.load(f)
+            self.assertEqual(saved_lock, {"NewSet": {"NewUpstream": 20}})
+
+            # Verify dist file was properly created
+            target_lsr = os.path.join(test_dist, "NewSet.lsr")
+            self.assertTrue(os.path.isfile(target_lsr))
+            with open(target_lsr, "r", encoding="utf-8") as f:
+                content = f.read()
+            self.assertIn("# TOTAL: 20", content)
+            self.assertIn("DOMAIN,node-1.new.com", content)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_18_lock_file_matches_sources_strict(self):
+        """
+        Verify that scripts/upstream_lock.json strictly matches sources.yml:
+        - No extraneous rulesets or test leftovers (e.g. ShrinkTest).
+        - Every ruleset with upstream sources is present with exact matching source names.
+        """
+        parsed_sources = build.load_sources(SOURCES_FILE)
+        lock_data = build.load_upstream_lock(build.UPSTREAM_LOCK_FILE, allow_missing=False)
+
+        expected_rulesets = {}
+        for rname, rcfg in parsed_sources.get("rulesets", {}).items():
+            sources = rcfg.get("sources", [])
+            if sources:
+                expected_rulesets[rname] = [s["name"] for s in sources]
+
+        # Verify exact ruleset key equivalence
+        self.assertEqual(
+            set(expected_rulesets.keys()),
+            set(lock_data.keys()),
+            f"Lock file rulesets {set(lock_data.keys())} do not match sources.yml {set(expected_rulesets.keys())}!"
+        )
+
+        # Verify each ruleset has exact matching source names
+        for rname, expected_srcs in expected_rulesets.items():
+            actual_srcs = list(lock_data[rname].keys())
+            self.assertEqual(
+                set(expected_srcs),
+                set(actual_srcs),
+                f"Ruleset '{rname}' sources in lock file {actual_srcs} do not match sources.yml {expected_srcs}!"
+            )
+            for sname, scnt in lock_data[rname].items():
+                self.assertGreater(scnt, 0, f"Locked count for {rname}.{sname} must be > 0")
 
 if __name__ == "__main__":
     unittest.main()
