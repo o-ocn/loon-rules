@@ -10,6 +10,7 @@ License: GPL-2.0
 import os
 import sys
 import re
+import json
 import shutil
 import tempfile
 import urllib.request
@@ -21,6 +22,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCES_FILE = os.path.join(BASE_DIR, "sources.yml")
 RULES_CUSTOM_DIR = os.path.join(BASE_DIR, "rules", "custom")
 DIST_DIR = os.path.join(BASE_DIR, "dist")
+UPSTREAM_LOCK_FILE = os.path.join(BASE_DIR, "scripts", "upstream_lock.json")
 
 SUPPORTED_TYPES = {
     "DOMAIN",
@@ -93,6 +95,35 @@ def count_lsr_rules(filepath):
             if clean and not clean.startswith(("#", ";")):
                 count += 1
     return count
+
+def load_upstream_lock(lock_file=UPSTREAM_LOCK_FILE):
+    """
+    Loads previously recorded valid upstream rule counts.
+    Returns a dictionary mapping ruleset -> {source_name: rule_count}.
+    """
+    if not lock_file or not os.path.isfile(lock_file):
+        return {}
+    try:
+        with open(lock_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"  [!] Warning: Failed to parse upstream lock file {lock_file}: {e}")
+        return {}
+
+def save_upstream_lock(lock_data, lock_file=UPSTREAM_LOCK_FILE):
+    """
+    Atomically saves recorded valid upstream rule counts to lock_file.
+    """
+    if not lock_file:
+        return
+    dir_name = os.path.dirname(lock_file)
+    if dir_name:
+        os.makedirs(dir_name, exist_ok=True)
+    temp_lock = lock_file + ".tmp"
+    with open(temp_lock, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(lock_data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    os.replace(temp_lock, lock_file)
 
 def parse_yaml_fallback(filepath):
     """
@@ -275,12 +306,16 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3):
                 continue
     raise RuntimeError(f"CRITICAL: Failed to fetch upstream rule from {url} after {max_retries} attempts: {last_err}") from last_err
 
-def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR):
+def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE):
     print(f"[*] Starting Loon Rules Build at {datetime.now(timezone.utc).isoformat()}...")
     cfg = load_sources(sources_file)
     rulesets = cfg.get("rulesets", {})
     if not rulesets:
         raise ValueError("No rulesets defined in sources.yml")
+
+    default_max_shrink = float(cfg.get("metadata", {}).get("max_shrink_ratio", 0.15))
+    lock_data = load_upstream_lock(lock_file)
+    new_lock_data = {}
 
     staged_rules_by_set = {}
     rule_to_policy_map = {}   # (rule_type, rule_val) -> (ruleset_name, bound_policy)
@@ -308,6 +343,8 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR):
 
         # 2. Ingest upstream sources strictly
         upstream_sources = rcfg.get("sources", [])
+        if upstream_sources:
+            new_lock_data[name] = {}
         for src in upstream_sources:
             sname = src.get("name")
             surl = src.get("url")
@@ -315,6 +352,28 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR):
             excluded = set(src.get("filter_excluded", []))
             print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
             raw_text = fetch_upstream_strict(surl, min_rules=min_r)
+
+            # Count valid non-comment rule lines in upstream source
+            valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+            src_count = len(valid_src_lines)
+            new_lock_data[name][sname] = src_count
+
+            # Per-upstream shrinkage protection against previous valid lock baseline
+            prev_src_count = lock_data.get(name, {}).get(sname)
+            src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
+            if prev_src_count is not None and prev_src_count > 0:
+                if src_count < prev_src_count:
+                    drop = prev_src_count - src_count
+                    shrink_ratio = drop / float(prev_src_count)
+                    if shrink_ratio > src_max_shrink:
+                        raise RuntimeError(
+                            f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
+                            f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
+                            f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
+                        )
+            else:
+                print(f"  [BASELINE] Established initial valid count for upstream '{sname}' in '{name}': {src_count} rules.")
+
             for line in raw_text.splitlines():
                 cleaned = clean_rule_line(line)
                 if cleaned:
@@ -462,6 +521,12 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR):
                 print(f"[UPDATED] {name}.lsr")
             else:
                 print(f"[UNCHANGED] {name}.lsr (Identical hash)")
+
+        # 7. Update upstream lock file only after all validations pass and dist is updated
+        merged_lock = dict(lock_data)
+        merged_lock.update(new_lock_data)
+        save_upstream_lock(merged_lock, lock_file)
+        print(f"[LOCKED] Upstream rule baselines saved to {lock_file}")
 
         print(f"\n[SUCCESS] Build complete. {updated_count} files updated in {dist_dir}.")
     finally:

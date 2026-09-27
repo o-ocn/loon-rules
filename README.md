@@ -49,7 +49,8 @@ loon-rules/
 ├── sources.yml                    # 声明式只读上游来源与防冲突排除表
 ├── scripts/
 │   ├── build.py                   # 拉取、校验、去重、冲突检测与 .lsr 生成引擎
-│   └── test_rules.py              # 自动化单元测试（语法、防碰撞、隔离断言）
+│   ├── test_rules.py              # 自动化单元测试（语法、防碰撞、隔离断言）
+│   └── upstream_lock.json         # 各上游有效规则数锁定基线（防单源异常缩水）
 ├── dist/                          # Loon 最终订阅的 .lsr 成品
 ├── docs/                          # 详细交接与运维文档
 │   ├── lcf_audit_report.md        # 原始 .lcf 配置文件脱敏审计报告

@@ -11,6 +11,7 @@ import sys
 import unittest
 import tempfile
 import shutil
+import json
 import io
 from unittest.mock import patch, MagicMock
 
@@ -316,6 +317,8 @@ rulesets:
             with open(target_lsr, "w", encoding="utf-8") as f:
                 f.write(existing_content)
 
+            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
+
             # Test sources config with max_shrink_ratio: 0.15 (15%) and min_rules: 10
             test_yaml = f"""
 metadata:
@@ -343,7 +346,11 @@ rulesets:
 
             with patch("urllib.request.urlopen", return_value=mock_resp):
                 with self.assertRaises(RuntimeError) as ctx:
-                    build.build_rulesets(sources_file=test_sources_file, dist_dir=test_dist)
+                    build.build_rulesets(
+                        sources_file=test_sources_file,
+                        dist_dir=test_dist,
+                        lock_file=test_lock_file
+                    )
                 self.assertIn("shrank abnormally by 40.0% (50 -> 30 rules", str(ctx.exception))
 
             # Verify existing dist file remains completely untouched
@@ -363,6 +370,7 @@ rulesets:
             test_dist = os.path.join(tmp_dir, "dist")
             os.makedirs(test_dist, exist_ok=True)
             test_sources_file = os.path.join(tmp_dir, "sources.yml")
+            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
 
             # Create existing dist file with 50 valid rules
             existing_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 51)]
@@ -396,7 +404,11 @@ rulesets:
             mock_resp.__enter__.return_value = mock_resp
 
             with patch("urllib.request.urlopen", return_value=mock_resp):
-                build.build_rulesets(sources_file=test_sources_file, dist_dir=test_dist)
+                build.build_rulesets(
+                    sources_file=test_sources_file,
+                    dist_dir=test_dist,
+                    lock_file=test_lock_file
+                )
 
             # Verify dist file was updated to 46 rules
             with open(target_lsr, "r", encoding="utf-8") as f:
@@ -404,6 +416,94 @@ rulesets:
             self.assertIn("# TOTAL: 46", dist_after)
             self.assertIn("DOMAIN,node-46.existing.com", dist_after)
             self.assertNotIn("DOMAIN,node-47.existing.com", dist_after)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_13_dual_upstream_single_shrinkage_triggers_fail_stop_real_engine(self):
+        """
+        Verify that in a ruleset with two upstream sources, if ONE upstream abnormally shrinks
+        while the other remains unchanged, the real build engine aborts with RuntimeError,
+        and existing published dist/ remains 100% untouched.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_dual_upstream_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
+
+            # Create existing dist file with 100 valid rules (50 from UpstreamA + 50 from UpstreamB)
+            existing_rules_a = [f"DOMAIN,src-a-{i}.example.com" for i in range(1, 51)]
+            existing_rules_b = [f"DOMAIN,src-b-{i}.example.com" for i in range(1, 51)]
+            all_existing = existing_rules_a + existing_rules_b
+            existing_content = "# NAME: DualSet\n# TOTAL: 100\n" + "\n".join(all_existing) + "\n"
+            target_lsr = os.path.join(test_dist, "DualSet.lsr")
+            with open(target_lsr, "w", encoding="utf-8") as f:
+                f.write(existing_content)
+
+            # Establish lock baseline: both upstreams previously had 50 valid rules
+            initial_lock = {
+                "DualSet": {
+                    "UpstreamA": 50,
+                    "UpstreamB": 50
+                }
+            }
+            with open(test_lock_file, "w", encoding="utf-8") as f:
+                json.dump(initial_lock, f, indent=2)
+
+            test_yaml = f"""
+metadata:
+  max_shrink_ratio: 0.15
+rulesets:
+  DualSet:
+    bound_policy: "DualPolicy"
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "UpstreamA"
+        url: "https://mock.example.com/upstream_a.list"
+        min_rules: 10
+      - name: "UpstreamB"
+        url: "https://mock.example.com/upstream_b.list"
+        min_rules: 10
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            # Mock responses:
+            # UpstreamA abnormally shrinks from 50 to 20 rules (60% drop > 15%, while >= min_rules 10)
+            # UpstreamB remains unchanged at 50 rules (0% drop)
+            body_a = "# Upstream A\n" + "\n".join([f"DOMAIN,src-a-{i}.example.com" for i in range(1, 21)]) + "\n"
+            body_b = "# Upstream B\n" + "\n".join(existing_rules_b) + "\n"
+
+            def mock_urlopen_router(req, timeout=15):
+                url = req.full_url if hasattr(req, "full_url") else str(req)
+                resp = MagicMock()
+                resp.status = 200
+                if "upstream_a.list" in url:
+                    resp.read.return_value = body_a.encode("utf-8")
+                else:
+                    resp.read.return_value = body_b.encode("utf-8")
+                resp.__enter__.return_value = resp
+                return resp
+
+            with patch("urllib.request.urlopen", side_effect=mock_urlopen_router):
+                with self.assertRaises(RuntimeError) as ctx:
+                    build.build_rulesets(
+                        sources_file=test_sources_file,
+                        dist_dir=test_dist,
+                        lock_file=test_lock_file
+                    )
+                self.assertIn("Upstream source 'UpstreamA' in ruleset 'DualSet' shrank abnormally by 60.0% (50 -> 20 rules", str(ctx.exception))
+
+            # Verify existing dist file remains completely untouched
+            with open(target_lsr, "r", encoding="utf-8") as f:
+                dist_after = f.read()
+            self.assertEqual(existing_content, dist_after, "Dual-upstream dist file was modified despite one upstream shrinking!")
+
+            # Verify lock file remains completely unchanged
+            with open(test_lock_file, "r", encoding="utf-8") as f:
+                lock_after = json.load(f)
+            self.assertEqual(initial_lock, lock_after, "Upstream lock was modified despite build failure!")
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 

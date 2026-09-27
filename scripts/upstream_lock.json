@@ -1,0 +1,43 @@
+{
+  "AI-Overseas": {
+    "OpenAI": 35,
+    "Claude": 3
+  },
+  "GoogleDrive": {
+    "GoogleDrive": 8
+  },
+  "OneDrive": {
+    "OneDrive": 16
+  },
+  "Google": {
+    "Google": 698
+  },
+  "YouTube": {
+    "YouTube": 190
+  },
+  "Telegram": {
+    "Telegram": 40
+  },
+  "Twitter": {
+    "Twitter": 33
+  },
+  "Discord": {
+    "Discord": 29
+  },
+  "Apple-Direct": {
+    "AppleMusic": 10,
+    "iCloud": 61
+  },
+  "Apple-Media-US": {
+    "AppleTV": 9,
+    "AppleNews": 2
+  },
+  "China-Direct": {
+    "WeChat": 33,
+    "Alibaba": 57,
+    "JingDong": 249
+  },
+  "ShrinkTest": {
+    "MockUpstream": 46
+  }
+}
