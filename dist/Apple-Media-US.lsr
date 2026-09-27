@@ -2,7 +2,7 @@
 # DESCRIPTION: Apple US-restricted services (Apple TV+, Apple News, Fitness+, TestFlight)
 # RECOMMENDED POLICY: US Test
 # AUTHOR: o-ocn
-# UPDATED: 2026-09-27 18:49:25 UTC
+# REVISION: 9cd966b0039a
 # TOTAL: 22
 # ==============================================================================
 DOMAIN-SUFFIX,tv.apple.com

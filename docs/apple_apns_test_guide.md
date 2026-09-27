@@ -1,4 +1,4 @@
-# Apple 生态基线与 APNs 推送实验验证指南
+# Apple 生态基线、iCloud/CloudKit 准入与 APNs 推送实验验证指南
 
 ## 1. Apple 服务基线原则（稳定性第一）
 
@@ -16,53 +16,47 @@
 
 ---
 
-## 2. APNs 底层原理与 Loon 捕获机制深度剖析
+## 2. iCloud / CloudKit 上游准入与验证机制
 
-### A. APNs 的系统级本质
-* 在 iOS 与 watchOS 中，APNs 由单一系统守护进程 `apsd` 统一托管。
-* 整个系统（**Telegram、微信、邮件、HomeKit 门铃告警、摄像头移动侦测、iCloud 变更推送、Apple Watch 数据唤醒、爱乐记、猿音**）共用同一条长连接 TLS 通道（默认目标为 `courier.push.apple.com`，端口 5223 / 443 / 2197）。
-* **绝不能声称 APNs “只影响 Telegram”**。任何针对 APNs 路由的调整，都会瞬间影响整台设备的全部通知与后台数据同步！
+为了确保 iCloud、系统相册、备忘录以及第三方重度依赖 CloudKit 的 App（如**爱乐记**、**猿音**）稳定同步，本仓库采取严格的上游准入流程：
 
-### B. Loon “包含 APNS” 开关的关键影响
-* **当前状态：关闭 (OFF)**。
-* **物理事实**：在 iOS NetworkExtension 架构下，当 Loon 的“包含 APNS”关闭时，iOS 内核直接豁免 `apsd`，其所有连接**绕过 TUN 虚拟网卡，直接通过物理 Wi-Fi 或蜂窝网络发出**。
-* **结论**：**若“包含 APNS”处于关闭状态，APNs 流量根本未进入 Loon！此时无论在 `.lsr` 中写何种规则，都绝不可能命中，也绝不可能改变 Telegram 的推送延迟。若 APNs 流量未进 Loon，`.lsr` 无法单独解决该问题。**
+1. **权威上游同步**：
+   从 `blackmatrix7/ios_rule_script` 的 `iCloud.list` 和 `AppleMusic.list` 进行声明式拉取。
+2. **多重安全清洗与过滤**：
+   - 上游域名在进入 `dist/Apple-Direct.lsr` 前，自动执行黑名单过滤，严禁混入美区媒体域名（`tv.apple.com`, `apple.news`, `testflight.apple.com`）。
+   - 严禁引入任何通配全量域 `apple.com` 或整段 `17.0.0.0/8`。
+3. **自动化测试守门**：
+   由 `scripts/test_rules.py` 执行断言，任何非法父域通配或跨策略冲突将立即阻断发版。
 
 ---
 
-## 3. APNs 独立实验方案（单变量控制测试）
+## 3. APNs 机制客观说明与 Loon 捕获实测要求
 
-为了在不破坏 Apple 核心服务的前提下探索 Telegram 的低延迟后台推送，我们设计了独立的 `Apple-Push-Experimental.lsr`，并严格遵守**一次只改变一个变量**的科学测试流程。
+### A. APNs 的系统级本质
+* 在 iOS 与 watchOS 中，APNs 由全局系统守护进程 `apsd` 统一托管。
+* 整个系统（**Telegram、微信、邮件、HomeKit 门铃告警、摄像头移动侦测、iCloud 变更推送、Apple Watch 数据唤醒、爱乐记、猿音**）共用同一条长连接 TLS 通道（默认目标为 `courier.push.apple.com`，端口 5223 / 443 / 2197）。
+* **绝不能声称 APNs “只影响 Telegram”**。任何针对 APNs 路由的调整，都会同步影响整台设备的全部通知与后台数据同步！
 
-### 测试步骤与矩阵
+### B. Loon “包含 APNS” 开关与捕获行为的客观说明
+* **当前系统开关状态**：“包含所有网络”为 **关闭 (OFF)**；“包含 APNS”为 **关闭 (OFF)**。
+* **客观实测要求**：
+  在 iOS NetworkExtension 架构下，当“包含 APNS”关闭时，系统通常豁免 `apsd`，其长连接不进入 TUN 虚拟接口。**但这绝不能当作不需要验证的先验绝对真理**。由于 iOS 大版本迭代及蜂窝网卡与 Wi-Fi 路由策略差异，**APNs 流量是否进入 Loon、命中哪条策略，必须以用户在 Loon【请求记录】中的实际抓包数据为准**。
+* **默认安全状态**：
+  本仓库提供的 `Apple-Push-Experimental.lsr` 在所有导入示例中**默认设为关闭 (`enabled=false`)**。
+  只有在用户主动实测、且确认抓包记录中看到了推送连接时，才根据需要启用。若 APNs 流量未进入 Loon，`.lsr` 无法单独解决该问题。
 
-#### 第一阶段：基线确认（“包含 APNS” 保持关闭）
-1. 打开 Loon 的“请求日志”（Requests / Recent）。
-2. 将 Telegram 彻底退出后台（划掉后台卡片）。
-3. 使用另一台设备或桌面端向该 Telegram 发送一条测试消息。
-4. **观察点**：
-   - Loon 日志中是否出现目标为 `push.apple.com` 或 `17.x.x.x` 的请求？（预期：**不出现**，因为未捕获 APNs）。
-   - 手机是否收到系统推送通知？耗时多久？
+---
 
-#### 第二阶段：开启“包含 APNS” 仅绑定 DIRECT（验证捕获能力）
-1. 在 Loon 设置中打开【包含 APNS】（保持“包含所有网络”为关闭！）。
-2. 在 `[Remote Rule]` 中启用 `Apple-Push-Experimental.lsr`，并将 `Apple Push` 策略组手动固定选为 `DIRECT`。
-3. 检查 Loon 请求日志：此时日志中应开始出现 `apsd` 或 `push.apple.com` 的连接记录，并清晰显示命中策略为 `DIRECT`。
-4. **验收健康度**：
-   - Apple Watch 天气是否正常刷新？
-   - HomeKit 摄像头（特别是室内摄像头、门铃实时画面）是否正常秒开？
-   - 打开【爱乐记】与【猿音】，检查 iCloud/CloudKit 记录是否秒级同步？
+## 4. APNs 单变量控制测试矩阵
 
-#### 第三阶段：测试代理推送（对比 Wi-Fi 与 蜂窝数据）
-1. 将 `Apple Push` 策略组手动切换至自建香港或低延迟专线（如自建 VMISS 9929 或 HK）。
-2. **网络 A：大陆家庭 Wi-Fi 环境下**：
-   - 锁定屏幕 5 分钟，测试 Telegram 消息推送实时性。
-   - 检查是否有通知丢失或延迟激增。
-   - 检查 HomeKit 门铃是否有延迟。
-3. **网络 B：大陆蜂窝移动数据环境下**：
-   - 断开 Wi-Fi，在 5G/4G 蜂窝数据下重复上述测试。
-   - 检查基站切换与熄屏唤醒时，APNs 握手是否受阻。
+为探索 Telegram 的低延迟后台推送，同时绝对不破坏 Apple 核心服务，请严格遵循**一次只改变一个变量**的测试流程：
+
+| 测试阶段 | Loon 开关组合 | 规则与策略设置 | 需实测的网络环境 | 必须核验的观察项 |
+| :--- | :--- | :--- | :--- | :--- |
+| **阶段 1：基线确认** | 包含所有网络: 关<br>包含 APNS: **关** | `Apple-Push-Experimental` **禁用** | 大陆 Wi-Fi & 蜂窝数据 | 1. 划掉 Telegram 后台，测试系统推送延迟。<br>2. 观察 Loon 请求记录中是否出现 `push.apple.com` 或 `17.x.x.x`（验证其是否绕过 Loon）。 |
+| **阶段 2：捕获测试 (直连)** | 包含所有网络: 关<br>包含 APNS: **开** | 启用 `Apple-Push-Experimental`<br>策略手动固定为 **`DIRECT`** | 大陆 Wi-Fi | 1. 查看 Loon 请求记录：是否开始记录 `apsd` / `push.apple.com` 并命中 `DIRECT`。<br>2. 检查 Apple Watch 天气是否正常。<br>3. 检查 HomeKit 室内摄像头画面是否秒开。<br>4. 检查爱乐记、猿音的 CloudKit 同步是否畅通。 |
+| **阶段 3：代理测试 (分网验证)** | 包含所有网络: 关<br>包含 APNS: **开** | 策略切换至 **`Apple Push`** (代理节点) | **网络 A：大陆 Wi-Fi**<br>**网络 B：大陆蜂窝数据** | 1. 锁屏 5 分钟后测试 Telegram 消息唤醒速度。<br>2. 对比蜂窝与 Wi-Fi 切换时推送是否断连。<br>3. 检查全系统其他 App（微信、邮件、门铃）通知是否受牵连。 |
 
 > [!CAUTION]
-> **回滚触发红线**：
-> 一旦发现 Apple Watch 天气出现破裂/无法获取数据、爱乐记或猿音同步停滞、或 HomeKit 摄像头提示“未响应”，**立即将 `Apple Push` 切回 `DIRECT`，或关闭 Loon 中的【包含 APNS】**，即可秒级恢复原生状态。
+> **异常回滚红线**：
+> 一旦发现 Apple Watch 天气无法获取、爱乐记或猿音同步停滞、或 HomeKit 摄像头提示“未响应”，**立即将 `Apple-Push-Experimental.lsr` 停用或将 Loon【包含 APNS】关闭**，即可瞬间恢复原生网络表现。

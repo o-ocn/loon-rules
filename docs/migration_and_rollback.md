@@ -1,6 +1,6 @@
-# 平滑迁移、多路订阅与零风险回滚方案
+# 平滑迁移、多路订阅与分步回滚方案
 
-为了确保现有网络体验不中断，本方案遵循**“先备份、离线自立、逐组迁移、单点回滚”**的工业级安全原则。
+为了确保现有网络体验不中断，本方案遵循**“先备份基线、离线自立、逐组迁移、单点回滚”**的安全原则。
 
 ---
 
@@ -33,7 +33,7 @@ AI = select, [你的VMISS-9929节点名], US, HK, JP, DIRECT
 1. 在 `[Remote Rule]` 中添加：
    - `AI-Overseas.lsr` -> 绑定 `AI`
    - `AI-China-Direct.lsr` -> 绑定 `DIRECT`
-2. 禁用或删除原有的 `kelee.one` 的 `AI.lsr`。
+2. 禁用或删除原有的第三方杂合 AI 规则。
 3. **验收**：
    - 访问 `deepseek.com`：确认直连畅通，不经过代理。
    - 访问 `chatgpt.com` / `claude.ai` / `gemini.google.com`：确认走 VMISS 9929 正常访问。
@@ -54,10 +54,11 @@ AI = select, [你的VMISS-9929节点名], US, HK, JP, DIRECT
 3. **验收**：
    - HomeKit 摄像头即时推流无黑屏。
    - Apple Watch 天气刷新。
+   - 打开【爱乐记】与【猿音】，核验 CloudKit 数据即时同步。
    - 微信、淘宝、京东、闲鱼秒开且支付定位正常。
 
 ### 步骤 5：APNs 独立挂载（可选实验）
-挂载 `Apple-Push-Experimental.lsr` 绑定 `Apple Push`，并按《APNs 实验验证指南》进行单变量对比测试。
+挂载 `Apple-Push-Experimental.lsr`（默认保持 `enabled=false`），按《Apple 生态与 APNs 实验验证指南》进行单变量对比测试。
 
 ---
 
@@ -68,19 +69,19 @@ AI = select, [你的VMISS-9929节点名], US, HK, JP, DIRECT
 
 | 规则成品 | GitHub Raw 官方原始源（首选） | jsDelivr CDN 加速镜像（备用） |
 | :--- | :--- | :--- |
-| **`AI-Overseas.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/AI-Overseas.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/AI-Overseas.lsr` |
-| **`AI-China-Direct.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/AI-China-Direct.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/AI-China-Direct.lsr` |
-| **`GoogleDrive.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/GoogleDrive.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/GoogleDrive.lsr` |
-| **`OneDrive.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/OneDrive.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/OneDrive.lsr` |
-| **`Google.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Google.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Google.lsr` |
-| **`YouTube.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/YouTube.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/YouTube.lsr` |
-| **`Telegram.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Telegram.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Telegram.lsr` |
-| **`Twitter.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Twitter.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Twitter.lsr` |
-| **`Discord.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Discord.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Discord.lsr` |
-| **`Apple-Direct.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Apple-Direct.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Apple-Direct.lsr` |
-| **`Apple-Media-US.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Apple-Media-US.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Apple-Media-US.lsr` |
-| **`Apple-Push-Experimental.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/Apple-Push-Experimental.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/Apple-Push-Experimental.lsr` |
-| **`China-Direct.lsr`** | `https://raw.githubusercontent.com/angusdevgo/loon-rules/main/dist/China-Direct.lsr` | `https://fastly.jsdelivr.net/gh/angusdevgo/loon-rules@main/dist/China-Direct.lsr` |
+| **`AI-Overseas.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/AI-Overseas.lsr` |
+| **`AI-China-Direct.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/AI-China-Direct.lsr` |
+| **`GoogleDrive.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GoogleDrive.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/GoogleDrive.lsr` |
+| **`OneDrive.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/OneDrive.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/OneDrive.lsr` |
+| **`Google.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Google.lsr` |
+| **`YouTube.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/YouTube.lsr` |
+| **`Telegram.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Telegram.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Telegram.lsr` |
+| **`Twitter.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Twitter.lsr` |
+| **`Discord.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Discord.lsr` |
+| **`Apple-Direct.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Apple-Direct.lsr` |
+| **`Apple-Media-US.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media-US.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Apple-Media-US.lsr` |
+| **`Apple-Push-Experimental.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push-Experimental.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/Apple-Push-Experimental.lsr` |
+| **`China-Direct.lsr`** | `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr` | `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/China-Direct.lsr` |
 
 ---
 

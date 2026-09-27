@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Loon Rules Generator and Validator
-Maintains clean, policy-segregated .lsr files with conflict detection and deduplication.
+Fail-stop upstream fetching, atomic staging, idempotence, and cross-policy conflict engine.
 Author: o-ocn
 License: GPL-2.0
 """
@@ -10,86 +10,17 @@ License: GPL-2.0
 import os
 import sys
 import re
+import shutil
+import tempfile
 import urllib.request
 import urllib.error
-import json
+import hashlib
 from datetime import datetime, timezone
 
-try:
-    import yaml
-    def parse_yaml_file(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
-except ImportError:
-    # Standard library fallback parser for sources.yml
-    def parse_yaml_file(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        
-        cfg = {"rulesets": {}}
-        current_ruleset = None
-        current_list = None
-        current_dict_item = None
-        in_rulesets = False
-        
-        for line in lines:
-            raw = line.rstrip()
-            if not raw or raw.strip().startswith("#"):
-                continue
-            
-            indent = len(raw) - len(raw.lstrip())
-            stripped = raw.strip()
-
-            if indent == 0 and stripped == "rulesets:":
-                in_rulesets = True
-                continue
-            elif indent == 0 and stripped != "rulesets:":
-                in_rulesets = False
-                continue
-
-            if not in_rulesets:
-                continue
-            
-            if indent == 2 and stripped.endswith(":"):
-                current_ruleset = stripped[:-1].strip()
-                cfg["rulesets"][current_ruleset] = {"sources": []}
-                current_list = None
-                current_dict_item = None
-
-            elif indent == 4 and current_ruleset:
-                if ":" in stripped:
-                    k, v = stripped.split(":", 1)
-                    k = k.strip()
-                    v = v.strip().strip('"\'')
-                    if k == "sources":
-                        current_list = "sources"
-                    else:
-                        cfg["rulesets"][current_ruleset][k] = v if v else True
-                        current_list = None
-            elif indent >= 6 and current_ruleset:
-                if stripped.startswith("- "):
-                    item_str = stripped[2:].strip()
-                    if current_list == "sources":
-                        if ":" in item_str:
-                            k, v = item_str.split(":", 1)
-                            current_dict_item = {k.strip(): v.strip().strip('"\'')}
-                            cfg["rulesets"][current_ruleset]["sources"].append(current_dict_item)
-                        else:
-                            current_dict_item = {"name": item_str}
-                            cfg["rulesets"][current_ruleset]["sources"].append(current_dict_item)
-                    elif current_list == "filter_excluded" and current_dict_item is not None:
-                        current_dict_item.setdefault("filter_excluded", []).append(item_str.strip('"\''))
-                elif ":" in stripped and current_dict_item is not None:
-                    k, v = stripped.split(":", 1)
-                    k = k.strip()
-                    v = v.strip().strip('"\'')
-                    if k == "filter_excluded":
-                        current_list = "filter_excluded"
-                        current_dict_item["filter_excluded"] = []
-                    else:
-                        current_dict_item[k] = v
-        return cfg
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SOURCES_FILE = os.path.join(BASE_DIR, "sources.yml")
+RULES_CUSTOM_DIR = os.path.join(BASE_DIR, "rules", "custom")
+DIST_DIR = os.path.join(BASE_DIR, "dist")
 
 SUPPORTED_TYPES = {
     "DOMAIN",
@@ -102,152 +33,358 @@ SUPPORTED_TYPES = {
     "URL-REGEX"
 }
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCES_FILE = os.path.join(BASE_DIR, "sources.yml")
-RULES_CUSTOM_DIR = os.path.join(BASE_DIR, "rules", "custom")
-DIST_DIR = os.path.join(BASE_DIR, "dist")
+# Explicitly verified and whitelisted parent-subdomain policy delegations.
+# Any unlisted cross-policy shadowing will halt build immediately.
+KNOWN_SAFE_DELEGATIONS = {
+    # Gemini / AI Studio (AI) carved out from Google (US Test)
+    "gemini.google.com": ("AI-Overseas", "Google"),
+    "bard.google.com": ("AI-Overseas", "Google"),
+    "aistudio.google.com": ("AI-Overseas", "Google"),
+    "makersuite.google.com": ("AI-Overseas", "Google"),
+    "generativelanguage.googleapis.com": ("AI-Overseas", "Google"),
+    "alkalimakersuite-pa.clients6.google.com": ("AI-Overseas", "Google"),
+    "proactivebackend-pa.googleapis.com": ("AI-Overseas", "Google"),
+
+    # Google Drive (HK) carved out from Google (US Test)
+    "drive.google.com": ("GoogleDrive", "Google"),
+    "docs.google.com": ("GoogleDrive", "Google"),
+    "googledrive.com": ("GoogleDrive", "Google"),
+    "drive-thirdparty.google.com": ("GoogleDrive", "Google"),
+    "filepickup.google.com": ("GoogleDrive", "Google"),
+
+    # Discord Dynamic Links (US) carved out from Google Firebase (US Test)
+    "discord-attachments-uploads-prd.storage.googleapis.com": ("Discord", "Google"),
+    "discordapp.page.link": ("Discord", "Google"),
+
+
+
+    # Apple Media (US Test) carved out from Apple-Direct (DIRECT)
+    "tv.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "tv.applemusic.com": ("Apple-Media-US", "Apple-Direct"),
+    "linear.tv.apple.com": ("Apple-Media-US", "Apple-Direct"),
+
+    "news-client.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "news-client-search.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "news-assets.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "news-edge.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "gspe1-ssl.ls.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "apple.news": ("Apple-Media-US", "Apple-Direct"),
+    "fitness.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "amp-api.fitness.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "testflight.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "play-edge.itunes.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "np-edge.itunes.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "uts-api.itunes.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "hls.itunes.apple.com": ("Apple-Media-US", "Apple-Direct"),
+    "hls-amt.itunes.apple.com": ("Apple-Media-US", "Apple-Direct"),
+
+
+    # APNs Experimental (Apple Push) carved out from Apple-Direct (DIRECT)
+    "push.apple.com": ("Apple-Push-Experimental", "Apple-Direct"),
+    "courier.push.apple.com": ("Apple-Push-Experimental", "Apple-Direct"),
+}
+
+
+def parse_yaml_fallback(filepath):
+    """
+    Robust stack-based indentation YAML parser for sources.yml.
+    Accurately supports nested lists and dicts without PyYAML.
+    """
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    cfg = {"rulesets": {}}
+    current_ruleset = None
+    current_source = None
+    current_target_list = None
+    in_rulesets = False
+
+    for line_num, raw in enumerate(lines, 1):
+        line = raw.rstrip()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(raw) - len(raw.lstrip())
+
+        if indent == 0:
+            if stripped == "rulesets:":
+                in_rulesets = True
+            else:
+                in_rulesets = False
+            continue
+
+        if not in_rulesets:
+            continue
+
+        # Ruleset level: indent 2
+        if indent == 2 and stripped.endswith(":"):
+            current_ruleset = stripped[:-1].strip()
+            cfg["rulesets"][current_ruleset] = {"sources": []}
+            current_source = None
+            current_target_list = None
+            continue
+
+        if not current_ruleset:
+            continue
+
+        # Ruleset properties: indent 4
+        if indent == 4:
+            if ":" in stripped:
+                k, v = stripped.split(":", 1)
+                k = k.strip()
+                v = v.strip().strip('"\'')
+                if k == "sources":
+                    current_target_list = "sources"
+                else:
+                    cfg["rulesets"][current_ruleset][k] = v if v else True
+                    current_target_list = None
+            continue
+
+        # Source list items: indent 6
+        if indent == 6:
+            if stripped.startswith("- "):
+                item_content = stripped[2:].strip()
+                if ":" in item_content:
+                    k, v = item_content.split(":", 1)
+                    current_source = {k.strip(): v.strip().strip('"\'')}
+                    cfg["rulesets"][current_ruleset]["sources"].append(current_source)
+                    current_target_list = "source_props"
+                else:
+                    current_source = {"name": item_content}
+                    cfg["rulesets"][current_ruleset]["sources"].append(current_source)
+                    current_target_list = "source_props"
+            elif ":" in stripped and current_source is not None:
+                k, v = stripped.split(":", 1)
+                k = k.strip()
+                v = v.strip().strip('"\'')
+                if k == "filter_excluded":
+                    current_source["filter_excluded"] = []
+                    current_target_list = "filter_excluded"
+                else:
+                    current_source[k] = v
+            continue
+
+        # Nested filter_excluded list items: indent 8 or 10
+        if indent >= 8:
+            if stripped.startswith("- ") and current_source is not None and "filter_excluded" in current_source:
+                ex_val = stripped[2:].strip().strip('"\'')
+                current_source["filter_excluded"].append(ex_val)
+            continue
+
+    return cfg
 
 def load_sources():
     if not os.path.isfile(SOURCES_FILE):
         raise FileNotFoundError(f"Sources config not found: {SOURCES_FILE}")
-    return parse_yaml_file(SOURCES_FILE)
-
+    try:
+        import yaml
+        with open(SOURCES_FILE, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f)
+    except ImportError:
+        return parse_yaml_fallback(SOURCES_FILE)
 
 def clean_rule_line(line):
     line = line.strip()
     if not line or line.startswith("#") or line.startswith(";"):
         return None
-    # Strip any trailing Loon policy if present (e.g. DOMAIN-SUFFIX,example.com,DIRECT -> DOMAIN-SUFFIX,example.com)
-    # Remote rules in .lsr files should NOT contain target policy inline when bound by [Remote Rule] policy=...
     parts = [p.strip() for p in line.split(",")]
     if not parts:
         return None
-    
     rule_type = parts[0].upper()
     if rule_type not in SUPPORTED_TYPES:
         return f"INVALID_SYNTAX: Unknown rule type '{rule_type}' in line: {line}"
-    
-    # Check parameters (e.g. no-resolve)
-    has_no_resolve = any(p.lower() == "no-resolve" for p in parts[1:])
     value = parts[1] if len(parts) > 1 else ""
     if not value:
         return f"INVALID_SYNTAX: Missing rule target value in line: {line}"
-
+    has_no_resolve = any(p.lower() == "no-resolve" for p in parts[1:])
     if has_no_resolve:
         return f"{rule_type},{value},no-resolve"
     else:
         return f"{rule_type},{value}"
 
-def fetch_upstream(url, timeout=10):
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Loon-Rules-Builder/1.0"})
-        with urllib.request.urlopen(req, timeout=timeout) as response:
-            return response.read().decode("utf-8", errors="ignore")
-    except Exception as e:
-        print(f"  [WARN] Failed to fetch upstream {url}: {e}")
-        return None
+def fetch_upstream_strict(url, min_rules=1, timeout=15, max_retries=3):
+    """
+    Fetches upstream rule list with strict error handling and retries.
+    Raises RuntimeError on any failure or invalid content.
+    """
+    last_err = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Loon-Rules-Builder/2.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"HTTP status {response.status} when fetching {url}")
+                body = response.read().decode("utf-8", errors="strict")
+                lines = [l.strip() for l in body.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+                if len(lines) < min_rules:
+                    raise RuntimeError(f"Upstream returned abnormally few rules ({len(lines)} < {min_rules}) from {url}")
+                return body
+        except Exception as e:
+            last_err = e
+            if attempt < max_retries:
+                import time
+                time.sleep(1.0)
+                continue
+    raise RuntimeError(f"CRITICAL: Failed to fetch upstream rule from {url} after {max_retries} attempts: {last_err}") from last_err
 
-def build():
+
+
+def build_rulesets():
     print(f"[*] Starting Loon Rules Build at {datetime.now(timezone.utc).isoformat()}...")
     cfg = load_sources()
     rulesets = cfg.get("rulesets", {})
-    
-    all_rules_by_set = {}
-    domain_to_set_map = {}
-    has_critical_error = False
+    if not rulesets:
+        raise ValueError("No rulesets defined in sources.yml")
+
+    # Staging memory for rules
+    staged_rules_by_set = {}
+    domain_to_policy_map = {}
+    parent_domains = {}  # domain -> (ruleset, policy)
 
     for name, rcfg in rulesets.items():
-        print(f"\n[*] Processing ruleset: {name} (Policy: {rcfg.get('bound_policy', 'UNBOUND')})")
+        bound_policy = rcfg.get("bound_policy", "DIRECT")
         custom_file = os.path.join(BASE_DIR, rcfg.get("local_custom", ""))
         collected_rules = []
         seen = set()
 
-        # 1. Custom rules first (Highest priority)
+        # 1. Load custom rules first
         if os.path.isfile(custom_file):
-            print(f"  [+] Loading custom rules from {rcfg.get('local_custom')}")
+            print(f"  [+] Ingesting custom rules: {rcfg.get('local_custom')}")
             with open(custom_file, "r", encoding="utf-8") as f:
                 for line_idx, line in enumerate(f, 1):
                     cleaned = clean_rule_line(line)
                     if cleaned:
                         if cleaned.startswith("INVALID_SYNTAX:"):
-                            print(f"  [ERROR] {custom_file}:{line_idx} - {cleaned}")
-                            has_critical_error = True
-                        elif cleaned not in seen:
+                            raise SyntaxError(f"Syntax error in {custom_file}:{line_idx} - {cleaned}")
+                        if cleaned not in seen:
                             seen.add(cleaned)
                             collected_rules.append(cleaned)
 
-        # 2. Upstream sources (optional, filtered)
+        # 2. Ingest upstream sources strictly
         upstream_sources = rcfg.get("sources", [])
         for src in upstream_sources:
             sname = src.get("name")
             surl = src.get("url")
             excluded = set(src.get("filter_excluded", []))
-            print(f"  [+] Ingesting upstream: {sname}")
-            raw_text = fetch_upstream(surl)
-            if raw_text:
-                for line in raw_text.splitlines():
-                    cleaned = clean_rule_line(line)
-                    if cleaned and not cleaned.startswith("INVALID_SYNTAX:"):
-                        if cleaned in excluded:
-                            continue
-                        if cleaned not in seen:
-                            seen.add(cleaned)
-                            collected_rules.append(cleaned)
-            else:
-                print(f"  [NOTE] Using local/cached definitions for {sname} due to fetch limit.")
+            print(f"  [+] Ingesting upstream: {sname} ({surl})")
+            raw_text = fetch_upstream_strict(surl)
+            for line in raw_text.splitlines():
+                cleaned = clean_rule_line(line)
+                if cleaned:
+                    if cleaned.startswith("INVALID_SYNTAX:"):
+                        raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
+                    if cleaned in excluded:
+                        continue
+                    if cleaned not in seen:
+                        seen.add(cleaned)
+                        collected_rules.append(cleaned)
 
-        all_rules_by_set[name] = collected_rules
-        print(f"  [=] Total rules for {name}: {len(collected_rules)}")
+        staged_rules_by_set[name] = collected_rules
+        print(f"  [=] Ruleset '{name}': {len(collected_rules)} rules loaded.")
 
-        # Check collision map
+        # Record domain mapping for conflict checks
         for r in collected_rules:
             parts = r.split(",")
             rtype = parts[0]
-            rval = parts[1]
+            rval = parts[1].lower()
             if rtype in ("DOMAIN", "DOMAIN-SUFFIX"):
-                if rval in domain_to_set_map and domain_to_set_map[rval] != name:
-                    prev_set = domain_to_set_map[rval]
-                    # Check if policies differ
-                    p1 = rulesets[prev_set].get("bound_policy")
-                    p2 = rcfg.get("bound_policy")
-                    if p1 != p2:
-                        print(f"  [CONFLICT DETECTED] Domain '{rval}' is in both '{prev_set}' ({p1}) and '{name}' ({p2})!")
-                        # If AI-Overseas vs Google, verify precision
-                        if (name == "AI-Overseas" and prev_set == "Google") or (prev_set == "AI-Overseas" and name == "Google"):
-                            print(f"    -> Cross-hit between AI and Google! Review precision domain allocation.")
-                domain_to_set_map[rval] = name
+                if rval in domain_to_policy_map:
+                    prev_set, prev_pol = domain_to_policy_map[rval]
+                    if prev_pol != bound_policy:
+                        raise ValueError(
+                            f"FATAL CONFLICT: Exact domain '{rval}' is mapped to both '{prev_set}' (Policy: {prev_pol}) "
+                            f"and '{name}' (Policy: {bound_policy})! Ambiguous policy assignment is forbidden."
+                        )
+                domain_to_policy_map[rval] = (name, bound_policy)
+                if rtype == "DOMAIN-SUFFIX":
+                    parent_domains[rval] = (name, bound_policy)
 
-    # 3. Specific validation for user requirements
-    ai_rules = all_rules_by_set.get("AI-Overseas", [])
-    forbidden_in_ai = ["DOMAIN-SUFFIX,googleapis.com", "DOMAIN-SUFFIX,google.com", "DOMAIN-SUFFIX,x.com", "DOMAIN-SUFFIX,twitter.com", "DOMAIN-SUFFIX,facebook.com", "DOMAIN-SUFFIX,instagram.com", "DOMAIN-SUFFIX,meta.com"]
+    # 3. Check for illegal parent-domain shadowing across different policies
+    for domain, (c_set, c_pol) in domain_to_policy_map.items():
+        # Check if domain has a parent suffix with a different policy
+        parts = domain.split(".")
+        for i in range(1, len(parts)):
+            parent = ".".join(parts[i:])
+            if parent in parent_domains:
+                p_set, p_pol = parent_domains[parent]
+                if p_pol != c_pol:
+                    # Check if this cross-policy delegation is explicitly whitelisted
+                    if domain in KNOWN_SAFE_DELEGATIONS:
+                        expected_child, expected_parent = KNOWN_SAFE_DELEGATIONS[domain]
+                        if c_set == expected_child and p_set == expected_parent:
+                            continue  # Safe, intentional delegation
+                    raise ValueError(
+                        f"FATAL SHADOWING: Subdomain '{domain}' in '{c_set}' ({c_pol}) is shadowed by parent "
+                        f"suffix '{parent}' in '{p_set}' ({p_pol}) without verified delegation! Build halted."
+                    )
+
+    # 4. Strict assertions for user requirements
+    ai_rules = staged_rules_by_set.get("AI-Overseas", [])
+    forbidden_in_ai = [
+        "DOMAIN-SUFFIX,googleapis.com", "DOMAIN-SUFFIX,google.com",
+        "DOMAIN-SUFFIX,x.com", "DOMAIN-SUFFIX,twitter.com",
+        "DOMAIN-SUFFIX,facebook.com", "DOMAIN-SUFFIX,instagram.com", "DOMAIN-SUFFIX,meta.com"
+    ]
     for fb in forbidden_in_ai:
         if fb in ai_rules:
-            print(f"  [CRITICAL ERROR] '{fb}' detected in AI-Overseas! Must not blanket include parent domains in AI.")
-            has_critical_error = True
+            raise ValueError(f"CRITICAL: Blanket domain '{fb}' found in AI-Overseas.lsr! Halting build.")
 
-    if has_critical_error:
-        print("\n[FAILED] Build aborted due to critical validation errors. Existing dist/ kept intact.")
-        sys.exit(1)
+    # 5. Atomic write to temporary staging directory first
+    staging_dir = tempfile.mkdtemp(prefix="loon_dist_staging_")
+    try:
+        generated_files = {}
+        for name, rlist in staged_rules_by_set.items():
+            staging_file = os.path.join(staging_dir, f"{name}.lsr")
+            policy = rulesets[name].get("bound_policy", "DIRECT")
+            desc = rulesets[name].get("description", "")
+            
+            # Content-based hash to preserve idempotence (no volatile wall-clock timestamp in rule body)
+            rule_body = "\n".join(rlist)
+            content_hash = hashlib.sha256(rule_body.encode("utf-8")).hexdigest()[:12]
+            
+            with open(staging_file, "w", encoding="utf-8", newline="\n") as f:
+                f.write(f"# NAME: {name}\n")
+                f.write(f"# DESCRIPTION: {desc}\n")
+                f.write(f"# RECOMMENDED POLICY: {policy}\n")
+                f.write(f"# AUTHOR: o-ocn\n")
+                f.write(f"# REVISION: {content_hash}\n")
+                f.write(f"# TOTAL: {len(rlist)}\n")
+                f.write("# ==============================================================================\n")
+                if rlist:
+                    f.write(rule_body + "\n")
+            generated_files[name] = staging_file
 
-    # 4. Write dist files
-    os.makedirs(DIST_DIR, exist_ok=True)
-    for name, rlist in all_rules_by_set.items():
-        out_file = os.path.join(DIST_DIR, f"{name}.lsr")
-        policy = rulesets[name].get("bound_policy", "DIRECT")
-        desc = rulesets[name].get("description", "")
-        with open(out_file, "w", encoding="utf-8", newline="\n") as f:
-            f.write(f"# NAME: {name}\n")
-            f.write(f"# DESCRIPTION: {desc}\n")
-            f.write(f"# RECOMMENDED POLICY: {policy}\n")
-            f.write(f"# AUTHOR: o-ocn\n")
-            f.write(f"# UPDATED: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
-            f.write(f"# TOTAL: {len(rlist)}\n")
-            f.write("# ==============================================================================\n")
-            for r in rlist:
-                f.write(f"{r}\n")
-        print(f"[OK] Generated {out_file} ({len(rlist)} rules)")
+        # 6. Idempotent sync to dist/
+        os.makedirs(DIST_DIR, exist_ok=True)
+        updated_count = 0
+        for name, s_file in generated_files.items():
+            target_file = os.path.join(DIST_DIR, f"{name}.lsr")
+            with open(s_file, "r", encoding="utf-8") as f:
+                new_data = f.read()
+            
+            should_write = True
+            if os.path.isfile(target_file):
+                with open(target_file, "r", encoding="utf-8") as f:
+                    old_data = f.read()
+                if old_data == new_data:
+                    should_write = False
+            
+            if should_write:
+                with open(target_file, "w", encoding="utf-8", newline="\n") as f:
+                    f.write(new_data)
+                updated_count += 1
+                print(f"[UPDATED] {name}.lsr")
+            else:
+                print(f"[UNCHANGED] {name}.lsr (Identical hash)")
 
-    print("\n[SUCCESS] All Loon rulesets built successfully.")
+        print(f"\n[SUCCESS] Build complete. {updated_count} files updated in {DIST_DIR}.")
+    finally:
+        shutil.rmtree(staging_dir, ignore_errors=True)
 
 if __name__ == "__main__":
-    build()
+    try:
+        build_rulesets()
+    except Exception as err:
+        print(f"\n[BUILD ABORTED] Error: {err}", file=sys.stderr)
+        sys.exit(1)

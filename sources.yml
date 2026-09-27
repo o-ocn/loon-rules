@@ -1,7 +1,7 @@
 # Declarative Upstream Sources Configuration
 # All upstreams are strictly READ-ONLY.
 # Primary Upstream: blackmatrix7/ios_rule_script (GPL-2.0)
-# Secondary Reference: luestr/ShuntRules (Cites blackmatrix7)
+# Secondary Reference: luestr/ShuntRules (Cites blackmatrix7, used solely as structural reference)
 
 metadata:
   primary_upstream:
@@ -12,7 +12,7 @@ metadata:
   secondary_upstream:
     name: "luestr/ShuntRules"
     repo: "https://github.com/luestr/ShuntRules"
-    note: "Used for rule composition reference; production files are fetched from verified git sources."
+    note: "Structural reference only. Actual rule files are fetched directly from blackmatrix7 git raw to avoid 403 blocks."
 
 rulesets:
   AI-Overseas:
@@ -32,7 +32,7 @@ rulesets:
     local_custom: "rules/custom/AI-Overseas.list"
 
   AI-China-Direct:
-    description: "Mainland China AI services (DeepSeek, etc.) explicitly requiring DIRECT"
+    description: "Mainland China AI services (DeepSeek, etc.) requiring DIRECT"
     bound_policy: "DIRECT"
     custom_first: true
     local_custom: "rules/custom/AI-China-Direct.list"
@@ -44,7 +44,12 @@ rulesets:
     sources:
       - name: "GoogleDrive"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleDrive/GoogleDrive.list"
+        filter_excluded:
+          - "DOMAIN-SUFFIX,googleusercontent.com"
+          - "DOMAIN,googleusercontent.com"
+          - "DOMAIN,www.googleapis.com"
     local_custom: "rules/custom/GoogleDrive.list"
+
 
   OneDrive:
     description: "Microsoft OneDrive service, bound to US"
@@ -67,6 +72,18 @@ rulesets:
           - "DOMAIN,googledrive.com"
           - "DOMAIN-SUFFIX,drive.google.com"
           - "DOMAIN,drive.google.com"
+          - "DOMAIN-SUFFIX,googleusercontent.com"
+          - "DOMAIN,gemini.google.com"
+          - "DOMAIN,bard.google.com"
+          - "DOMAIN,aistudio.google.com"
+          - "DOMAIN,makersuite.google.com"
+          - "DOMAIN,generativelanguage.googleapis.com"
+          - "DOMAIN,alkalimakersuite-pa.clients6.google.com"
+          - "DOMAIN,proactivebackend-pa.googleapis.com"
+          - "DOMAIN-SUFFIX,youtube.com"
+          - "DOMAIN-SUFFIX,googlevideo.com"
+          - "DOMAIN-SUFFIX,ytimg.com"
+          - "DOMAIN-SUFFIX,youtu.be"
     local_custom: "rules/custom/Google.list"
 
   YouTube:
@@ -79,7 +96,7 @@ rulesets:
     local_custom: "rules/custom/YouTube.list"
 
   Telegram:
-    description: "Telegram messenger service, bound to Final (independent low-latency)"
+    description: "Telegram messenger service, bound to Final"
     bound_policy: "Final"
     custom_first: true
     sources:
@@ -99,6 +116,7 @@ rulesets:
           - "DOMAIN,grok.com"
           - "DOMAIN-SUFFIX,x.ai"
           - "DOMAIN,x.ai"
+          - "DOMAIN,api.x.ai"
     local_custom: "rules/custom/Twitter.list"
 
   Discord:
@@ -117,6 +135,16 @@ rulesets:
     sources:
       - name: "AppleMusic"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list"
+      - name: "iCloud"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list"
+        filter_excluded:
+          - "DOMAIN-SUFFIX,tv.apple.com"
+          - "DOMAIN-SUFFIX,news-client.apple.com"
+          - "DOMAIN-SUFFIX,news-assets.apple.com"
+          - "DOMAIN-SUFFIX,news-edge.apple.com"
+          - "DOMAIN-SUFFIX,apple.news"
+          - "DOMAIN-SUFFIX,fitness.apple.com"
+          - "DOMAIN-SUFFIX,testflight.apple.com"
     local_custom: "rules/custom/Apple-Direct.list"
 
   Apple-Media-US:

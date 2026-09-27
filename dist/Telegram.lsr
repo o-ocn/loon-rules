@@ -1,8 +1,8 @@
 # NAME: Telegram
-# DESCRIPTION: Telegram messenger service, bound to Final (independent low-latency)
+# DESCRIPTION: Telegram messenger service, bound to Final
 # RECOMMENDED POLICY: Final
 # AUTHOR: o-ocn
-# UPDATED: 2026-09-27 18:49:25 UTC
+# REVISION: c23e30434f8b
 # TOTAL: 48
 # ==============================================================================
 DOMAIN-SUFFIX,telegram.org

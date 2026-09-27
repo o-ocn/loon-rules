@@ -2,7 +2,7 @@
 # DESCRIPTION: Microsoft OneDrive service, bound to US
 # RECOMMENDED POLICY: US
 # AUTHOR: o-ocn
-# UPDATED: 2026-09-27 18:49:25 UTC
+# REVISION: 94e6e17447f7
 # TOTAL: 17
 # ==============================================================================
 DOMAIN-SUFFIX,onedrive.live.com

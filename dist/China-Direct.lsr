@@ -2,7 +2,7 @@
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
 # RECOMMENDED POLICY: DIRECT
 # AUTHOR: o-ocn
-# UPDATED: 2026-09-27 18:49:25 UTC
+# REVISION: 3fea7e7f3106
 # TOTAL: 372
 # ==============================================================================
 DOMAIN-SUFFIX,weixin.com

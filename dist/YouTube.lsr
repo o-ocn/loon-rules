@@ -2,7 +2,7 @@
 # DESCRIPTION: YouTube streaming service, bound to US Test
 # RECOMMENDED POLICY: US Test
 # AUTHOR: o-ocn
-# UPDATED: 2026-09-27 18:49:25 UTC
+# REVISION: d3f84ce46dd0
 # TOTAL: 190
 # ==============================================================================
 DOMAIN-SUFFIX,youtube.com

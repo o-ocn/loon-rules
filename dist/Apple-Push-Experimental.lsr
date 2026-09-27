@@ -2,7 +2,7 @@
 # DESCRIPTION: Independent experimental APNs rule, bound to Apple Push policy
 # RECOMMENDED POLICY: Apple Push
 # AUTHOR: o-ocn
-# UPDATED: 2026-09-27 18:49:25 UTC
+# REVISION: 1316ea3b350b
 # TOTAL: 7
 # ==============================================================================
 DOMAIN-SUFFIX,push.apple.com
