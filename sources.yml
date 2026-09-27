@@ -13,12 +13,14 @@ metadata:
     name: "luestr/ShuntRules"
     repo: "https://github.com/luestr/ShuntRules"
     note: "Structural reference only. Actual rule files are fetched directly from blackmatrix7 git raw to avoid 403 blocks."
+  max_shrink_ratio: 0.15
 
 rulesets:
   AI-Overseas:
     description: "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     bound_policy: "AI"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "OpenAI"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OpenAI/OpenAI.list"
@@ -45,6 +47,14 @@ rulesets:
           - "IP-ASN,20473,no-resolve"
           - "IP-CIDR,24.199.123.28/32,no-resolve"
           - "IP-CIDR,64.23.132.171/32,no-resolve"
+          # Overly broad / Shared infrastructure exclusions (Codex review)
+          - "DOMAIN-KEYWORD,openai"
+          - "DOMAIN-SUFFIX,client-api.arkoselabs.com"
+          - "DOMAIN,client-api.arkoselabs.com"
+          - "DOMAIN-SUFFIX,host.livekit.cloud"
+          - "DOMAIN,host.livekit.cloud"
+          - "DOMAIN-SUFFIX,turn.livekit.cloud"
+          - "DOMAIN,turn.livekit.cloud"
       - name: "Claude"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Claude/Claude.list"
         min_rules: 2
@@ -62,6 +72,7 @@ rulesets:
     description: "Google Drive service, bound to HK"
     bound_policy: "HK"
     custom_first: true
+    max_shrink_ratio: 0.20
     sources:
       - name: "GoogleDrive"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleDrive/GoogleDrive.list"
@@ -76,6 +87,7 @@ rulesets:
     description: "Microsoft OneDrive service, bound to US"
     bound_policy: "US"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "OneDrive"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OneDrive/OneDrive.list"
@@ -86,6 +98,7 @@ rulesets:
     description: "General Google services, bound to US Test"
     bound_policy: "US Test"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "Google"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Google/Google.list"
@@ -117,6 +130,7 @@ rulesets:
     description: "YouTube streaming service, bound to US Test"
     bound_policy: "US Test"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "YouTube"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list"
@@ -127,6 +141,7 @@ rulesets:
     description: "Telegram messenger service, bound to Final"
     bound_policy: "Final"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "Telegram"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Telegram/Telegram.list"
@@ -137,6 +152,7 @@ rulesets:
     description: "Twitter / X platform, bound to Final"
     bound_policy: "Final"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "Twitter"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Twitter/Twitter.list"
@@ -153,6 +169,7 @@ rulesets:
     description: "Discord communication platform, bound to US"
     bound_policy: "US"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "Discord"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Discord/Discord.list"
@@ -163,6 +180,7 @@ rulesets:
     description: "Apple baseline services requiring DIRECT (iCloud, CloudKit, App Store, Apple ID, HomeKit, Music)"
     bound_policy: "DIRECT"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "AppleMusic"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list"
@@ -184,6 +202,7 @@ rulesets:
     description: "Apple US-restricted services (Apple TV+, Apple News, Fitness+, TestFlight)"
     bound_policy: "US Test"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "AppleTV"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleTV/AppleTV.list"
@@ -203,6 +222,7 @@ rulesets:
     description: "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
     bound_policy: "DIRECT"
     custom_first: true
+    max_shrink_ratio: 0.15
     sources:
       - name: "WeChat"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/WeChat/WeChat.list"

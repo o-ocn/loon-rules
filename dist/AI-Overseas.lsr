@@ -2,8 +2,8 @@
 # DESCRIPTION: Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)
 # RECOMMENDED POLICY: AI
 # AUTHOR: o-ocn
-# REVISION: d11396ecb29f
-# TOTAL: 38
+# REVISION: 6829493c8bc6
+# TOTAL: 34
 # ==============================================================================
 DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,openai.com
@@ -37,9 +37,5 @@ DOMAIN-SUFFIX,sora.com
 DOMAIN-SUFFIX,cohere.com
 DOMAIN-SUFFIX,ai.com
 DOMAIN-SUFFIX,chatgpt.livekit.cloud
-DOMAIN-SUFFIX,client-api.arkoselabs.com
-DOMAIN-SUFFIX,host.livekit.cloud
 DOMAIN-SUFFIX,openaiapi-site.azureedge.net
 DOMAIN-SUFFIX,openaicom.imgix.net
-DOMAIN-SUFFIX,turn.livekit.cloud
-DOMAIN-KEYWORD,openai

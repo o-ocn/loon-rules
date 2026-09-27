@@ -80,18 +80,33 @@ KNOWN_SAFE_DELEGATIONS = {
     "courier.push.apple.com": ("Apple-Push-Experimental", "Apple-Direct"),
 }
 
+def count_lsr_rules(filepath):
+    """
+    Counts valid non-comment rule lines in an existing .lsr file.
+    """
+    if not os.path.isfile(filepath):
+        return 0
+    count = 0
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            clean = line.strip()
+            if clean and not clean.startswith(("#", ";")):
+                count += 1
+    return count
+
 def parse_yaml_fallback(filepath):
     """
     Robust stack-based indentation YAML parser for sources.yml.
-    Accurately supports nested lists and dicts without PyYAML.
+    Accurately supports nested lists, dicts, and property values without PyYAML.
     """
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    cfg = {"rulesets": {}}
+    cfg = {"metadata": {}, "rulesets": {}}
+    current_section = None
     current_ruleset = None
     current_source = None
-    in_rulesets = False
+    in_filter_excluded = False
 
     for line_num, raw in enumerate(lines, 1):
         line = raw.rstrip()
@@ -102,65 +117,105 @@ def parse_yaml_fallback(filepath):
         indent = len(raw) - len(raw.lstrip())
 
         if indent == 0:
-            if stripped == "rulesets:":
-                in_rulesets = True
+            if stripped.endswith(":"):
+                current_section = stripped[:-1].strip()
             else:
-                in_rulesets = False
-            continue
-
-        if not in_rulesets:
-            continue
-
-        # Ruleset level: indent 2
-        if indent == 2 and stripped.endswith(":"):
-            current_ruleset = stripped[:-1].strip()
-            cfg["rulesets"][current_ruleset] = {"sources": []}
+                current_section = None
+            current_ruleset = None
             current_source = None
+            in_filter_excluded = False
             continue
 
-        if not current_ruleset:
-            continue
-
-        # Ruleset properties: indent 4
-        if indent == 4:
+        if current_section == "metadata":
             if ":" in stripped:
                 k, v = stripped.split(":", 1)
                 k = k.strip()
                 v = v.strip().strip('"\'')
-                if k != "sources":
-                    cfg["rulesets"][current_ruleset][k] = v if v else True
+                if v:
+                    try:
+                        cfg["metadata"][k] = float(v) if "." in v else int(v)
+                    except ValueError:
+                        cfg["metadata"][k] = v
             continue
 
-        # Source list items: indent 6
-        if indent == 6:
-            if stripped.startswith("- "):
-                item_content = stripped[2:].strip()
-                if ":" in item_content:
-                    k, v = item_content.split(":", 1)
-                    val = int(v.strip().strip('"\'')) if k.strip() == "min_rules" else v.strip().strip('"\'')
-                    current_source = {k.strip(): val}
-                    cfg["rulesets"][current_ruleset]["sources"].append(current_source)
-                else:
-                    current_source = {"name": item_content}
-                    cfg["rulesets"][current_ruleset]["sources"].append(current_source)
-            elif ":" in stripped and current_source is not None:
-                k, v = stripped.split(":", 1)
-                k = k.strip()
-                v = v.strip().strip('"\'')
-                if k == "filter_excluded":
-                    current_source["filter_excluded"] = []
-                elif k == "min_rules":
-                    current_source["min_rules"] = int(v)
-                else:
-                    current_source[k] = v
-            continue
+        if current_section == "rulesets":
+            # Ruleset level: indent 2
+            if indent == 2 and stripped.endswith(":"):
+                current_ruleset = stripped[:-1].strip()
+                cfg["rulesets"][current_ruleset] = {"sources": []}
+                current_source = None
+                in_filter_excluded = False
+                continue
 
-        # Nested filter_excluded list items: indent 8 or 10
-        if indent >= 8:
-            if stripped.startswith("- ") and current_source is not None and "filter_excluded" in current_source:
-                ex_val = stripped[2:].strip().strip('"\'')
-                current_source["filter_excluded"].append(ex_val)
-            continue
+            if not current_ruleset:
+                continue
+
+            # Ruleset properties: indent 4
+            if indent == 4:
+                in_filter_excluded = False
+                current_source = None
+                if ":" in stripped:
+                    k, v = stripped.split(":", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"\'')
+                    if k != "sources":
+                        try:
+                            cfg["rulesets"][current_ruleset][k] = float(v) if "." in v else int(v)
+                        except ValueError:
+                            cfg["rulesets"][current_ruleset][k] = v if v else True
+                continue
+
+            # Source list items: indent 6
+            if indent == 6:
+                in_filter_excluded = False
+                if stripped.startswith("- "):
+                    item_content = stripped[2:].strip()
+                    current_source = {}
+                    cfg["rulesets"][current_ruleset]["sources"].append(current_source)
+                    if ":" in item_content:
+                        k, v = item_content.split(":", 1)
+                        k = k.strip()
+                        v = v.strip().strip('"\'')
+                        current_source[k] = int(v) if k == "min_rules" else v
+                elif ":" in stripped and current_source is not None:
+                    k, v = stripped.split(":", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"\'')
+                    if k == "filter_excluded":
+                        current_source["filter_excluded"] = []
+                        in_filter_excluded = True
+                    elif k == "min_rules":
+                        current_source["min_rules"] = int(v)
+                    else:
+                        current_source[k] = v
+                continue
+
+            # Source properties: indent 8
+            if indent == 8:
+                if ":" in stripped and current_source is not None:
+                    k, v = stripped.split(":", 1)
+                    k = k.strip()
+                    v = v.strip().strip('"\'')
+                    if k == "filter_excluded":
+                        current_source["filter_excluded"] = []
+                        in_filter_excluded = True
+                    elif k == "min_rules":
+                        current_source["min_rules"] = int(v)
+                        in_filter_excluded = False
+                    else:
+                        in_filter_excluded = False
+                        current_source[k] = v
+                elif stripped.startswith("- ") and in_filter_excluded and current_source is not None:
+                    ex_val = stripped[2:].strip().strip('"\'')
+                    current_source["filter_excluded"].append(ex_val)
+                continue
+
+            # Nested filter_excluded list items: indent >= 10
+            if indent >= 10:
+                if stripped.startswith("- ") and in_filter_excluded and current_source is not None:
+                    ex_val = stripped[2:].strip().strip('"\'')
+                    current_source["filter_excluded"].append(ex_val)
+                continue
 
     return cfg
 
@@ -323,13 +378,45 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR):
         "DOMAIN-SUFFIX,x.com", "DOMAIN-SUFFIX,twitter.com",
         "DOMAIN-SUFFIX,facebook.com", "DOMAIN-SUFFIX,instagram.com", "DOMAIN-SUFFIX,meta.com",
         "DOMAIN-SUFFIX,stripe.com", "DOMAIN-SUFFIX,auth0.com", "DOMAIN-SUFFIX,sentry.io",
-        "DOMAIN-SUFFIX,intercom.io", "DOMAIN-SUFFIX,launchdarkly.com", "IP-ASN,20473,no-resolve"
+        "DOMAIN-SUFFIX,intercom.io", "DOMAIN-SUFFIX,launchdarkly.com", "IP-ASN,20473,no-resolve",
+        "DOMAIN-KEYWORD,openai",
+        "DOMAIN-SUFFIX,client-api.arkoselabs.com", "DOMAIN,client-api.arkoselabs.com",
+        "DOMAIN-SUFFIX,host.livekit.cloud", "DOMAIN,host.livekit.cloud",
+        "DOMAIN-SUFFIX,turn.livekit.cloud", "DOMAIN,turn.livekit.cloud"
     ]
     for fb in forbidden_in_ai:
         if fb in ai_rules:
             raise ValueError(f"CRITICAL: Prohibited broad/shared rule '{fb}' found in AI-Overseas.lsr! Halting build.")
 
-    # 5. Atomic write to temporary staging directory first
+    for r in ai_rules:
+        if r.startswith("DOMAIN-KEYWORD,"):
+            raise ValueError(f"CRITICAL: Prohibited keyword rule '{r}' found in AI-Overseas.lsr! Halting build.")
+
+    # 5. Dual protection: Relative shrinkage check for all auto-synced rulesets against previous valid dist version
+    default_max_shrink = float(cfg.get("metadata", {}).get("max_shrink_ratio", 0.15))
+    for name, rcfg in rulesets.items():
+        upstream_sources = rcfg.get("sources", [])
+        if not upstream_sources:
+            # Custom-only rulesets (e.g. AI-China-Direct, Apple-Push-Experimental) are author-controlled
+            continue
+
+        target_file = os.path.join(dist_dir, f"{name}.lsr")
+        prev_count = count_lsr_rules(target_file)
+        new_count = len(staged_rules_by_set.get(name, []))
+        max_shrink_ratio = float(rcfg.get("max_shrink_ratio", default_max_shrink))
+
+        if prev_count > 0 and new_count < prev_count:
+            drop_count = prev_count - new_count
+            shrink_ratio = drop_count / float(prev_count)
+            if shrink_ratio > max_shrink_ratio:
+                raise RuntimeError(
+                    f"CRITICAL: Ruleset '{name}' shrank abnormally by {shrink_ratio:.1%} "
+                    f"({prev_count} -> {new_count} rules, dropped {drop_count} rules), "
+                    f"exceeding maximum allowed shrinkage threshold of {max_shrink_ratio:.1%}. "
+                    f"Build halted to protect dist."
+                )
+
+    # 6. Atomic write to temporary staging directory first
     staging_dir = tempfile.mkdtemp(prefix="loon_dist_staging_")
     try:
         generated_files = {}

@@ -89,9 +89,21 @@ class TestLoonRulesSuite(unittest.TestCase):
             "DOMAIN-SUFFIX,launchdarkly.com",
             "DOMAIN-SUFFIX,segment.io",
             "IP-ASN,20473",
+            "DOMAIN-KEYWORD,openai",
+            "DOMAIN-SUFFIX,client-api.arkoselabs.com",
+            "DOMAIN,client-api.arkoselabs.com",
+            "DOMAIN-SUFFIX,host.livekit.cloud",
+            "DOMAIN,host.livekit.cloud",
+            "DOMAIN-SUFFIX,turn.livekit.cloud",
+            "DOMAIN,turn.livekit.cloud",
         ]
         for fb in forbidden_rules:
             self.assertNotIn(fb, content, f"Violation: '{fb}' found in AI-Overseas.lsr! Must be scoped.")
+
+        for line in content.splitlines():
+            clean_l = line.strip()
+            if clean_l and not clean_l.startswith("#"):
+                self.assertFalse(clean_l.startswith("DOMAIN-KEYWORD,"), f"Forbidden DOMAIN-KEYWORD rule: {clean_l}")
 
     def test_03_ai_china_direct(self):
         """Ensure DeepSeek is strictly in AI-China-Direct and bound to DIRECT."""
@@ -212,12 +224,19 @@ rulesets:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
     def test_07_claude_source_ingestion_and_fallback_parser(self):
-        """Verify fallback YAML parser correctly parses Claude under AI-Overseas."""
+        """Verify fallback YAML parser correctly parses Claude under AI-Overseas, filters, and metadata."""
         parsed = build.parse_yaml_fallback(SOURCES_FILE)
         ai_sources = parsed.get("rulesets", {}).get("AI-Overseas", {}).get("sources", [])
         source_names = [s.get("name") for s in ai_sources]
         self.assertIn("Claude", source_names, "Fallback YAML parser failed to ingest Claude source!")
         self.assertIn("OpenAI", source_names, "Fallback YAML parser failed to ingest OpenAI source!")
+
+        # Verify fallback parser parsed filter_excluded and max_shrink_ratio properly
+        openai_src = next(s for s in ai_sources if s.get("name") == "OpenAI")
+        self.assertIn("filter_excluded", openai_src)
+        self.assertIn("DOMAIN-KEYWORD,openai", openai_src["filter_excluded"])
+        self.assertIn("DOMAIN-SUFFIX,client-api.arkoselabs.com", openai_src["filter_excluded"])
+        self.assertEqual(parsed.get("rulesets", {}).get("AI-Overseas", {}).get("max_shrink_ratio"), 0.15)
 
     def test_08_idempotent_build_no_diff(self):
         """Verify repeated build on unchanged sources results in 0 file modifications."""
@@ -277,6 +296,116 @@ rulesets:
                 for pat, desc in forbidden_patterns:
                     if re.search(pat, content):
                         self.fail(f"Security leak detected ({desc}) in {fpath}")
+
+    def test_11_upstream_abnormal_shrinkage_triggers_fail_stop_real_engine(self):
+        """
+        Verify that when an auto-synced ruleset experiences abnormal shrinkage compared to
+        the previous dist version (> max_shrink_ratio), the real build engine aborts with RuntimeError,
+        and existing dist/ remains 100% untouched.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_shrink_fail_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+
+            # Create existing dist file with 50 valid rules
+            existing_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 51)]
+            existing_content = "# NAME: ShrinkTest\n# TOTAL: 50\n" + "\n".join(existing_rules) + "\n"
+            target_lsr = os.path.join(test_dist, "ShrinkTest.lsr")
+            with open(target_lsr, "w", encoding="utf-8") as f:
+                f.write(existing_content)
+
+            # Test sources config with max_shrink_ratio: 0.15 (15%) and min_rules: 10
+            test_yaml = f"""
+metadata:
+  max_shrink_ratio: 0.15
+rulesets:
+  ShrinkTest:
+    bound_policy: "TestPolicy"
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "MockUpstream"
+        url: "https://mock.example.com/rules.list"
+        min_rules: 10
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            # Mock upstream returning 30 rules (40% drop, exceeding 15% threshold while >= min_rules 10)
+            mock_upstream_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 31)]
+            mock_body = "# Mock upstream\n" + "\n".join(mock_upstream_rules) + "\n"
+
+            mock_resp = MagicMock()
+            mock_resp.status = 200
+            mock_resp.read.return_value = mock_body.encode("utf-8")
+            mock_resp.__enter__.return_value = mock_resp
+
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                with self.assertRaises(RuntimeError) as ctx:
+                    build.build_rulesets(sources_file=test_sources_file, dist_dir=test_dist)
+                self.assertIn("shrank abnormally by 40.0% (50 -> 30 rules", str(ctx.exception))
+
+            # Verify existing dist file remains completely untouched
+            with open(target_lsr, "r", encoding="utf-8") as f:
+                dist_after = f.read()
+            self.assertEqual(existing_content, dist_after, "Dist file was modified despite abnormal shrinkage!")
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def test_12_upstream_normal_minor_shrinkage_allowed_real_engine(self):
+        """
+        Verify that reasonable upstream rule updates within the threshold (e.g. 8% drop <= 15%)
+        are allowed to build and update the dist file smoothly.
+        """
+        tmp_dir = tempfile.mkdtemp(prefix="test_loon_shrink_ok_")
+        try:
+            test_dist = os.path.join(tmp_dir, "dist")
+            os.makedirs(test_dist, exist_ok=True)
+            test_sources_file = os.path.join(tmp_dir, "sources.yml")
+
+            # Create existing dist file with 50 valid rules
+            existing_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 51)]
+            existing_content = "# NAME: ShrinkTest\n# TOTAL: 50\n" + "\n".join(existing_rules) + "\n"
+            target_lsr = os.path.join(test_dist, "ShrinkTest.lsr")
+            with open(target_lsr, "w", encoding="utf-8") as f:
+                f.write(existing_content)
+
+            test_yaml = f"""
+metadata:
+  max_shrink_ratio: 0.15
+rulesets:
+  ShrinkTest:
+    bound_policy: "TestPolicy"
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "MockUpstream"
+        url: "https://mock.example.com/rules.list"
+        min_rules: 10
+"""
+            with open(test_sources_file, "w", encoding="utf-8") as f:
+                f.write(test_yaml)
+
+            # Mock upstream returning 46 rules (8% drop <= 15% threshold)
+            mock_upstream_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 47)]
+            mock_body = "# Mock upstream\n" + "\n".join(mock_upstream_rules) + "\n"
+
+            mock_resp = MagicMock()
+            mock_resp.status = 200
+            mock_resp.read.return_value = mock_body.encode("utf-8")
+            mock_resp.__enter__.return_value = mock_resp
+
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                build.build_rulesets(sources_file=test_sources_file, dist_dir=test_dist)
+
+            # Verify dist file was updated to 46 rules
+            with open(target_lsr, "r", encoding="utf-8") as f:
+                dist_after = f.read()
+            self.assertIn("# TOTAL: 46", dist_after)
+            self.assertIn("DOMAIN,node-46.existing.com", dist_after)
+            self.assertNotIn("DOMAIN,node-47.existing.com", dist_after)
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 if __name__ == "__main__":
     unittest.main()

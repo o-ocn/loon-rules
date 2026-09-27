@@ -9,7 +9,7 @@
 
 | 规则成品文件名 (`.lsr`) | 推荐绑定策略组 | 涵盖核心服务与说明 | 防碰撞与隔离准则 |
 | :--- | :--- | :--- | :--- |
-| **`AI-Overseas.lsr`** | **`AI`** | ChatGPT, Claude, Gemini, Grok, Muse from Meta, Perplexity 等海外 AI | **绝对不含** `googleapis.com`、`google.com`、`x.com`、`twitter.com`、`meta.com`、`facebook.com`。防大厂社交/普通服务被强行劫持到 AI 节点。 |
+| **`AI-Overseas.lsr`** | **`AI`** | ChatGPT, Claude, Gemini, Grok, Muse from Meta, Perplexity 等海外 AI | **绝对不含** `googleapis.com`、`google.com`、`x.com`、`twitter.com`、`meta.com`、`facebook.com`、通用验证码（`client-api.arkoselabs.com`）、共享 LiveKit 节点（`host/turn.livekit.cloud`）及关键字通配（`DOMAIN-KEYWORD,openai`）。防普通服务被强行劫持到 AI 节点。 |
 | **`AI-China-Direct.lsr`** | **`DIRECT`** | DeepSeek（用户明确要求直连） | 严格直连，避免境外代理绕行与网络封控。 |
 | **`GoogleDrive.lsr`** | **`HK`** | Google Drive 云端硬盘专属域名 | 保持现有偏好：Google Drive 走香港节点。已从通用 Google 中完全剔除。 |
 | **`OneDrive.lsr`** | **`US`** | 微软 OneDrive、SharePoint 服务 | 保持现有偏好：OneDrive 走美国节点。 |
