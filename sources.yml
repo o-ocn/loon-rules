@@ -22,13 +22,34 @@ rulesets:
     sources:
       - name: "OpenAI"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OpenAI/OpenAI.list"
+        min_rules: 15
         filter_excluded:
+          # Shared SaaS / Payment / Identity / Analytics / Telemetry services to exclude
+          - "DOMAIN-SUFFIX,stripe.com"
+          - "DOMAIN-SUFFIX,auth0.com"
+          - "DOMAIN-SUFFIX,sentry.io"
+          - "DOMAIN-SUFFIX,intercom.io"
+          - "DOMAIN-SUFFIX,intercomcdn.com"
+          - "DOMAIN-SUFFIX,launchdarkly.com"
+          - "DOMAIN-SUFFIX,segment.io"
+          - "DOMAIN-SUFFIX,observeit.net"
+          - "DOMAIN-SUFFIX,identrust.com"
           - "DOMAIN-SUFFIX,algolia.net"
-          - "DOMAIN-SUFFIX,azureedge.net"
+          - "DOMAIN-SUFFIX,api.statsig.com"
+          - "DOMAIN-SUFFIX,events.statsigapi.net"
+          - "DOMAIN-SUFFIX,featuregates.org"
           - "DOMAIN,browser-intake-datadoghq.com"
           - "DOMAIN,static.cloudflareinsights.com"
+          - "DOMAIN-SUFFIX,azureedge.net"
+          # Shared hosting / broad ASN exclusions (Vultr AS20473 & DigitalOcean IPs)
+          - "IP-ASN,20473,no-resolve"
+          - "IP-CIDR,24.199.123.28/32,no-resolve"
+          - "IP-CIDR,64.23.132.171/32,no-resolve"
       - name: "Claude"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Claude/Claude.list"
+        min_rules: 2
+        filter_excluded:
+          - "DOMAIN,cdn.usefathom.com"
     local_custom: "rules/custom/AI-Overseas.list"
 
   AI-China-Direct:
@@ -44,12 +65,12 @@ rulesets:
     sources:
       - name: "GoogleDrive"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleDrive/GoogleDrive.list"
+        min_rules: 5
         filter_excluded:
           - "DOMAIN-SUFFIX,googleusercontent.com"
           - "DOMAIN,googleusercontent.com"
           - "DOMAIN,www.googleapis.com"
     local_custom: "rules/custom/GoogleDrive.list"
-
 
   OneDrive:
     description: "Microsoft OneDrive service, bound to US"
@@ -58,6 +79,7 @@ rulesets:
     sources:
       - name: "OneDrive"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OneDrive/OneDrive.list"
+        min_rules: 8
     local_custom: "rules/custom/OneDrive.list"
 
   Google:
@@ -67,6 +89,7 @@ rulesets:
     sources:
       - name: "Google"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Google/Google.list"
+        min_rules: 100
         filter_excluded:
           - "DOMAIN-SUFFIX,googledrive.com"
           - "DOMAIN,googledrive.com"
@@ -84,6 +107,10 @@ rulesets:
           - "DOMAIN-SUFFIX,googlevideo.com"
           - "DOMAIN-SUFFIX,ytimg.com"
           - "DOMAIN-SUFFIX,youtu.be"
+          # USER-AGENT exclusions for GoogleDrive exclusivity
+          - "USER-AGENT,%E4%BA%91%E7%AB%AF%E7%A1%AC%E7%9B%98*"
+          - "USER-AGENT,*com.google.Drive*"
+          - "USER-AGENT,Google.Drive*"
     local_custom: "rules/custom/Google.list"
 
   YouTube:
@@ -93,6 +120,7 @@ rulesets:
     sources:
       - name: "YouTube"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list"
+        min_rules: 30
     local_custom: "rules/custom/YouTube.list"
 
   Telegram:
@@ -102,6 +130,7 @@ rulesets:
     sources:
       - name: "Telegram"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Telegram/Telegram.list"
+        min_rules: 15
     local_custom: "rules/custom/Telegram.list"
 
   Twitter:
@@ -111,6 +140,7 @@ rulesets:
     sources:
       - name: "Twitter"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Twitter/Twitter.list"
+        min_rules: 10
         filter_excluded:
           - "DOMAIN-SUFFIX,grok.com"
           - "DOMAIN,grok.com"
@@ -126,6 +156,7 @@ rulesets:
     sources:
       - name: "Discord"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Discord/Discord.list"
+        min_rules: 10
     local_custom: "rules/custom/Discord.list"
 
   Apple-Direct:
@@ -135,8 +166,10 @@ rulesets:
     sources:
       - name: "AppleMusic"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list"
+        min_rules: 10
       - name: "iCloud"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list"
+        min_rules: 20
         filter_excluded:
           - "DOMAIN-SUFFIX,tv.apple.com"
           - "DOMAIN-SUFFIX,news-client.apple.com"
@@ -154,8 +187,10 @@ rulesets:
     sources:
       - name: "AppleTV"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleTV/AppleTV.list"
+        min_rules: 5
       - name: "AppleNews"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleNews/AppleNews.list"
+        min_rules: 2
     local_custom: "rules/custom/Apple-Media-US.list"
 
   Apple-Push-Experimental:
@@ -171,8 +206,11 @@ rulesets:
     sources:
       - name: "WeChat"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/WeChat/WeChat.list"
+        min_rules: 30
       - name: "Alibaba"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Alibaba/Alibaba.list"
+        min_rules: 50
       - name: "JingDong"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/JingDong/JingDong.list"
+        min_rules: 30
     local_custom: "rules/custom/China-Direct.list"

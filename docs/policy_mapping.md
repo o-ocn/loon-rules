@@ -56,9 +56,10 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Telegram.lsr, polic
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr, policy=Final, tag=Twitter, enabled=true
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr, policy=US, tag=Discord, enabled=true
 
-# --- Apple 服务（基线直连与锁区美区）---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy=DIRECT, tag=Apple-Direct, enabled=true
+# --- Apple 服务（注意：美区媒体必须置于直连之前，确保媒体边缘优先命中）---
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media-US.lsr, policy=US Test, tag=Apple-Media-US, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy=DIRECT, tag=Apple-Direct, enabled=true
+
 
 # --- APNs 实验性推送（独立可控，默认关闭）---
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push-Experimental.lsr, policy=Apple Push, tag=Apple-Push-Experimental, enabled=false

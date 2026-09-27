@@ -48,9 +48,10 @@ AI = select, [你的VMISS-9929节点名], US, HK, JP, DIRECT
    - OneDrive 文档同步（走美国）。
    - Twitter 正常刷推，且 Grok 功能正常。
 
-### 步骤 4：迁移 Apple 基线与大陆直连（第三阶段验收）
-1. 替换 `Apple-Direct.lsr` (`DIRECT`) 与 `Apple-Media-US.lsr` (`US Test`)。
+### 步骤 4：迁移 Apple 服务与大陆直连（第三阶段验收）
+1. 依次添加 `Apple-Media-US.lsr` (`US Test`) 与 `Apple-Direct.lsr` (`DIRECT`)（注意：美区媒体规则在 Loon 中必须排在直连规则上方）。
 2. 替换 `China-Direct.lsr` (`DIRECT`)。
+
 3. **验收**：
    - HomeKit 摄像头即时推流无黑屏。
    - Apple Watch 天气刷新。

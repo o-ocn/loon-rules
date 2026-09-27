@@ -12,11 +12,54 @@
    - App Store 与 Apple ID 认证 (`apps.apple.com`, `appleid.apple.com`)
    - Apple Music 串流 (`music.apple.com`)
    - HomeKit 局域网协同与本地串流 (`192.168.0.0/16` 直连)
-3. **精准美区分离**：仅将 Apple TV+、Apple News、Fitness+ 以及 TestFlight 精准分流至美区策略组，避免污染日常核心基线。
+3. **精准美区分离与导入顺序法则**：
+   - 仅将 Apple TV+、Apple News、Fitness+ 以及 TestFlight 精准分流至美区策略组，避免污染日常核心基线。
+   - **Loon `[Remote Rule]` 顶层匹配顺序保障**：
+     在 Loon 中，远程规则自上而下第一命中即生效。因此，**`Apple-Media-US.lsr` 必须置于 `Apple-Direct.lsr` 之前**。
+     这样，精准的美区媒体边缘（如 `play-edge.itunes.apple.com`）会先匹配至 `US Test`，而常规 App Store / iTunes 下载（`itunes.apple.com`）则顺利落入下方的 `Apple-Direct.lsr` 走 `DIRECT`。
 
 ---
 
-## 2. iCloud / CloudKit 上游准入与验证机制
+## 2. 实机 Loon【请求记录】必须核验的域名清单
+
+分流规则不能仅靠代码中的白名单声明，**必须在 iPhone 上打开家庭与系统服务，在 Loon【请求记录】(Requests) 中逐一核对以下域名的真实命中策略**：
+
+### A. 美区限定服务（必须验证命中：`US Test`）
+* **Apple TV+ 播放与元数据**：
+  - `tv.apple.com`
+  - `linear.tv.apple.com`
+  - `play-edge.itunes.apple.com`（流媒体核心切片）
+  - `np-edge.itunes.apple.com`
+  - `uts-api.itunes.apple.com`
+  - `hls.itunes.apple.com` 与 `hls-amt.itunes.apple.com`
+  - `tv.applemusic.com`（Apple TV 内置音乐视频频道）
+* **Apple News 客户端与图床**：
+  - `apple.news`
+  - `news-client.apple.com`
+  - `news-assets.apple.com`
+  - `news-edge.apple.com`
+  - `news-client-search.apple.com`
+  - `gspe1-ssl.ls.apple.com`
+* **TestFlight 内测平台**：
+  - `testflight.apple.com`
+* **Apple Fitness+**：
+  - `fitness.apple.com`
+  - `amp-api.fitness.apple.com`
+
+### B. 核心系统基线（必须验证命中：`DIRECT`）
+* **App Store 应用商店与下载**：
+  - `apps.apple.com`
+  - `itunes.apple.com`（非流媒体部分）
+  - `mzstatic.com`
+* **iCloud 与 CloudKit 数据管道**：
+  - `apple-cloudkit.com`（爱乐记、猿音等 App 同步时触发）
+  - `icloud.com`
+  - `icloud.apple.com`
+  - `icloud-content.com`
+* **Apple Music**：
+  - `music.apple.com`
+  - `audio-ssl.itunes.apple.com`
+
 
 为了确保 iCloud、系统相册、备忘录以及第三方重度依赖 CloudKit 的 App（如**爱乐记**、**猿音**）稳定同步，本仓库采取严格的上游准入流程：
 
