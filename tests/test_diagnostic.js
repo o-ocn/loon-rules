@@ -817,3 +817,83 @@ test('16. Backup Rulesets Incomplete Verification Due to Deadline Triggers Warni
   assert.match(postedNotif.subtitle, /规则集校验未完全完成/);
 });
 
+test('17. Service Probing Incomplete Due to Deadline Triggers Warning and Never Green', async () => {
+  // Build a manifest with 8 services to ensure concurrency limit (4) leaves remaining services unprobed
+  const services8 = [];
+  for (let i = 1; i <= 8; i++) {
+    services8.push({ id: 'svc' + i, name: 'Service ' + i, url: 'https://svc' + i + '.com/ping', expected_status: [200], quick: true });
+  }
+
+  const manifest8 = Object.assign({}, sampleManifest, { services: services8 });
+
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(manifest8),
+      delayMs: 1
+    },
+    {
+      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(manifest8),
+      delayMs: 1
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent,
+      delayMs: 1
+    },
+    {
+      matches: (url) => url.includes('svc1.com') || url.includes('svc2.com'),
+      status: 200,
+      data: 'OK',
+      delayMs: 2
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK',
+      delayMs: 25
+    }
+  ]);
+
+  // Set deadlineMs to 40ms: manifest & rulesets complete fast,
+  // initial batch runs, then deadline is reached before all 8 services complete
+  const diag = await diagnostic.runDiagnostic({
+    httpClient: mockClient,
+    mode: 'quick',
+    deadlineMs: 40
+  });
+
+  assert.strictEqual(diag.rulesetIncomplete, false, 'Ruleset must be completely verified');
+  assert.strictEqual(diag.rulesetFailure, false, 'No ruleset failure');
+  assert.strictEqual(diag.serviceIncomplete, true, 'Service probing must be flagged incomplete');
+  assert.ok(diag.totalTested < 8, `Expected totalTested < 8, got: ${diag.totalTested}`);
+  assert.ok(diag.totalTested > 0, `Expected totalTested > 0, got: ${diag.totalTested}`);
+
+  // Report must explicitly flag incomplete and never claim [✓] or green conclusion
+  assert.match(diag.report, /\[!\] 服务连通性: 未完成 \(已探测 \d+\/8 项服务，当前路由均可达；部分项因时限跳过\)/);
+  assert.match(diag.report, /⚠️ 诊断结论: 服务探测未完成 \(\d+\/8\)，已完成结果仅供参考；请在网络良好时重试完整探测。/);
+  assert.doesNotMatch(diag.report, /✔ 诊断结论/);
+  assert.doesNotMatch(diag.report, /\[✓\] 服务连通性/);
+
+  // Notification title assertion: must flag warning, never green or direct
+  let postedNotif = null;
+  diagnostic.initLoonEntrypoint({
+    $done: () => {},
+    $notification: { post: (t, s, b) => { postedNotif = { title: t, subtitle: s, body: b }; } },
+    $httpClient: mockClient,
+    args: { mode: 'quick' },
+    deadlineMs: 40
+  });
+  await new Promise(r => setTimeout(r, 250));
+  assert.ok(postedNotif, 'Notification must be posted');
+  assert.strictEqual(postedNotif.title, 'Loon 规则诊断: 存在警告');
+  assert.doesNotMatch(postedNotif.title, /连通性正常/);
+  assert.doesNotMatch(postedNotif.title, /直连/);
+  assert.match(postedNotif.subtitle, /服务探测未完成 \(\d+\/8\)/);
+});
+
+

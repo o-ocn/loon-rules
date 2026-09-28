@@ -614,7 +614,7 @@
         for (const s of this.completedServices) {
           lines.push(`  * ${s.name}: ${s.statusDesc}`);
         }
-        lines.push('- 结论: 诊断超时未全部完成；已完成部分仅供参考。');
+        lines.push(`- 结论: 服务探测未完成 (${this.completedServices.length}/${this.totalServices || this.completedServices.length})，已完成结果仅供参考。`);
       } else {
         lines.push('- 服务探测: 超时前未能完成任何服务探测。');
         lines.push('- 结论: 超时，未形成结论。请检查网络或切换节点后重试。');
@@ -863,12 +863,17 @@
     const hasRouteFailure = (countDirectOnly > 0 || countBothFail > 0);
     const hasRouteBlockedWhileDirectOk = (countDirectOnly > 0);
 
-    if (abnormalServices.length === 0 && totalTested === serviceList.length) {
+    const serviceIncomplete = (totalTested < serviceList.length);
+
+    if (abnormalServices.length === 0 && !serviceIncomplete) {
       if (countProxyOnly > 0) {
         reportLines.push(`[✓] 服务连通性: 共探测 ${totalTested} 项服务，当前路由均可达 (其中 ${countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${countBothPass} 项双向均可达)`);
       } else {
         reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与 DIRECT 均可达 (双向均可达)`);
       }
+    } else if (abnormalServices.length === 0 && serviceIncomplete) {
+      reportLines.push(`[!] 服务连通性: 未完成 (已探测 ${totalTested}/${serviceList.length} 项服务，当前路由均可达；部分项因时限跳过)`);
+      reportLines.push(`- 连通性分布: 其中 ${countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${countBothPass} 项双向均可达`);
     } else {
       reportLines.push(`[!] 服务连通性: 探测 ${totalTested} 项服务中发现 ${abnormalServices.length} 项异常 (仅当前路由可达: ${countProxyOnly}, 双向均可达: ${countBothPass})`);
       for (const res of abnormalServices) {
@@ -878,7 +883,7 @@
           reportLines.push(`  ⚠ ${res.name}: 当前路由与 DIRECT 均不可达 (可能网络中断、端点不可达或服务宕机)`);
         }
       }
-      if (totalTested < serviceList.length) {
+      if (serviceIncomplete) {
         reportLines.push(`- 连通性进度: 已完成 ${totalTested}/${serviceList.length} 项探测 (部分项因时限跳过)`);
       }
     }
@@ -898,6 +903,8 @@
       reportLines.push(`⚠️ 诊断结论: 发现 ${countDirectOnly} 项服务仅 DIRECT 可达但当前路由不可达，建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点`);
     } else if (countBothFail > 0) {
       reportLines.push(`⚠️ 诊断结论: 发现 ${countBothFail} 项服务两者均不可达，可能为目标服务临时宕机或本地网络受限`);
+    } else if (serviceIncomplete) {
+      reportLines.push(`⚠️ 诊断结论: 服务探测未完成 (${totalTested}/${serviceList.length})，已完成结果仅供参考；请在网络良好时重试完整探测。 (耗时: ${durationTotal}s)`);
     } else if (sourcesStatus.hasWarning) {
       reportLines.push(`⚠️ 诊断结论: 已检测核心服务连通性均正常，但发布源存在警告 (${sourcesStatus.sourceNote})；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
     } else if (sourcesStatus.isDegraded) {
@@ -922,6 +929,7 @@
       repoOk,
       rulesetFailure,
       rulesetIncomplete,
+      serviceIncomplete,
       sourcesStatus,
       hasWarning: Boolean(sourcesStatus && sourcesStatus.hasWarning),
       isDegraded: Boolean(sourcesStatus && sourcesStatus.isDegraded),
@@ -932,6 +940,7 @@
       countDirectOnly,
       countBothFail,
       totalTested,
+      totalServices: serviceList.length,
       timedOut,
       duration: durationTotal
     };
@@ -974,7 +983,7 @@
 
         if (res.hasRouteFailure || res.rulesetFailure || !res.repoOk) {
           title = 'Loon 规则诊断: 发现异常';
-        } else if (res.hasWarning || res.isDegraded || res.rulesetIncomplete) {
+        } else if (res.hasWarning || res.isDegraded || res.rulesetIncomplete || res.serviceIncomplete) {
           title = 'Loon 规则诊断: 存在警告';
         } else {
           title = 'Loon 规则诊断: 连通性正常';
@@ -986,6 +995,8 @@
           subtitle = '规则集校验失败，点击查看报告';
         } else if (res.rulesetIncomplete) {
           subtitle = '规则集校验未完全完成，点击查看报告';
+        } else if (res.serviceIncomplete) {
+          subtitle = `服务探测未完成 (${res.totalTested}/${res.totalServices})，已完成结果仅供参考`;
         } else if (res.hasWarning) {
           subtitle = '发布源存在警告或镜像未同步，点击查看报告';
         } else if (res.isDegraded) {
