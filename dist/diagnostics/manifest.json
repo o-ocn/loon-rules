@@ -1,9 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T15:16:50.380115+00:00",
-  "content_revision": "4cbd4f67f6a4",
-  "package_sha256": "4cbd4f67f6a4f6022b8674f7bbdccce199d43a512cee58dd3b6b9699bb5c115a",
-  "release_commit": "54973ea",
+  "build_timestamp": "2026-09-28T15:46:55.719818+00:00",
+  "content_revision": "4c665bf2d94e",
+  "package_sha256": "4c665bf2d94eb525a180f1a1136c8d0baf86ac78e572ac8773bac7b2b16a3a74",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -28,50 +27,50 @@
     },
     "OneDrive.lsr": {
       "total_rules": 17,
-      "revision": "94e6e17447f7",
-      "sha256": "94e6e17447f7d870de4ac1df254d598656296604ba9d4fd52fdf72ae213293ad",
+      "revision": "dbffa4201442",
+      "sha256": "dbffa42014420d551c15bf49d4d172922fbf3b61213a13121d58bd915387139f",
       "description": "Microsoft OneDrive services"
     },
     "Google.lsr": {
-      "total_rules": 690,
-      "revision": "83897e11e205",
-      "sha256": "83897e11e20539311a63338cb1d4b3645ccec72f5ae6bfa7763c5116e54b7f77",
+      "total_rules": 689,
+      "revision": "063e08790853",
+      "sha256": "063e087908535f4b7e1b70ca6859acf69c03c9c6e3951b3285bd5a43f507da3e",
       "description": "General Google services and infrastructure"
     },
     "YouTube.lsr": {
       "total_rules": 190,
-      "revision": "d3f84ce46dd0",
-      "sha256": "d3f84ce46dd0202acf9c074b4233a4c2df484000d0f39e2cbd709f2b6753baf1",
+      "revision": "7d49dae2f850",
+      "sha256": "7d49dae2f850bf036f80fcf1dac2d22ae510806b2b69f212f691e3f1761cc0c3",
       "description": "YouTube streaming and media services"
     },
     "Telegram.lsr": {
       "total_rules": 48,
-      "revision": "c23e30434f8b",
-      "sha256": "c23e30434f8b53f20b99dd27a4ad4c7ede3848f2755ca9c79ee8b8dfb2a5c31c",
+      "revision": "b4a48a4f08c1",
+      "sha256": "b4a48a4f08c1bc7babf2fdcec66746344b24b42a5c9b63b6c9040f3f19a5bd57",
       "description": "Telegram messaging platform"
     },
     "Twitter.lsr": {
       "total_rules": 32,
-      "revision": "6f67d9a80faa",
-      "sha256": "6f67d9a80faa040cfe95eb817b229e914bafcadeb45fb4a7b8c7bfa047edb9b0",
+      "revision": "9447f4c03c7a",
+      "sha256": "9447f4c03c7a369076b8ca99828edf5dba2d168f7a5fdce923adf96ea62641e3",
       "description": "Twitter / X social platform"
     },
     "Discord.lsr": {
       "total_rules": 30,
-      "revision": "1ccae11944cf",
-      "sha256": "1ccae11944cff4fcfacd16abbd9a61bbfa027846d86ca49aae4f2c18d0d4f1f7",
+      "revision": "10f8ab448c76",
+      "sha256": "10f8ab448c7626f11d4bb29cc35015346401c5bf6668cb38b03cdef63b41e3fe",
       "description": "Discord voice and chat platform"
     },
     "Apple-Direct.lsr": {
       "total_rules": 80,
-      "revision": "f3237a77135d",
-      "sha256": "f3237a77135dc3fa987c78341442a8dd8687a8286346eee6ec97874f406f1fb1",
+      "revision": "d158568c126a",
+      "sha256": "d158568c126a90a73b76288d75adc49b1cfd248752e3d138fd03c27e0faa1bb5",
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
     },
     "Apple-Media.lsr": {
       "total_rules": 18,
-      "revision": "268c3f23b141",
-      "sha256": "268c3f23b141477045effe6f9b95d78e5c93ef8ae5f371a882569b6b93b39fda",
+      "revision": "02ad01eebd77",
+      "sha256": "02ad01eebd77731bb1fd1d42c3bb956cc2a52f1ff0a6fcbc21bb2ed85e14ddda",
       "description": "Apple media services (Apple TV+, Apple News, Fitness+)"
     },
     "TestFlight.lsr": {
@@ -88,8 +87,8 @@
     },
     "China-Direct.lsr": {
       "total_rules": 366,
-      "revision": "520040bb6fa3",
-      "sha256": "520040bb6fa31c423c214d9926fcb0fd1de13fa54631fb157c3a73c41a94daa3",
+      "revision": "933339d9d218",
+      "sha256": "933339d9d218f7403acaa0d51c9a6dfd9e748b54477589964539c51f293d4696",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
     }
   },

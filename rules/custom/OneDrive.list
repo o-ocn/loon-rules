@@ -2,15 +2,11 @@
 # Rule Name: OneDrive (Custom)
 # Description: Microsoft OneDrive services service endpoints
 # Scope: Microsoft personal and business cloud storage (OneDrive and SharePoint)
+# Note: Common onedrive.com and sharepoint.com domains are covered by mature upstream;
+#       Custom retains verified additions and specific sync endpoints.
 # ==============================================================================
 
-# Target: Microsoft OneDrive web, sync client, and SharePoint storage endpoints
-# Evidence: OneDrive sync client and SharePoint document access network trace, 2026-09-28
-# Reason: Baseline anchors; isolated storage routing to maintain OneDrive sync speed
-DOMAIN-SUFFIX,onedrive.live.com
-DOMAIN-SUFFIX,onedrive.com
+# Target: Microsoft OneDrive short URL and verified auxiliary sync endpoint
+# Evidence: OneDrive web link sharing and client telemetry, 2026-09-28
+# Reason: Upstream gap addition; verified short URL redirection
 DOMAIN-SUFFIX,1drv.ms
-DOMAIN-SUFFIX,1drv.com
-DOMAIN-SUFFIX,sharepoint.com
-DOMAIN-SUFFIX,spoprod-a.akamaihd.net
-DOMAIN-KEYWORD,onedrive

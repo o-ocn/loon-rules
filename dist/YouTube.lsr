@@ -1,23 +1,20 @@
 # NAME: YouTube
 # DESCRIPTION: YouTube streaming and media services
 # AUTHOR: o-ocn
-# REVISION: d3f84ce46dd0
+# REVISION: 7d49dae2f850
 # TOTAL: 190
 # ==============================================================================
-DOMAIN-SUFFIX,youtube.com
-DOMAIN-SUFFIX,ytimg.com
-DOMAIN-SUFFIX,googlevideo.com
-DOMAIN-SUFFIX,youtu.be
-DOMAIN-SUFFIX,youtube-nocookie.com
-DOMAIN-KEYWORD,youtube
 DOMAIN-SUFFIX,ggpht.cn
 DOMAIN-SUFFIX,ggpht.com
+DOMAIN-SUFFIX,googlevideo.com
 DOMAIN-SUFFIX,gvt1.com
 DOMAIN-SUFFIX,gvt2.com
 DOMAIN-SUFFIX,video.google.com
 DOMAIN-SUFFIX,wide-youtube.l.google.com
 DOMAIN-SUFFIX,withyoutube.com
+DOMAIN-SUFFIX,youtu.be
 DOMAIN-SUFFIX,youtube
+DOMAIN-SUFFIX,youtube-nocookie.com
 DOMAIN-SUFFIX,youtube-ui.l.google.com
 DOMAIN-SUFFIX,youtube.ae
 DOMAIN-SUFFIX,youtube.al
@@ -54,6 +51,7 @@ DOMAIN-SUFFIX,youtube.co.uk
 DOMAIN-SUFFIX,youtube.co.ve
 DOMAIN-SUFFIX,youtube.co.za
 DOMAIN-SUFFIX,youtube.co.zw
+DOMAIN-SUFFIX,youtube.com
 DOMAIN-SUFFIX,youtube.com.ar
 DOMAIN-SUFFIX,youtube.com.au
 DOMAIN-SUFFIX,youtube.com.az
@@ -184,6 +182,8 @@ DOMAIN-SUFFIX,youtubei.googleapis.com
 DOMAIN-SUFFIX,youtubekids.com
 DOMAIN-SUFFIX,youtubemobilesupport.com
 DOMAIN-SUFFIX,yt.be
+DOMAIN-SUFFIX,ytimg.com
+DOMAIN-KEYWORD,youtube
 USER-AGENT,*YouTubeMusic*
 USER-AGENT,*com.google.ios.youtubemusic*
 USER-AGENT,*youtube*

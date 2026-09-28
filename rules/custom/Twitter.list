@@ -2,15 +2,7 @@
 # Rule Name: Twitter (Custom)
 # Description: Twitter / X platform
 # Anti-Collision: grok.com and x.ai are strictly isolated in AI-Overseas.lsr
+# Note: Core Twitter/X domains (twitter.com, x.com, twimg.com, etc.) are 100% covered by
+#       mature upstream (32 rules in Twitter.lsr). This custom file is preserved for
+#       verified gap additions and temporary exceptions.
 # ==============================================================================
-
-# Target: Core Twitter / X web, app, image CDN, and URL shortener
-# Evidence: Official X / Twitter platform connectivity trace, 2026-09-28
-# Reason: Baseline anchors; grok.com and x.ai are strictly excluded to avoid AI routing collisions
-DOMAIN-SUFFIX,twitter.com
-DOMAIN-SUFFIX,x.com
-DOMAIN-SUFFIX,twimg.com
-DOMAIN-SUFFIX,t.co
-DOMAIN-SUFFIX,tweetdeck.com
-DOMAIN-SUFFIX,periscope.tv
-DOMAIN-KEYWORD,twitter

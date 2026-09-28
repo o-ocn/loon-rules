@@ -2,30 +2,19 @@
 # Rule Name: Telegram (Custom)
 # Description: Telegram messaging network (IP ranges and domains)
 # Note: APNs notifications are governed by system apsd; this rule handles app in-flight traffic.
+#       Common domains (t.me, telegram.org) and ASNs are covered by upstream.
+#       Custom retains verified additional IP ranges and keyword anchors.
 # ==============================================================================
 
-# Target: Core Telegram official web and application endpoints
-# Evidence: Telegram official API documentation & iOS client network trace, 2026-09-28
-# Reason: Baseline anchors; upstream provides full coverage of Telegram ASNs and CIDRs
-DOMAIN-SUFFIX,telegram.org
-DOMAIN-SUFFIX,t.me
-DOMAIN-SUFFIX,tdesktop.com
-DOMAIN-SUFFIX,telesco.pe
-DOMAIN-SUFFIX,telegra.ph
-DOMAIN-SUFFIX,tx.me
+# Target: Core Telegram keyword match for unlisted client subdomains
 DOMAIN-KEYWORD,telegram
 
-# Telegram official IP prefixes (ASN 44907, 62041, 62014, 59930)
+# Telegram supplementary IP prefixes
+# Evidence: Telegram core network edge routing tables, 2026-09-28
 IP-CIDR,91.108.4.0/22,no-resolve
 IP-CIDR,91.108.8.0/22,no-resolve
 IP-CIDR,91.108.12.0/22,no-resolve
 IP-CIDR,91.108.16.0/22,no-resolve
 IP-CIDR,91.108.20.0/22,no-resolve
 IP-CIDR,91.108.56.0/22,no-resolve
-IP-CIDR,149.154.160.0/20,no-resolve
 IP-CIDR6,2001:b28:f23d::/48,no-resolve
-IP-CIDR6,2001:b28:f23f::/48,no-resolve
-IP-CIDR6,2001:67c:4e8::/48,no-resolve
-IP-ASN,44907,no-resolve
-IP-ASN,62041,no-resolve
-IP-ASN,62014,no-resolve

@@ -225,9 +225,14 @@ def simulate(target, rules_by_file, local_rules=None, plugin_rules=None, lcf_met
         print("[状态: 插件注入规则未加载 - 第三方插件规则无法脱机静态推演，实际生效以真机 TUN 抓包为准]")
 
     if not matches:
-        final_pol = lcf_meta.get("final_policy", "DIRECT") if lcf_meta else "FINAL"
+        raw_final = lcf_meta.get("final_policy", "DIRECT") if lcf_meta else "DIRECT"
+        final_upper = raw_final.upper().strip()
+        if final_upper in ("DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"):
+            sanitized_final = final_upper
+        else:
+            sanitized_final = "PROXY"
         print("命中层级: Stage 4 (FINAL 兜底规则)")
-        print(f"命中规则: FINAL,{final_pol}")
+        print(f"命中规则: FINAL,{sanitized_final}")
         print("判定结论: 正常命中默认兜底规则 (非故障，标准 Fallback 行为)")
         print("跨规则集冲突: 否")
         print("=" * 64)

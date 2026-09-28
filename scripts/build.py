@@ -459,8 +459,13 @@ def get_upstream_cache_path(url):
     url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
     return os.path.join(UPSTREAM_CACHE_DIR, f"{url_hash}.list")
 
-def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_offline_cache=True):
-    """Fetches upstream rule list with strict retries, caching, and fail-stop guarantees."""
+def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_offline_cache=False):
+    """
+    Fetches upstream rule list with strict retries, caching, and fail-stop guarantees.
+    HTTP 404/500, abnormally few rules, and syntax errors fail immediately.
+    Offline cache is ONLY used when allow_offline_cache=True is explicitly enabled.
+    Returns: tuple (rule_text, used_offline_cache)
+    """
     cache_path = get_upstream_cache_path(url)
     last_err = None
     network_failed = False
@@ -483,7 +488,10 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_off
                         f.write(body)
                 except Exception:
                     pass
-                return body
+                return body, False
+        except urllib.error.HTTPError as e:
+            # Fatal upstream HTTP response (404, 500, etc.) must NEVER fall back to cache or disguise as synced
+            raise RuntimeError(f"CRITICAL: Upstream returned HTTP {e.code} ({e.reason}) for {url}") from e
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
             last_err = e
             network_failed = True
@@ -492,10 +500,10 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_off
                 time.sleep(0.5)
                 continue
         except Exception as e:
-            # Fatal upstream response error (e.g. abnormally few rules, HTTP 500, syntax error); fail immediately!
+            # Fatal upstream response error (e.g. abnormally few rules, syntax error); fail immediately!
             raise
 
-    # Fallback to local cache ONLY when network is genuinely unavailable/offline
+    # Fallback to local cache ONLY when network is genuinely unavailable/offline and allow_offline_cache is True
     if network_failed and allow_offline_cache and os.path.isfile(cache_path):
         try:
             with open(cache_path, "r", encoding="utf-8") as f:
@@ -503,13 +511,13 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_off
             lines = [l.strip() for l in cached_body.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
             if len(lines) >= min_rules:
                 print(f"  [OFFLINE CACHE] Network unavailable, loaded {len(lines)} rules from cache for {url}")
-                return cached_body
+                return cached_body, True
         except Exception:
             pass
 
     raise RuntimeError(f"CRITICAL: Failed to fetch upstream rule from {url} after {max_retries} attempts: {last_err}") from last_err
 
-def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE, allow_new_baseline=False):
+def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE, allow_new_baseline=False, offline=False):
     print(f"[*] Starting Loon Rules Build at {datetime.now(timezone.utc).isoformat()}...")
     cfg = load_sources(sources_file)
     rulesets = cfg.get("rulesets", {})
@@ -518,6 +526,9 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
 
     env_allow = os.getenv("ALLOW_NEW_UPSTREAM_BASELINE", "").lower() in ("1", "true", "yes")
     allow_new_baseline = allow_new_baseline or env_allow
+
+    offline_mode = offline or (os.getenv("LOON_BUILD_OFFLINE", "").lower() in ("1", "true", "yes")) or ("--offline" in sys.argv)
+    any_offline_cache_used = False
 
     default_max_shrink = float(cfg.get("metadata", {}).get("max_shrink_ratio", 0.15))
     has_upstream_sources = any(rcfg.get("sources") for rcfg in rulesets.values())
@@ -555,62 +566,64 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                             collected_rules.append(cleaned)
                             custom_rules_for_set.add(cleaned)
 
-        # 2. Ingest upstream sources strictly
-        upstream_sources = rcfg.get("sources", [])
-        if upstream_sources:
-            new_lock_data[name] = {}
-        for src in upstream_sources:
-            sname = src.get("name")
-            surl = src.get("url")
-            min_r = src.get("min_rules", 2)
-            excluded = set(src.get("filter_excluded", []))
-            print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
-            raw_text = fetch_upstream_strict(surl, min_rules=min_r)
+            # 2. Ingest upstream sources strictly
+            upstream_sources = rcfg.get("sources", [])
+            if upstream_sources:
+                new_lock_data[name] = {}
+            for src in upstream_sources:
+                sname = src.get("name")
+                surl = src.get("url")
+                min_r = src.get("min_rules", 2)
+                excluded = set(src.get("filter_excluded", []))
+                print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
+                raw_text, used_cache = fetch_upstream_strict(surl, min_rules=min_r, allow_offline_cache=offline_mode)
+                if used_cache:
+                    any_offline_cache_used = True
 
-            # Count valid non-comment rule lines in upstream source
-            valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
-            src_count = len(valid_src_lines)
-            new_lock_data[name][sname] = src_count
+                # Count valid non-comment rule lines in upstream source
+                valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+                src_count = len(valid_src_lines)
+                new_lock_data[name][sname] = src_count
 
-            # Per-upstream shrinkage protection against previous valid lock baseline
-            prev_src_count = lock_data.get(name, {}).get(sname)
-            src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
-            if prev_src_count is not None and prev_src_count > 0:
-                if src_count < prev_src_count:
-                    drop = prev_src_count - src_count
-                    shrink_ratio = drop / float(prev_src_count)
-                    if shrink_ratio > src_max_shrink:
+                # Per-upstream shrinkage protection against previous valid lock baseline
+                prev_src_count = lock_data.get(name, {}).get(sname)
+                src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
+                if prev_src_count is not None and prev_src_count > 0:
+                    if src_count < prev_src_count:
+                        drop = prev_src_count - src_count
+                        shrink_ratio = drop / float(prev_src_count)
+                        if shrink_ratio > src_max_shrink:
+                            raise RuntimeError(
+                                f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
+                                f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
+                                f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
+                            )
+                else:
+                    if not allow_new_baseline:
                         raise RuntimeError(
-                            f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
-                            f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
-                            f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
+                            f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
+                            f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
+                            f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
                         )
-            else:
-                if not allow_new_baseline:
-                    raise RuntimeError(
-                        f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
-                        f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
-                        f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
-                    )
-                print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
+                    print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
 
-            for line in raw_text.splitlines():
-                cleaned = clean_rule_line(line)
-                if cleaned:
-                    if cleaned.startswith("INVALID_SYNTAX:"):
-                        raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
-                    if cleaned in excluded:
-                        continue
-                    if cleaned in custom_rules_for_set:
-                        upstream_overlaps.append({
-                            "ruleset": name,
-                            "custom_file": custom_file_rel,
-                            "rule": cleaned,
-                            "upstream": sname
-                        })
-                    if cleaned not in seen:
-                        seen.add(cleaned)
-                        collected_rules.append(cleaned)
+                for line in raw_text.splitlines():
+                    cleaned = clean_rule_line(line)
+                    if cleaned:
+                        if cleaned.startswith("INVALID_SYNTAX:"):
+                            raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
+                        if cleaned in excluded:
+                            continue
+                        if cleaned in custom_rules_for_set:
+                            upstream_overlaps.append({
+                                "ruleset": name,
+                                "custom_file": custom_file_rel,
+                                "rule": cleaned,
+                                "upstream": sname
+                            })
+                        if cleaned not in seen:
+                            seen.add(cleaned)
+                            collected_rules.append(cleaned)
 
         # Intra-ruleset deduplication and parent domain pruning
         pruned_rules = prune_intra_set_redundancies(collected_rules)
@@ -851,12 +864,11 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 "build_timestamp": build_time,
                 "content_revision": content_rev,
                 "package_sha256": package_sha256,
-                "release_commit": git_rev,
                 "repository": "https://github.com/o-ocn/loon-rules",
                 "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
                 "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
                 "rulesets": ruleset_metadata,
-                "upstream_sync_status": "synced",
+                "upstream_sync_status": "offline_cached (离线缓存构建，非实时同步)" if any_offline_cache_used else "synced",
                 "services": services_cfg.get("services", []),
                 "physical_verification_items": services_cfg.get("physical_verification_items", [
                     "APNs TCP 5223 系统级长连接与锁屏即时通知 (apsd)",
@@ -870,48 +882,39 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 json.dump(manifest_data, f, indent=2, ensure_ascii=False)
                 f.write("\n")
 
-            # Backup current dist if exists
-            if os.path.exists(dist_backup):
-                shutil.rmtree(dist_backup, ignore_errors=True)
+            # Count updated files summary before atomic switch
+            updated_count = 0
+            for name, s_file in generated_files.items():
+                target_file = os.path.join(dist_dir, f"{name}.lsr")
+                new_cnt = len(staged_rules_by_set.get(name, []))
+                if name in files_to_update:
+                    prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
+                    delta = new_cnt - prev_cnt
+                    delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(修改)"
+                    change_summary_lines.append(f"  [UPDATED]    {name}.lsr: {new_cnt} 条规则 {delta_str}")
+                    updated_count += 1
+                else:
+                    change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
+
+            # Directory-level atomic switch with full rollback protection
+            dist_parent = os.path.dirname(dist_dir) or BASE_DIR
+            dist_old = os.path.join(dist_parent, ".dist_old")
+            if os.path.exists(dist_old):
+                shutil.rmtree(dist_old, ignore_errors=True)
             if os.path.exists(dist_dir):
-                shutil.copytree(dist_dir, dist_backup)
+                os.rename(dist_dir, dist_old)
 
             try:
-                updated_count = 0
-                for name, s_file in generated_files.items():
-                    target_file = os.path.join(dist_dir, f"{name}.lsr")
-                    new_cnt = len(staged_rules_by_set.get(name, []))
-                    if name in files_to_update:
-                        prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
-                        delta = new_cnt - prev_cnt
-                        delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(修改)"
-                        change_summary_lines.append(f"  [UPDATED]    {name}.lsr: {new_cnt} 条规则 {delta_str}")
-                        updated_count += 1
-                    else:
-                        change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
-
-                # Apply staged files to dist_dir
-                for root, dirs, files in os.walk(dist_new):
-                    rel = os.path.relpath(root, dist_new)
-                    target_root = os.path.join(dist_dir, rel) if rel != "." else dist_dir
-                    os.makedirs(target_root, exist_ok=True)
-                    for f in files:
-                        src_f = os.path.join(root, f)
-                        dst_f = os.path.join(target_root, f)
-                        tmp_f = dst_f + ".tmp"
-                        shutil.copy2(src_f, tmp_f)
-                        os.replace(tmp_f, dst_f)
-
+                os.rename(dist_new, dist_dir)
+                if os.path.exists(dist_old):
+                    shutil.rmtree(dist_old, ignore_errors=True)
+                print(f"[ATOMIC SWITCH] Successfully replaced entire dist/ directory.")
                 print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time}, content_revision: {content_rev})")
             except Exception as e:
-                # Rollback on failure
-                if os.path.exists(dist_backup):
-                    shutil.rmtree(dist_dir, ignore_errors=True)
-                    shutil.copytree(dist_backup, dist_dir)
-                raise RuntimeError(f"Build deployment failed, restored previous dist from backup: {e}")
-            finally:
-                if os.path.exists(dist_backup):
-                    shutil.rmtree(dist_backup, ignore_errors=True)
+                # Rollback on failure: restore dist_old -> dist_dir
+                if os.path.exists(dist_old) and not os.path.exists(dist_dir):
+                    os.rename(dist_old, dist_dir)
+                raise RuntimeError(f"Atomic directory switch failed, restored previous dist from backup: {e}") from e
 
             # Update lock baseline when dist genuinely updated
             if has_upstream_sources:
@@ -934,6 +937,16 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
         print(f"\n[SUCCESS] Build complete. {updated_count} ruleset files updated in {dist_dir}.")
         return {"updated_count": updated_count, "overlaps": upstream_overlaps, "rulesets": ruleset_metadata, "is_zero_change": is_zero_change}
 
+    except Exception as e:
+        failure_log = os.path.join(dist_dir, ".build_failure.log") if os.path.isdir(dist_dir) else os.path.join(BASE_DIR, ".build_failure.log")
+        try:
+            with open(failure_log, "w", encoding="utf-8") as f:
+                f.write("Loon Rules Build Failure Report\n")
+                f.write(f"Timestamp: {datetime.now(timezone.utc).isoformat()}\n")
+                f.write(f"Error: {e}\n")
+        except Exception:
+            pass
+        raise
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)
 
@@ -947,8 +960,13 @@ def main():
         action="store_true",
         help="Explicitly establish baselines for newly added upstreams or initialize missing lock file."
     )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Explicitly allow offline cache fallback (marks manifest as offline_cached)."
+    )
     args = parser.parse_args()
-    build_rulesets(allow_new_baseline=args.allow_new_baseline)
+    build_rulesets(allow_new_baseline=args.allow_new_baseline, offline=args.offline)
 
 if __name__ == "__main__":
     try:

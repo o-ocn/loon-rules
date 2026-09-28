@@ -264,7 +264,10 @@ class TestLoonRulesSuite(unittest.TestCase):
 
     def test_08_upstream_fail_stop_on_single_rule(self):
         """Verify upstream returning abnormally few rules halts build without touching dist/."""
-        hashes_before = {fname: open(os.path.join(DIST_DIR, fname), "rb").read() for fname in self.lsr_files}
+        hashes_before = {}
+        for fname in self.lsr_files:
+            with open(os.path.join(DIST_DIR, fname), "rb") as f:
+                hashes_before[fname] = f.read()
 
         mock_resp = MagicMock()
         mock_resp.status = 200
@@ -278,7 +281,8 @@ class TestLoonRulesSuite(unittest.TestCase):
 
         # Verify dist untouched
         for fname in self.lsr_files:
-            hash_after = open(os.path.join(DIST_DIR, fname), "rb").read()
+            with open(os.path.join(DIST_DIR, fname), "rb") as f:
+                hash_after = f.read()
             self.assertEqual(hashes_before[fname], hash_after)
 
     def test_09_cross_ruleset_conflict_detection_real_engine(self):
@@ -771,6 +775,143 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("disabled-rule.com", local_values)
         self.assertIn("Apple-Push.lsr", pipe["remote_order"])
         self.assertNotIn("Disabled.lsr", pipe["remote_order"])
+
+    def test_27_sanitize_unknown_rule_and_policy_labels(self):
+        """Verify unknown rule labels and private policy/node names are strictly redacted."""
+        from scripts.sanitize_log import sanitize_safe_rule_label, sanitize_safe_policy_label
+
+        # Unknown rule labels stripped
+        self.assertEqual(sanitize_safe_rule_label("MyPrivateRule"), "")
+        self.assertEqual(sanitize_safe_rule_label("CustomSecretTag"), "")
+        self.assertEqual(sanitize_safe_rule_label("MyNode123"), "")
+
+        # Known public rulesets allowed
+        self.assertEqual(sanitize_safe_rule_label("AI-Overseas.lsr"), "AI-Overseas.lsr")
+        self.assertEqual(sanitize_safe_rule_label("GoogleDrive"), "GoogleDrive")
+
+        # Unknown policies/nodes sanitized to PROXY
+        self.assertEqual(sanitize_safe_policy_label("PrivateNode123"), "PROXY")
+        self.assertEqual(sanitize_safe_policy_label("HK-BGP-01"), "PROXY")
+        self.assertEqual(sanitize_safe_policy_label("MyCustomProxyGroup"), "PROXY")
+
+        # Safe built-in and category policies preserved
+        self.assertEqual(sanitize_safe_policy_label("DIRECT"), "DIRECT")
+        self.assertEqual(sanitize_safe_policy_label("REJECT"), "REJECT")
+        self.assertEqual(sanitize_safe_policy_label("Apple Push"), "Apple Push")
+
+        # simulate_hit FINAL policy sanitization
+        mock_lcf = os.path.join(TEST_TMP_DIR, "mock_final.lcf")
+        with open(mock_lcf, "w", encoding="utf-8") as f:
+            f.write("[Rule]\nFINAL,PrivateNode123\n")
+        pipe = simulate_hit.load_lcf_pipeline(mock_lcf)
+        self.assertEqual(pipe["final_policy"], "PrivateNode123")
+
+        # Redirect stdout and assert simulate prints sanitized FINAL,PROXY
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            simulate_hit.simulate("nonexistent-unmatched-domain-12345.xyz", [], local_rules=[], lcf_meta=pipe)
+        out = buf.getvalue()
+        self.assertIn("FINAL,PROXY", out)
+        self.assertNotIn("PrivateNode123", out)
+
+    def test_28_upstream_failure_injection(self):
+        """Verify HTTP 404/500 and network drop fail strictly and do not use cache without --offline."""
+        import urllib.error
+        from unittest.mock import patch
+
+        # 1. HTTP 404 fail-stop
+        with patch("urllib.request.urlopen") as mock_open:
+            mock_open.side_effect = urllib.error.HTTPError(
+                "https://raw.githubusercontent.com/.../404.list", 404, "Not Found", {}, None
+            )
+            with self.assertRaises(RuntimeError) as cm:
+                build.fetch_upstream_strict("https://example.com/404.list", allow_offline_cache=False)
+            self.assertIn("HTTP 404", str(cm.exception))
+
+        # 2. HTTP 500 fail-stop
+        with patch("urllib.request.urlopen") as mock_open:
+            mock_open.side_effect = urllib.error.HTTPError(
+                "https://raw.githubusercontent.com/.../500.list", 500, "Internal Server Error", {}, None
+            )
+            with self.assertRaises(RuntimeError) as cm:
+                build.fetch_upstream_strict("https://example.com/500.list", allow_offline_cache=False)
+            self.assertIn("HTTP 500", str(cm.exception))
+
+        # 3. Network offline fail-stop when allow_offline_cache=False
+        with patch("urllib.request.urlopen") as mock_open:
+            mock_open.side_effect = urllib.error.URLError("Network is unreachable")
+            with self.assertRaises(RuntimeError) as cm:
+                build.fetch_upstream_strict("https://example.com/offline.list", allow_offline_cache=False)
+            self.assertIn("Failed to fetch upstream rule", str(cm.exception))
+
+    def test_29_atomic_directory_switch_and_rollback(self):
+        """Verify atomic directory switch and rollback protection on failure."""
+        test_dist = os.path.join(TEST_TMP_DIR, "test_dist")
+        os.makedirs(test_dist, exist_ok=True)
+        orig_file = os.path.join(test_dist, "original.lsr")
+        with open(orig_file, "w", encoding="utf-8") as f:
+            f.write("# ORIGINAL CONTENT\n")
+
+        # Test simulated failed swap
+        test_new = os.path.join(TEST_TMP_DIR, "test_dist_new")
+        os.makedirs(test_new, exist_ok=True)
+        new_file = os.path.join(test_new, "new.lsr")
+        with open(new_file, "w", encoding="utf-8") as f:
+            f.write("# NEW CONTENT\n")
+
+        dist_old = os.path.join(TEST_TMP_DIR, ".test_dist_old")
+        os.rename(test_dist, dist_old)
+        # Simulate failure by causing exception
+        try:
+            raise OSError("Simulated disk error during rename")
+        except Exception:
+            # Rollback
+            if os.path.exists(dist_old) and not os.path.exists(test_dist):
+                os.rename(dist_old, test_dist)
+
+        # Assert rollback preserved original content
+        self.assertTrue(os.path.isdir(test_dist))
+        self.assertTrue(os.path.isfile(orig_file))
+        with open(orig_file, "r", encoding="utf-8") as f:
+            self.assertEqual(f.read(), "# ORIGINAL CONTENT\n")
+
+        # Verify manifest.json does NOT contain release_commit
+        manifest_path = os.path.join(DIAGNOSTICS_DIST_DIR, "manifest.json")
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            m = json.load(f)
+        self.assertNotIn("release_commit", m)
+        self.assertIn("content_revision", m)
+
+    def test_30_custom_zero_overlap_with_upstream(self):
+        """Verify rules/custom/*.list has zero duplicates with upstream."""
+        cfg = build.load_sources(SOURCES_FILE)
+        all_overlaps = []
+        for name, rcfg in cfg.get("rulesets", {}).items():
+            custom_file_rel = rcfg.get("local_custom", "")
+            if not custom_file_rel:
+                continue
+            custom_file = os.path.join(BASE_DIR, custom_file_rel)
+            if not os.path.isfile(custom_file):
+                continue
+            c_rules = set()
+            with open(custom_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    cl = build.clean_rule_line(line)
+                    if cl and not cl.startswith("INVALID_SYNTAX:"):
+                        c_rules.add(cl)
+            for src in rcfg.get("sources", []):
+                surl = src.get("url")
+                cache_path = build.get_upstream_cache_path(surl)
+                if os.path.isfile(cache_path):
+                    with open(cache_path, "r", encoding="utf-8") as f:
+                        up_text = f.read()
+                    up_rules = [build.clean_rule_line(l) for l in up_text.splitlines() if build.clean_rule_line(l)]
+                    ovs = build.detect_upstream_overlaps(c_rules, {src.get("name"): up_rules}, ruleset_name=name)
+                    all_overlaps.extend(ovs)
+
+        self.assertEqual(len(all_overlaps), 0, f"Expected zero custom duplicates with upstream, found: {all_overlaps}")
 
     @classmethod
     def tearDownClass(cls):

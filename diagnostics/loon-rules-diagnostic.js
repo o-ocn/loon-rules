@@ -263,7 +263,10 @@
       } catch (e) {}
       return { ok: false, manifest: null, duration: res.duration, error: 'manifest 数据解析失败' };
     }
-    return { ok: false, manifest: null, duration: res.duration, error: classifyError(res.error) };
+    const errMsg = res.status
+      ? (res.status === 404 ? 'HTTP 404 (资源待发布: main 分支尚未合并)' : `HTTP ${res.status}`)
+      : classifyError(res.error);
+    return { ok: false, manifest: null, duration: res.duration, error: errMsg };
   }
 
   // Inspect both primary and backup release bases
@@ -336,11 +339,14 @@
     const res = await httpRequest({ url: fileUrl, timeout: PROBE_TIMEOUT_MS }, httpClient);
 
     if (!res.ok || res.status !== 200) {
+      const errStr = res.status
+        ? (res.status === 404 ? 'HTTP 404 (资源待发布: main 分支尚未合并)' : `HTTP ${res.status}`)
+        : classifyError(res.error);
       return {
         ruleset: rulesetName,
         ok: false,
         duration: res.duration,
-        error: res.ok ? `HTTP ${res.status}` : classifyError(res.error)
+        error: errStr
       };
     }
 
@@ -545,7 +551,7 @@
     const httpClient = options.httpClient || (typeof $httpClient !== 'undefined' ? $httpClient : null);
     const mode = options.mode || parseArgs().mode;
     const startTime = Date.now();
-    const deadlineMs = (mode === 'full') ? 50000 : 25000;
+    const deadlineMs = (mode === 'full') ? 52000 : 25000;
 
     function isDeadlineExceeded() {
       return (Date.now() - startTime) >= deadlineMs;
@@ -564,7 +570,7 @@
     if (repoOk && manifest) {
       reportLines.push(`[✓] 发布源状态: ${sourcesStatus.sourceNote}`);
       const rsetCount = manifest.rulesets ? Object.keys(manifest.rulesets).length : 0;
-      reportLines.push(`- 版本标识: ${manifest.content_revision || manifest.release_commit || '最新'} (构建时间: ${manifest.build_timestamp || '未知'}, 清单: ${rsetCount} 个规则集)`);
+      reportLines.push(`- 版本标识: ${manifest.content_revision || '最新'} (构建时间: ${manifest.build_timestamp || '未知'}, 清单: ${rsetCount} 个规则集)`);
     } else {
       reportLines.push(`[✘] 规则发布源不可达: ${sourcesStatus.sourceNote}`);
       reportLines.push('  判断: 规则资源下载受阻，请检查网络连接或切换备用镜像');
@@ -618,6 +624,20 @@
           reportLines.push(`- 校验进度: 已验证 ${verifiedCount}/${toTestLength} 个规则集 (部分项因时限跳过)`);
         }
       }
+
+      // Also verify backup source ruleset download in full mode if backup manifest was reachable
+      if (mode === 'full' && sourcesStatus.backup.ok && !isDeadlineExceeded()) {
+        const sampleBackupName = 'AI-Overseas.lsr';
+        const bMeta = manifest.rulesets[sampleBackupName];
+        if (bMeta) {
+          const bRes = await verifyRulesetFile(sampleBackupName, bMeta, BACKUP_BASE_URL, httpClient);
+          if (bRes.ok) {
+            reportLines.push(`[✓] 备用源规则集: jsDelivr 镜像规则正文与 SHA256 校验均通过 (测试: ${sampleBackupName})`);
+          } else {
+            reportLines.push(`[!] 备用源规则集: jsDelivr 镜像校验未通过 (${bRes.error})`);
+          }
+        }
+      }
     } else {
       reportLines.push('[!] 因清单不可达，跳过规则文件正文下载校验');
     }
@@ -646,9 +666,11 @@
       serviceList = serviceList.filter(s => s.quick === true);
     }
 
-    let hasRouteFailure = false;
-    let hasRouteBlockedWhileDirectOk = false;
-    const failedServices = [];
+    let countBothPass = 0;
+    let countProxyOnly = 0;
+    let countDirectOnly = 0;
+    let countBothFail = 0;
+    const abnormalServices = [];
     let totalTested = 0;
 
     const sResults = await mapConcurrent(serviceList, CONCURRENCY_LIMIT, async (s) => {
@@ -663,20 +685,36 @@
       const res = sResults[i];
       if (!res) continue;
       totalTested++;
-      if (!res.routeReachable) {
-        hasRouteFailure = true;
-        failedServices.push(res);
-        if (res.directReachable) {
-          hasRouteBlockedWhileDirectOk = true;
-        }
+      if (res.routeReachable && res.directReachable) {
+        countBothPass++;
+      } else if (res.routeReachable && !res.directReachable) {
+        countProxyOnly++;
+      } else if (!res.routeReachable && res.directReachable) {
+        countDirectOnly++;
+        abnormalServices.push({ ...res, category: 'direct_only' });
+      } else {
+        countBothFail++;
+        abnormalServices.push({ ...res, category: 'both_fail' });
       }
     }
 
-    if (failedServices.length === 0 && totalTested === serviceList.length) {
-      reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由探测均正常`);
+    const hasRouteFailure = (countDirectOnly > 0 || countBothFail > 0);
+    const hasRouteBlockedWhileDirectOk = (countDirectOnly > 0);
+
+    if (abnormalServices.length === 0 && totalTested === serviceList.length) {
+      if (countProxyOnly > 0) {
+        reportLines.push(`[✓] 服务连通性: 共探测 ${totalTested} 项服务，当前分流路由均畅通 (其中 ${countProxyOnly} 项仅代理通/需分流, ${countBothPass} 项双向直连通)`);
+      } else {
+        reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与直连均畅通`);
+      }
     } else {
-      for (const res of failedServices) {
-        reportLines.push(`${res.symbol} ${res.name}: ${res.verdict}`);
+      reportLines.push(`[!] 服务连通性: 探测 ${totalTested} 项服务中发现 ${abnormalServices.length} 项异常 (仅代理通: ${countProxyOnly}, 双向通: ${countBothPass})`);
+      for (const res of abnormalServices) {
+        if (res.category === 'direct_only') {
+          reportLines.push(`  ✘ ${res.name}: 仅 DIRECT 可达 | 当前路由不可达 (建议检查该服务命中规则、策略组或出口节点)`);
+        } else {
+          reportLines.push(`  ⚠ ${res.name}: 当前路由与 DIRECT 均不可达 (可能网络中断、端点不可达或服务宕机)`);
+        }
       }
       if (totalTested < serviceList.length) {
         reportLines.push(`- 连通性进度: 已完成 ${totalTested}/${serviceList.length} 项探测 (部分项因时限跳过)`);
@@ -692,12 +730,14 @@
       reportLines.push('❗ 诊断结论: 规则发布源无法下载或 manifest 损坏，请检查网络或切换备用镜像');
     } else if (rulesetFailure) {
       reportLines.push('⚠️ 诊断结论: 部分 .lsr 规则集文件下载失败或哈希校验不匹配，请刷新规则订阅');
-    } else if (hasRouteBlockedWhileDirectOk) {
-      reportLines.push('⚠️ 诊断结论: 部分服务当前路由不可达但 DIRECT 可达，建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点');
-    } else if (hasRouteFailure) {
-      reportLines.push('⚠️ 诊断结论: 部分服务当前路由和 DIRECT 均不可达，可能为目标服务临时宕机或本地网络受限');
+    } else if (countDirectOnly > 0 && countBothFail === 0) {
+      reportLines.push(`⚠️ 诊断结论: 发现 ${countDirectOnly} 项服务仅 DIRECT 通但当前路由不可达，建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点`);
+    } else if (countBothFail > 0) {
+      reportLines.push(`⚠️ 诊断结论: 发现 ${countBothFail} 项服务两者均不可达，可能为目标服务临时宕机或本地网络受限`);
+    } else if (countProxyOnly > 0) {
+      reportLines.push(`✔ 诊断结论: 核心服务分流有效运作 (${countProxyOnly} 项走代理分流, ${countBothPass} 项双向直连)，分流策略平稳 (耗时: ${durationTotal}s)`);
     } else {
-      reportLines.push(`✔ 诊断结论: 全部 ${totalTested} 项服务及规则源连接正常，分流策略运行平稳 (耗时: ${durationTotal}s)`);
+      reportLines.push(`✔ 诊断结论: 全部 ${totalTested} 项服务连接正常，分流策略运行平稳 (耗时: ${durationTotal}s)`);
     }
 
     if (timedOut) {
@@ -715,6 +755,10 @@
       rulesetFailure,
       hasRouteFailure,
       hasRouteBlockedWhileDirectOk,
+      countBothPass,
+      countProxyOnly,
+      countDirectOnly,
+      countBothFail,
       timedOut,
       duration: durationTotal
     };
@@ -729,13 +773,17 @@
       $done(payload);
     }
 
+    const args = parseArgs();
+    const isFull = (args.mode === 'full');
+    const watchdogTimeoutMs = isFull ? 56000 : 27000;
+
     // Safety watchdog to guarantee $done before Loon aborts
     const watchdogTimer = setTimeout(() => {
       safeDone({
-        title: 'Loon 规则诊断 (时限保护)',
-        content: '【Loon 规则诊断报告】\n⚠️ 诊断执行接近系统总时限，已触发保护提前退出。\n请检查网络连接或尝试使用“快速诊断”模式。'
+        title: `Loon 规则诊断 (时限保护 - ${isFull ? '完整' : '快速'}模式)`,
+        content: `【Loon 规则诊断报告】\n⚠️ 诊断执行接近系统总时限 (${isFull ? '60' : '30'}s)，已触发时限保护退出。\n已终止未完成网络请求并安全返回，保证 $done 正常交付。`
       });
-    }, 28000);
+    }, watchdogTimeoutMs);
 
     runDiagnostic().then((res) => {
       clearTimeout(watchdogTimer);
@@ -743,7 +791,7 @@
       if (typeof $notification !== 'undefined') {
         const title = (res.hasRouteFailure || res.rulesetFailure || !res.repoOk)
           ? 'Loon 规则诊断: 发现异常'
-          : 'Loon 规则诊断: 全部正常';
+          : (res.countProxyOnly > 0 ? 'Loon 规则诊断: 分流正常' : 'Loon 规则诊断: 全部正常');
         const subtitle = res.hasRouteBlockedWhileDirectOk
           ? '存在路由不可达但 DIRECT 可达项 (建议检查节点)'
           : `检测完成 (${res.duration}s)，点击查看报告`;

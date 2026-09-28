@@ -30,6 +30,19 @@ SAFE_TIMESTAMP_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.
 # Safe built-in policy labels in Loon
 SAFE_BUILTIN_POLICIES = {"DIRECT", "PROXY", "REJECT", "REJECT-TINYGIF", "REJECT-DROP", "FINAL"}
 
+# Known public ruleset names (whitelist for rule labels)
+KNOWN_PUBLIC_RULESETS = {
+    "AI-OVERSEAS", "AI-CHINA-DIRECT", "GOOGLEDRIVE", "ONEDRIVE", "GOOGLE",
+    "YOUTUBE", "TELEGRAM", "TWITTER", "DISCORD", "APPLE-DIRECT",
+    "APPLE-MEDIA", "TESTFLIGHT", "APPLE-PUSH", "CHINA-DIRECT"
+}
+
+# Known safe high-level policy category names
+KNOWN_SAFE_CATEGORIES = {
+    "DIRECT", "PROXY", "REJECT", "REJECT-TINYGIF", "REJECT-DROP", "FINAL",
+    "AI", "APPLE", "APPLE PUSH", "GOOGLE", "YOUTUBE", "TELEGRAM", "TWITTER", "DISCORD", "CHINA", "GLOBAL"
+}
+
 # Safe rule prefixes
 SAFE_RULE_PREFIXES = (
     "DOMAIN,", "DOMAIN-SUFFIX,", "DOMAIN-KEYWORD,",
@@ -90,9 +103,8 @@ def validate_safe_timestamp(raw_ts):
 
 def sanitize_safe_rule_label(raw_rule):
     """
-    Sanitizes rule label. Strictly admits only standard rule types or ruleset names.
-    Rejects and discards sensitive tokens, HTTP headers (e.g. 'Authorization: Bearer'),
-    passwords, cookies, or arbitrary user strings.
+    Sanitizes rule label. Strictly admits ONLY standard rule types or known public ruleset names.
+    Any unknown/custom label (such as 'MyPrivateRule', private tag, or auth header) is discarded.
     """
     if not raw_rule:
         return ""
@@ -120,17 +132,19 @@ def sanitize_safe_rule_label(raw_rule):
             return f"{rtype},{rval}"
         return rtype
 
-    # If it is a clean ruleset filename or identifier, e.g. AI-Overseas.lsr, GoogleDrive
-    if re.match(r'^[a-zA-Z0-9_\-\.]{1,40}$', clean):
+    # Only admit known public rulesets (e.g. AI-Overseas.lsr, GoogleDrive)
+    base_name = upper.replace(".LSR", "")
+    if base_name in KNOWN_PUBLIC_RULESETS:
         return clean
 
+    # Unknown rule labels (e.g. 'MyPrivateRule') must be stripped to prevent private leakage
     return ""
 
 def sanitize_safe_policy_label(raw_policy):
     """
     Sanitizes policy label.
-    Preserves standard built-in actions (DIRECT, PROXY, REJECT, FINAL) or clean group category names.
-    Strips and sanitizes private node names, device identifiers, host:ports, or tokens.
+    Preserves ONLY standard built-in actions (DIRECT, PROXY, REJECT, FINAL) or known safe category group names.
+    Any private node names (e.g. 'PrivateNode123'), device identifiers, host:ports, or tokens are sanitized to 'PROXY'.
     """
     if not raw_policy:
         return ""
@@ -139,15 +153,11 @@ def sanitize_safe_policy_label(raw_policy):
     if upper in SAFE_BUILTIN_POLICIES:
         return upper
 
-    lower = clean.lower()
-    for bad in ("device-id", "device_", "node", "server", "bearer", "secret", "token", "password", "session", "@", ":", "/", "=", "?", "&"):
-        if bad in lower:
-            return "PROXY"
-
-    # Allow safe category/group names like 'AI', 'Apple Push', 'Global', 'Google', 'China'
-    if re.match(r'^[a-zA-Z0-9_\- ]{1,30}$', clean):
+    # Check against known safe categories (e.g. Apple Push, AI, China)
+    if upper in KNOWN_SAFE_CATEGORIES:
         return clean
 
+    # Any unknown policy or node name (e.g. 'PrivateNode123', 'MyHongKongNode') is strictly anonymized to 'PROXY'
     return "PROXY"
 
 def sanitize_safe_label(label):

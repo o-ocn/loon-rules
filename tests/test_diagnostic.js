@@ -382,7 +382,7 @@ test('9. Partial Service Failure with Strictly Neutral Phrasing', async () => {
   assert.strictEqual(diag.hasRouteBlockedWhileDirectOk, true);
 
   // Must use strictly neutral observation without asserting that proxy or node is broken
-  assert.match(diag.report, /当前路由不可达.*DIRECT可达/);
+  assert.match(diag.report, /仅 DIRECT 可达.*当前路由不可达/);
   assert.match(diag.report, /建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点/);
   assert.doesNotMatch(diag.report, /代理生效/);
   assert.doesNotMatch(diag.report, /当前代理节点异常/);
@@ -421,7 +421,7 @@ test('10. Full Diagnostic Run with All Green Services and Honest Boundaries', as
   assert.strictEqual(diag.hasRouteFailure, false);
   assert.strictEqual(diag.hasRouteBlockedWhileDirectOk, false);
   assert.strictEqual(diag.repoOk, true);
-  assert.match(diag.report, /全部.*项服务及规则源连接正常/);
+  assert.match(diag.report, /全部.*项服务连接正常/);
   assert.match(diag.report, /能力边界提示/);
   assert.match(diag.report, /无法自动发现未知新增域名/);
   assert.match(diag.report, /APNs TCP 5223/);
@@ -429,4 +429,149 @@ test('10. Full Diagnostic Run with All Green Services and Honest Boundaries', as
   // Daily report line count assertion: normal all-pass report must be concise (<= 25 lines)
   const lineCount = diag.report.split('\n').filter(l => l.trim()).length;
   assert.ok(lineCount <= 25, `Report too long for daily copy-paste: ${lineCount} lines (expected <= 25)`);
+});
+
+test('11. 4-Way Routing States Distinction (Proxy-Only, Direct-Only, Both-Pass, Both-Fail)', async () => {
+  // Test case where ChatGPT is proxy_only (routeReachable=true, directReachable=false)
+  // Gemini is both_pass (routeReachable=true, directReachable=true)
+  // Blocked is direct_only (routeReachable=false, directReachable=true)
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      // ChatGPT: route ok, direct fails (proxy_only)
+      matches: (url, isDirect) => url.includes('chatgpt.com') && !isDirect,
+      status: 200,
+      data: 'OK'
+    },
+    {
+      matches: (url, isDirect) => url.includes('chatgpt.com') && isDirect,
+      error: new Error('connect ETIMEDOUT')
+    },
+    {
+      // Gemini: both ok (both_pass)
+      matches: (url, isDirect) => url.includes('gemini.google.com'),
+      status: 200,
+      data: 'OK'
+    },
+    {
+      // Blocked: route fails, direct ok (direct_only)
+      matches: (url, isDirect) => url.includes('blocked.example.com') && !isDirect,
+      error: new Error('connect ECONNREFUSED')
+    },
+    {
+      matches: (url, isDirect) => url.includes('blocked.example.com') && isDirect,
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'quick' });
+  assert.strictEqual(diag.countProxyOnly, 1);
+  assert.strictEqual(diag.countBothPass, 1);
+  assert.strictEqual(diag.countDirectOnly, 1);
+  assert.strictEqual(diag.countBothFail, 0);
+
+  // Must clearly distinguish states in report and not write '全部正常'
+  assert.match(diag.report, /仅代理通: 1.*双向通: 1/);
+  assert.match(diag.report, /仅 DIRECT 可达.*当前路由不可达/);
+  assert.doesNotMatch(diag.report, /全部 3 项服务当前路由探测均正常/);
+});
+
+test('12. Full Mode Supports Longer Deadlines (> 28s) Without Premature Watchdog Cutoff', async () => {
+  // Test full mode configures a 52s deadline and runs past 28 seconds without getting aborted by a hardcoded 28s timer
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  // Run full mode diagnostic
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'full' });
+  assert.strictEqual(diag.repoOk, true);
+  assert.strictEqual(diag.rulesetFailure, false);
+  assert.strictEqual(diag.timedOut, false);
+  assert.match(diag.report, /完整诊断/);
+});
+
+test('13. Backup Release Mirror .lsr Content and SHA256 Verification in Full Mode', async () => {
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url.startsWith(diagnostic.BACKUP_BASE_URL) && url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL) && url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'full' });
+  assert.match(diag.report, /备用源规则集.*校验均通过/);
+});
+
+test('14. HTTP 404 Response from Unmerged Main Branch Reports Resource Pending Release', async () => {
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      status: 404,
+      data: '404 Not Found'
+    },
+    {
+      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 404,
+      data: '404 Not Found'
+    }
+  ]);
+
+  const sources = await diagnostic.checkReleaseSources(mockClient);
+  assert.strictEqual(sources.ok, false);
+  assert.match(sources.sourceNote, /HTTP 404 \(资源待发布: main 分支尚未合并\)/);
 });

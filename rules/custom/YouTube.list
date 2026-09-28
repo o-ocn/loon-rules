@@ -4,14 +4,7 @@
 # Scope: YouTube web, app, video streams, thumbnails, and short links
 # Architectural Boundary:
 #   - Isolated from Google.lsr so YouTube media streams do not route to general Google egress
+# Note: Core YouTube domains (youtube.com, googlevideo.com, etc.) are 100% covered by
+#       mature upstream (190 rules in YouTube.lsr). This custom file is preserved for
+#       verified gap additions and temporary exceptions.
 # ==============================================================================
-
-# Target: Core YouTube video streaming and web assets
-# Evidence: YouTube web and iOS client streaming telemetry, 2026-09-28
-# Reason: Baseline anchors; mature upstream provides comprehensive 180+ streaming and CDN rules
-DOMAIN-SUFFIX,youtube.com
-DOMAIN-SUFFIX,ytimg.com
-DOMAIN-SUFFIX,googlevideo.com
-DOMAIN-SUFFIX,youtu.be
-DOMAIN-SUFFIX,youtube-nocookie.com
-DOMAIN-KEYWORD,youtube

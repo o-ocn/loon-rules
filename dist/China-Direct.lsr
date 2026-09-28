@@ -1,13 +1,9 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
 # AUTHOR: o-ocn
-# REVISION: 520040bb6fa3
+# REVISION: 933339d9d218
 # TOTAL: 366
 # ==============================================================================
-DOMAIN-SUFFIX,weixin.com
-DOMAIN-SUFFIX,wechat.com
-DOMAIN-SUFFIX,qpic.cn
-DOMAIN-SUFFIX,qlogo.cn
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
 DOMAIN-SUFFIX,taobao.com
@@ -20,10 +16,6 @@ DOMAIN-SUFFIX,2.taobao.com
 DOMAIN-SUFFIX,idlefish.com
 DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipayobjects.com
-DOMAIN-SUFFIX,jd.com
-DOMAIN-SUFFIX,360buy.com
-DOMAIN-SUFFIX,360buyimg.com
-DOMAIN-SUFFIX,jdcloud.com
 DOMAIN-SUFFIX,douyin.com
 DOMAIN-SUFFIX,snssdk.com
 DOMAIN-SUFFIX,bilibili.com
@@ -50,13 +42,17 @@ DOMAIN,slife.xy-asia.com
 DOMAIN-SUFFIX,iot-tencent.com
 DOMAIN-SUFFIX,lbs.gtimg.com
 DOMAIN-SUFFIX,map.qq.com
+DOMAIN-SUFFIX,qlogo.cn
+DOMAIN-SUFFIX,qpic.cn
 DOMAIN-SUFFIX,servicewechat.com
 DOMAIN-SUFFIX,tenpay.com
 DOMAIN-SUFFIX,up-hl.3g.qq.com
 DOMAIN-SUFFIX,vweixinthumb.tc.qq.com
+DOMAIN-SUFFIX,wechat.com
 DOMAIN-SUFFIX,wechatlegal.net
 DOMAIN-SUFFIX,wechatos.net
 DOMAIN-SUFFIX,wechatpay.com
+DOMAIN-SUFFIX,weixin.com
 DOMAIN-SUFFIX,weixin.qq.com
 DOMAIN-SUFFIX,weixinbridge.com
 DOMAIN-SUFFIX,weixinsxy.com
@@ -129,7 +125,9 @@ DOMAIN-SUFFIX,1huizhan.com
 DOMAIN-SUFFIX,3.cn
 DOMAIN-SUFFIX,300hu.com
 DOMAIN-SUFFIX,360buy.cn
+DOMAIN-SUFFIX,360buy.com
 DOMAIN-SUFFIX,360buy.com.cn
+DOMAIN-SUFFIX,360buyimg.com
 DOMAIN-SUFFIX,360buyinternational.com
 DOMAIN-SUFFIX,360top.com
 DOMAIN-SUFFIX,7fresh.com
@@ -265,6 +263,7 @@ DOMAIN-SUFFIX,jd-ex.com.cn
 DOMAIN-SUFFIX,jd-ex.net
 DOMAIN-SUFFIX,jd.cn
 DOMAIN-SUFFIX,jd.co.th
+DOMAIN-SUFFIX,jd.com
 DOMAIN-SUFFIX,jd.com.cn
 DOMAIN-SUFFIX,jd.hk
 DOMAIN-SUFFIX,jd.id
@@ -282,6 +281,7 @@ DOMAIN-SUFFIX,jdcloud-livebuy.com
 DOMAIN-SUFFIX,jdcloud-mail.com
 DOMAIN-SUFFIX,jdcloud-openapi.com
 DOMAIN-SUFFIX,jdcloud-oss.com
+DOMAIN-SUFFIX,jdcloud.com
 DOMAIN-SUFFIX,jdcloudcache.com
 DOMAIN-SUFFIX,jdcloudcache.net
 DOMAIN-SUFFIX,jdcloudcdn.com
