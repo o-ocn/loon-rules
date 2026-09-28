@@ -1,13 +1,10 @@
 # ==============================================================================
 # Rule Name: Discord (Custom)
-# Target Policy: US (or Final)
 # Description: Discord communication platform
+# Scope: Discord chat, voice, gateway, CDN, and invite endpoints
+# Note: Common domains (discord.com, discordapp.com, etc.) are covered by upstream (30 rules).
+#       Custom retains keyword anchor for unlisted regional gateways.
 # ==============================================================================
 
-DOMAIN-SUFFIX,discord.com
-DOMAIN-SUFFIX,discordapp.com
-DOMAIN-SUFFIX,discordapp.net
-DOMAIN-SUFFIX,discord.gg
-DOMAIN-SUFFIX,discord.media
-DOMAIN-SUFFIX,discordstatus.com
+# Target: Core Discord keyword match
 DOMAIN-KEYWORD,discord

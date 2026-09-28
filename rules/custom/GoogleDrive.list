@@ -1,10 +1,18 @@
 # ==============================================================================
 # Rule Name: GoogleDrive (Custom)
-# Target Policy: HK
-# Description: Google Drive services routing through Hong Kong
+# Description: Google Drive services service endpoints
+# Scope: Dedicated Drive, Docs, and third-party upload endpoints
+# Architectural Boundary:
+#   - www.googleapis.com is shared across Google services (used by Primuse for audio streams)
+#     and is strictly excluded from GoogleDrive to prevent breaking generic Google APIs.
 # ==============================================================================
 
-DOMAIN-SUFFIX,drive.google.com
-DOMAIN,docs.google.com
+# Target: Google Drive third-party application connectors
+# Evidence: Google Drive third-party integration API traces, 2026-09-28
+# Reason: Third-party app Drive synchronization
 DOMAIN,drive-thirdparty.google.com
+
+# Target: Google Drive large file pickup and direct download
+# Evidence: Google Drive file download stream analysis, 2026-09-28
+# Reason: Routes large file downloads to dedicated storage egress
 DOMAIN,filepickup.google.com

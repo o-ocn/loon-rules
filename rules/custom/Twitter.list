@@ -1,14 +1,8 @@
 # ==============================================================================
 # Rule Name: Twitter (Custom)
-# Target Policy: Final
 # Description: Twitter / X platform
 # Anti-Collision: grok.com and x.ai are strictly isolated in AI-Overseas.lsr
+# Note: Core Twitter/X domains (twitter.com, x.com, twimg.com, etc.) are 100% covered by
+#       mature upstream (32 rules in Twitter.lsr). This custom file is preserved for
+#       verified gap additions and temporary exceptions.
 # ==============================================================================
-
-DOMAIN-SUFFIX,twitter.com
-DOMAIN-SUFFIX,x.com
-DOMAIN-SUFFIX,twimg.com
-DOMAIN-SUFFIX,t.co
-DOMAIN-SUFFIX,tweetdeck.com
-DOMAIN-SUFFIX,periscope.tv
-DOMAIN-KEYWORD,twitter

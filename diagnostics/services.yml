@@ -1,0 +1,123 @@
+# Service Connectivity Targets for LoonRules Diagnostic Plugin
+# Strategy Neutral: Pure connectivity verification without fixing egress nodes or regions.
+# All test endpoints are read-only, public, safe, and free from write side-effects.
+
+services:
+  - id: "chatgpt"
+    name: "ChatGPT / OpenAI"
+    category: "AI-Overseas"
+    url: "https://chatgpt.com/favicon.ico"
+    expected_status: [200, 301, 302, 401, 403]
+    quick: true
+    note: "AI-Overseas 核心服务"
+
+  - id: "gemini"
+    name: "Google Gemini"
+    category: "AI-Overseas"
+    url: "https://gemini.google.com/"
+    expected_status: [200, 301, 302, 400, 404]
+    quick: true
+    note: "AI-Overseas 核心服务 (精准防与 Google 通用服务碰撞)"
+
+  - id: "claude"
+    name: "Claude / Anthropic"
+    category: "AI-Overseas"
+    url: "https://claude.ai/favicon.ico"
+    expected_status: [200, 301, 302, 401, 403]
+    quick: true
+    note: "AI-Overseas 核心服务"
+
+  - id: "deepseek"
+    name: "DeepSeek (大陆 AI)"
+    category: "AI-China-Direct"
+    url: "https://api.deepseek.com/"
+    expected_status: [200, 401, 404]
+    quick: true
+    note: "AI-China-Direct 服务"
+
+  - id: "googledrive"
+    name: "Google Drive"
+    category: "GoogleDrive"
+    url: "https://drive.google.com/drive/my-drive"
+    expected_status: [200, 301, 302]
+    quick: true
+    note: "GoogleDrive 独立大流量保护"
+
+  - id: "google"
+    name: "Google 通用服务"
+    category: "Google"
+    url: "https://www.google.com/generate_204"
+    expected_status: [204, 200]
+    quick: true
+    note: "Google 基础通用通道"
+
+  - id: "youtube"
+    name: "YouTube 流媒体"
+    category: "YouTube"
+    url: "https://www.youtube.com/generate_204"
+    expected_status: [204, 200]
+    quick: true
+    note: "YouTube 流媒体独立分流"
+
+  - id: "telegram"
+    name: "Telegram 平台"
+    category: "Telegram"
+    url: "https://t.me/telegram"
+    expected_status: [200, 301, 302]
+    quick: true
+    note: "Telegram 应用通讯通道"
+
+  - id: "github"
+    name: "GitHub 规则源"
+    category: "基线网络"
+    url: "https://api.github.com/zen"
+    expected_status: [200]
+    quick: true
+    note: "规则订阅与版本更新网络"
+
+  - id: "icloud"
+    name: "Apple iCloud"
+    category: "Apple-Direct"
+    url: "https://www.icloud.com/"
+    expected_status: [200, 301, 302]
+    quick: true
+    note: "Apple-Direct 基础服务"
+
+  - id: "grok"
+    name: "xAI / Grok"
+    category: "AI-Overseas"
+    url: "https://grok.com/"
+    expected_status: [200, 301, 302, 401, 403, 404]
+    quick: false
+    note: "海外 AI，与 Twitter 主干隔离"
+
+  - id: "muse"
+    name: "Muse from Meta"
+    category: "AI-Overseas"
+    url: "https://muse.ai/"
+    expected_status: [200, 301, 302]
+    quick: false
+    note: "精准 Muse 服务，不含 Meta 全家桶"
+
+  - id: "testflight"
+    name: "Apple TestFlight"
+    category: "TestFlight"
+    url: "https://testflight.apple.com/v1/session"
+    expected_status: [200, 401, 403, 404]
+    quick: false
+    note: "TestFlight 独立分流"
+
+  - id: "apns_safe"
+    name: "Apple APNs (HTTPS安全测试)"
+    category: "Apple-Push"
+    url: "https://courier.push.apple.com/"
+    expected_status: [200, 400, 403, 404, 502]
+    quick: false
+    note: "仅测试 TCP 443 备用通道可达性。系统 TCP 5223 及锁屏推送必须真机实测"
+
+physical_verification_items:
+  - "APNs TCP 5223 系统级长连接与锁屏即时通知 (apsd)"
+  - "Telegram 锁屏/蜂窝网络下的后台消息唤醒与推送延迟"
+  - "HomeKit 室内摄像头即时画面流媒体秒开与门铃推送"
+  - "Apple Watch 独立蜂窝/Wi-Fi联网与天气表盘主动刷新"
+  - "第三方依赖 CloudKit 的 App (爱乐记、猿音) 真实多端双向同步"

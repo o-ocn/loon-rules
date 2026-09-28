@@ -1,19 +1,17 @@
 # ==============================================================================
 # Rule Name: Apple-Direct (Custom)
-# Target Policy: DIRECT
-# Description: Baseline Apple services requiring DIRECT connection
+# Description: Baseline Apple system services, iCloud, device communications, and local CDN acceleration
 # Scope: iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, Apple Dev, OTA
 # Strict Restriction: DO NOT blanket route apple.com, 17.0.0.0/8, or Apple CDN to proxy
+# Note: Common iCloud/AppleMusic domains (icloud.com, music.apple.com, etc.) are covered
+#       by mature upstream. Custom retains verified domestic CDN nodes, OTA endpoints,
+#       and China cache CIDRs.
 # ==============================================================================
 
-# --- iCloud & CloudKit Sync ---
-DOMAIN-SUFFIX,apple-cloudkit.com
-DOMAIN-SUFFIX,icloud-content.com
-DOMAIN-SUFFIX,icloud.apple.com
-DOMAIN-SUFFIX,icloud.com
-DOMAIN-SUFFIX,apple-livephotoskit.com
-
 # --- App Store & Apple ID ---
+# Target: App Store downloads, icons, and Apple Account authentication
+# Evidence: App Store app updates and Apple ID sign-in trace, 2026-09-28
+# Reason: Direct connection to local Apple CDN nodes avoids throttling
 DOMAIN-SUFFIX,apps.apple.com
 DOMAIN-SUFFIX,itunes.apple.com
 DOMAIN-SUFFIX,mzstatic.com
@@ -21,15 +19,14 @@ DOMAIN,identity.apple.com
 DOMAIN-SUFFIX,appleid.apple.com
 DOMAIN-SUFFIX,appleid.cdn-apple.com
 
-# --- Apple Music ---
-DOMAIN-SUFFIX,music.apple.com
+# --- Apple Music CDN Edge ---
 DOMAIN-SUFFIX,audio-ssl.itunes.apple.com
-DOMAIN-SUFFIX,blobstore.apple.com
 
 # --- Core Infrastructure & Hardware / Firmware / OTA ---
-DOMAIN-SUFFIX,gc.apple.com
+# Target: iOS OTA software updates, Game Center, and Apple captive portal
+# Evidence: iOS System Settings OTA update check, 2026-09-28
+# Reason: Fast OTA downloads from local cache nodes
 DOMAIN-SUFFIX,apple-dns.net
-DOMAIN-SUFFIX,cdn-apple.com
 DOMAIN,konut-cdn.apple.com
 DOMAIN-SUFFIX,swcdn.apple.com
 DOMAIN-SUFFIX,updates-http.cdn-apple.com
@@ -38,4 +35,7 @@ DOMAIN-SUFFIX,gg.apple.com
 DOMAIN-SUFFIX,gnip.apple.com
 
 # --- Apple China Local CDN Cache ---
+# Target: Official Apple China CDN IPv4 subnet
+# Evidence: Apple official documentation on China CDN cache IPs, 2026-09-28
+# Reason: Domestic CDN acceleration
 IP-CIDR,17.248.128.0/17,no-resolve

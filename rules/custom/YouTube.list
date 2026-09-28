@@ -1,12 +1,10 @@
 # ==============================================================================
 # Rule Name: YouTube (Custom)
-# Target Policy: US Test
-# Description: YouTube streaming services routing through US Test
+# Description: YouTube streaming services service endpoints
+# Scope: YouTube web, app, video streams, thumbnails, and short links
+# Architectural Boundary:
+#   - Isolated from Google.lsr so YouTube media streams do not route to general Google egress
+# Note: Core YouTube domains (youtube.com, googlevideo.com, etc.) are 100% covered by
+#       mature upstream (190 rules in YouTube.lsr). This custom file is preserved for
+#       verified gap additions and temporary exceptions.
 # ==============================================================================
-
-DOMAIN-SUFFIX,youtube.com
-DOMAIN-SUFFIX,ytimg.com
-DOMAIN-SUFFIX,googlevideo.com
-DOMAIN-SUFFIX,youtu.be
-DOMAIN-SUFFIX,youtube-nocookie.com
-DOMAIN-KEYWORD,youtube

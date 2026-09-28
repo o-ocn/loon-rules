@@ -1,14 +1,12 @@
 # ==============================================================================
 # Rule Name: China-Direct (Custom)
-# Target Policy: DIRECT
 # Description: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
+# Scope: High-frequency domestic Chinese applications, banking, payments, and private LAN subnets
+# Note: Common WeChat (weixin.com, etc.) and JD domains are covered by upstream;
+#       Custom retains additional top-tier apps, domestic payment gateways, and LAN ranges.
 # ==============================================================================
 
-# --- WeChat / Tencent ---
-DOMAIN-SUFFIX,weixin.com
-DOMAIN-SUFFIX,wechat.com
-DOMAIN-SUFFIX,qpic.cn
-DOMAIN-SUFFIX,qlogo.cn
+# --- Tencent Services ---
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
 
@@ -23,12 +21,6 @@ DOMAIN-SUFFIX,2.taobao.com
 DOMAIN-SUFFIX,idlefish.com
 DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipayobjects.com
-
-# --- JD (Jingdong) ---
-DOMAIN-SUFFIX,jd.com
-DOMAIN-SUFFIX,360buy.com
-DOMAIN-SUFFIX,360buyimg.com
-DOMAIN-SUFFIX,jdcloud.com
 
 # --- Other Mainland Services ---
 DOMAIN-SUFFIX,douyin.com

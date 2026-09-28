@@ -1,14 +1,10 @@
-# NAME: Apple-Media-US
-# DESCRIPTION: Apple US-restricted services (Apple TV+, Apple News, Fitness+)
-# RECOMMENDED POLICY: US Test
+# NAME: Apple-Media
+# DESCRIPTION: Apple media services (Apple TV+, Apple News, Fitness+)
 # AUTHOR: o-ocn
-# REVISION: e52b3387bfa1
-# TOTAL: 21
+# REVISION: 02ad01eebd77
+# TOTAL: 18
 # ==============================================================================
-DOMAIN-SUFFIX,tv.apple.com
-DOMAIN-SUFFIX,play-edge.itunes.apple.com
-DOMAIN-SUFFIX,hls.itunes.apple.com
-DOMAIN-SUFFIX,hls-amt.itunes.apple.com
+DOMAIN-SUFFIX,tv.applemusic.com
 DOMAIN-SUFFIX,linear.tv.apple.com
 DOMAIN-SUFFIX,news-assets.apple.com
 DOMAIN-SUFFIX,news-client.apple.com
@@ -20,8 +16,8 @@ DOMAIN,hls-amt.itunes.apple.com
 DOMAIN,hls.itunes.apple.com
 DOMAIN,np-edge.itunes.apple.com
 DOMAIN,play-edge.itunes.apple.com
-DOMAIN,tv.applemusic.com
 DOMAIN,uts-api.itunes.apple.com
+DOMAIN-SUFFIX,tv.apple.com
 USER-AGENT,AppleTV*
 USER-AGENT,com.apple.tv*
 DOMAIN,gspe1-ssl.ls.apple.com

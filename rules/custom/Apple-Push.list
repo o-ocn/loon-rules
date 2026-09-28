@@ -1,0 +1,35 @@
+# ==============================================================================
+# Rule Name: Apple-Push (Custom)
+# Description: Official minimal Apple Push Notification service (APNs) ruleset
+# Port Specifications:
+#   - Primary push notification port: TCP 5223 (Wi-Fi and Cellular)
+#   - Fallback push notification port: TCP 443 (when 5223 is blocked by network firewalls)
+#   - Developer provider API port: TCP 2197 (sending notifications to APNs)
+# Architectural & Network Notes:
+#   1. APNs is handled at the iOS/watchOS/macOS system level by the `apsd` daemon.
+#   2. In Loon, if "包含 APNS" (Include APNs) is OFF, system apsd traffic bypasses
+#      the Loon TUN interface completely and cannot be matched by remote rules.
+#   3. APNs establishes a single shared persistent TLS tunnel for the ENTIRE system:
+#      WeChat, Telegram, Apple Mail, HomeKit doorbells/cameras, iCloud changes,
+#      Apple Watch wakeups, and third-party CloudKit apps (e.g. 爱乐记, 猿音).
+#   4. Strict Minimal Scope:
+#      - Only *.push.apple.com and official Apple APNs CIDR blocks are included.
+#      - Strictly prohibits entire 17.0.0.0/8, apple.com, icloud.com, or Apple CDNs.
+#      - Absolutely NO MitM interception.
+# ==============================================================================
+
+# --- Push Domains ---
+DOMAIN-SUFFIX,push.apple.com
+
+# --- APNs Official Verified IPv4 Blocks ---
+IP-CIDR,17.249.0.0/16,no-resolve
+IP-CIDR,17.252.0.0/16,no-resolve
+IP-CIDR,17.57.144.0/22,no-resolve
+IP-CIDR,17.188.128.0/18,no-resolve
+IP-CIDR,17.188.20.0/23,no-resolve
+
+# --- APNs Official Verified IPv6 Blocks ---
+IP-CIDR6,2620:149:a44::/48,no-resolve
+IP-CIDR6,2403:300:a42::/48,no-resolve
+IP-CIDR6,2403:300:a51::/48,no-resolve
+IP-CIDR6,2a01:b740:a42::/48,no-resolve

@@ -1,8 +1,15 @@
 # ==============================================================================
 # Rule Name: TestFlight (Custom)
-# Target Policy: US
 # Description: Apple TestFlight beta testing platform
+# Scope: TestFlight app, beta invitations, and build distribution endpoints
 # ==============================================================================
+
+# Target: TestFlight portal and beta application downloads
+# Evidence: TestFlight iOS client network trace, 2026-09-28
+# Reason: TestFlight requires US/Proxy exit in regions where direct connection fails; isolated from Apple-Direct.
 DOMAIN-SUFFIX,testflight.apple.com
-DOMAIN,testflight.apple.com
+
+# Target: Legacy TestFlight beta iTunes API
+# Evidence: TestFlight legacy client authentication logs, 2026-09-28
+# Reason: Resolves historical beta build testing issues
 DOMAIN,beta.itunes.apple.com

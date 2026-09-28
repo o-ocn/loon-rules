@@ -1,25 +1,22 @@
 # NAME: Twitter
-# DESCRIPTION: Twitter / X platform, bound to Final
-# RECOMMENDED POLICY: Final
+# DESCRIPTION: Twitter / X social platform
 # AUTHOR: o-ocn
-# REVISION: 6f67d9a80faa
+# REVISION: 9447f4c03c7a
 # TOTAL: 32
 # ==============================================================================
-DOMAIN-SUFFIX,twitter.com
-DOMAIN-SUFFIX,x.com
-DOMAIN-SUFFIX,twimg.com
-DOMAIN-SUFFIX,t.co
-DOMAIN-SUFFIX,tweetdeck.com
-DOMAIN-SUFFIX,periscope.tv
-DOMAIN-KEYWORD,twitter
 DOMAIN-SUFFIX,ads-twitter.com
 DOMAIN-SUFFIX,cms-twdigitalassets.com
+DOMAIN-SUFFIX,periscope.tv
 DOMAIN-SUFFIX,pscp.tv
+DOMAIN-SUFFIX,t.co
 DOMAIN-SUFFIX,tellapart.com
+DOMAIN-SUFFIX,tweetdeck.com
 DOMAIN-SUFFIX,twimg.co
+DOMAIN-SUFFIX,twimg.com
 DOMAIN-SUFFIX,twimg.org
 DOMAIN-SUFFIX,twitpic.com
 DOMAIN-SUFFIX,twitter.biz
+DOMAIN-SUFFIX,twitter.com
 DOMAIN-SUFFIX,twitter.jp
 DOMAIN-SUFFIX,twittercommunity.com
 DOMAIN-SUFFIX,twitterflightschool.com
@@ -31,6 +28,8 @@ DOMAIN-SUFFIX,twttr.com
 DOMAIN-SUFFIX,twttr.net
 DOMAIN-SUFFIX,twvid.com
 DOMAIN-SUFFIX,vine.co
+DOMAIN-SUFFIX,x.com
+DOMAIN-KEYWORD,twitter
 IP-CIDR,192.133.76.0/22,no-resolve
 IP-CIDR,199.59.148.0/22,no-resolve
 IP-CIDR,199.96.56.0/21,no-resolve

@@ -1,22 +1,12 @@
 # NAME: Google
-# DESCRIPTION: General Google services, bound to US Test
-# RECOMMENDED POLICY: US Test
+# DESCRIPTION: General Google services and infrastructure
 # AUTHOR: o-ocn
-# REVISION: f5290d51cc41
-# TOTAL: 696
+# REVISION: c95b8615252d
+# TOTAL: 690
 # ==============================================================================
-DOMAIN-SUFFIX,google.com
-DOMAIN-SUFFIX,google.com.hk
-DOMAIN-SUFFIX,googleapis.com
-DOMAIN-SUFFIX,googlevideo.com
-DOMAIN-SUFFIX,gstatic.com
-DOMAIN-SUFFIX,ggpht.com
-DOMAIN-SUFFIX,googleusercontent.com
-DOMAIN-SUFFIX,google-analytics.com
-DOMAIN-SUFFIX,1e100.net
-DOMAIN-KEYWORD,google
 DOMAIN,voice.telephony.goog
 DOMAIN-SUFFIX,0emm.com
+DOMAIN-SUFFIX,1e100.net
 DOMAIN-SUFFIX,1ucrs.com
 DOMAIN-SUFFIX,265.com
 DOMAIN-SUFFIX,2mdn-cn.net
@@ -200,7 +190,6 @@ DOMAIN-SUFFIX,data-vocabulary.org
 DOMAIN-SUFFIX,dataliberation.org
 DOMAIN-SUFFIX,debug.com
 DOMAIN-SUFFIX,debugproject.com
-DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deja.com
 DOMAIN-SUFFIX,deps.dev
 DOMAIN-SUFFIX,deps.info
@@ -264,6 +253,7 @@ DOMAIN-SUFFIX,googel.com
 DOMAIN-SUFFIX,googil.com
 DOMAIN-SUFFIX,googl.com
 DOMAIN-SUFFIX,google-analytics-cn.com
+DOMAIN-SUFFIX,google-analytics.com
 DOMAIN-SUFFIX,google-syndication.com
 DOMAIN-SUFFIX,google.ad
 DOMAIN-SUFFIX,google.ae
@@ -316,6 +306,7 @@ DOMAIN-SUFFIX,google.co.vi
 DOMAIN-SUFFIX,google.co.za
 DOMAIN-SUFFIX,google.co.zm
 DOMAIN-SUFFIX,google.co.zw
+DOMAIN-SUFFIX,google.com
 DOMAIN-SUFFIX,google.com.af
 DOMAIN-SUFFIX,google.com.ag
 DOMAIN-SUFFIX,google.com.ai
@@ -338,6 +329,7 @@ DOMAIN-SUFFIX,google.com.fj
 DOMAIN-SUFFIX,google.com.gh
 DOMAIN-SUFFIX,google.com.gi
 DOMAIN-SUFFIX,google.com.gt
+DOMAIN-SUFFIX,google.com.hk
 DOMAIN-SUFFIX,google.com.jm
 DOMAIN-SUFFIX,google.com.kh
 DOMAIN-SUFFIX,google.com.kw
@@ -465,6 +457,7 @@ DOMAIN-SUFFIX,googleadservices.com
 DOMAIN-SUFFIX,googleanalytics.com
 DOMAIN-SUFFIX,googleapis-cn.com
 DOMAIN-SUFFIX,googleapis.cn
+DOMAIN-SUFFIX,googleapis.com
 DOMAIN-SUFFIX,googleapps-cn.com
 DOMAIN-SUFFIX,googleapps.com
 DOMAIN-SUFFIX,googlearth.com
@@ -514,6 +507,7 @@ DOMAIN-SUFFIX,gridaware.app
 DOMAIN-SUFFIX,gsrc.io
 DOMAIN-SUFFIX,gstatic-cn.com
 DOMAIN-SUFFIX,gstatic.cn
+DOMAIN-SUFFIX,gstatic.com
 DOMAIN-SUFFIX,gstaticcnapps.cn
 DOMAIN-SUFFIX,gsuite.com
 DOMAIN-SUFFIX,gv.com
@@ -692,12 +686,11 @@ DOMAIN-SUFFIX,xn--p8j9a0d9c9a.xn--q9jyb4c
 DOMAIN-SUFFIX,xplr.co
 DOMAIN-SUFFIX,zukunftswerkstatt.de
 DOMAIN-SUFFIX,zynamics.com
+DOMAIN-SUFFIX,googleusercontent.com
 DOMAIN-KEYWORD,appspot
 DOMAIN-KEYWORD,blogspot
 DOMAIN-KEYWORD,gmail
+DOMAIN-KEYWORD,google
 DOMAIN-KEYWORD,recaptcha
-IP-CIDR,172.110.32.0/21,no-resolve
 IP-CIDR,173.194.0.0/16,no-resolve
-IP-CIDR,216.73.80.0/20,no-resolve
 IP-CIDR,74.125.0.0/16,no-resolve
-IP-CIDR6,2620:120:e000::/40,no-resolve

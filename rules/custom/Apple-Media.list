@@ -1,0 +1,27 @@
+# ==============================================================================
+# Rule Name: Apple-Media (Custom)
+# Description: Apple Media services (Apple TV+, Apple News, Fitness+)
+# Scope: Region-locked media endpoints requiring US/Media egress
+# Note: tv.apple.com is covered by upstream AppleTV list;
+#       Custom retains verified Apple News, Apple Fitness+ and auxiliary live streams.
+# ==============================================================================
+
+# --- Apple TV+ Live Streams ---
+DOMAIN-SUFFIX,tv.applemusic.com
+DOMAIN-SUFFIX,linear.tv.apple.com
+
+# --- Apple News ---
+# Target: Apple News app feed and media assets
+# Evidence: iOS Apple News app network logs, 2026-09-28
+# Reason: Geo-restricted service requiring US/UK exit; isolated from base Apple services
+DOMAIN-SUFFIX,news-assets.apple.com
+DOMAIN-SUFFIX,news-client.apple.com
+DOMAIN-SUFFIX,news-edge.apple.com
+DOMAIN-SUFFIX,apple.news
+
+# --- Apple Fitness+ ---
+# Target: Apple Fitness+ workout video API and streams
+# Evidence: Apple Watch workout video session trace, 2026-09-28
+# Reason: Geo-restricted service requiring US exit
+DOMAIN-SUFFIX,amp-api.fitness.apple.com
+DOMAIN-SUFFIX,fitness.apple.com

@@ -6,4 +6,13 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.tmp
+loon_dist_staging_*
 *.lcf
+
+# Logs, HAR files and diagnostic data (Strictly ignored to prevent sensitive leaks)
+*.log
+*.har
+*.raw
+logs/
+*.sanitized.json
+*.sanitized.txt
