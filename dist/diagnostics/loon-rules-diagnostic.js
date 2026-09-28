@@ -317,12 +317,23 @@
       sourceNote = `主备双源均不可达 (主: ${primaryRes.error}, 备: ${backupRes.error})`;
     }
 
+    const primaryOk = Boolean(primaryRes.ok);
+    const backupOk = Boolean(backupRes.ok);
+    const isAllGood = Boolean(primaryOk && backupOk && mirrorConsistent);
+    const hasWarning = Boolean(primaryOk && (!backupOk || !mirrorConsistent));
+    const isDegraded = Boolean(!primaryOk && backupOk);
+
     return {
       primary: primaryRes,
       backup: backupRes,
       activeManifest,
       sourceNote,
       mirrorConsistent,
+      primaryOk,
+      backupOk,
+      isAllGood,
+      hasWarning,
+      isDegraded,
       ok: Boolean(activeManifest)
     };
   }
@@ -610,7 +621,7 @@
       }
 
       lines.push('----------------------------------------');
-      lines.push('【能力边界提示 (需真机验证)】仅探测已知 HTTPS 端点，未探测 APNs TCP 5223 及应用内私有长连接。');
+      lines.push('【能力边界提示 (需真机验证)】仅探测已知 HTTPS 端点，无法自动发现全部未知域名。若遇稳定异常，应先核对上游更新与规则；仅在仍无法定位时，方需提供一次本地脱敏请求记录。本插件不能探测 APNs TCP 5223，亦不能替代 Telegram 锁屏蜂窝推送、HomeKit 摄像头、Apple Watch 及 CloudKit 真机测试。');
       return lines.join('\n');
     }
   };
@@ -620,7 +631,7 @@
     const httpClient = options.httpClient || (typeof $httpClient !== 'undefined' ? $httpClient : null);
     const mode = options.mode || parseArgs().mode;
     const startTime = Date.now();
-    const deadlineMs = (mode === 'full') ? 52000 : 25000;
+    const deadlineMs = options.deadlineMs || ((mode === 'full') ? 52000 : 25000);
 
     currentProgress.reset(mode);
 
@@ -640,8 +651,16 @@
     currentProgress.manifest = manifest;
     const repoOk = sourcesStatus.ok;
 
-    if (repoOk && manifest) {
+    if (sourcesStatus.isAllGood && manifest) {
       reportLines.push(`[✓] 发布源状态: ${sourcesStatus.sourceNote}`);
+      const rsetCount = manifest.rulesets ? Object.keys(manifest.rulesets).length : 0;
+      reportLines.push(`- 版本标识: ${manifest.content_revision || '最新'} (构建时间: ${manifest.build_timestamp || '未知'}, 清单: ${rsetCount} 个规则集)`);
+    } else if (sourcesStatus.hasWarning && manifest) {
+      reportLines.push(`[!] 发布源状态 (警告): ${sourcesStatus.sourceNote}`);
+      const rsetCount = manifest.rulesets ? Object.keys(manifest.rulesets).length : 0;
+      reportLines.push(`- 版本标识: ${manifest.content_revision || '最新'} (构建时间: ${manifest.build_timestamp || '未知'}, 清单: ${rsetCount} 个规则集)`);
+    } else if (sourcesStatus.isDegraded && manifest) {
+      reportLines.push(`[!] 发布源状态 (降级): ${sourcesStatus.sourceNote}`);
       const rsetCount = manifest.rulesets ? Object.keys(manifest.rulesets).length : 0;
       reportLines.push(`- 版本标识: ${manifest.content_revision || '最新'} (构建时间: ${manifest.build_timestamp || '未知'}, 清单: ${rsetCount} 个规则集)`);
     } else {
@@ -653,6 +672,7 @@
 
     // 2. Download and verify actual .lsr ruleset files (Concurrent)
     let rulesetFailure = false;
+    let rulesetIncomplete = false;
     let timedOut = false;
     const failedRulesets = [];
     let verifiedCount = 0;
@@ -697,47 +717,58 @@
         const sampleRev = manifest.rulesets[toTest[0]]?.revision || '一致';
         reportLines.push(`[✓] 规则集校验: 全部 ${toTestLength} 个规则集正文、条数与 SHA256 均校验通过 (版本: ${sampleRev})`);
       } else {
-        for (const f of failedRulesets) {
-          reportLines.push(`[✘] ${f.ruleset}: 校验失败 (${f.error})`);
+        if (failedRulesets.length > 0) {
+          for (const f of failedRulesets) {
+            reportLines.push(`[✘] ${f.ruleset}: 校验失败 (${f.error})`);
+          }
         }
         if (verifiedCount < toTestLength) {
-          reportLines.push(`- 校验进度: 已验证 ${verifiedCount}/${toTestLength} 个规则集 (部分项因时限跳过)`);
+          rulesetIncomplete = true;
+          reportLines.push(`[!] 规则集校验: 未完成 (已验证 ${verifiedCount}/${toTestLength} 个规则集，部分项因时限跳过)`);
         }
       }
 
       // In full mode: verify ALL rulesets from backup source (jsDelivr)
-      if (mode === 'full' && sourcesStatus.backup.ok && !isDeadlineExceeded()) {
-        const failedBackupRulesets = [];
-        let backupVerifiedCount = 0;
-
-        const bResults = await mapConcurrent(allRulesets, CONCURRENCY_LIMIT, async (rname) => {
-          const bMeta = manifest.rulesets[rname];
-          return await verifyRulesetFile(rname, bMeta, BACKUP_BASE_URL, httpClient);
-        }, isDeadlineExceeded, (rname, res) => {
-          if (res && !res.ok) {
-            currentProgress.rulesetFailed.push(res);
-          }
-        });
-
-        for (let i = 0; i < bResults.length; i++) {
-          const bRes = bResults[i];
-          if (!bRes) continue;
-          if (bRes.ok) {
-            backupVerifiedCount++;
-          } else {
-            rulesetFailure = true; // Backup failure triggers rulesetFailure
-            failedBackupRulesets.push(bRes);
-          }
-        }
-
-        if (failedBackupRulesets.length === 0 && backupVerifiedCount === allRulesets.length) {
-          reportLines.push(`[✓] 备用源规则集: 全部 ${allRulesets.length} 个规则集 jsDelivr 镜像正文与 SHA256 均校验通过`);
+      if (mode === 'full' && sourcesStatus.backup.ok) {
+        if (isDeadlineExceeded()) {
+          rulesetIncomplete = true;
+          reportLines.push('[!] 备用源规则集: 未完成 (因时限跳过)');
         } else {
-          for (const f of failedBackupRulesets) {
-            reportLines.push(`[✘] 备用源: ${f.ruleset} 校验失败 (${f.error})`);
+          const failedBackupRulesets = [];
+          let backupVerifiedCount = 0;
+
+          const bResults = await mapConcurrent(allRulesets, CONCURRENCY_LIMIT, async (rname) => {
+            const bMeta = manifest.rulesets[rname];
+            return await verifyRulesetFile(rname, bMeta, BACKUP_BASE_URL, httpClient);
+          }, isDeadlineExceeded, (rname, res) => {
+            if (res && !res.ok) {
+              currentProgress.rulesetFailed.push(res);
+            }
+          });
+
+          for (let i = 0; i < bResults.length; i++) {
+            const bRes = bResults[i];
+            if (!bRes) continue;
+            if (bRes.ok) {
+              backupVerifiedCount++;
+            } else {
+              rulesetFailure = true; // Backup failure triggers rulesetFailure
+              failedBackupRulesets.push(bRes);
+            }
           }
-          if (backupVerifiedCount < allRulesets.length) {
-            reportLines.push(`- 备用源进度: 已验证 ${backupVerifiedCount}/${allRulesets.length} 个规则集 (部分项因时限跳过)`);
+
+          if (failedBackupRulesets.length === 0 && backupVerifiedCount === allRulesets.length) {
+            reportLines.push(`[✓] 备用源规则集: 全部 ${allRulesets.length} 个规则集 jsDelivr 镜像正文与 SHA256 均校验通过`);
+          } else {
+            if (failedBackupRulesets.length > 0) {
+              for (const f of failedBackupRulesets) {
+                reportLines.push(`[✘] 备用源: ${f.ruleset} 校验失败 (${f.error})`);
+              }
+            }
+            if (backupVerifiedCount < allRulesets.length) {
+              rulesetIncomplete = true;
+              reportLines.push(`[!] 备用源规则集: 未完成 (已验证 ${backupVerifiedCount}/${allRulesets.length} 个规则集，部分项因时限跳过)`);
+            }
           }
         }
       }
@@ -834,9 +865,9 @@
 
     if (abnormalServices.length === 0 && totalTested === serviceList.length) {
       if (countProxyOnly > 0) {
-        reportLines.push(`[✓] 服务连通性: 共探测 ${totalTested} 项服务，当前分流路由均畅通 (其中 ${countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${countBothPass} 项双向均可达)`);
+        reportLines.push(`[✓] 服务连通性: 共探测 ${totalTested} 项服务，当前路由均可达 (其中 ${countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${countBothPass} 项双向均可达)`);
       } else {
-        reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与直连均畅通 (双向均可达)`);
+        reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与 DIRECT 均可达 (双向均可达)`);
       }
     } else {
       reportLines.push(`[!] 服务连通性: 探测 ${totalTested} 项服务中发现 ${abnormalServices.length} 项异常 (仅当前路由可达: ${countProxyOnly}, 双向均可达: ${countBothPass})`);
@@ -861,14 +892,20 @@
       reportLines.push('❗ 诊断结论: 规则发布源清单无法下载或损坏，规则正文校验未执行，请检查网络或切换备用镜像');
     } else if (rulesetFailure) {
       reportLines.push('⚠️ 诊断结论: 部分 .lsr 规则集文件下载失败或哈希校验不匹配，请刷新规则订阅');
+    } else if (rulesetIncomplete) {
+      reportLines.push('⚠️ 诊断结论: 规则集校验因时限未完全完成，已完成部分有效；请在网络良好时重试完整校验');
     } else if (countDirectOnly > 0 && countBothFail === 0) {
       reportLines.push(`⚠️ 诊断结论: 发现 ${countDirectOnly} 项服务仅 DIRECT 可达但当前路由不可达，建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点`);
     } else if (countBothFail > 0) {
       reportLines.push(`⚠️ 诊断结论: 发现 ${countBothFail} 项服务两者均不可达，可能为目标服务临时宕机或本地网络受限`);
+    } else if (sourcesStatus.hasWarning) {
+      reportLines.push(`⚠️ 诊断结论: 已检测核心服务连通性均正常，但发布源存在警告 (${sourcesStatus.sourceNote})；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
+    } else if (sourcesStatus.isDegraded) {
+      reportLines.push(`⚠️ 诊断结论: 已检测核心服务连通性均正常，但发布源处于降级状态 (${sourcesStatus.sourceNote})；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
     } else if (countProxyOnly > 0) {
-      reportLines.push(`✔ 诊断结论: 核心服务分流有效运作 (${countProxyOnly} 项仅当前路由可达/DIRECT不可达, ${countBothPass} 项双向均可达)，连通性平稳 (耗时: ${durationTotal}s)`);
+      reportLines.push(`✔ 诊断结论: 已检测核心服务连通性均正常 (${countProxyOnly} 项仅当前路由可达/DIRECT不可达, ${countBothPass} 项双向均可达)；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
     } else {
-      reportLines.push(`✔ 诊断结论: 全部 ${totalTested} 项服务连接正常 (双向均可达)，分流策略运行平稳 (耗时: ${durationTotal}s)`);
+      reportLines.push(`✔ 诊断结论: 已检测核心服务连通性均正常 (双向均可达)；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
     }
 
     if (timedOut) {
@@ -876,7 +913,7 @@
     }
 
     reportLines.push('----------------------------------------');
-    reportLines.push('【能力边界提示 (需真机验证)】仅探测已知 HTTPS 端点，无法自动发现未知新增域名 (仍需日常抓包或用户反馈补充)；未探测 APNs TCP 5223 及应用内私有长连接。');
+    reportLines.push('【能力边界提示 (需真机验证)】仅探测已知 HTTPS 端点，无法自动发现全部未知域名。若遇稳定异常，应先核对上游更新与规则；仅在仍无法定位时，方需提供一次本地脱敏请求记录。本插件不能探测 APNs TCP 5223，亦不能替代 Telegram 锁屏蜂窝推送、HomeKit 摄像头、Apple Watch 及 CloudKit 真机测试。');
     reportLines.push('========================================');
 
     const finalReport = reportLines.join('\n');
@@ -884,12 +921,17 @@
       report: finalReport,
       repoOk,
       rulesetFailure,
+      rulesetIncomplete,
+      sourcesStatus,
+      hasWarning: Boolean(sourcesStatus && sourcesStatus.hasWarning),
+      isDegraded: Boolean(sourcesStatus && sourcesStatus.isDegraded),
       hasRouteFailure,
       hasRouteBlockedWhileDirectOk,
       countBothPass,
       countProxyOnly,
       countDirectOnly,
       countBothFail,
+      totalTested,
       timedOut,
       duration: durationTotal
     };
@@ -922,17 +964,36 @@
       });
     }, watchdogTimeoutMs);
 
-    runDiagnostic({ mode: args.mode, httpClient: env.$httpClient }).then((res) => {
+    runDiagnostic({ mode: args.mode, httpClient: env.$httpClient, deadlineMs: env.deadlineMs }).then((res) => {
       clearTimer(watchdogTimer);
       console.log(res.report);
       const notifFn = env.$notification || (typeof $notification !== 'undefined' ? $notification : null);
       if (notifFn) {
-        const title = (res.hasRouteFailure || res.rulesetFailure || !res.repoOk)
-          ? 'Loon 规则诊断: 发现异常'
-          : (res.countProxyOnly > 0 ? 'Loon 规则诊断: 连通性正常' : 'Loon 规则诊断: 全部双向直连');
-        const subtitle = res.hasRouteBlockedWhileDirectOk
-          ? '存在路由不可达但 DIRECT 可达项 (仅DIRECT可达)'
-          : `检测完成 (${res.duration}s)，点击查看报告`;
+        let title = '';
+        let subtitle = '';
+
+        if (res.hasRouteFailure || res.rulesetFailure || !res.repoOk) {
+          title = 'Loon 规则诊断: 发现异常';
+        } else if (res.hasWarning || res.isDegraded || res.rulesetIncomplete) {
+          title = 'Loon 规则诊断: 存在警告';
+        } else {
+          title = 'Loon 规则诊断: 连通性正常';
+        }
+
+        if (res.hasRouteBlockedWhileDirectOk) {
+          subtitle = '存在路由不可达但 DIRECT 可达项 (仅DIRECT可达)';
+        } else if (res.rulesetFailure) {
+          subtitle = '规则集校验失败，点击查看报告';
+        } else if (res.rulesetIncomplete) {
+          subtitle = '规则集校验未完全完成，点击查看报告';
+        } else if (res.hasWarning) {
+          subtitle = '发布源存在警告或镜像未同步，点击查看报告';
+        } else if (res.isDegraded) {
+          subtitle = '发布源处于降级状态，点击查看报告';
+        } else {
+          subtitle = `已检测 ${res.totalTested} 项服务均可达 (${res.duration}s)，点击查看报告`;
+        }
+
         notifFn.post(title, subtitle, '已输出至 Loon 日志，可直接全选复制反馈');
       }
       safeDone({

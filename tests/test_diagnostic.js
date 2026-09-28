@@ -102,7 +102,7 @@ function createMockHttpClient(handlers) {
             } else {
               callback(null, { status: h.status || 200, headers: h.headers || {} }, h.data || '');
             }
-          }, 5);
+          }, typeof h.delayMs === 'number' ? h.delayMs : 5);
           return;
         }
       }
@@ -329,14 +329,46 @@ test('8. Primary vs Backup Manifest Version Mismatch Detection', async () => {
       matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
       status: 200,
       data: JSON.stringify(backupMismatchedManifest)
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK'
     }
   ]);
 
   const res = await diagnostic.checkReleaseSources(mockClient);
   assert.strictEqual(res.ok, true);
+  assert.strictEqual(res.primaryOk, true);
+  assert.strictEqual(res.backupOk, true);
   assert.strictEqual(res.mirrorConsistent, false);
+  assert.strictEqual(res.hasWarning, true);
   assert.match(res.sourceNote, /主备双源可达但版本不一致/);
   assert.match(res.sourceNote, /镜像尚未同步/);
+
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'quick' });
+  assert.strictEqual(diag.hasWarning, true);
+  assert.match(diag.report, /\[!\] 发布源状态 \(警告\): 主备双源可达但版本不一致/);
+  assert.match(diag.report, /⚠️ 诊断结论: 已检测核心服务连通性均正常，但发布源存在警告/);
+  assert.doesNotMatch(diag.report, /✔ 诊断结论/);
+
+  // Verify notification title in entrypoint reflects warning
+  let postedNotif = null;
+  diagnostic.initLoonEntrypoint({
+    $done: () => {},
+    $notification: { post: (t, s, b) => { postedNotif = { title: t, subtitle: s, body: b }; } },
+    $httpClient: mockClient,
+    args: { mode: 'quick' }
+  });
+  await new Promise(r => setTimeout(r, 60));
+  assert.ok(postedNotif);
+  assert.strictEqual(postedNotif.title, 'Loon 规则诊断: 存在警告');
+  assert.match(postedNotif.subtitle, /发布源存在警告或镜像未同步/);
 });
 
 test('9. Partial Service Failure with Strictly Neutral Phrasing', async () => {
@@ -388,7 +420,7 @@ test('9. Partial Service Failure with Strictly Neutral Phrasing', async () => {
   assert.doesNotMatch(diag.report, /当前代理节点异常/);
 });
 
-test('10. Full Diagnostic Run with All Green Services and Honest Boundaries', async () => {
+test('10. Objective Phrasing When All Services Are Reachable (Current Route & DIRECT Both Reachable)', async () => {
   const mockClient = createMockHttpClient([
     {
       matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
@@ -421,10 +453,34 @@ test('10. Full Diagnostic Run with All Green Services and Honest Boundaries', as
   assert.strictEqual(diag.hasRouteFailure, false);
   assert.strictEqual(diag.hasRouteBlockedWhileDirectOk, false);
   assert.strictEqual(diag.repoOk, true);
-  assert.match(diag.report, /全部.*项服务连接正常/);
-  assert.match(diag.report, /能力边界提示/);
-  assert.match(diag.report, /无法自动发现未知新增域名/);
+  assert.strictEqual(diag.countBothPass, 3);
+  assert.strictEqual(diag.countProxyOnly, 0);
+
+  // Assert objective phrasing - never claim "分流有效运作" or "分流策略运行平稳"
+  assert.match(diag.report, /全部 3 项服务当前路由与 DIRECT 均可达 \(双向均可达\)/);
+  assert.match(diag.report, /✔ 诊断结论: 已检测核心服务连通性均正常 \(双向均可达\)；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。/);
+  assert.doesNotMatch(diag.report, /分流有效运作/);
+  assert.doesNotMatch(diag.report, /分流策略运行平稳/);
+  assert.doesNotMatch(diag.report, /日常抓包/);
+
+  // Assert updated boundary wording
+  assert.match(diag.report, /【能力边界提示 \(需真机验证\)】仅探测已知 HTTPS 端点，无法自动发现全部未知域名。/);
   assert.match(diag.report, /APNs TCP 5223/);
+
+  // Verify notification title and subtitle in entrypoint
+  let postedNotif = null;
+  diagnostic.initLoonEntrypoint({
+    $done: () => {},
+    $notification: { post: (t, s, b) => { postedNotif = { title: t, subtitle: s, body: b }; } },
+    $httpClient: mockClient,
+    args: { mode: 'quick' }
+  });
+
+  await new Promise(r => setTimeout(r, 60));
+  assert.ok(postedNotif, 'Notification must be posted');
+  assert.strictEqual(postedNotif.title, 'Loon 规则诊断: 连通性正常');
+  assert.doesNotMatch(postedNotif.title, /直连/, 'Notification title must never contain "直连"');
+  assert.match(postedNotif.subtitle, /已检测 3 项服务均可达/);
 
   // Daily report line count assertion: normal all-pass report must be concise (<= 25 lines)
   const lineCount = diag.report.split('\n').filter(l => l.trim()).length;
@@ -496,9 +552,9 @@ test('11. 4-Way Routing States Distinction (Proxy-Only, Direct-Only, Both-Pass, 
   assert.match(singleTest.verdict, /仅当前路由可达, DIRECT不可达/);
 });
 
-test('12. Entrypoint Watchdog Fires at Accurate Time and Emits Real Partial Report with Single $done Call', async () => {
-  // Test that initLoonEntrypoint uses watchdog timer (27s quick, 56s full)
-  // and when requests hang, triggers safeDone with the partial report from in-progress items
+test('12. Entrypoint Watchdog Fires via Simulated Timer Callback and Emits Real Partial Report with Single $done Call', async () => {
+  // Note: This test explicitly mocks setTimeout/clearTimeout to verify timer callback logic and scheduled delay values
+  // (27000ms quick, 56000ms full) instantaneously; it does not claim to run 27/56 physical seconds on a real device.
   let donePayloads = [];
   let mockDone = (payload) => {
     donePayloads.push(payload);
@@ -640,3 +696,124 @@ test('14. HTTP 404 Reports Resource Missing or Not Yet Published and Skips Rules
   assert.match(diag.report, /规则正文校验: 未执行 \(主备清单均不可用\)/);
   assert.doesNotMatch(diag.report, /14\/14 LSR 本地元数据校验匹配/);
 });
+
+test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification', async () => {
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(sampleManifest)
+    },
+    {
+      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 500,
+      data: 'Server Error'
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  const res = await diagnostic.checkReleaseSources(mockClient);
+  assert.strictEqual(res.primaryOk, true);
+  assert.strictEqual(res.backupOk, false);
+  assert.strictEqual(res.hasWarning, true);
+  assert.strictEqual(res.isAllGood, false);
+  assert.match(res.sourceNote, /GitHub 主源正常，jsDelivr 备用源不可达/);
+
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'quick' });
+  assert.strictEqual(diag.hasWarning, true);
+  assert.match(diag.report, /\[!\] 发布源状态 \(警告\): GitHub 主源正常，jsDelivr 备用源不可达/);
+  assert.match(diag.report, /⚠️ 诊断结论: 已检测核心服务连通性均正常，但发布源存在警告/);
+  assert.doesNotMatch(diag.report, /✔ 诊断结论/);
+
+  // Notification title assertion: must flag warning, never green or direct
+  let postedNotif = null;
+  diagnostic.initLoonEntrypoint({
+    $done: () => {},
+    $notification: { post: (t, s, b) => { postedNotif = { title: t, subtitle: s, body: b }; } },
+    $httpClient: mockClient,
+    args: { mode: 'quick' }
+  });
+  await new Promise(r => setTimeout(r, 60));
+  assert.ok(postedNotif);
+  assert.strictEqual(postedNotif.title, 'Loon 规则诊断: 存在警告');
+  assert.doesNotMatch(postedNotif.title, /连通性正常/);
+  assert.doesNotMatch(postedNotif.title, /直连/);
+  assert.match(postedNotif.subtitle, /发布源存在警告或镜像未同步/);
+});
+
+test('16. Backup Rulesets Incomplete Verification Due to Deadline Triggers Warning Not Green', async () => {
+  // Build a manifest with 14 rulesets
+  const rulesets14 = {};
+  for (let i = 1; i <= 14; i++) {
+    rulesets14[`Ruleset-${i}.lsr`] = {
+      total_rules: 2,
+      revision: sampleRevision,
+      sha256: sampleSha256
+    };
+  }
+  const manifest14 = Object.assign({}, sampleManifest, { rulesets: rulesets14 });
+
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url.includes('manifest.json'),
+      status: 200,
+      data: JSON.stringify(manifest14)
+    },
+    {
+      matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL),
+      status: 200,
+      data: sampleLsrContent,
+      delayMs: 1
+    },
+    {
+      matches: (url) => url.startsWith(diagnostic.BACKUP_BASE_URL),
+      status: 200,
+      data: sampleLsrContent,
+      delayMs: 25 // delay per request so deadline cuts off backup verification
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  // Set deadlineMs short so primary succeeds but backup checks exceed deadlineMs
+  const diag = await diagnostic.runDiagnostic({
+    httpClient: mockClient,
+    mode: 'full',
+    deadlineMs: 60
+  });
+
+  assert.strictEqual(diag.rulesetIncomplete, true, 'Ruleset verification must be flagged as incomplete');
+  assert.strictEqual(diag.rulesetFailure, false, 'No files corrupted, only truncated');
+  assert.match(diag.report, /\[!\] 备用源规则集: 未完成/);
+  assert.doesNotMatch(diag.report, /\[✓\] 备用源规则集: 全部 14 个规则集 jsDelivr 镜像正文与 SHA256 均校验通过/);
+  assert.match(diag.report, /⚠️ 诊断结论: 规则集校验因时限未完全完成，已完成部分有效/);
+  assert.doesNotMatch(diag.report, /✔ 诊断结论/);
+
+  // Notification title assertion: must flag warning, never green pass
+  let postedNotif = null;
+  diagnostic.initLoonEntrypoint({
+    $done: () => {},
+    $notification: { post: (t, s, b) => { postedNotif = { title: t, subtitle: s, body: b }; } },
+    $httpClient: mockClient,
+    args: { mode: 'full' },
+    deadlineMs: 60
+  });
+  await new Promise(r => setTimeout(r, 120));
+  assert.ok(postedNotif);
+  assert.strictEqual(postedNotif.title, 'Loon 规则诊断: 存在警告');
+  assert.doesNotMatch(postedNotif.title, /连通性正常/);
+  assert.match(postedNotif.subtitle, /规则集校验未完全完成/);
+});
+
