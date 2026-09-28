@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T18:46:47.446781+00:00",
-  "content_revision": "041db8613353",
-  "package_sha256": "041db86133531f5c7a98883f77035a4fe45e2a50503dc46fb1c8a66b66b4f20a",
+  "build_timestamp": "2026-09-28T19:14:02.785312+00:00",
+  "content_revision": "d7f47dbb7247",
+  "package_sha256": "d7f47dbb72479d894ebb582aee60c15d4094b0a0888293d2fc5bdc573bafde4d",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -12,12 +12,6 @@
       "revision": "a1f362bd587f",
       "sha256": "a1f362bd587fb71280babce6e24a2ba6fa84607af35f04a0cea7c60b666622bb",
       "description": "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
-    },
-    "AI-China-Direct.lsr": {
-      "total_rules": 2,
-      "revision": "50fbb9d56b4c",
-      "sha256": "50fbb9d56b4c6e9be8795818514a2b1a6d5162f343cf55107128c35d12ad4649",
-      "description": "Mainland China AI services (DeepSeek, etc.)"
     },
     "GoogleDrive.lsr": {
       "total_rules": 8,
@@ -79,11 +73,11 @@
       "sha256": "3b18ad5912d7a0bc4f5caea8ca42849935ccfe05fb5505576066899d63609709",
       "description": "GitHub development platform and services"
     },
-    "Apple-Direct.lsr": {
-      "total_rules": 155,
-      "revision": "cff12abe2740",
-      "sha256": "cff12abe2740f66a292a85284f295c8201147ac20c40f36ec98fce58bd1c978e",
-      "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
+    "TestFlight.lsr": {
+      "total_rules": 3,
+      "revision": "a352eaefa38e",
+      "sha256": "a352eaefa38ef0234d41c53712fec7c2513104aae462b71b0c3d1b9ee5f238b9",
+      "description": "Apple TestFlight beta testing platform"
     },
     "Apple-Media.lsr": {
       "total_rules": 18,
@@ -91,23 +85,29 @@
       "sha256": "02ad01eebd77731bb1fd1d42c3bb956cc2a52f1ff0a6fcbc21bb2ed85e14ddda",
       "description": "Apple media services (Apple TV+, Apple News, Fitness+)"
     },
-    "TestFlight.lsr": {
-      "total_rules": 3,
-      "revision": "a352eaefa38e",
-      "sha256": "a352eaefa38ef0234d41c53712fec7c2513104aae462b71b0c3d1b9ee5f238b9",
-      "description": "Apple TestFlight beta testing platform"
-    },
     "Apple-Push.lsr": {
       "total_rules": 10,
       "revision": "2517937b2d51",
       "sha256": "2517937b2d513300eae4df39626d82ca664e9778560cc1b61dab3b6e508c6d4c",
       "description": "Apple Push Notification service (APNs) minimal authoritative rules"
     },
+    "AI-China-Direct.lsr": {
+      "total_rules": 19,
+      "revision": "eaec94aa7fb8",
+      "sha256": "eaec94aa7fb80f2d6fa4b9d3a88e5ceb38665bb5040212fbd09a5cd9bd35ca7e",
+      "description": "Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)"
+    },
+    "Apple-Direct.lsr": {
+      "total_rules": 155,
+      "revision": "cff12abe2740",
+      "sha256": "cff12abe2740f66a292a85284f295c8201147ac20c40f36ec98fce58bd1c978e",
+      "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
+    },
     "China-Direct.lsr": {
       "total_rules": 359,
       "revision": "3f598c94a81a",
       "sha256": "3f598c94a81acf1d35bb80171e0bb0c3a44308ea0d0a2ea1d0c9b684ad45c1bb",
-      "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
+      "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     },
     "China-GeoIP.lsr": {
       "total_rules": 1,

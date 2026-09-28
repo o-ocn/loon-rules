@@ -1,5 +1,5 @@
 # NAME: Apple-Direct
-# DESCRIPTION: Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)
+# DESCRIPTION: Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)
 # AUTHOR: o-ocn
 # REVISION: cff12abe2740
 # TOTAL: 155

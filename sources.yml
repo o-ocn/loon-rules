@@ -3,6 +3,13 @@
 # Primary Upstream: blackmatrix7/ios_rule_script (GPL-2.0)
 # Secondary Reference: luestr/ShuntRules (Cites blackmatrix7, used solely as structural reference)
 # Strategy Neutrality: All rulesets are pure service classifications without bound policies.
+#
+# === Loon Recommended Evaluation Order ===
+# This file is ordered top-to-bottom matching the recommended Loon [Remote Rule] priority:
+#   1. Proxy services (user typically assigns proxy policy)
+#   2. Direct services (user typically assigns direct policy)
+#   3. Structural catch-alls (GeoIP safety net, LAN bypass)
+# Within Loon, remote rules are evaluated top-to-bottom; first match wins.
 
 metadata:
   primary_upstream:
@@ -17,6 +24,10 @@ metadata:
   max_shrink_ratio: 0.15
 
 rulesets:
+  # ======================================================================
+  # PROXY SERVICES (user typically assigns proxy / specific node policy)
+  # ======================================================================
+
   AI-Overseas:
     description: "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     custom_first: true
@@ -68,11 +79,6 @@ rulesets:
           - "DOMAIN-KEYWORD,developerprofiles"
           - "DOMAIN-KEYWORD,generativelanguage"
     local_custom: "rules/custom/AI-Overseas.list"
-
-  AI-China-Direct:
-    description: "Mainland China AI services (DeepSeek, etc.)"
-    custom_first: true
-    local_custom: "rules/custom/AI-China-Direct.list"
 
   GoogleDrive:
     description: "Google Drive storage services"
@@ -188,21 +194,17 @@ rulesets:
         min_rules: 10
     local_custom: "rules/custom/GitHub.list"
 
-  Apple-Direct:
-    description: "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
+  TestFlight:
+    description: "Apple TestFlight beta testing platform"
     custom_first: true
-    max_shrink_ratio: 0.15
+    max_shrink_ratio: 0.35
     sources:
-      - name: "AppleMusic"
-        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list"
-        min_rules: 10
-      - name: "iCloud"
-        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list"
-        min_rules: 20
-      - name: "SystemOTA"
-        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/SystemOTA/SystemOTA.list"
-        min_rules: 30
-    local_custom: "rules/custom/Apple-Direct.list"
+      - name: "TestFlight"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/TestFlight/TestFlight.list"
+        min_rules: 2
+        filter_excluded:
+          - "DOMAIN,beta.apple.com"
+    local_custom: "rules/custom/TestFlight.list"
 
   Apple-Media:
     description: "Apple media services (Apple TV+, Apple News, Fitness+)"
@@ -217,25 +219,38 @@ rulesets:
         min_rules: 2
     local_custom: "rules/custom/Apple-Media.list"
 
-  TestFlight:
-    description: "Apple TestFlight beta testing platform"
-    custom_first: true
-    max_shrink_ratio: 0.35
-    sources:
-      - name: "TestFlight"
-        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/TestFlight/TestFlight.list"
-        min_rules: 2
-        filter_excluded:
-          - "DOMAIN,beta.apple.com"
-    local_custom: "rules/custom/TestFlight.list"
-
   Apple-Push:
     description: "Apple Push Notification service (APNs) minimal authoritative rules"
     custom_first: true
     local_custom: "rules/custom/Apple-Push.list"
 
+  # ======================================================================
+  # DIRECT SERVICES (user typically assigns DIRECT policy)
+  # ======================================================================
+
+  AI-China-Direct:
+    description: "Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)"
+    custom_first: true
+    local_custom: "rules/custom/AI-China-Direct.list"
+
+  Apple-Direct:
+    description: "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
+    custom_first: true
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "AppleMusic"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleMusic/AppleMusic.list"
+        min_rules: 10
+      - name: "iCloud"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list"
+        min_rules: 20
+      - name: "SystemOTA"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/SystemOTA/SystemOTA.list"
+        min_rules: 30
+    local_custom: "rules/custom/Apple-Direct.list"
+
   China-Direct:
-    description: "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
+    description: "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -249,6 +264,10 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/JingDong/JingDong.list"
         min_rules: 30
     local_custom: "rules/custom/China-Direct.list"
+
+  # ======================================================================
+  # STRUCTURAL CATCH-ALLS (bottom of rule chain, before FINAL)
+  # ======================================================================
 
   China-GeoIP:
     description: "GeoIP catch-all for mainland China IP traffic (safety net)"

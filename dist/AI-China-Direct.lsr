@@ -1,8 +1,25 @@
 # NAME: AI-China-Direct
-# DESCRIPTION: Mainland China AI services (DeepSeek, etc.)
+# DESCRIPTION: Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)
 # AUTHOR: o-ocn
-# REVISION: 50fbb9d56b4c
-# TOTAL: 2
+# REVISION: eaec94aa7fb8
+# TOTAL: 19
 # ==============================================================================
 DOMAIN-SUFFIX,deepseek.com
 DOMAIN-SUFFIX,deepseeksvc.com
+DOMAIN-SUFFIX,kimi.ai
+DOMAIN-SUFFIX,moonshot.cn
+DOMAIN-SUFFIX,kimichat.com
+DOMAIN-SUFFIX,zhipuai.cn
+DOMAIN-SUFFIX,chatglm.cn
+DOMAIN-SUFFIX,bigmodel.cn
+DOMAIN-SUFFIX,doubao.com
+DOMAIN-SUFFIX,coze.cn
+DOMAIN-SUFFIX,minimaxi.com
+DOMAIN-SUFFIX,hailuoai.com
+DOMAIN-SUFFIX,hailuoai.video
+DOMAIN-SUFFIX,baichuan-ai.com
+DOMAIN-SUFFIX,01.ai
+DOMAIN-SUFFIX,lingyiwanwu.com
+DOMAIN-SUFFIX,stepfun.com
+DOMAIN-SUFFIX,sensenova.cn
+DOMAIN-SUFFIX,sparkchain.cn

@@ -969,11 +969,11 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
         self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
 
-        # Verify total rules across all 19 .lsr files is exactly 1728
+        # Verify total rules across all 19 .lsr files is exactly 1745
         total_rules = 0
         for fname in self.lsr_files:
             total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
-        self.assertEqual(total_rules, 1728, f"Expected 1728 rules, got {total_rules}")
+        self.assertEqual(total_rules, 1745, f"Expected 1745 rules, got {total_rules}")
 
     @classmethod
     def tearDownClass(cls):

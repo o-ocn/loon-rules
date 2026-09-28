@@ -32,17 +32,17 @@
   "GitHub": {
     "GitHub": 31
   },
-  "Apple-Direct": {
-    "AppleMusic": 10,
-    "iCloud": 61,
-    "SystemOTA": 78
+  "TestFlight": {
+    "TestFlight": 3
   },
   "Apple-Media": {
     "AppleTV": 9,
     "AppleNews": 2
   },
-  "TestFlight": {
-    "TestFlight": 3
+  "Apple-Direct": {
+    "AppleMusic": 10,
+    "iCloud": 61,
+    "SystemOTA": 78
   },
   "China-Direct": {
     "WeChat": 33,
