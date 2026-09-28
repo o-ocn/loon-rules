@@ -6,8 +6,9 @@
 #
 # === Loon Recommended Evaluation Order ===
 # This file is ordered top-to-bottom matching the recommended Loon [Remote Rule] priority:
-#   1. Proxy services (user typically assigns proxy policy)
-#   2. Direct services (user typically assigns direct policy)
+#   0. System Critical (APNs push notification socket - evaluated first for zero push latency)
+#   1. Proxy services (user typically assigns proxy / specific exit nodes)
+#   2. Direct services (user typically assigns DIRECT policy)
 #   3. Structural catch-alls (GeoIP safety net, LAN bypass)
 # Within Loon, remote rules are evaluated top-to-bottom; first match wins.
 
@@ -24,6 +25,15 @@ metadata:
   max_shrink_ratio: 0.15
 
 rulesets:
+  # ======================================================================
+  # SYSTEM CRITICAL (APNs push socket, top priority to avoid evaluation latency)
+  # ======================================================================
+
+  Apple-Push:
+    description: "Apple Push Notification service (APNs) minimal authoritative rules"
+    custom_first: true
+    local_custom: "rules/custom/Apple-Push.list"
+
   # ======================================================================
   # PROXY SERVICES (user typically assigns proxy / specific node policy)
   # ======================================================================
@@ -218,11 +228,6 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleNews/AppleNews.list"
         min_rules: 2
     local_custom: "rules/custom/Apple-Media.list"
-
-  Apple-Push:
-    description: "Apple Push Notification service (APNs) minimal authoritative rules"
-    custom_first: true
-    local_custom: "rules/custom/Apple-Push.list"
 
   # ======================================================================
   # DIRECT SERVICES (user typically assigns DIRECT policy)
