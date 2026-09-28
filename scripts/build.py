@@ -517,7 +517,78 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_off
 
     raise RuntimeError(f"CRITICAL: Failed to fetch upstream rule from {url} after {max_retries} attempts: {last_err}") from last_err
 
+def recover_interrupted_dist(dist_dir: str = DIST_DIR) -> bool:
+    """
+    Checks for interrupted previous builds and recovers dist/ from .dist_old if needed.
+    Returns True if recovery was performed, False otherwise.
+    """
+    dist_parent = os.path.dirname(os.path.abspath(dist_dir)) or BASE_DIR
+    dist_old = os.path.join(dist_parent, ".dist_old")
+    if not os.path.exists(dist_old):
+        return False
+
+    # Check if dist_dir is missing or broken (e.g., less than expected .lsr files)
+    is_broken = False
+    if not os.path.isdir(dist_dir):
+        is_broken = True
+    else:
+        existing_lsrs = [f for f in os.listdir(dist_dir) if f.endswith(".lsr")]
+        if len(existing_lsrs) < 10:  # Incomplete directory
+            is_broken = True
+
+    if is_broken:
+        if os.path.exists(dist_dir):
+            shutil.rmtree(dist_dir, ignore_errors=True)
+        os.rename(dist_old, dist_dir)
+        print(f"[CRASH RECOVERY] Interrupted build detected! Successfully restored previous dist/ from {dist_old}.")
+        return True
+    else:
+        # dist_dir is intact, safe to clean up stale .dist_old
+        shutil.rmtree(dist_old, ignore_errors=True)
+        return False
+
+def switch_dist_directory(dist_new: str, dist_dir: str = DIST_DIR) -> None:
+    """
+    Two-stage staged directory switch with in-flight rollback protection and crash recovery.
+
+    Design Note & Technical Guarantee:
+    On Windows NTFS and standard POSIX filesystems without atomic directory symlinks,
+    renaming an existing non-empty directory is a 2-stage operation:
+    1. rename dist -> .dist_old
+    2. rename dist_new -> dist
+    Between step 1 and step 2, there is a sub-millisecond gap where dist does not exist.
+    If a power failure or SIGKILL process termination occurs precisely inside this gap,
+    automatic recovery is guaranteed on the next run via recover_interrupted_dist().
+    If an exception occurs during step 2, instant in-flight rollback restores .dist_old -> dist.
+    We honestly withdraw any unconditional claim that external readers never see an intermediate gap.
+    """
+    dist_parent = os.path.dirname(os.path.abspath(dist_dir)) or BASE_DIR
+    dist_old = os.path.join(dist_parent, ".dist_old")
+
+    recover_interrupted_dist(dist_dir)
+    if os.path.exists(dist_old):
+        shutil.rmtree(dist_old, ignore_errors=True)
+
+    if os.path.exists(dist_dir):
+        os.rename(dist_dir, dist_old)
+
+    try:
+        os.rename(dist_new, dist_dir)
+        if os.path.exists(dist_old):
+            shutil.rmtree(dist_old, ignore_errors=True)
+        print(f"[STAGED SWITCH] Successfully replaced entire dist/ directory with crash-recovery protection.")
+    except Exception as e:
+        # In-flight rollback: restore .dist_old -> dist_dir
+        if os.path.exists(dist_old) and not os.path.exists(dist_dir):
+            try:
+                os.rename(dist_old, dist_dir)
+                print(f"[ROLLBACK] Restored previous dist/ directory following failed switch.")
+            except Exception as rb_err:
+                raise RuntimeError(f"Switch failed and rollback also encountered error: {rb_err}") from e
+        raise RuntimeError(f"Directory switch failed, previous dist restored: {e}") from e
+
 def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE, allow_new_baseline=False, offline=False):
+    recover_interrupted_dist(dist_dir)
     print(f"[*] Starting Loon Rules Build at {datetime.now(timezone.utc).isoformat()}...")
     cfg = load_sources(sources_file)
     rulesets = cfg.get("rulesets", {})
@@ -896,25 +967,9 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 else:
                     change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
 
-            # Directory-level atomic switch with full rollback protection
-            dist_parent = os.path.dirname(dist_dir) or BASE_DIR
-            dist_old = os.path.join(dist_parent, ".dist_old")
-            if os.path.exists(dist_old):
-                shutil.rmtree(dist_old, ignore_errors=True)
-            if os.path.exists(dist_dir):
-                os.rename(dist_dir, dist_old)
-
-            try:
-                os.rename(dist_new, dist_dir)
-                if os.path.exists(dist_old):
-                    shutil.rmtree(dist_old, ignore_errors=True)
-                print(f"[ATOMIC SWITCH] Successfully replaced entire dist/ directory.")
-                print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time}, content_revision: {content_rev})")
-            except Exception as e:
-                # Rollback on failure: restore dist_old -> dist_dir
-                if os.path.exists(dist_old) and not os.path.exists(dist_dir):
-                    os.rename(dist_old, dist_dir)
-                raise RuntimeError(f"Atomic directory switch failed, restored previous dist from backup: {e}") from e
+            # Directory-level staged switch with rollback and crash recovery
+            switch_dist_directory(dist_new, dist_dir)
+            print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time}, content_revision: {content_rev})")
 
             # Update lock baseline when dist genuinely updated
             if has_upstream_sources:

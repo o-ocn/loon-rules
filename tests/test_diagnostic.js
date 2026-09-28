@@ -167,7 +167,7 @@ test('3. 401/403 Status Treated as Server Reachable for Specific Endpoints', asy
   const result = await diagnostic.testService(service, mockClient);
   assert.strictEqual(result.routeReachable, true, '401 should be treated as reachable when in expected_status');
   assert.strictEqual(result.directReachable, true);
-  assert.match(result.verdict, /当前路由正常/);
+  assert.match(result.verdict, /当前路由可达/);
 });
 
 test('4. Primary and Backup Release Mirrors: Both Checked Independently', async () => {
@@ -485,29 +485,122 @@ test('11. 4-Way Routing States Distinction (Proxy-Only, Direct-Only, Both-Pass, 
   assert.strictEqual(diag.countDirectOnly, 1);
   assert.strictEqual(diag.countBothFail, 0);
 
-  // Must clearly distinguish states in report and not write '全部正常'
-  assert.match(diag.report, /仅代理通: 1.*双向通: 1/);
+  // Must clearly distinguish states in report using objective phrasing
+  assert.match(diag.report, /仅当前路由可达: 1.*双向均可达: 1/);
   assert.match(diag.report, /仅 DIRECT 可达.*当前路由不可达/);
+  assert.doesNotMatch(diag.report, /走代理分流/);
   assert.doesNotMatch(diag.report, /全部 3 项服务当前路由探测均正常/);
+
+  // Test individual testService verdict for proxy_only
+  const singleTest = await diagnostic.testService({ url: 'https://chatgpt.com', expected_status: [200] }, mockClient);
+  assert.match(singleTest.verdict, /仅当前路由可达, DIRECT不可达/);
 });
 
-test('12. Full Mode Supports Longer Deadlines (> 28s) Without Premature Watchdog Cutoff', async () => {
-  // Test full mode configures a 52s deadline and runs past 28 seconds without getting aborted by a hardcoded 28s timer
+test('12. Entrypoint Watchdog Fires at Accurate Time and Emits Real Partial Report with Single $done Call', async () => {
+  // Test that initLoonEntrypoint uses watchdog timer (27s quick, 56s full)
+  // and when requests hang, triggers safeDone with the partial report from in-progress items
+  let donePayloads = [];
+  let mockDone = (payload) => {
+    donePayloads.push(payload);
+  };
+
+  // 1. Quick mode watchdog triggers at 27000ms
+  let scheduledDelay = 0;
+  let timerCallback = null;
+  let mockSetTimeout = (cb, delay) => {
+    scheduledDelay = delay;
+    timerCallback = cb;
+    return 12345;
+  };
+  let mockClearTimeout = () => {};
+
+  // Setup slow client that responds for 1 service then hangs forever
+  let mockHangingClient = {
+    get: (opts, cb) => {
+      if (opts.url && opts.url.includes('manifest.json')) {
+        return cb(null, { status: 200 }, JSON.stringify(sampleManifest));
+      }
+      if (opts.url && opts.url.includes('.lsr')) {
+        return cb(null, { status: 200 }, sampleLsrContent);
+      }
+      if (opts.url && opts.url.includes('chatgpt.com')) {
+        return cb(null, { status: 200 }, 'OK');
+      }
+      // other services hang (never call cb)
+    }
+  };
+
+  // Launch quick entrypoint
+  const runner = diagnostic.initLoonEntrypoint({
+    $done: mockDone,
+    $httpClient: mockHangingClient,
+    args: { mode: 'quick' },
+    setTimeout: mockSetTimeout,
+    clearTimeout: mockClearTimeout
+  });
+
+  assert.strictEqual(scheduledDelay, 27000, 'Quick mode watchdog must be scheduled at exactly 27000ms');
+
+  // Wait a tick for manifest and chatgpt to finish
+  await new Promise(r => setTimeout(r, 60));
+
+  // Trigger watchdog manually (simulating 27s timer firing)
+  assert.ok(timerCallback, 'Timer callback must be registered');
+  timerCallback();
+
+  assert.strictEqual(donePayloads.length, 1, '$done must be called exactly once by watchdog');
+  assert.match(donePayloads[0].title, /快速模式超时/);
+  assert.match(donePayloads[0].content, /时限保护 - 部分报告/);
+  assert.match(donePayloads[0].content, /已完成服务探测/);
+  assert.match(donePayloads[0].content, /在途网络请求未被底层 API 中断，但报告生成已截止/);
+
+  // Verify $done is NOT called again even if called directly
+  runner.safeDone({ error: 'Secondary call' });
+  assert.strictEqual(donePayloads.length, 1, '$done must never be called multiple times');
+
+  // 2. Full mode watchdog schedules at 56000ms
+  scheduledDelay = 0;
+  timerCallback = null;
+  diagnostic.initLoonEntrypoint({
+    $done: (p) => {},
+    $httpClient: mockHangingClient,
+    args: { mode: 'full' },
+    setTimeout: (cb, d) => { scheduledDelay = d; return 999; },
+    clearTimeout: () => {}
+  });
+  assert.strictEqual(scheduledDelay, 56000, 'Full mode watchdog must be scheduled at exactly 56000ms');
+});
+
+test('13. Backup Release Mirror Checks All 14 Rulesets in Full Mode and Reflects Failures in Total State', async () => {
+  // Test full mode verifying all rulesets from backup mirror
+  const fullManifest = Object.assign({}, sampleManifest, {
+    rulesets: {
+      'AI-Overseas.lsr': { total_rules: 2, revision: sampleRevision, sha256: sampleSha256 },
+      'GoogleDrive.lsr': { total_rules: 2, revision: sampleRevision, sha256: sampleSha256 }
+    }
+  });
+
+  // Mock client where backup mirror GoogleDrive.lsr is corrupted (wrong SHA256)
   const mockClient = createMockHttpClient([
     {
-      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
+      matches: (url) => url.includes('manifest.json'),
       status: 200,
-      data: JSON.stringify(sampleManifest)
+      data: JSON.stringify(fullManifest)
     },
     {
-      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
-      status: 200,
-      data: JSON.stringify(sampleManifest)
-    },
-    {
-      matches: (url) => url.includes('.lsr'),
+      matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL),
       status: 200,
       data: sampleLsrContent
+    },
+    {
+      matches: (url) => url === `${diagnostic.BACKUP_BASE_URL}/AI-Overseas.lsr`,
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: (url) => url === `${diagnostic.BACKUP_BASE_URL}/GoogleDrive.lsr`,
+      status: 200,
+      data: '# Corrupted backup content\nDOMAIN,corrupted.com\n'
     },
     {
       matches: () => true,
@@ -516,48 +609,13 @@ test('12. Full Mode Supports Longer Deadlines (> 28s) Without Premature Watchdog
     }
   ]);
 
-  // Run full mode diagnostic
   const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'full' });
-  assert.strictEqual(diag.repoOk, true);
-  assert.strictEqual(diag.rulesetFailure, false);
-  assert.strictEqual(diag.timedOut, false);
-  assert.match(diag.report, /完整诊断/);
+  assert.strictEqual(diag.rulesetFailure, true, 'Corrupted backup file must trigger rulesetFailure');
+  assert.match(diag.report, /备用源: GoogleDrive.lsr 校验失败/);
+  assert.match(diag.report, /部分 .lsr 规则集文件下载失败或哈希校验不匹配/);
 });
 
-test('13. Backup Release Mirror .lsr Content and SHA256 Verification in Full Mode', async () => {
-  const mockClient = createMockHttpClient([
-    {
-      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
-      status: 200,
-      data: JSON.stringify(sampleManifest)
-    },
-    {
-      matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
-      status: 200,
-      data: JSON.stringify(sampleManifest)
-    },
-    {
-      matches: (url) => url.startsWith(diagnostic.BACKUP_BASE_URL) && url.includes('.lsr'),
-      status: 200,
-      data: sampleLsrContent
-    },
-    {
-      matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL) && url.includes('.lsr'),
-      status: 200,
-      data: sampleLsrContent
-    },
-    {
-      matches: () => true,
-      status: 200,
-      data: 'OK'
-    }
-  ]);
-
-  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'full' });
-  assert.match(diag.report, /备用源规则集.*校验均通过/);
-});
-
-test('14. HTTP 404 Response from Unmerged Main Branch Reports Resource Pending Release', async () => {
+test('14. HTTP 404 Reports Resource Missing or Not Yet Published and Skips Ruleset Body Check when Manifests Missing', async () => {
   const mockClient = createMockHttpClient([
     {
       matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL,
@@ -568,10 +626,17 @@ test('14. HTTP 404 Response from Unmerged Main Branch Reports Resource Pending R
       matches: (url) => url === diagnostic.BACKUP_MANIFEST_URL,
       status: 404,
       data: '404 Not Found'
+    },
+    {
+      matches: () => true,
+      status: 200,
+      data: 'OK'
     }
   ]);
 
-  const sources = await diagnostic.checkReleaseSources(mockClient);
-  assert.strictEqual(sources.ok, false);
-  assert.match(sources.sourceNote, /HTTP 404 \(资源待发布: main 分支尚未合并\)/);
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'full' });
+  assert.strictEqual(diag.repoOk, false);
+  assert.match(diag.report, /HTTP 404 \(资源不存在或尚未发布\)/);
+  assert.match(diag.report, /规则正文校验: 未执行 \(主备清单均不可用\)/);
+  assert.doesNotMatch(diag.report, /14\/14 LSR 本地元数据校验匹配/);
 });

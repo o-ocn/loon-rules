@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T15:46:55.719818+00:00",
-  "content_revision": "4c665bf2d94e",
-  "package_sha256": "4c665bf2d94eb525a180f1a1136c8d0baf86ac78e572ac8773bac7b2b16a3a74",
+  "build_timestamp": "2026-09-28T16:37:30.095678+00:00",
+  "content_revision": "0b8b8e0be129",
+  "package_sha256": "0b8b8e0be129d84c60d11f320e65caf9fd01e0f93afafdc40f3ec3177bf62756",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -32,9 +32,9 @@
       "description": "Microsoft OneDrive services"
     },
     "Google.lsr": {
-      "total_rules": 689,
-      "revision": "063e08790853",
-      "sha256": "063e087908535f4b7e1b70ca6859acf69c03c9c6e3951b3285bd5a43f507da3e",
+      "total_rules": 690,
+      "revision": "c95b8615252d",
+      "sha256": "c95b8615252d1d1f48a2eedd71c961aa98ca8b3bc0252ed14c02699fb9a7f089",
       "description": "General Google services and infrastructure"
     },
     "YouTube.lsr": {

@@ -264,7 +264,7 @@
       return { ok: false, manifest: null, duration: res.duration, error: 'manifest 数据解析失败' };
     }
     const errMsg = res.status
-      ? (res.status === 404 ? 'HTTP 404 (资源待发布: main 分支尚未合并)' : `HTTP ${res.status}`)
+      ? (res.status === 404 ? 'HTTP 404 (资源不存在或尚未发布)' : `HTTP ${res.status}`)
       : classifyError(res.error);
     return { ok: false, manifest: null, duration: res.duration, error: errMsg };
   }
@@ -340,7 +340,7 @@
 
     if (!res.ok || res.status !== 200) {
       const errStr = res.status
-        ? (res.status === 404 ? 'HTTP 404 (资源待发布: main 分支尚未合并)' : `HTTP ${res.status}`)
+        ? (res.status === 404 ? 'HTTP 404 (资源不存在或尚未发布)' : `HTTP ${res.status}`)
         : classifyError(res.error);
       return {
         ruleset: rulesetName,
@@ -489,18 +489,18 @@
     let symbol = '✔';
 
     if (routeReachable && directReachable) {
-      verdict = `当前路由正常(${routeRes.duration}ms) | DIRECT正常(${directRes.duration}ms)`;
+      verdict = `当前路由可达(${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)`;
     } else if (routeReachable && !directReachable) {
-      verdict = `当前路由正常(${routeRes.duration}ms) | DIRECT不可达 (当前路由与DIRECT探测存在差异)`;
+      verdict = `当前路由可达(${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)`;
     } else if (!routeReachable && directReachable) {
       symbol = '✘';
       const errName = routeRes.status ? `HTTP ${routeRes.status}` : classifyError(routeRes.error);
-      verdict = `当前路由不可达(${errName}) | DIRECT可达 (建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点)`;
+      verdict = `当前路由不可达(${errName}) | DIRECT可达 (仅DIRECT可达, 当前路由不可达)`;
     } else {
       symbol = '⚠';
       const rErr = routeRes.status ? `HTTP ${routeRes.status}` : classifyError(routeRes.error);
       const dErr = directRes.status ? `HTTP ${directRes.status}` : classifyError(directRes.error);
-      verdict = `当前路由与DIRECT均不可达 (路由: ${rErr}, DIRECT: ${dErr}；可能为服务临时故障或本地网络受限)`;
+      verdict = `当前路由与DIRECT均不可达 (路由: ${rErr}, DIRECT: ${dErr}；双向均不可达)`;
     }
 
     return {
@@ -516,8 +516,8 @@
     };
   }
 
-  // Controlled concurrency batch runner with cancellation check
-  async function mapConcurrent(items, limit, fn, shouldStop) {
+  // Controlled concurrency batch runner with cancellation and item completion callback
+  async function mapConcurrent(items, limit, fn, shouldStop, onItemCompleted) {
     const results = [];
     let index = 0;
 
@@ -527,7 +527,13 @@
           break;
         }
         const currentIndex = index++;
-        results[currentIndex] = await fn(items[currentIndex]);
+        const res = await fn(items[currentIndex]);
+        results[currentIndex] = res;
+        if (onItemCompleted) {
+          try {
+            onItemCompleted(items[currentIndex], res);
+          } catch (e) {}
+        }
       }
     }
 
@@ -540,18 +546,83 @@
     return results;
   }
 
+  // Live diagnostic execution progress tracker for safe watchdog reporting
+  const currentProgress = {
+    mode: 'quick',
+    startTime: 0,
+    sourcesStatus: null,
+    manifest: null,
+    rulesetVerifiedCount: 0,
+    rulesetTotalToTest: 0,
+    rulesetFailed: [],
+    completedServices: [],
+    countBothPass: 0,
+    countProxyOnly: 0,
+    countDirectOnly: 0,
+    countBothFail: 0,
+    totalServices: 0,
+    reset: function(mode) {
+      this.mode = mode || 'quick';
+      this.startTime = Date.now();
+      this.sourcesStatus = null;
+      this.manifest = null;
+      this.rulesetVerifiedCount = 0;
+      this.rulesetTotalToTest = 0;
+      this.rulesetFailed = [];
+      this.completedServices = [];
+      this.countBothPass = 0;
+      this.countProxyOnly = 0;
+      this.countDirectOnly = 0;
+      this.countBothFail = 0;
+      this.totalServices = 0;
+    },
+    formatPartialReport: function(reason) {
+      const modeStr = this.mode === 'full' ? '完整诊断' : '快速诊断';
+      const timeoutLimit = this.mode === 'full' ? '56s' : '27s';
+      const lines = [
+        '【Loon 规则与连通性诊断报告】',
+        `- 模式: ${modeStr} [${reason || '时限保护 - 部分报告'}]`,
+        `- 状态: 运行达到安全时限 (${timeoutLimit})，在途网络请求未被底层 API 中断，但报告生成已截止。`
+      ];
+
+      if (this.manifest && this.manifest.content_revision) {
+        lines.push(`- 版本标识: ${this.manifest.content_revision}`);
+      }
+
+      if (this.sourcesStatus) {
+        lines.push(`- 发布源状态: ${this.sourcesStatus.sourceNote || '已检测'}`);
+      }
+
+      if (this.rulesetTotalToTest > 0) {
+        lines.push(`- 规则集进度: 已验证 ${this.rulesetVerifiedCount}/${this.rulesetTotalToTest} 个 (失败: ${this.rulesetFailed.length})`);
+      }
+
+      if (this.completedServices.length > 0) {
+        lines.push(`- 已完成服务探测: ${this.completedServices.length}/${this.totalServices || this.completedServices.length} 项 (其中 ${this.countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${this.countBothPass} 项双向均可达)`);
+        lines.push('- 部分连通性分布:');
+        for (const s of this.completedServices) {
+          lines.push(`  * ${s.name}: ${s.statusDesc}`);
+        }
+        lines.push('- 结论: 诊断超时未全部完成；已完成部分仅供参考。');
+      } else {
+        lines.push('- 服务探测: 超时前未能完成任何服务探测。');
+        lines.push('- 结论: 超时，未形成结论。请检查网络或切换节点后重试。');
+      }
+
+      lines.push('----------------------------------------');
+      lines.push('【能力边界提示 (需真机验证)】仅探测已知 HTTPS 端点，未探测 APNs TCP 5223 及应用内私有长连接。');
+      return lines.join('\n');
+    }
+  };
+
   // Main diagnostic execution
-  // Features:
-  // - Hard execution deadline (25s for quick, 50s for full) to prevent Loon script kill
-  // - Controlled concurrency (limit = 4)
-  // - Partial reporting on timeout
-  // - Concise daily report (summarizes successes in 1-2 lines, lists only exceptions)
-  // - Honest boundary disclaimer
   async function runDiagnostic(options = {}) {
     const httpClient = options.httpClient || (typeof $httpClient !== 'undefined' ? $httpClient : null);
     const mode = options.mode || parseArgs().mode;
     const startTime = Date.now();
     const deadlineMs = (mode === 'full') ? 52000 : 25000;
+
+    currentProgress.reset(mode);
 
     function isDeadlineExceeded() {
       return (Date.now() - startTime) >= deadlineMs;
@@ -564,7 +635,9 @@
 
     // 1. Check Primary and Backup Release Sources & Manifest (Concurrent)
     const sourcesStatus = await checkReleaseSources(httpClient);
+    currentProgress.sourcesStatus = sourcesStatus;
     const manifest = sourcesStatus.activeManifest;
+    currentProgress.manifest = manifest;
     const repoOk = sourcesStatus.ok;
 
     if (repoOk && manifest) {
@@ -592,11 +665,18 @@
         ? allRulesets
         : allRulesets.filter(r => ['AI-Overseas.lsr', 'Apple-Push.lsr', 'GoogleDrive.lsr', 'China-Direct.lsr'].includes(r));
       toTestLength = toTest.length;
+      currentProgress.rulesetTotalToTest = toTestLength;
 
       const vResults = await mapConcurrent(toTest, CONCURRENCY_LIMIT, async (rname) => {
         const meta = manifest.rulesets[rname];
         return await verifyRulesetFile(rname, meta, activeBase, httpClient);
-      }, isDeadlineExceeded);
+      }, isDeadlineExceeded, (rname, res) => {
+        if (res && res.ok) {
+          currentProgress.rulesetVerifiedCount++;
+        } else if (res) {
+          currentProgress.rulesetFailed.push(res);
+        }
+      });
 
       for (let i = 0; i < vResults.length; i++) {
         const vRes = vResults[i];
@@ -625,21 +705,44 @@
         }
       }
 
-      // Also verify backup source ruleset download in full mode if backup manifest was reachable
+      // In full mode: verify ALL rulesets from backup source (jsDelivr)
       if (mode === 'full' && sourcesStatus.backup.ok && !isDeadlineExceeded()) {
-        const sampleBackupName = 'AI-Overseas.lsr';
-        const bMeta = manifest.rulesets[sampleBackupName];
-        if (bMeta) {
-          const bRes = await verifyRulesetFile(sampleBackupName, bMeta, BACKUP_BASE_URL, httpClient);
+        const failedBackupRulesets = [];
+        let backupVerifiedCount = 0;
+
+        const bResults = await mapConcurrent(allRulesets, CONCURRENCY_LIMIT, async (rname) => {
+          const bMeta = manifest.rulesets[rname];
+          return await verifyRulesetFile(rname, bMeta, BACKUP_BASE_URL, httpClient);
+        }, isDeadlineExceeded, (rname, res) => {
+          if (res && !res.ok) {
+            currentProgress.rulesetFailed.push(res);
+          }
+        });
+
+        for (let i = 0; i < bResults.length; i++) {
+          const bRes = bResults[i];
+          if (!bRes) continue;
           if (bRes.ok) {
-            reportLines.push(`[✓] 备用源规则集: jsDelivr 镜像规则正文与 SHA256 校验均通过 (测试: ${sampleBackupName})`);
+            backupVerifiedCount++;
           } else {
-            reportLines.push(`[!] 备用源规则集: jsDelivr 镜像校验未通过 (${bRes.error})`);
+            rulesetFailure = true; // Backup failure triggers rulesetFailure
+            failedBackupRulesets.push(bRes);
+          }
+        }
+
+        if (failedBackupRulesets.length === 0 && backupVerifiedCount === allRulesets.length) {
+          reportLines.push(`[✓] 备用源规则集: 全部 ${allRulesets.length} 个规则集 jsDelivr 镜像正文与 SHA256 均校验通过`);
+        } else {
+          for (const f of failedBackupRulesets) {
+            reportLines.push(`[✘] 备用源: ${f.ruleset} 校验失败 (${f.error})`);
+          }
+          if (backupVerifiedCount < allRulesets.length) {
+            reportLines.push(`- 备用源进度: 已验证 ${backupVerifiedCount}/${allRulesets.length} 个规则集 (部分项因时限跳过)`);
           }
         }
       }
     } else {
-      reportLines.push('[!] 因清单不可达，跳过规则文件正文下载校验');
+      reportLines.push('[!] 规则正文校验: 未执行 (主备清单均不可用)');
     }
 
     reportLines.push('----------------------------------------');
@@ -650,21 +753,28 @@
       serviceList = manifest.services;
     } else {
       serviceList = [
-        { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/favicon.ico', expected_status: [200, 301, 302, 401, 403], quick: true },
+        { id: 'chatgpt', name: 'ChatGPT / OpenAI', url: 'https://chatgpt.com/favicon.ico', expected_status: [200, 301, 302, 401, 403], quick: true },
         { id: 'gemini', name: 'Google Gemini', url: 'https://gemini.google.com/', expected_status: [200, 301, 302, 400, 404], quick: true },
-        { id: 'claude', name: 'Claude', url: 'https://claude.ai/favicon.ico', expected_status: [200, 301, 302, 401, 403], quick: true },
+        { id: 'claude', name: 'Claude / Anthropic', url: 'https://claude.ai/favicon.ico', expected_status: [200, 301, 302, 401, 403], quick: true },
         { id: 'deepseek', name: 'DeepSeek (大陆 AI)', url: 'https://api.deepseek.com/', expected_status: [200, 401, 404], quick: true },
         { id: 'googledrive', name: 'Google Drive', url: 'https://drive.google.com/drive/my-drive', expected_status: [200, 301, 302], quick: true },
-        { id: 'google', name: 'Google 通用', url: 'https://www.google.com/generate_204', expected_status: [204, 200], quick: true },
-        { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/generate_204', expected_status: [204, 200], quick: true },
-        { id: 'github', name: 'GitHub', url: 'https://api.github.com/zen', expected_status: [200], quick: true },
+        { id: 'google', name: 'Google 通用服务', url: 'https://www.google.com/generate_204', expected_status: [204, 200], quick: true },
+        { id: 'youtube', name: 'YouTube 流媒体', url: 'https://www.youtube.com/generate_204', expected_status: [204, 200], quick: true },
+        { id: 'telegram', name: 'Telegram 平台', url: 'https://t.me/telegram', expected_status: [200, 301, 302], quick: true },
+        { id: 'github', name: 'GitHub 规则源', url: 'https://api.github.com/zen', expected_status: [200], quick: true },
         { id: 'icloud', name: 'Apple iCloud', url: 'https://www.icloud.com/', expected_status: [200, 301, 302], quick: true },
+        { id: 'grok', name: 'xAI / Grok', url: 'https://grok.com/', expected_status: [200, 301, 302, 401, 403, 404], quick: false },
+        { id: 'muse', name: 'Muse from Meta', url: 'https://muse.ai/', expected_status: [200, 301, 302], quick: false },
+        { id: 'testflight', name: 'Apple TestFlight', url: 'https://testflight.apple.com/v1/session', expected_status: [200, 401, 403, 404], quick: false },
+        { id: 'apns_safe', name: 'Apple APNs (HTTPS安全测试)', url: 'https://courier.push.apple.com/', expected_status: [200, 400, 403, 404, 502], quick: false }
       ];
     }
 
     if (mode === 'quick') {
       serviceList = serviceList.filter(s => s.quick === true);
     }
+
+    currentProgress.totalServices = serviceList.length;
 
     let countBothPass = 0;
     let countProxyOnly = 0;
@@ -675,7 +785,28 @@
 
     const sResults = await mapConcurrent(serviceList, CONCURRENCY_LIMIT, async (s) => {
       return await testService(s, httpClient);
-    }, isDeadlineExceeded);
+    }, isDeadlineExceeded, (s, res) => {
+      if (!res) return;
+      let statusDesc = '';
+      if (res.routeReachable && res.directReachable) {
+        currentProgress.countBothPass++;
+        statusDesc = '可达 (双向均可达)';
+      } else if (res.routeReachable && !res.directReachable) {
+        currentProgress.countProxyOnly++;
+        statusDesc = '可达 (仅当前路由可达, DIRECT不可达)';
+      } else if (!res.routeReachable && res.directReachable) {
+        currentProgress.countDirectOnly++;
+        statusDesc = '异常 (仅DIRECT可达, 当前路由不可达)';
+      } else {
+        currentProgress.countBothFail++;
+        statusDesc = '不可达 (双向均不可达)';
+      }
+      currentProgress.completedServices.push({
+        id: s.id,
+        name: s.name,
+        statusDesc: statusDesc
+      });
+    });
 
     if (isDeadlineExceeded()) {
       timedOut = true;
@@ -703,12 +834,12 @@
 
     if (abnormalServices.length === 0 && totalTested === serviceList.length) {
       if (countProxyOnly > 0) {
-        reportLines.push(`[✓] 服务连通性: 共探测 ${totalTested} 项服务，当前分流路由均畅通 (其中 ${countProxyOnly} 项仅代理通/需分流, ${countBothPass} 项双向直连通)`);
+        reportLines.push(`[✓] 服务连通性: 共探测 ${totalTested} 项服务，当前分流路由均畅通 (其中 ${countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${countBothPass} 项双向均可达)`);
       } else {
-        reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与直连均畅通`);
+        reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与直连均畅通 (双向均可达)`);
       }
     } else {
-      reportLines.push(`[!] 服务连通性: 探测 ${totalTested} 项服务中发现 ${abnormalServices.length} 项异常 (仅代理通: ${countProxyOnly}, 双向通: ${countBothPass})`);
+      reportLines.push(`[!] 服务连通性: 探测 ${totalTested} 项服务中发现 ${abnormalServices.length} 项异常 (仅当前路由可达: ${countProxyOnly}, 双向均可达: ${countBothPass})`);
       for (const res of abnormalServices) {
         if (res.category === 'direct_only') {
           reportLines.push(`  ✘ ${res.name}: 仅 DIRECT 可达 | 当前路由不可达 (建议检查该服务命中规则、策略组或出口节点)`);
@@ -727,17 +858,17 @@
     const durationTotal = ((Date.now() - startTime) / 1000).toFixed(1);
 
     if (!repoOk) {
-      reportLines.push('❗ 诊断结论: 规则发布源无法下载或 manifest 损坏，请检查网络或切换备用镜像');
+      reportLines.push('❗ 诊断结论: 规则发布源清单无法下载或损坏，规则正文校验未执行，请检查网络或切换备用镜像');
     } else if (rulesetFailure) {
       reportLines.push('⚠️ 诊断结论: 部分 .lsr 规则集文件下载失败或哈希校验不匹配，请刷新规则订阅');
     } else if (countDirectOnly > 0 && countBothFail === 0) {
-      reportLines.push(`⚠️ 诊断结论: 发现 ${countDirectOnly} 项服务仅 DIRECT 通但当前路由不可达，建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点`);
+      reportLines.push(`⚠️ 诊断结论: 发现 ${countDirectOnly} 项服务仅 DIRECT 可达但当前路由不可达，建议在 Loon 中检查该服务命中规则、绑定策略组或出口节点`);
     } else if (countBothFail > 0) {
       reportLines.push(`⚠️ 诊断结论: 发现 ${countBothFail} 项服务两者均不可达，可能为目标服务临时宕机或本地网络受限`);
     } else if (countProxyOnly > 0) {
-      reportLines.push(`✔ 诊断结论: 核心服务分流有效运作 (${countProxyOnly} 项走代理分流, ${countBothPass} 项双向直连)，分流策略平稳 (耗时: ${durationTotal}s)`);
+      reportLines.push(`✔ 诊断结论: 核心服务分流有效运作 (${countProxyOnly} 项仅当前路由可达/DIRECT不可达, ${countBothPass} 项双向均可达)，连通性平稳 (耗时: ${durationTotal}s)`);
     } else {
-      reportLines.push(`✔ 诊断结论: 全部 ${totalTested} 项服务连接正常，分流策略运行平稳 (耗时: ${durationTotal}s)`);
+      reportLines.push(`✔ 诊断结论: 全部 ${totalTested} 项服务连接正常 (双向均可达)，分流策略运行平稳 (耗时: ${durationTotal}s)`);
     }
 
     if (timedOut) {
@@ -765,50 +896,65 @@
   }
 
   // Loon Execution Entrypoint with Safe Single-$done Guard and Watchdog
-  if (typeof $done !== 'undefined') {
+  function initLoonEntrypoint(env = {}) {
+    const doneFn = env.$done || (typeof $done !== 'undefined' ? $done : null);
+    if (!doneFn) return null;
+
     let doneCalled = false;
     function safeDone(payload) {
       if (doneCalled) return;
       doneCalled = true;
-      $done(payload);
+      doneFn(payload);
     }
 
-    const args = parseArgs();
+    const setTimer = env.setTimeout || setTimeout;
+    const clearTimer = env.clearTimeout || clearTimeout;
+    const args = env.args || parseArgs();
     const isFull = (args.mode === 'full');
     const watchdogTimeoutMs = isFull ? 56000 : 27000;
 
     // Safety watchdog to guarantee $done before Loon aborts
-    const watchdogTimer = setTimeout(() => {
+    const watchdogTimer = setTimer(() => {
+      const partialReport = currentProgress.formatPartialReport('时限保护 - 部分报告');
       safeDone({
-        title: `Loon 规则诊断 (时限保护 - ${isFull ? '完整' : '快速'}模式)`,
-        content: `【Loon 规则诊断报告】\n⚠️ 诊断执行接近系统总时限 (${isFull ? '60' : '30'}s)，已触发时限保护退出。\n已终止未完成网络请求并安全返回，保证 $done 正常交付。`
+        title: `Loon 规则诊断 (${isFull ? '完整' : '快速'}模式超时)`,
+        content: partialReport
       });
     }, watchdogTimeoutMs);
 
-    runDiagnostic().then((res) => {
-      clearTimeout(watchdogTimer);
+    runDiagnostic({ mode: args.mode, httpClient: env.$httpClient }).then((res) => {
+      clearTimer(watchdogTimer);
       console.log(res.report);
-      if (typeof $notification !== 'undefined') {
+      const notifFn = env.$notification || (typeof $notification !== 'undefined' ? $notification : null);
+      if (notifFn) {
         const title = (res.hasRouteFailure || res.rulesetFailure || !res.repoOk)
           ? 'Loon 规则诊断: 发现异常'
-          : (res.countProxyOnly > 0 ? 'Loon 规则诊断: 分流正常' : 'Loon 规则诊断: 全部正常');
+          : (res.countProxyOnly > 0 ? 'Loon 规则诊断: 连通性正常' : 'Loon 规则诊断: 全部双向直连');
         const subtitle = res.hasRouteBlockedWhileDirectOk
-          ? '存在路由不可达但 DIRECT 可达项 (建议检查节点)'
+          ? '存在路由不可达但 DIRECT 可达项 (仅DIRECT可达)'
           : `检测完成 (${res.duration}s)，点击查看报告`;
-        $notification.post(title, subtitle, '已输出至 Loon 日志，可直接全选复制反馈给 ChatGPT 或 Gemini');
+        notifFn.post(title, subtitle, '已输出至 Loon 日志，可直接全选复制反馈');
       }
       safeDone({
         title: 'Loon 规则诊断',
         content: res.report
       });
     }).catch((err) => {
-      clearTimeout(watchdogTimer);
+      clearTimer(watchdogTimer);
       console.log('Diagnostic error occurred');
-      if (typeof $notification !== 'undefined') {
-        $notification.post('Loon 规则诊断失败', '执行异常', classifyError(err));
+      const notifFn = env.$notification || (typeof $notification !== 'undefined' ? $notification : null);
+      if (notifFn) {
+        notifFn.post('Loon 规则诊断失败', '执行异常', classifyError(err));
       }
       safeDone({ error: classifyError(err) });
     });
+
+    return { safeDone, watchdogTimer };
+  }
+
+  // Automatic execution if running inside Loon runtime
+  if (typeof $done !== 'undefined') {
+    initLoonEntrypoint();
   }
 
   // Export for automated local testing
@@ -823,6 +969,8 @@
       calculateSha256,
       pureJsSha256,
       mapConcurrent,
+      currentProgress,
+      initLoonEntrypoint,
       PRIMARY_BASE_URL,
       BACKUP_BASE_URL,
       PRIMARY_MANIFEST_URL,

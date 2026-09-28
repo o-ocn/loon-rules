@@ -351,7 +351,21 @@ rulesets:
         with open(manifest_path, "rb") as f:
             manifest_before = f.read()
 
-        res = build.build_rulesets()
+        def controlled_urlopen(req, *args, **kwargs):
+            url = req.full_url if hasattr(req, "full_url") else str(req)
+            cache_file = build.get_upstream_cache_path(url)
+            if os.path.isfile(cache_file):
+                with open(cache_file, "rb") as f:
+                    content = f.read()
+                mock_resp = MagicMock()
+                mock_resp.status = 200
+                mock_resp.read.return_value = content
+                mock_resp.__enter__.return_value = mock_resp
+                return mock_resp
+            raise urllib.error.URLError(f"Controlled test fixture: URL {url} not cached")
+
+        with patch("urllib.request.urlopen", side_effect=controlled_urlopen):
+            res = build.build_rulesets()
         self.assertEqual(res.get("updated_count"), 0)
         self.assertTrue(res.get("is_zero_change"))
 
@@ -847,35 +861,54 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             self.assertIn("Failed to fetch upstream rule", str(cm.exception))
 
     def test_29_atomic_directory_switch_and_rollback(self):
-        """Verify atomic directory switch and rollback protection on failure."""
-        test_dist = os.path.join(TEST_TMP_DIR, "test_dist")
+        """Verify switch_dist_directory in-flight rollback and recover_interrupted_dist crash recovery."""
+        test_dist = os.path.join(TEST_TMP_DIR, "test_dist_actual")
         os.makedirs(test_dist, exist_ok=True)
         orig_file = os.path.join(test_dist, "original.lsr")
         with open(orig_file, "w", encoding="utf-8") as f:
             f.write("# ORIGINAL CONTENT\n")
 
-        # Test simulated failed swap
-        test_new = os.path.join(TEST_TMP_DIR, "test_dist_new")
+        test_new = os.path.join(TEST_TMP_DIR, "test_dist_new_actual")
         os.makedirs(test_new, exist_ok=True)
         new_file = os.path.join(test_new, "new.lsr")
         with open(new_file, "w", encoding="utf-8") as f:
             f.write("# NEW CONTENT\n")
 
-        dist_old = os.path.join(TEST_TMP_DIR, ".test_dist_old")
-        os.rename(test_dist, dist_old)
-        # Simulate failure by causing exception
-        try:
-            raise OSError("Simulated disk error during rename")
-        except Exception:
-            # Rollback
-            if os.path.exists(dist_old) and not os.path.exists(test_dist):
-                os.rename(dist_old, test_dist)
+        # 1. Test in-flight rollback in switch_dist_directory when second rename fails
+        real_rename = os.rename
+        rename_call_count = [0]
+        def faulty_rename(src, dst):
+            rename_call_count[0] += 1
+            if rename_call_count[0] == 2:  # Step 2: dist_new -> dist
+                raise OSError("Injected disk I/O error during second rename")
+            return real_rename(src, dst)
+
+        with patch("os.rename", side_effect=faulty_rename):
+            with self.assertRaises(RuntimeError) as cm:
+                build.switch_dist_directory(test_new, test_dist)
+            self.assertIn("Directory switch failed, previous dist restored", str(cm.exception))
 
         # Assert rollback preserved original content
         self.assertTrue(os.path.isdir(test_dist))
         self.assertTrue(os.path.isfile(orig_file))
         with open(orig_file, "r", encoding="utf-8") as f:
             self.assertEqual(f.read(), "# ORIGINAL CONTENT\n")
+
+        # 2. Test crash recovery: simulate process terminated mid-switch (dist missing, .dist_old exists)
+        dist_parent = os.path.dirname(os.path.abspath(test_dist))
+        dist_old = os.path.join(dist_parent, ".dist_old")
+        if os.path.exists(dist_old):
+            shutil.rmtree(dist_old, ignore_errors=True)
+        os.rename(test_dist, dist_old)
+        self.assertFalse(os.path.exists(test_dist))
+        self.assertTrue(os.path.exists(dist_old))
+
+        # Call recover_interrupted_dist
+        recovered = build.recover_interrupted_dist(test_dist)
+        self.assertTrue(recovered)
+        self.assertTrue(os.path.isdir(test_dist))
+        self.assertTrue(os.path.isfile(orig_file))
+        self.assertFalse(os.path.exists(dist_old))
 
         # Verify manifest.json does NOT contain release_commit
         manifest_path = os.path.join(DIAGNOSTICS_DIST_DIR, "manifest.json")
@@ -912,6 +945,29 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
                     all_overlaps.extend(ovs)
 
         self.assertEqual(len(all_overlaps), 0, f"Expected zero custom duplicates with upstream, found: {all_overlaps}")
+
+    def test_31_googleusercontent_placement_boundary(self):
+        """Verify DOMAIN-SUFFIX,googleusercontent.com is in Google.lsr and absent in AI and Drive."""
+        google_path = os.path.join(DIST_DIR, "Google.lsr")
+        ai_path = os.path.join(DIST_DIR, "AI-Overseas.lsr")
+        drive_path = os.path.join(DIST_DIR, "GoogleDrive.lsr")
+
+        with open(google_path, "r", encoding="utf-8") as f:
+            g_c = f.read()
+        with open(ai_path, "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(drive_path, "r", encoding="utf-8") as f:
+            dr_c = f.read()
+
+        self.assertIn("DOMAIN-SUFFIX,googleusercontent.com", g_c, "googleusercontent.com missing in Google.lsr!")
+        self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
+        self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
+
+        # Verify total rules across all 14 .lsr files is exactly 1532
+        total_rules = 0
+        for fname in self.lsr_files:
+            total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
+        self.assertEqual(total_rules, 1532, f"Expected 1532 rules, got {total_rules}")
 
     @classmethod
     def tearDownClass(cls):
