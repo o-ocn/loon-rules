@@ -32,6 +32,9 @@
     "AppleTV": 9,
     "AppleNews": 2
   },
+  "TestFlight": {
+    "TestFlight": 3
+  },
   "China-Direct": {
     "WeChat": 33,
     "Alibaba": 57,

@@ -1,0 +1,11 @@
+# NAME: TestFlight
+# DESCRIPTION: Apple TestFlight beta testing platform, bound to US
+# RECOMMENDED POLICY: US
+# AUTHOR: o-ocn
+# REVISION: 4ff0ca70aa1b
+# TOTAL: 4
+# ==============================================================================
+DOMAIN-SUFFIX,testflight.apple.com
+DOMAIN,testflight.apple.com
+DOMAIN,beta.itunes.apple.com
+DOMAIN-KEYWORD,testflight

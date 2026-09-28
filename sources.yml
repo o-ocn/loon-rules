@@ -199,7 +199,7 @@ rulesets:
     local_custom: "rules/custom/Apple-Direct.list"
 
   Apple-Media-US:
-    description: "Apple US-restricted services (Apple TV+, Apple News, Fitness+, TestFlight)"
+    description: "Apple US-restricted services (Apple TV+, Apple News, Fitness+)"
     bound_policy: "US Test"
     custom_first: true
     max_shrink_ratio: 0.15
@@ -211,6 +211,19 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleNews/AppleNews.list"
         min_rules: 2
     local_custom: "rules/custom/Apple-Media-US.list"
+
+  TestFlight:
+    description: "Apple TestFlight beta testing platform, bound to US"
+    bound_policy: "US"
+    custom_first: true
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "TestFlight"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/TestFlight/TestFlight.list"
+        min_rules: 2
+        filter_excluded:
+          - "DOMAIN,beta.apple.com"
+    local_custom: "rules/custom/TestFlight.list"
 
   Apple-Push-Experimental:
     description: "Independent experimental APNs rule, bound to Apple Push policy"

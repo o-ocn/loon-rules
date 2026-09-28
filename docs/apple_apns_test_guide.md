@@ -88,18 +88,32 @@
   本仓库提供的 `Apple-Push-Experimental.lsr` 在所有导入示例中**默认设为关闭 (`enabled=false`)**。
   只有在用户主动实测、且确认抓包记录中看到了推送连接时，才根据需要启用。若 APNs 流量未进入 Loon，`.lsr` 无法单独解决该问题。
 
+### C. 本地 [Rule] 规则与远程订阅规则的优先级制约（核心原理解析）
+* **本地规则的绝对优先级**：
+  原配置在本地 `[Rule]` 中显式包含了 6 条指向 `Apple Push` 的 APNs 规则：
+  - `DOMAIN-SUFFIX,push.apple.com,Apple Push`
+  - `IP-CIDR,17.249.0.0/16,Apple Push,no-resolve`
+  - `IP-CIDR,17.252.0.0/16,Apple Push,no-resolve`
+  - `IP-CIDR,17.57.144.0/22,Apple Push,no-resolve`
+  - `IP-CIDR,17.188.128.0/18,Apple Push,no-resolve`
+  - `IP-CIDR,17.188.20.0/23,Apple Push,no-resolve`
+* **生效机制说明**：
+  在 Loon 的流水线中，本地 `[Rule]` 的优先级高于所有远程订阅 `[Remote Rule]`。当 APNs 流量进入 Loon 时，会优先命中这 6 条本地规则并走 `Apple Push` 策略。
+* **重要结论**：
+  **单独启用远程实验规则并将远程规则绑定为 `DIRECT`，并不能将 APNs 流量改为直连**，因为本地 `[Rule]` 会在前端先行拦截。因此，现有这 6 条本地 APNs 规则必须保持原样；本轮测试切勿擅自修改本地规则或手机系统开关，APNs、HomeKit、Watch 及 Telegram 推送表现严格留待最后真机实测验证。
+
 ---
 
 ## 4. APNs 单变量控制测试矩阵
 
-为探索 Telegram 的低延迟后台推送，同时绝对不破坏 Apple 核心服务，请严格遵循**一次只改变一个变量**的测试流程：
+为探索 Telegram 的低延迟后台推送，同时绝对不破坏 Apple 核心服务，请严格遵循**一次只改变一个变量**的测试流程（所有 APNs 变更须在确认本地规则与手机开关后实施）：
 
-| 测试阶段 | Loon 开关组合 | 规则与策略设置 | 需实测的网络环境 | 必须核验的观察项 |
+| 测试阶段 | Loon 开关组合 | 本地与远程规则状态 | 需实测的网络环境 | 必须核验的观察项 |
 | :--- | :--- | :--- | :--- | :--- |
-| **阶段 1：基线确认** | 包含所有网络: 关<br>包含 APNS: **关** | `Apple-Push-Experimental` **禁用** | 大陆 Wi-Fi & 蜂窝数据 | 1. 划掉 Telegram 后台，测试系统推送延迟。<br>2. 观察 Loon 请求记录中是否出现 `push.apple.com` 或 `17.x.x.x`（验证其是否绕过 Loon）。 |
-| **阶段 2：捕获测试 (直连)** | 包含所有网络: 关<br>包含 APNS: **开** | 启用 `Apple-Push-Experimental`<br>策略手动固定为 **`DIRECT`** | 大陆 Wi-Fi | 1. 查看 Loon 请求记录：是否开始记录 `apsd` / `push.apple.com` 并命中 `DIRECT`。<br>2. 检查 Apple Watch 天气是否正常。<br>3. 检查 HomeKit 室内摄像头画面是否秒开。<br>4. 检查爱乐记、猿音的 CloudKit 同步是否畅通。 |
-| **阶段 3：代理测试 (分网验证)** | 包含所有网络: 关<br>包含 APNS: **开** | 策略切换至 **`Apple Push`** (代理节点) | **网络 A：大陆 Wi-Fi**<br>**网络 B：大陆蜂窝数据** | 1. 锁屏 5 分钟后测试 Telegram 消息唤醒速度。<br>2. 对比蜂窝与 Wi-Fi 切换时推送是否断连。<br>3. 检查全系统其他 App（微信、邮件、门铃）通知是否受牵连。 |
+| **阶段 1：基线确认 (当前配置)** | 包含所有网络: 关<br>包含 APNS: **关** | 本地 6 条 APNs 规则保持现状<br>`Apple-Push-Experimental` **禁用** | 大陆 Wi-Fi & 蜂窝数据 | 1. 划掉 Telegram 后台，测试系统推送延迟。<br>2. 观察 Loon 请求记录中是否出现 `push.apple.com` 或 `17.x.x.x`（核验其是否绕过 Loon）。 |
+| **阶段 2：捕获测试 (原策略)** | 包含所有网络: 关<br>包含 APNS: **开** | 本地 6 条 APNs 规则走 `Apple Push`<br>远程实验规则保持禁用 | 大陆 Wi-Fi | 1. 查看 Loon 请求记录：是否开始记录 `apsd` / `push.apple.com` 并命中 `Apple Push`。<br>2. 检查 Apple Watch 天气是否正常。<br>3. 检查 HomeKit 室内摄像头画面是否秒开。<br>4. 检查爱乐记、猿音的 CloudKit 同步是否畅通。 |
+| **阶段 3：分网综合验证** | 包含所有网络: 关<br>包含 APNS: **开** | 本地 APNs 策略保持 `Apple Push` | **网络 A：大陆 Wi-Fi**<br>**网络 B：大陆蜂窝数据** | 1. 锁屏 5~10 分钟后测试 Telegram 消息唤醒速度。<br>2. 对比蜂窝与 Wi-Fi 切换时推送是否断连。<br>3. 检查全系统其他 App（微信、邮件、门铃）通知是否受牵连。 |
 
 > [!CAUTION]
 > **异常回滚红线**：
-> 一旦发现 Apple Watch 天气无法获取、爱乐记或猿音同步停滞、或 HomeKit 摄像头提示“未响应”，**立即将 `Apple-Push-Experimental.lsr` 停用或将 Loon【包含 APNS】关闭**，即可瞬间恢复原生网络表现。
+> 一旦发现 Apple Watch 天气无法获取、爱乐记或猿音同步停滞、或 HomeKit 摄像头提示“未响应”，**立即将 Loon【包含 APNS】关闭**，即可瞬间恢复原生网络表现。

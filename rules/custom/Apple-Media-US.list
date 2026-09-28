@@ -21,5 +21,3 @@ DOMAIN-SUFFIX,apple.news
 DOMAIN-SUFFIX,amp-api.fitness.apple.com
 DOMAIN-SUFFIX,fitness.apple.com
 
-# --- TestFlight ---
-DOMAIN-SUFFIX,testflight.apple.com
