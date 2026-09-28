@@ -669,8 +669,8 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                     f"Build halted to protect dist."
                 )
 
-    # 6. Atomic write to temporary staging directory first
-    staging_dir = tempfile.mkdtemp(prefix="loon_dist_staging_")
+    # 6. Atomic write to temporary staging directory on E: drive first
+    staging_dir = tempfile.mkdtemp(prefix="loon_dist_staging_", dir=BASE_DIR)
     staging_diag_dir = os.path.join(staging_dir, "diagnostics")
     os.makedirs(staging_diag_dir, exist_ok=True)
 
@@ -768,8 +768,10 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 target_file = os.path.join(dist_dir, f"{name}.lsr")
                 new_cnt = len(staged_rules_by_set.get(name, []))
                 if name in files_to_update:
-                    with open(target_file, "w", encoding="utf-8", newline="\n") as f:
+                    tmp_target = target_file + ".tmp"
+                    with open(tmp_target, "w", encoding="utf-8", newline="\n") as f:
                         f.write(files_to_update[name])
+                    os.replace(tmp_target, target_file)
                     prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
                     delta = new_cnt - prev_cnt
                     delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(修改)"
@@ -778,12 +780,14 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 else:
                     change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
 
-            # Copy diagnostic scripts
+            # Copy diagnostic scripts atomically
             for s_p, d_p in [(lpx_src, lpx_dst), (js_src, js_dst)]:
                 if os.path.isfile(s_p):
-                    shutil.copy2(s_p, d_p)
+                    tmp_d = d_p + ".tmp"
+                    shutil.copy2(s_p, tmp_d)
+                    os.replace(tmp_d, d_p)
 
-            # Generate and write new manifest.json
+            # Generate and write new manifest.json atomically
             manifest_data = {
                 "schema_version": "1.0",
                 "build_timestamp": build_time,
@@ -802,9 +806,11 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                     "第三方依赖 CloudKit 的 App (爱乐记、猿音) 真实多端双向同步"
                 ])
             }
-            with open(manifest_dst, "w", encoding="utf-8", newline="\n") as f:
+            tmp_manifest = manifest_dst + ".tmp"
+            with open(tmp_manifest, "w", encoding="utf-8", newline="\n") as f:
                 json.dump(manifest_data, f, indent=2, ensure_ascii=False)
                 f.write("\n")
+            os.replace(tmp_manifest, manifest_dst)
             print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time})")
 
             # Update lock baseline when dist genuinely updated

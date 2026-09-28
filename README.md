@@ -21,12 +21,12 @@
    - **Google Drive / 共享 API**：`www.googleapis.com` 承载 Primuse 音乐串流等多业务共享，严禁归入 Drive 或 AI，统一归于 `Google.lsr`。
    - **YouTube / 普通 Google**：YouTube 视频、CDN IP-CIDRs (`172.110.32.0/21`, `216.73.80.0/20`) 专属于 `YouTube`。`deepmind.com` 归于 AI；YouTube 排在 Google 之前。
    - **Grok / Twitter/X**：`grok.com`、`x.ai` 归入 `AI-Overseas`；Twitter 平台主干归入 `Twitter`；禁止跨集污染。
-   - **Muse / Meta 精准核实**：严格区分独立 AI 视频检索平台 `https://muse.ai/` 与 Meta 生成式音乐应用 `Muse from Meta` (App Store ID: 6760173601，使用 `meta.ai` / `api.meta.ai`)；严禁引入 Meta 社交套件 (`facebook.com`, `instagram.com`, `meta.com` 等)。
+   - **Muse from Meta 精准核实**：Muse from Meta (App Store ID: 6760173601) 是 Meta 于 2026-09-08 官方发布的个人 AI 代理 (Personal AI Agent)，在 iOS、Android 和 `muse.ai` 上运行。专属域名 `muse.ai` 归入 `AI-Overseas`；`meta.ai` / `api.meta.ai` 属于通用 Meta AI 基础设施，因缺少 Muse 专属端点证据不予收录；严禁引入 Meta 社交套件 (`facebook.com`, `instagram.com`, `meta.com` 等)。
    - **TestFlight / Apple Media / Apple Direct**：TestFlight 独立分发；Apple TV/News 媒体分流；基础直连锁定 iCloud、CloudKit、OTA；排在 Direct 之前生效。
-   - **APNs / Apple 基础服务**：`Apple-Push.lsr` 仅收录官方最小 `push.apple.com` 及 5 个 IPv4 + 4 个 IPv6 官方推送 CIDR；保留 `Apple Push` 策略组；严禁混入 `17.0.0.0/8` 或 `apple.com`；排在 Direct 之前生效。
-4. **中国大陆冷启动与双镜像发布**：
-   - 首次导入 `.lcf`，节点未就绪或 GitHub Raw 暂时不可达时，依靠本地旁路与大陆直连保障基础联网。
-   - 所有规则与插件均同步提供 Fastly jsDelivr 备用 CDN 镜像；Loon 具备离线缓存运行能力。
+   - **APNs / Apple 基础服务**：`Apple-Push.lsr` 仅收录官方最小 `push.apple.com` 及 5 个 IPv4 + 4 个 IPv6 官方推送 CIDR（严格遵循 Apple 官方文档 102266，IPv6 包含权威 `2620:149:a44::/48`）；保留 `Apple Push` 策略组；严禁混入 `17.0.0.0/8` 或 `apple.com`；排在 Direct 之前生效。
+4. **中国大陆冷启动与双镜像发布 (待真机验证)**：
+   - 首次导入 `.lcf`，节点未就绪或 GitHub Raw 暂时不可达时，依靠本地 `[Rule]` 中的内网段旁路与必要直连规则维持基础联网。
+   - 所有规则与插件均同步提供 Fastly jsDelivr 备用 CDN 镜像。根据 Loon 官方文档，规则订阅 LRU 为近期查询缓存，离线冷启动表现需待真机首次导入验证。
 5. **零变更构建幂等性**：
    - 自动构建没有规则内容变化时，严格禁止修改发布文件、版本号、构建时间或 `manifest.json`，杜绝幽灵提交。
    - 下载失败、异常缩水、语法错误或冲突增加时，自动熔断并保留上一版成品。

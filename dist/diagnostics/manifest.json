@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T12:17:20.212805+00:00",
-  "release_commit": "8775f82",
+  "build_timestamp": "2026-09-28T13:01:52.564742+00:00",
+  "release_commit": "51d5864",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
   "rulesets": {
     "AI-Overseas.lsr": {
-      "total_rules": 43,
-      "revision": "f1972f6bf6d7",
-      "sha256": "f1972f6bf6d799a6fdf59b038c2d5cf5702ba57e5dd995998b3b3dd4ef3ab68c",
+      "total_rules": 38,
+      "revision": "a1f362bd587f",
+      "sha256": "a1f362bd587fb71280babce6e24a2ba6fa84607af35f04a0cea7c60b666622bb",
       "description": "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     },
     "AI-China-Direct.lsr": {
@@ -20,8 +20,8 @@
     },
     "GoogleDrive.lsr": {
       "total_rules": 8,
-      "revision": "4efe6f292d8d",
-      "sha256": "4efe6f292d8dd882f4bbbf9296addedfe4a7459735f213469598da0c2f52604e",
+      "revision": "6ba3b3e451a4",
+      "sha256": "6ba3b3e451a4cd2bc6e2329c39011ee31c83b410325a6067833ce231b91f96ff",
       "description": "Google Drive storage services"
     },
     "OneDrive.lsr": {
@@ -80,8 +80,8 @@
     },
     "Apple-Push.lsr": {
       "total_rules": 10,
-      "revision": "d9b64503ba65",
-      "sha256": "d9b64503ba6595d37136ca05422f6bfc0e104028e4fd6168aeacedd3d65b3c1b",
+      "revision": "2517937b2d51",
+      "sha256": "2517937b2d513300eae4df39626d82ca664e9778560cc1b61dab3b6e508c6d4c",
       "description": "Apple Push Notification service (APNs) minimal authoritative rules"
     },
     "China-Direct.lsr": {

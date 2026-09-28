@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Loon Log Sanitizing Analyzer (Zero-Privacy Leakage)
-Parses Loon request logs or HAR files, strictly strips all private credentials/cookies/tokens/queries/bodies,
-and automatically flags failures, FINAL hits, new uncollected domains, suspected misclassifications,
-and high-bandwidth streaming requests.
+Parses Loon request logs or HAR files, strictly extracts only verified hostnames,
+timestamps, HTTP status codes, safe rule/policy labels, traffic volumes, and fixed
+error categories. Completely discards URL paths, query strings, headers, bodies,
+user credentials, and raw exception messages.
 Author: o-ocn
 License: GPL-2.0
 """
@@ -20,39 +21,72 @@ DIST_DIR = os.path.join(BASE_DIR, "dist")
 
 HIGH_BANDWIDTH_THRESHOLD_BYTES = 5 * 1024 * 1024  # 5 MB
 
-SENSITIVE_PARAM_PATTERNS = [
-    re.compile(r'(token|auth|key|secret|credential|session|sig|signature|pass|pwd|code)=[^&]*', re.IGNORECASE),
-    re.compile(r'bearer\s+[a-zA-Z0-9_\-\.]+', re.IGNORECASE)
-]
+# Hostname validation regex (RFC 1123 compliant label characters)
+HOSTNAME_REGEX = re.compile(r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$')
 
-def sanitize_url(raw_url):
-    """Strips query parameters and credentials, retaining only scheme, host, port, and sanitized path."""
-    if not raw_url:
-        return ""
-    try:
-        parsed = urllib.parse.urlsplit(raw_url)
-        # Drop query and fragment entirely for maximum privacy safety
-        return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-    except Exception:
-        # Fallback regex extraction of host
-        m = re.match(r'^(https?://[^/?#]+)', raw_url)
-        return m.group(1) if m else "unknown_url"
+# Fixed safe error categories (Enum)
+class ErrorCategory:
+    NONE = "NONE"
+    TIMEOUT = "TIMEOUT"
+    DNS_FAILURE = "DNS_FAILURE"
+    TLS_ERROR = "TLS_ERROR"
+    CONNECTION_REFUSED = "CONNECTION_REFUSED"
+    HTTP_4XX = "HTTP_4XX"
+    HTTP_5XX = "HTTP_5XX"
+    UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
-def extract_host(url_or_host):
-    """Extracts lowercase host without port."""
+def extract_safe_host(url_or_host):
+    """
+    Extracts strictly validated lowercase hostname without userinfo, password, port, or path.
+    Guarantees zero leakage of credentials in URLs (e.g. user:pass@host:port).
+    """
     if not url_or_host:
         return ""
+    raw = str(url_or_host).strip()
+
+    # Prepend scheme if missing so urlsplit handles userinfo/port properly
+    if "://" not in raw:
+        target = "http://" + raw
+    else:
+        target = raw
+
     try:
-        if "://" in url_or_host:
-            parsed = urllib.parse.urlsplit(url_or_host)
-            host = parsed.netloc
-        else:
-            host = url_or_host.split("/")[0]
-        if ":" in host:
-            host = host.split(":")[0]
-        return host.lower().strip()
+        parsed = urllib.parse.urlsplit(target)
+        hostname = parsed.hostname
+        if not hostname:
+            return ""
+        hostname = hostname.lower().strip()
+        # Verify characters against strict hostname regex
+        if HOSTNAME_REGEX.match(hostname):
+            return hostname
+        return "invalid_host"
     except Exception:
-        return url_or_host.lower().strip()
+        return "invalid_host"
+
+def classify_error_category(status, error_str=None):
+    """
+    Maps status and optional error hint to a fixed enum category.
+    Guarantees no raw error string or credential is leaked into output records.
+    """
+    if error_str:
+        low = str(error_str).lower()
+        if any(k in low for k in ("timeout", "timed out", "etimeout")):
+            return ErrorCategory.TIMEOUT
+        if any(k in low for k in ("dns", "resolve", "enotfound", "getaddrinfo", "nodename")):
+            return ErrorCategory.DNS_FAILURE
+        if any(k in low for k in ("tls", "ssl", "cert", "handshake", "proto")):
+            return ErrorCategory.TLS_ERROR
+        if any(k in low for k in ("refused", "reset", "econnrefused", "abort")):
+            return ErrorCategory.CONNECTION_REFUSED
+
+    if 400 <= status < 500:
+        return ErrorCategory.HTTP_4XX
+    elif status >= 500:
+        return ErrorCategory.HTTP_5XX
+    elif status == 0 and error_str:
+        return ErrorCategory.UNKNOWN_ERROR
+
+    return ErrorCategory.NONE
 
 def load_known_domains():
     """Loads all known domains and suffixes from dist/*.lsr to identify uncollected new domains."""
@@ -80,7 +114,7 @@ def load_known_domains():
     return known_exact, known_suffixes
 
 def is_domain_collected(host, known_exact, known_suffixes):
-    if not host:
+    if not host or host == "invalid_host":
         return True
     host = host.lower()
     if host in known_exact or host in known_suffixes:
@@ -90,21 +124,34 @@ def is_domain_collected(host, known_exact, known_suffixes):
             return True
     return False
 
+def sanitize_safe_label(label):
+    """Sanitizes rule or policy label to avoid leaking user tokens or URL fragments."""
+    if not label:
+        return ""
+    clean = str(label).strip()
+    # Strip any potential url or auth parameters if inadvertently logged in label
+    clean = re.sub(r'https?://[^\s]+', '[url]', clean)
+    clean = re.sub(r'(token|auth|key|secret|pass)=[^&\s]+', r'\1=[redacted]', clean, flags=re.I)
+    return clean[:60]
+
 def sanitize_har(har_data, known_exact, known_suffixes):
-    """Sanitizes HTTP Archive (HAR) format."""
+    """
+    Sanitizes HTTP Archive (HAR) format.
+    Extracts strictly: host, timestamp, status, rule, policy, bytes, error_category.
+    Completely ignores request/response headers, cookies, POST bodies, and URL paths/queries.
+    """
     entries = har_data.get("log", {}).get("entries", [])
     sanitized_records = []
 
     for entry in entries:
         req = entry.get("request", {})
         resp = entry.get("response", {})
-        timings = entry.get("timings", {})
 
         raw_url = req.get("url", "")
-        clean_url = sanitize_url(raw_url)
-        host = extract_host(raw_url)
+        host = extract_safe_host(raw_url)
+        if not host:
+            continue
 
-        # Traffic calculation (request + response body size)
         req_size = max(0, req.get("bodySize", 0))
         resp_size = max(0, resp.get("bodySize", 0))
         total_bytes = req_size + resp_size
@@ -112,33 +159,32 @@ def sanitize_har(har_data, known_exact, known_suffixes):
             total_bytes = max(0, resp.get("content", {}).get("size", 0))
 
         status = resp.get("status", 0)
-        error = entry.get("_error", "") or (resp.get("statusText", "") if status >= 400 else "")
-        rule = entry.get("_rule", "") or entry.get("_matchRule", "")
-        policy = entry.get("_policy", "") or entry.get("_proxy", "")
+        error_hint = entry.get("_error", "") or (resp.get("statusText", "") if status >= 400 else "")
+        error_cat = classify_error_category(status, error_hint)
 
-        is_failed = status >= 400 or bool(error) or status == 0
+        rule = sanitize_safe_label(entry.get("_rule", "") or entry.get("_matchRule", ""))
+        policy = sanitize_safe_label(entry.get("_policy", "") or entry.get("_proxy", ""))
+
+        is_failed = error_cat != ErrorCategory.NONE
         is_final = "final" in rule.lower() or "final" in policy.lower()
         is_uncollected = not is_domain_collected(host, known_exact, known_suffixes)
         is_high_bw = total_bytes >= HIGH_BANDWIDTH_THRESHOLD_BYTES
 
-        # Suspected misclassifications
+        # Suspected cross-service misclassification check
         suspected_issue = ""
         if host == "www.googleapis.com" and ("ai" in policy.lower() or "ai" in rule.lower()):
             suspected_issue = "www.googleapis.com 误入 AI 策略"
-        elif "gemini" in host and ("google" in policy.lower() and not "ai" in policy.lower()):
+        elif "gemini" in host and ("google" in policy.lower() and "ai" not in policy.lower()):
             suspected_issue = "Gemini 流量落入通用 Google 策略"
-        elif "deepseek" in host and policy.lower() not in ("", "direct"):
-            suspected_issue = "DeepSeek 流量未走 DIRECT"
 
         sanitized_records.append({
             "timestamp": entry.get("startedDateTime", ""),
             "host": host,
-            "url": clean_url,
             "status": status,
             "rule": rule,
             "policy": policy,
             "bytes": total_bytes,
-            "error": error,
+            "error_category": error_cat,
             "flags": {
                 "failed": is_failed,
                 "final": is_final,
@@ -160,39 +206,38 @@ def sanitize_text_log(text_content, known_exact, known_suffixes):
         if not clean:
             continue
 
-        # Look for host, URL, status, policy, rule, bytes
-        # Sample Loon log: 2026-09-28 12:00:00 [REQ] https://api.openai.com/v1/... [RULE] DOMAIN-SUFFIX,openai.com [POLICY] AI [STATUS] 200 [BYTES] 4096
-        host_match = re.search(r'https?://([^/\s]+)', clean)
-        host = extract_host(host_match.group(1)) if host_match else ""
-        if not host:
-            # Check standalone domain pattern
+        host_match = re.search(r'https?://([^\s/\?#]+)', clean)
+        raw_host = host_match.group(0) if host_match else ""
+        if not raw_host:
             d_match = re.search(r'\b([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,})\b', clean)
-            host = d_match.group(1).lower() if d_match else "unknown"
+            raw_host = d_match.group(1) if d_match else ""
 
-        # Timestamp
+        host = extract_safe_host(raw_host)
+        if not host:
+            continue
+
         ts_match = re.search(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}', clean)
         timestamp = ts_match.group(0) if ts_match else ""
 
-        # Status
         status_match = re.search(r'\b(?:status[:\s=]+|code[:\s=]+)?([1-5]\d{2})\b', clean, re.IGNORECASE)
         status = int(status_match.group(1)) if status_match else 200
 
-        # Policy & Rule
         pol_match = re.search(r'\[?(?:policy|proxy)[:\s=]+([^\]\s,]+)', clean, re.IGNORECASE)
-        policy = pol_match.group(1) if pol_match else ""
+        policy = sanitize_safe_label(pol_match.group(1) if pol_match else "")
 
         rule_match = re.search(r'\[?(?:rule)[:\s=]+([^\]\s]+)', clean, re.IGNORECASE)
-        rule = rule_match.group(1) if rule_match else ""
+        rule = sanitize_safe_label(rule_match.group(1) if rule_match else "")
 
-        # Bytes
-        byte_match = re.search(r'(\d+)\s*(?:bytes|B|kb|mb)', clean, re.IGNORECASE)
+        byte_match = re.search(r'(\d+)\s*(?:bytes|b|kb|mb)', clean, re.IGNORECASE)
         bytes_val = int(byte_match.group(1)) if byte_match else 0
         if "mb" in clean.lower():
             bytes_val *= (1024 * 1024)
         elif "kb" in clean.lower():
             bytes_val *= 1024
 
-        is_failed = status >= 400
+        error_cat = classify_error_category(status, clean if status >= 400 or status == 0 else None)
+
+        is_failed = error_cat != ErrorCategory.NONE
         is_final = "final" in rule.lower() or "final" in policy.lower()
         is_uncollected = not is_domain_collected(host, known_exact, known_suffixes)
         is_high_bw = bytes_val >= HIGH_BANDWIDTH_THRESHOLD_BYTES
@@ -206,12 +251,11 @@ def sanitize_text_log(text_content, known_exact, known_suffixes):
         sanitized_records.append({
             "timestamp": timestamp,
             "host": host,
-            "url": f"https://{host}/[sanitized]",
             "status": status,
             "rule": rule,
             "policy": policy,
             "bytes": bytes_val,
-            "error": "HTTP " + str(status) if is_failed else "",
+            "error_category": error_cat,
             "flags": {
                 "failed": is_failed,
                 "final": is_final,
@@ -232,35 +276,35 @@ def analyze_and_report(records):
     high_bw = [r for r in records if r["flags"]["high_bandwidth"]]
     suspected = [r for r in records if r["flags"]["suspected_issue"]]
 
-    unique_uncollected = sorted(list(set(r["host"] for r in uncollected if r["host"])))
+    unique_uncollected = sorted(list(set(r["host"] for r in uncollected if r["host"] and r["host"] != "invalid_host")))
 
     report = []
     report.append("==================== Loon 请求日志脱敏分析报告 ====================")
-    report.append(f"总请求数: {total} 条 | 隐私脱敏状态: 100% 已移除 (无 Cookie/Token/Query/Body)")
+    report.append(f"总请求数: {total} 条 | 隐私脱敏状态: 已完成严格主机与字段脱敏 (仅输出 Host/状态/流量/错误分类)")
     report.append("----------------------------------------------------------------")
     report.append("【统计概览】")
     report.append(f"  - 失败/异常请求: {len(failed)} 项")
-    report.append(f"  - 命中 FINAL 兜底: {len(final_hits)} 项")
+    report.append(f"  - 命中 FINAL 兜底: {len(final_hits)} 项 (正常兜底，非故障判定)")
     report.append(f"  - 未收录新域名: {len(unique_uncollected)} 个独立 Host")
     report.append(f"  - 大流量传输 (>=5MB): {len(high_bw)} 项")
-    report.append(f"  - 疑似错误分类: {len(suspected)} 项")
+    report.append(f"  - 疑似跨分类冲突: {len(suspected)} 项")
     report.append("----------------------------------------------------------------")
 
     if suspected:
-        report.append("【⚠ 疑似错误分类发现】")
+        report.append("【⚠ 疑似边界分类冲突】")
         for s in suspected[:10]:
             report.append(f"  - Host: {s['host']} | 策略: {s['policy']} | 判定: {s['flags']['suspected_issue']}")
         report.append("----------------------------------------------------------------")
 
     if high_bw:
-        report.append("【大流量请求 (需重点保护独立分流)】")
+        report.append("【大流量请求 (建议关注分流节点带宽)】")
         for hb in high_bw[:10]:
             mb = hb['bytes'] / (1024 * 1024)
             report.append(f"  - Host: {hb['host']} | 流量: {mb:.2f} MB | 命中规则: {hb['rule'] or '未知'}")
         report.append("----------------------------------------------------------------")
 
     if unique_uncollected:
-        report.append("【未收录新域名 (建议评估加入 Custom 或提交上游)】")
+        report.append("【未收录新域名列表 (供评估是否为新遗漏)】")
         for uh in unique_uncollected[:15]:
             report.append(f"  - {uh}")
         if len(unique_uncollected) > 15:
@@ -268,13 +312,13 @@ def analyze_and_report(records):
         report.append("----------------------------------------------------------------")
 
     if failed:
-        report.append("【失败请求抽样】")
+        report.append("【失败请求抽样 (固定脱敏分类)】")
         for f in failed[:5]:
-            report.append(f"  - Host: {f['host']} | 状态: {f['status']} | 错误: {f['error']}")
+            report.append(f"  - Host: {f['host']} | 状态: {f['status']} | 类别: {f['error_category']}")
         report.append("----------------------------------------------------------------")
 
     report.append("【真机能力边界提醒】")
-    report.append("* APNs TCP 5223 守护进程、HomeKit 摄像头推流及 Watch 蜂窝行为无法靠日志单项判定，需结合真机实测。")
+    report.append("* APNs TCP 5223、Telegram 锁屏长连接、HomeKit 摄像头及 Watch 蜂窝行为需结合真机实测。")
     report.append("================================================================")
     return "\n".join(report)
 
@@ -288,7 +332,6 @@ def process_file(filepath, output_json=None):
     with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
         content = f.read()
 
-    # Determine format
     is_har = False
     try:
         data = json.loads(content)
@@ -305,14 +348,13 @@ def process_file(filepath, output_json=None):
     report_text = analyze_and_report(records)
     print(report_text)
 
-    # Save clean sanitized JSON
     out_file = output_json
     if not out_file:
         out_file = filepath + ".sanitized.json"
 
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(records, f, indent=2, ensure_ascii=False)
-    print(f"\n[已保存脱敏数据] {out_file} (已完全剔除凭据、Cookie、查询参数及 Body)")
+    print(f"\n[已保存脱敏数据] {out_file} (已完全剔除 URL 路径、查询参数、凭据、Cookie 及 Body)")
     return 0
 
 def main():

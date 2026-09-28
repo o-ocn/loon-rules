@@ -1,13 +1,13 @@
 #!name = Loon Rules 规则与服务诊断
-#!desc = 一键检测 Loon 分流规则仓库状态与核心服务连通性（策略中立、零隐私上传、仅手动运行、零外部依赖）
+#!desc = 一键检测 Loon 分流规则仓库发布状态、规则文件完整性与核心服务连通性（策略中立、零隐私上传、仅手动运行、零外部依赖）
 #!author = o-ocn
 #!homepage = https://github.com/o-ocn/loon-rules
 #!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Diagnostic.png
 #!date = 2026-09-28
 
 [Script]
-# 快速诊断：检测仓库状态、manifest及核心高频服务 (ChatGPT, Gemini, Claude, DeepSeek, Google Drive, Google, YouTube, Telegram, GitHub, iCloud)
-generic script-path = https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/loon-rules-diagnostic.js, tag = 规则诊断(快速), timeout = 30, argument = mode=quick
+# 快速诊断：检测仓库状态、manifest、核心规则文件与核心高频服务 (ChatGPT, Gemini, Claude, DeepSeek, Google Drive, Google, YouTube, Telegram, GitHub, iCloud)
+generic script-path=https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/loon-rules-diagnostic.js,tag=规则诊断(快速),timeout=30,argument="mode=quick",enable=true
 
-# 完整诊断：全量检测全部 14 个规则集文件、主备源镜像、以及全部已知服务连通性 (含 Grok, Muse, TestFlight, APNs安全端口)
-generic script-path = https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/loon-rules-diagnostic.js, tag = 规则诊断(完整), timeout = 60, argument = mode=full
+# 完整诊断：全量下载核验全部 14 个 .lsr 规则集文件、主备源镜像校验、以及全部已知服务连通性 (含 Grok, Muse, TestFlight)
+generic script-path=https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/loon-rules-diagnostic.js,tag=规则诊断(完整),timeout=60,argument="mode=full",enable=true

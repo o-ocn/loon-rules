@@ -1,13 +1,13 @@
 # NAME: GoogleDrive
 # DESCRIPTION: Google Drive storage services
 # AUTHOR: o-ocn
-# REVISION: 4efe6f292d8d
+# REVISION: 6ba3b3e451a4
 # TOTAL: 8
 # ==============================================================================
-DOMAIN-SUFFIX,drive.google.com
 DOMAIN,drive-thirdparty.google.com
 DOMAIN,filepickup.google.com
 DOMAIN-SUFFIX,docs.google.com
+DOMAIN-SUFFIX,drive.google.com
 DOMAIN-SUFFIX,googledrive.com
 USER-AGENT,%E4%BA%91%E7%AB%AF%E7%A1%AC%E7%9B%98*
 USER-AGENT,*com.google.Drive*

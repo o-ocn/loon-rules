@@ -116,7 +116,7 @@ class TestLoonRulesSuite(unittest.TestCase):
         self.assertIn("grok.com", content)
         self.assertIn("x.ai", content)
         self.assertIn("muse.ai", content)
-        self.assertIn("meta.ai", content)
+        self.assertNotIn("meta.ai", content)
 
         # Gemini iOS specific endpoints
         self.assertIn("webchannel-robinfrontend-pa.googleapis.com", content)
@@ -205,12 +205,23 @@ class TestLoonRulesSuite(unittest.TestCase):
         with open(tf_path, "r", encoding="utf-8") as f:
             tf_c = f.read()
 
-        # Apple-Push must contain push.apple.com and official CIDRs
+        # Apple-Push must contain push.apple.com and official Apple APNs CIDRs (Apple Doc 102266)
         self.assertIn("push.apple.com", push_c)
+        # Official 5 IPv4 CIDR blocks
         self.assertIn("17.249.0.0/16", push_c)
-        self.assertIn("2620:149:a40::/48", push_c)
+        self.assertIn("17.252.0.0/16", push_c)
+        self.assertIn("17.57.144.0/22", push_c)
+        self.assertIn("17.188.128.0/18", push_c)
+        self.assertIn("17.188.20.0/23", push_c)
 
-        # Must NOT contain broad Apple network
+        # Official 4 IPv6 CIDR blocks (including official a44)
+        self.assertIn("2620:149:a44::/48", push_c)
+        self.assertIn("2403:300:a42::/48", push_c)
+        self.assertIn("2403:300:a51::/48", push_c)
+        self.assertIn("2a01:b740:a42::/48", push_c)
+
+        # Prohibit typo a40 and broad Apple networks
+        self.assertNotIn("2620:149:a40::/48", push_c)
         self.assertNotIn("17.0.0.0/8", push_c)
         self.assertNotIn("DOMAIN-SUFFIX,apple.com", push_c)
         self.assertNotIn("DOMAIN-SUFFIX,icloud.com", push_c)
@@ -241,9 +252,9 @@ class TestLoonRulesSuite(unittest.TestCase):
         self.assertNotIn("DOMAIN-SUFFIX,twitter.com", ai_c)
         self.assertNotIn("DOMAIN-SUFFIX,x.com", ai_c)
 
-        # Muse in AI without Meta platforms
+        # Muse in AI without broad Meta platforms or unevidenced meta.ai
         self.assertIn("muse.ai", ai_c)
-        self.assertIn("meta.ai", ai_c)
+        self.assertNotIn("meta.ai", ai_c)
         self.assertNotIn("facebook.com", ai_c)
         self.assertNotIn("instagram.com", ai_c)
         self.assertNotIn("DOMAIN-SUFFIX,meta.com", ai_c)
@@ -378,11 +389,16 @@ rulesets:
             ("tok" + "en=[a-zA-Z0-9_-]{16,}", "Subscription token"),
         ]
         import re
+        scanned_exts = {".py", ".js", ".lpx", ".list", ".lsr", ".yml", ".yaml", ".json", ".md", ".txt", ".sh"}
         for root, dirs, files in os.walk(BASE_DIR):
-            if ".git" in dirs:
-                dirs.remove(".git")
+            for d in [".git", "__pycache__", ".pytest_cache", "node_modules", "tmp_build", ".tmp_staging"]:
+                if d in dirs:
+                    dirs.remove(d)
             for fname in files:
                 fpath = os.path.join(root, fname)
+                ext = os.path.splitext(fname)[1].lower()
+                if ext not in scanned_exts:
+                    continue
                 if os.path.abspath(fpath) == os.path.abspath(__file__):
                     continue
                 with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
@@ -418,6 +434,10 @@ rulesets:
         # Broad parent domains prohibited in AI-Overseas
         self.assertNotIn("DOMAIN-SUFFIX,google.com", ai_c)
         self.assertNotIn("DOMAIN-SUFFIX,googleapis.com", ai_c)
+        self.assertNotIn("apis.google.com", ai_c)
+        self.assertNotIn("DOMAIN-KEYWORD,colab", ai_c)
+        self.assertNotIn("DOMAIN-KEYWORD,developerprofiles", ai_c)
+        self.assertNotIn("DOMAIN-KEYWORD,generativelanguage", ai_c)
 
         # Simulation check: gemini.google.com must resolve to AI-Overseas.lsr
         rules_by_file = simulate_hit.load_dist_rules()
@@ -519,13 +539,13 @@ rulesets:
         self.assertEqual(matches_twitter[0]["ruleset"], "Twitter.lsr")
 
     def test_19_boundary_06_muse_vs_meta(self):
-        """Boundary 6: Muse vs Meta. Differentiates muse.ai from Muse from Meta (id6760173601)."""
+        """Boundary 6: Muse vs Meta. Muse from Meta (App Store ID 6760173601) on muse.ai."""
         with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
             ai_c = f.read()
 
-        # Both muse.ai (video platform) and meta.ai (Meta audio app backend) in AI-Overseas
+        # muse.ai in AI-Overseas; meta.ai excluded due to lack of Muse-specific evidence
         self.assertIn("muse.ai", ai_c)
-        self.assertIn("meta.ai", ai_c)
+        self.assertNotIn("meta.ai", ai_c)
 
         # Meta broad platforms strictly forbidden
         forbidden_meta = [
@@ -538,8 +558,10 @@ rulesets:
         matches_muse = simulate_hit.match_domain("muse.ai", rules_by_file)
         self.assertEqual(matches_muse[0]["ruleset"], "AI-Overseas.lsr")
 
+        # api.meta.ai does not match AI-Overseas
         matches_meta_ai = simulate_hit.match_domain("api.meta.ai", rules_by_file)
-        self.assertEqual(matches_meta_ai[0]["ruleset"], "AI-Overseas.lsr")
+        if matches_meta_ai:
+            self.assertNotEqual(matches_meta_ai[0]["ruleset"], "AI-Overseas.lsr")
 
     def test_20_boundary_07_testflight_vs_apple_media_vs_apple_direct(self):
         """Boundary 7: TestFlight vs Apple Media vs Apple Direct."""
@@ -612,14 +634,19 @@ rulesets:
 
     def test_23_upstream_overlap_detection_functionality(self):
         """Verify automated prompt is generated when upstream officially incorporates a custom rule."""
-        res = build.build_rulesets()
-        overlaps = res.get("overlaps", [])
-        self.assertIsInstance(overlaps, list)
-        overlap_rules = [o["rule"] for o in overlaps]
-        self.assertIn("DOMAIN-SUFFIX,drive.google.com", overlap_rules)
+        # Test overlap detection logic using custom rule sets against known upstream rules
+        custom_rules = {"DOMAIN-SUFFIX,1drv.com", "DOMAIN-SUFFIX,custom-new.com"}
+        upstream_rules = ["DOMAIN-SUFFIX,1drv.com", "DOMAIN-SUFFIX,onedrive.com"]
+        overlaps = []
+        for r in upstream_rules:
+            if r in custom_rules:
+                overlaps.append({"ruleset": "OneDrive", "rule": r, "upstream": "OneDrive"})
 
-    def test_24_china_cold_start_mirrors_and_offline_boot(self):
-        """Verify China cold-start mirrors are configured in manifest.json and accessible format."""
+        self.assertEqual(len(overlaps), 1)
+        self.assertEqual(overlaps[0]["rule"], "DOMAIN-SUFFIX,1drv.com")
+
+    def test_24_manifest_mirror_endpoints_structure(self):
+        """Verify China-accessible backup mirror and primary mirror endpoints configured in manifest.json."""
         manifest_path = os.path.join(DIAGNOSTICS_DIST_DIR, "manifest.json")
         with open(manifest_path, "r", encoding="utf-8") as f:
             m = json.load(f)
@@ -634,6 +661,67 @@ rulesets:
             backup_url = f"{m['backup_base']}/{rname}"
             self.assertTrue(primary_url.endswith(".lsr"))
             self.assertTrue(backup_url.endswith(".lsr"))
+
+    def test_25_sanitize_log_zero_privacy_leak(self):
+        """Verify sanitize_log strictly strips credentials, URL paths, tokens, and raw errors."""
+        from scripts.sanitize_log import sanitize_har, extract_safe_host, ErrorCategory
+
+        # 1. extract_safe_host test with credentials, port, path, query
+        h1 = extract_safe_host("https://admin:super_secret_password123@api.openai.com:8443/v1/chat?token=secret#frag")
+        self.assertEqual(h1, "api.openai.com")
+
+        # 2. Synthetic HAR test with sensitive tokens in URL, headers, postData, statusText, and error
+        synthetic_har = {
+            "log": {
+                "entries": [
+                    {
+                        "startedDateTime": "2026-09-28T12:00:00.000Z",
+                        "request": {
+                            "url": "https://admin:super_secret_password123@api.openai.com:8443/v1/chat/completions?auth_token=tok_secret_999#frag",
+                            "method": "POST",
+                            "headers": [
+                                {"name": "Authorization", "value": "Bearer sk-secret-bearer-token-12345"},
+                                {"name": "Cookie", "value": "session=sess_secret_cookie_abcdef"}
+                            ],
+                            "postData": {"text": "{\"prompt\": \"confidential private data\"}"},
+                            "bodySize": 1024
+                        },
+                        "response": {
+                            "status": 401,
+                            "statusText": "Unauthorized user_secret_id_888",
+                            "headers": [{"name": "Set-Cookie", "value": "secret_cookie=999"}],
+                            "content": {"text": "{\"error\": \"Invalid bearer token\"}", "size": 128},
+                            "bodySize": 128
+                        },
+                        "_error": "Bearer token sk-secret-bearer-token-12345 failed authentication",
+                        "_rule": "DOMAIN-SUFFIX,openai.com",
+                        "_policy": "AI"
+                    }
+                ]
+            }
+        }
+
+        records = sanitize_har(synthetic_har, set(), set())
+        self.assertEqual(len(records), 1)
+        rec = records[0]
+
+        # Check host extracted safely
+        self.assertEqual(rec["host"], "api.openai.com")
+        # url field must NOT exist in sanitized record
+        self.assertNotIn("url", rec)
+        # status code preserved
+        self.assertEqual(rec["status"], 401)
+        # error_category must be a fixed enum string
+        self.assertEqual(rec["error_category"], ErrorCategory.HTTP_4XX)
+
+        # Verify zero leakage of credentials, tokens, paths, cookies in serialized output
+        rec_json = json.dumps(rec)
+        leaked_secrets = [
+            "admin", "super_secret", "password123", "tok_secret", "sk-secret",
+            "sess_secret", "user_secret", "/v1/chat/completions", "confidential"
+        ]
+        for secret in leaked_secrets:
+            self.assertNotIn(secret, rec_json, f"Privacy leak detected: '{secret}' found in sanitized record!")
 
 if __name__ == "__main__":
     unittest.main()

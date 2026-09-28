@@ -7,16 +7,6 @@
 #     and is strictly excluded from GoogleDrive to prevent breaking generic Google APIs.
 # ==============================================================================
 
-# Target: Google Drive web & core storage
-# Evidence: Google Drive web console telemetry, 2026-09-28
-# Reason: Direct routing to large-bandwidth / Hong Kong nodes
-DOMAIN-SUFFIX,drive.google.com
-
-# Target: Google Docs / Sheets / Slides real-time collaboration
-# Evidence: Google Workspace document editor network traces, 2026-09-28
-# Reason: Colocates Docs collaboration with Drive storage policy
-DOMAIN,docs.google.com
-
 # Target: Google Drive third-party application connectors
 # Evidence: Google Drive third-party integration API traces, 2026-09-28
 # Reason: Third-party app Drive synchronization

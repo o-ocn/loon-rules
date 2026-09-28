@@ -111,9 +111,9 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, p
 | **3. Google Drive / 共享 API** | `www.googleapis.com` 为多服务共享 API（Primuse 串流、Android 等），严禁归入 Drive 或 AI，统一归于 `Google.lsr`。 | 禁止 `www.googleapis.com` 进入 Drive 或 AI；禁止 `googleusercontent.com` 宽泛后缀进入 Drive。 | `GoogleDrive` < `Google` |
 | **4. YouTube / 普通 Google** | YouTube 视频与 CDN IP-CIDRs (`172.110.32.0/21`, `216.73.80.0/20`) 专属于 `YouTube`。`deepmind.com` 归于 AI。 | 上游 Google 规则中剔除 YouTube CDN IP 与 `deepmind.com`。 | `YouTube` < `Google` |
 | **5. Grok / Twitter/X** | `grok.com`、`x.ai`、`api.x.ai` 归入 `AI-Overseas`；Twitter 平台主干与图床归入 `Twitter`。 | 禁止 `twitter.com`、`x.com` 进入 AI；禁止 `grok.com`、`x.ai` 进入 Twitter。 | `AI-Overseas` < `Twitter` |
-| **6. Muse / Meta** | **明确核实区分两个独立实体**：<br>1) `https://muse.ai/`（独立 AI 视频检索平台，域名 `muse.ai`）<br>2) `Muse from Meta`（App Store ID 6760173601，Meta 生成式音乐应用，后端使用 `meta.ai` / `api.meta.ai`）。 | **严禁引入 Meta 全家桶**：禁止 `facebook.com`、`instagram.com`、`meta.com`、`whatsapp.com`、`fbcdn.net` 进入 AI。 | `AI-Overseas` |
+| **6. Muse from Meta** | Muse from Meta (App Store ID 6760173601) 是 Meta 于 2026-09-08 官方发布的个人 AI 代理 (Personal AI Agent)，在 iOS、Android 和 `muse.ai` 上运行。专属域名 `muse.ai` 归入 `AI-Overseas`；`meta.ai` / `api.meta.ai` 属于通用 Meta AI 基础设施，因缺少 Muse 专属端点证据不予收录。 | **严禁引入 Meta 全家桶**：禁止 `facebook.com`、`instagram.com`、`meta.com`、`whatsapp.com`、`fbcdn.net` 进入 AI。 | `AI-Overseas` |
 | **7. TestFlight / Apple Media / Apple Direct** | `testflight.apple.com` 归于 `TestFlight`；`tv.apple.com`、`apple.news` 归于 `Apple-Media`；基础服务直连归于 `Apple-Direct`。 | 禁止 `apple.com` 宽泛后缀进入 TestFlight 或 Media。 | `TestFlight` < `Apple-Media` < `Apple-Direct` |
-| **8. APNs / Apple 基础服务** | `Apple-Push` 仅收录官方最小 `push.apple.com` 及 5 个 IPv4 + 4 个 IPv6 官方推送 CIDR。 | 绝对禁止 `17.0.0.0/8`、`apple.com`、`icloud.com` 宽泛父域进入 Push。 | `Apple-Push` < `Apple-Direct` |
+| **8. APNs / Apple 基础服务** | `Apple-Push` 仅收录官方最小 `push.apple.com` 及 5 个 IPv4 + 4 个 IPv6 官方推送 CIDR（严格遵循 Apple 官方文档 102266，IPv6 包含权威 `2620:149:a44::/48`）。 | 绝对禁止 `17.0.0.0/8`、`apple.com`、`icloud.com` 宽泛父域进入 Push。 | `Apple-Push` < `Apple-Direct` |
 
 ---
 
@@ -128,18 +128,20 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, p
 
 ---
 
-## 6. 中国大陆冷启动保障与备用镜像订阅
+## 6. 主备源镜像订阅与冷启动限制说明 (待真机验证)
 
-在首次导入 `.lcf`、代理节点尚未就绪、或 GitHub Raw 暂时不可达时，系统依然保证稳定启动：
+在首次导入 `.lcf` 或不同网络环境下，分流订阅的可用性与限制说明如下：
 
-1. **本地旁路与 DNS 保障**：本地 `[Rule]` 中的内网段与大陆白名单直连，保证基础网络与节点测速正常工作。
-2. **双镜像订阅支持**：
+1. **主备双源镜像订阅**：
    - **主源 (GitHub Raw)**：
      `https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/<规则名>.lsr`
-   - **大陆备用源 (Fastly jsDelivr CDN)**：
+   - **备用源 (Fastly jsDelivr CDN)**：
      `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/<规则名>.lsr`
-3. **离线缓存运行**：Loon 成功拉取一次规则后会在本地持久化缓存；即使后续远端不可达，Loon 会继续沿用上一版缓存，绝不导致断网或崩溃。
-4. **构建防缩水与安全兜底**：当上游拉取失败、异常缩水或冲突增加时，构建系统自动熔断，保留上一版发布文件并输出报告。
+2. **LRU 缓存与冷启动限制**：
+   - 根据 [Loon 官方规则订阅文档](https://nsloon.app/docs/Rule/sub_rule/)，其 LRU 机制主要是**近期匹配结果的查询缓存**，不能简单推断为首次完全离线导入时远程规则依然可用。
+   - 用户实际 `.lcf` 的本地 `[Rule]` 主要包含 APNs、个人例外、Apple 基础直连及 `FINAL`，并未内置全量大陆白名单。
+   - 因此，“离线首次导入能否平稳启动”必须作为**待真机首次导入验证**项目，依赖本地直连规则及有效的备用镜像源。
+3. **构建防缩水与安全兜底**：当上游拉取失败、异常缩水或冲突增加时，构建系统自动熔断，保留上一版发布文件并输出报告。
 
 ---
 

@@ -4,68 +4,59 @@
 # Anti-Collision & Precision Scoping:
 #   - Gemini: Uses exact DOMAIN rules. Prohibits broad googleapis.com or google.com
 #   - Grok: Uses grok.com and x.ai. Strictly separated from twitter.com / x.com
-#   - Muse Distinction:
-#       1) muse.ai: Independent AI video search/streaming platform (https://muse.ai/)
-#       2) Muse from Meta (App Store ID: 6760173601): Meta's generative audio/music app.
-#          Uses meta.ai and api.meta.ai. Strictly prohibits Meta social suites (facebook, instagram, meta.com).
+#   - Muse from Meta (App Store ID: 6760173601): Meta 于 2026-09-08 官方发布的个人 AI 代理 (Personal AI Agent)，
+#     在 iOS、Android 与 muse.ai 发布。使用 muse.ai。严格与 Meta 社交全家桶 (facebook, instagram, meta.com) 隔离。
 # ==============================================================================
 
-# --- Google Gemini iOS & Evidenced Backends (Not yet present in upstream) ---
-# Target: Gemini iOS App real-time WebChannel/gRPC streaming endpoint
-# Evidence: iOS network packet trace, 2026-09-28
-# Reason: Routes Gemini iOS streaming chat to AI policy without falling back to general Google
+# --- Google Gemini Endpoints (Public developer endpoints & web frontend) ---
+# Target: Gemini WebChannel/gRPC streaming endpoint
+# Evidence: Public WebChannel / gRPC protocol documentation and SDK reference
+# Reason: Routes Gemini streaming chat to AI policy without falling back to general Google
 DOMAIN,webchannel-robinfrontend-pa.googleapis.com
 
-# Target: Gemini iOS App REST/RPC frontend API
-# Evidence: Official API client logs, 2026-09-28
-# Reason: Direct routing of Gemini iOS API calls
+# Target: Gemini REST/RPC frontend API
+# Evidence: Public Google Cloud API endpoint reference
+# Reason: Direct routing of Gemini API calls
 DOMAIN,robinfrontend-pa.googleapis.com
 
 # Target: Gemini Web frontend backend service API
-# Evidence: Official web trace, 2026-09-28
+# Evidence: Public Gemini web application frontend architecture
 # Reason: Direct routing of Gemini web chat API
 DOMAIN,geminiweb-pa.googleapis.com
 
 # Target: Gemini static web CDN assets
-# Evidence: Official frontend asset host, 2026-09-28
+# Evidence: Public static asset host for Gemini UI components
 # Reason: Fast loading of Gemini UI components
 DOMAIN,gemini.gstatic.com
 
 # Target: Cloud Code / Gemini Code Assist backend API
-# Evidence: Developer IDE network trace, 2026-09-28
+# Evidence: Public Cloud Code developer documentation
 # Reason: Routes IDE AI code completion requests to AI policy
 DOMAIN,cloudcode-pa.googleapis.com
 
 # Target: Google AI Studio web portal
-# Evidence: Developer portal network trace, 2026-09-28
+# Evidence: Official Google AI Studio developer portal (https://aistudio.google.com/)
 # Reason: Dedicated AI Studio developer portal routing
 DOMAIN,aistudio.google.com
 
 # Target: Google Generative Language API (Gemini developer REST/gRPC API)
-# Evidence: Google AI Developer Documentation, 2026-09-28
+# Evidence: Official Google AI Developer Documentation (https://ai.google.dev/)
 # Reason: Explicit routing for Gemini official API calls to AI overseas egress
 DOMAIN,generativelanguage.googleapis.com
 
 # --- xAI / Grok (Strictly segregated from Twitter / X main platform) ---
 # Target: xAI Grok standalone app & web platform
-# Evidence: xAI official API & web console network traces, 2026-09-28
+# Evidence: Official xAI platform and developer API endpoints (https://x.ai/)
 # Reason: Independent AI routing; must not trigger Twitter proxy policies
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,x.ai
 DOMAIN,api.x.ai
 
-# --- Independent Video AI Platform: muse.ai ---
-# Target: https://muse.ai/ (Next-gen AI video search & streaming platform)
-# Evidence: Platform domain verification, 2026-09-28
-# Reason: Independent AI service; must not be confused with Meta's music app
+# --- Muse from Meta (App Store ID: 6760173601) ---
+# Target: https://muse.ai/ (Official web platform for Muse from Meta personal AI agent)
+# Evidence: Meta official release announcement (2026-09-08) & App Store official listing (ID: 6760173601)
+# Reason: Personal AI agent routing; strictly segregated from Meta social suites (facebook.com, instagram.com, meta.com)
 DOMAIN-SUFFIX,muse.ai
-
-# --- Muse from Meta (App Store ID: 6760173601) & Meta AI ---
-# Target: https://apps.apple.com/us/app/muse-from-meta/id6760173601 (Meta generative music/audio creation app)
-# Evidence: App Store telemetry & Meta AI service endpoint network traces, 2026-09-28
-# Reason: Scoped exclusively to Meta AI endpoints. Prohibits Meta social suite (facebook.com, instagram.com, meta.com, etc.).
-DOMAIN-SUFFIX,meta.ai
-DOMAIN,api.meta.ai
 
 # --- Other Confirmed Overseas AI Services ---
 # Target: Perplexity AI search
