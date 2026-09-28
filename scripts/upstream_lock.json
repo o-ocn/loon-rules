@@ -4,17 +4,17 @@
     "Claude": 3,
     "Gemini": 13
   },
+  "YouTube": {
+    "YouTube": 190
+  },
   "GoogleDrive": {
     "GoogleDrive": 8
-  },
-  "OneDrive": {
-    "OneDrive": 16
   },
   "Google": {
     "Google": 698
   },
-  "YouTube": {
-    "YouTube": 190
+  "OneDrive": {
+    "OneDrive": 16
   },
   "Telegram": {
     "Telegram": 40

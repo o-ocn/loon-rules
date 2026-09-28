@@ -1,8 +1,8 @@
 # NAME: PayPal
-# DESCRIPTION: PayPal payment services (real operational domains only)
+# DESCRIPTION: PayPal payment services (curated operational domains only)
 # AUTHOR: o-ocn
-# REVISION: 4fb02bf03491
-# TOTAL: 18
+# REVISION: 90af227e8713
+# TOTAL: 19
 # ==============================================================================
 DOMAIN-SUFFIX,paypal.com
 DOMAIN-SUFFIX,paypalobjects.com
@@ -14,11 +14,12 @@ DOMAIN-SUFFIX,paypal-prepaid.com
 DOMAIN-SUFFIX,braintreegateway.com
 DOMAIN-SUFFIX,braintreepayments.com
 DOMAIN-SUFFIX,venmo.com
+DOMAIN-SUFFIX,xoom.com
 DOMAIN-SUFFIX,simility.com
 DOMAIN-SUFFIX,paydiant.com
-DOMAIN-SUFFIX,xoom.com
 DOMAIN-SUFFIX,anfutong.cn
 DOMAIN-SUFFIX,anfutong.com
 DOMAIN-SUFFIX,anfutong.com.cn
 DOMAIN-SUFFIX,beibao.cn
 DOMAIN-SUFFIX,beibao.com
+DOMAIN-SUFFIX,beibao.com.cn

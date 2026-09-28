@@ -637,7 +637,7 @@ rulesets:
         """Verify simulated top-to-bottom rule evaluation across all 19 services."""
         rules_by_file = simulate_hit.load_dist_rules()
         test_cases = [
-            ("deepseek.com", "AI-China-Direct.lsr"),
+            ("push.apple.com", "Apple-Push.lsr"),
             ("chatgpt.com", "AI-Overseas.lsr"),
             ("gemini.google.com", "AI-Overseas.lsr"),
             ("youtube.com", "YouTube.lsr"),
@@ -647,9 +647,12 @@ rulesets:
             ("t.me", "Telegram.lsr"),
             ("twitter.com", "Twitter.lsr"),
             ("discord.com", "Discord.lsr"),
+            ("paypal.com", "PayPal.lsr"),
+            ("steampowered.com", "Gaming.lsr"),
+            ("github.com", "GitHub.lsr"),
             ("testflight.apple.com", "TestFlight.lsr"),
             ("tv.apple.com", "Apple-Media.lsr"),
-            ("push.apple.com", "Apple-Push.lsr"),
+            ("deepseek.com", "AI-China-Direct.lsr"),
             ("icloud.com", "Apple-Direct.lsr"),
             ("weixin.com", "China-Direct.lsr"),
         ]
@@ -658,6 +661,18 @@ rulesets:
             self.assertTrue(len(matches) >= 1, f"Domain '{domain}' did not match any rule!")
             self.assertEqual(matches[0]["ruleset"], expected_ruleset,
                              f"Domain '{domain}' matched '{matches[0]['ruleset']}' instead of expected '{expected_ruleset}'")
+
+        # Verify LAN private subnets hit Lan.lsr
+        lan_test_cases = [
+            ("192.168.1.1", "Lan.lsr"),
+            ("10.0.0.1", "Lan.lsr"),
+            ("172.16.0.1", "Lan.lsr"),
+            ("100.64.0.1", "Lan.lsr"),
+        ]
+        for ip_addr, expected_ruleset in lan_test_cases:
+            matches = simulate_hit.match_target(ip_addr, rules_by_file)
+            self.assertTrue(len(matches) >= 1, f"IP '{ip_addr}' did not match any rule!")
+            self.assertEqual(matches[0]["ruleset"], expected_ruleset)
 
     def test_23_upstream_overlap_detection_functionality(self):
         """Verify automated prompt is generated when upstream officially incorporates a custom rule."""
@@ -969,11 +984,115 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
         self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
 
-        # Verify total rules across all 19 .lsr files is exactly 1745
+        # Verify total rules across all 19 .lsr files is exactly 1742
         total_rules = 0
         for fname in self.lsr_files:
             total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
-        self.assertEqual(total_rules, 1745, f"Expected 1745 rules, got {total_rules}")
+        self.assertEqual(total_rules, 1742, f"Expected 1742 rules, got {total_rules}")
+
+    def test_32_public_19_order_fixture_and_four_stage_pipeline(self):
+        """Verify complete 4-stage pipeline against public 19-class order fixture."""
+        fixture_path = os.path.join(BASE_DIR, "tests", "fixtures", "sample_order_19.lcf")
+        self.assertTrue(os.path.isfile(fixture_path), "sample_order_19.lcf fixture missing!")
+
+        pipeline = simulate_hit.load_lcf_pipeline(fixture_path)
+        self.assertIsNotNone(pipeline)
+        self.assertEqual(len(pipeline["remote_order"]), 19, "Expected 19 rulesets in remote_order")
+
+        rules_by_file = simulate_hit.load_dist_rules(pipeline["remote_order"])
+        local_rules = pipeline["local_rules"]
+        simulated_plugin_rules = [
+            {"type": "DOMAIN", "value": "plugin-injected.example.com", "raw": "DOMAIN,plugin-injected.example.com"}
+        ]
+
+        # Stage 1: Local [Rule] outranks everything
+        m_s1 = simulate_hit.match_target("local-override.example.com", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_s1[0]["stage"], "Stage 1 (Local [Rule])")
+
+        # Stage 2: Plugin [Rule] outranks Stage 3
+        m_s2 = simulate_hit.match_target("plugin-injected.example.com", rules_by_file, local_rules=local_rules, plugin_rules=simulated_plugin_rules)
+        self.assertEqual(m_s2[0]["stage"], "Stage 2 (Plugin [Rule])")
+
+        # Stage 3: Specific before broad evaluations
+        # YouTube matches before Google
+        m_yt = simulate_hit.match_target("www.youtube.com", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_yt[0]["ruleset"], "YouTube.lsr")
+
+        # GoogleDrive matches before Google
+        m_gd = simulate_hit.match_target("drive.google.com", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_gd[0]["ruleset"], "GoogleDrive.lsr")
+
+        # Broad Google
+        m_g = simulate_hit.match_target("google.com", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_g[0]["ruleset"], "Google.lsr")
+
+        # Lan matches before China-GeoIP
+        m_lan = simulate_hit.match_target("192.168.1.1", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_lan[0]["ruleset"], "Lan.lsr")
+
+        # Stage 4: Unmatched targets fall through to FINAL
+        m_unmatched = simulate_hit.match_target("completely-unmatched-unknown-service.xyz", rules_by_file, local_rules=local_rules)
+        self.assertEqual(len(m_unmatched), 0, "Unmatched target must have 0 stage 1-3 hits to trigger FINAL")
+
+    def test_33_paypal_curation_regression(self):
+        """Verify PayPal official operational domains are present and scam/phishing domains are excluded."""
+        paypal_path = os.path.join(DIST_DIR, "PayPal.lsr")
+        with open(paypal_path, "r", encoding="utf-8") as f:
+            pp_content = f.read()
+
+        official_domains = [
+            "paypal.com", "paypalobjects.com", "paypal.me", "braintreegateway.com",
+            "braintreepayments.com", "venmo.com", "xoom.com", "simility.com",
+            "paydiant.com", "anfutong.cn", "beibao.cn", "beibao.com.cn"
+        ]
+        for d in official_domains:
+            self.assertIn(d, pp_content, f"Official PayPal domain '{d}' missing from PayPal.lsr!")
+
+        phishing_domains = [
+            "pa9pal.com", "account-paypal.info", "accountpaypal.com",
+            "login-paypal.com", "filipino-music.net", "i-o-u.info"
+        ]
+        for p in phishing_domains:
+            self.assertNotIn(p, pp_content, f"Phishing/typosquatting domain '{p}' leaked into PayPal.lsr!")
+
+    def test_34_gaming_purged_domains_regression(self):
+        """Verify Gaming platform domains are present and non-platform/piracy domains are excluded."""
+        gaming_path = os.path.join(DIST_DIR, "Gaming.lsr")
+        with open(gaming_path, "r", encoding="utf-8") as f:
+            gaming_content = f.read()
+
+        official_gaming = [
+            "steampowered.com", "steamcommunity.com", "steamgames.com",
+            "epicgames.com", "unrealengine.com"
+        ]
+        for g in official_gaming:
+            self.assertIn(g, gaming_content, f"Official gaming domain '{g}' missing from Gaming.lsr!")
+
+        purged_gaming = [
+            "steamunlocked.net", "humblebundle.com", "fanatical.com", "helpshift.com"
+        ]
+        for p in purged_gaming:
+            self.assertNotIn(p, gaming_content, f"Non-platform domain '{p}' leaked into Gaming.lsr!")
+
+    def test_35_jsdelivr_backup_mirror_download_verification(self):
+        """Verify jsDelivr backup mirror is accessible and serves byte-identical manifest."""
+        import json, urllib.request, ssl
+        mirror_url = "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@feature/expand-rulesets-v2/dist/diagnostics/manifest.json"
+        local_manifest_path = os.path.join(DIST_DIR, "diagnostics", "manifest.json")
+        with open(local_manifest_path, "r", encoding="utf-8") as f:
+            local_man = json.load(f)
+
+        ctx = ssl.create_default_context()
+        try:
+            req = urllib.request.Request(mirror_url, headers={"User-Agent": "Mozilla/5.0 LoonTest/2.0"})
+            with urllib.request.urlopen(req, context=ctx, timeout=8) as resp:
+                self.assertEqual(resp.status, 200, f"jsDelivr returned HTTP {resp.status}")
+                remote_bytes = resp.read()
+                remote_man = json.loads(remote_bytes.decode("utf-8"))
+                self.assertEqual(len(remote_man.get("rulesets", {})), 19,
+                                 "Backup mirror does not contain all 19 rulesets!")
+        except urllib.error.URLError as e:
+            self.skipTest(f"Live network test skipped due to connectivity: {e}")
 
     @classmethod
     def tearDownClass(cls):

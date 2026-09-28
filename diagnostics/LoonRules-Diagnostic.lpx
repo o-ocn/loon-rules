@@ -3,11 +3,11 @@
 #!author = o-ocn
 #!homepage = https://github.com/o-ocn/loon-rules
 #!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Diagnostic.png
-#!date = 2026-09-28
+#!date = 2026-09-29
 
 [Script]
 # 快速诊断：检测仓库状态、manifest、核心规则文件与核心高频服务 (Loon 3.5.1+ Generic Script v2 语法规范)
-generic then script("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/loon-rules-diagnostic.js", "mode=quick") with tag="规则诊断(快速)", timeout=30
+generic then script("https://raw.githubusercontent.com/o-ocn/loon-rules/feature/expand-rulesets-v2/dist/diagnostics/loon-rules-diagnostic.js", "mode=quick&branch=feature/expand-rulesets-v2") with tag="规则诊断(快速)", timeout=30
 
-# 完整诊断：全量下载核验全部 14 个 .lsr 规则集文件、主备源镜像校验、以及全部已知服务连通性 (Loon 3.5.1+ Generic Script v2 语法规范)
-generic then script("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/loon-rules-diagnostic.js", "mode=full") with tag="规则诊断(完整)", timeout=60
+# 完整诊断：全量下载核验全部 19 个 .lsr 规则集文件、主备源镜像校验、以及全部已知服务连通性 (Loon 3.5.1+ Generic Script v2 语法规范)
+generic then script("https://raw.githubusercontent.com/o-ocn/loon-rules/feature/expand-rulesets-v2/dist/diagnostics/loon-rules-diagnostic.js", "mode=full&branch=feature/expand-rulesets-v2") with tag="规则诊断(完整)", timeout=60

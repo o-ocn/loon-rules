@@ -1,5 +1,5 @@
 # NAME: Lan
-# DESCRIPTION: LAN and private network bypass (RFC1918/RFC6598)
+# DESCRIPTION: LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)
 # AUTHOR: o-ocn
 # REVISION: 4de015f034d3
 # TOTAL: 9

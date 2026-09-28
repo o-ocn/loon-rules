@@ -1,29 +1,35 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T19:14:02.785312+00:00",
-  "content_revision": "d7f47dbb7247",
-  "package_sha256": "d7f47dbb72479d894ebb582aee60c15d4094b0a0888293d2fc5bdc573bafde4d",
+  "build_timestamp": "2026-09-28T20:19:17.878365+00:00",
+  "content_revision": "a987c2aac784",
+  "package_sha256": "a987c2aac7846760f566181fb1cf5d5cd0d26ee6bac9afe12de78e3a89622489",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
   "rulesets": {
+    "Apple-Push.lsr": {
+      "total_rules": 10,
+      "revision": "2517937b2d51",
+      "sha256": "2517937b2d513300eae4df39626d82ca664e9778560cc1b61dab3b6e508c6d4c",
+      "description": "Apple Push Notification service (APNs) minimal authoritative rules"
+    },
     "AI-Overseas.lsr": {
       "total_rules": 38,
       "revision": "a1f362bd587f",
       "sha256": "a1f362bd587fb71280babce6e24a2ba6fa84607af35f04a0cea7c60b666622bb",
       "description": "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     },
+    "YouTube.lsr": {
+      "total_rules": 190,
+      "revision": "7d49dae2f850",
+      "sha256": "7d49dae2f850bf036f80fcf1dac2d22ae510806b2b69f212f691e3f1761cc0c3",
+      "description": "YouTube streaming and media services (evaluated before broad Google)"
+    },
     "GoogleDrive.lsr": {
       "total_rules": 8,
       "revision": "6ba3b3e451a4",
       "sha256": "6ba3b3e451a4cd2bc6e2329c39011ee31c83b410325a6067833ce231b91f96ff",
-      "description": "Google Drive storage services"
-    },
-    "OneDrive.lsr": {
-      "total_rules": 17,
-      "revision": "dbffa4201442",
-      "sha256": "dbffa42014420d551c15bf49d4d172922fbf3b61213a13121d58bd915387139f",
-      "description": "Microsoft OneDrive services"
+      "description": "Google Drive storage services (evaluated before broad Google)"
     },
     "Google.lsr": {
       "total_rules": 690,
@@ -31,11 +37,11 @@
       "sha256": "c95b8615252d1d1f48a2eedd71c961aa98ca8b3bc0252ed14c02699fb9a7f089",
       "description": "General Google services and infrastructure"
     },
-    "YouTube.lsr": {
-      "total_rules": 190,
-      "revision": "7d49dae2f850",
-      "sha256": "7d49dae2f850bf036f80fcf1dac2d22ae510806b2b69f212f691e3f1761cc0c3",
-      "description": "YouTube streaming and media services"
+    "OneDrive.lsr": {
+      "total_rules": 17,
+      "revision": "dbffa4201442",
+      "sha256": "dbffa42014420d551c15bf49d4d172922fbf3b61213a13121d58bd915387139f",
+      "description": "Microsoft OneDrive services"
     },
     "Telegram.lsr": {
       "total_rules": 48,
@@ -56,16 +62,16 @@
       "description": "Discord voice and chat platform"
     },
     "PayPal.lsr": {
-      "total_rules": 18,
-      "revision": "4fb02bf03491",
-      "sha256": "4fb02bf03491e385ab0077f0fe1453d872affcf3bc64759cb57595570f55dbf3",
-      "description": "PayPal payment services (real operational domains only)"
+      "total_rules": 19,
+      "revision": "90af227e8713",
+      "sha256": "90af227e8713dc156c7cddcef9b7f4be4ed5458ffef395d5d1072480e86fd3c9",
+      "description": "PayPal payment services (curated operational domains only)"
     },
     "Gaming.lsr": {
-      "total_rules": 69,
-      "revision": "53e0a751a179",
-      "sha256": "53e0a751a179023ca0314ea583fa503f0305a3f116755e6d31f16621d8d7247f",
-      "description": "Gaming platforms (Steam and Epic Games)"
+      "total_rules": 65,
+      "revision": "06b2809abf75",
+      "sha256": "06b2809abf759c898d09756382672d04b2ed94b96bf35d968455d5ccbfc22a28",
+      "description": "Gaming platforms (Steam and Epic Games, third-party storefronts/phishing purged)"
     },
     "GitHub.lsr": {
       "total_rules": 31,
@@ -85,12 +91,6 @@
       "sha256": "02ad01eebd77731bb1fd1d42c3bb956cc2a52f1ff0a6fcbc21bb2ed85e14ddda",
       "description": "Apple media services (Apple TV+, Apple News, Fitness+)"
     },
-    "Apple-Push.lsr": {
-      "total_rules": 10,
-      "revision": "2517937b2d51",
-      "sha256": "2517937b2d513300eae4df39626d82ca664e9778560cc1b61dab3b6e508c6d4c",
-      "description": "Apple Push Notification service (APNs) minimal authoritative rules"
-    },
     "AI-China-Direct.lsr": {
       "total_rules": 19,
       "revision": "eaec94aa7fb8",
@@ -109,17 +109,17 @@
       "sha256": "3f598c94a81acf1d35bb80171e0bb0c3a44308ea0d0a2ea1d0c9b684ad45c1bb",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     },
+    "Lan.lsr": {
+      "total_rules": 9,
+      "revision": "4de015f034d3",
+      "sha256": "4de015f034d3c502b28e11149c2650a5eeedc12dfffd4be0c9f03f65f77453b7",
+      "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
+    },
     "China-GeoIP.lsr": {
       "total_rules": 1,
       "revision": "4e14c6b2ef91",
       "sha256": "4e14c6b2ef91c5ee04a2e78f4e299dfe43fcc0e550591198e8ca4c8151a4f80d",
       "description": "GeoIP catch-all for mainland China IP traffic (safety net)"
-    },
-    "Lan.lsr": {
-      "total_rules": 9,
-      "revision": "4de015f034d3",
-      "sha256": "4de015f034d3c502b28e11149c2650a5eeedc12dfffd4be0c9f03f65f77453b7",
-      "description": "LAN and private network bypass (RFC1918/RFC6598)"
     }
   },
   "upstream_sync_status": "synced",

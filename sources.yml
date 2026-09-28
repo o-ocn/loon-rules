@@ -6,10 +6,10 @@
 #
 # === Loon Recommended Evaluation Order ===
 # This file is ordered top-to-bottom matching the recommended Loon [Remote Rule] priority:
-#   0. System Critical (APNs push notification socket - evaluated first for zero push latency)
-#   1. Proxy services (user typically assigns proxy / specific exit nodes)
-#   2. Direct services (user typically assigns DIRECT policy)
-#   3. Structural catch-alls (GeoIP safety net, LAN bypass)
+#   0. System Critical (APNs push notification socket - top priority for push connectivity)
+#   1. Proxy services (Specific/narrow services BEFORE broad parent services, e.g. YouTube & Drive before Google)
+#   2. Direct services (Domestic AI, Apple core services, China daily apps)
+#   3. Structural catch-alls (LAN private bypass BEFORE GeoIP fallback)
 # Within Loon, remote rules are evaluated top-to-bottom; first match wins.
 
 metadata:
@@ -26,7 +26,7 @@ metadata:
 
 rulesets:
   # ======================================================================
-  # SYSTEM CRITICAL (APNs push socket, top priority to avoid evaluation latency)
+  # 0. SYSTEM CRITICAL (APNs push socket, top priority to avoid evaluation latency)
   # ======================================================================
 
   Apple-Push:
@@ -35,7 +35,7 @@ rulesets:
     local_custom: "rules/custom/Apple-Push.list"
 
   # ======================================================================
-  # PROXY SERVICES (user typically assigns proxy / specific node policy)
+  # 1. PROXY SERVICES (Specific services BEFORE broad parent services)
   # ======================================================================
 
   AI-Overseas:
@@ -90,8 +90,18 @@ rulesets:
           - "DOMAIN-KEYWORD,generativelanguage"
     local_custom: "rules/custom/AI-Overseas.list"
 
+  YouTube:
+    description: "YouTube streaming and media services (evaluated before broad Google)"
+    custom_first: true
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "YouTube"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list"
+        min_rules: 30
+    local_custom: "rules/custom/YouTube.list"
+
   GoogleDrive:
-    description: "Google Drive storage services"
+    description: "Google Drive storage services (evaluated before broad Google)"
     custom_first: true
     max_shrink_ratio: 0.20
     sources:
@@ -103,16 +113,6 @@ rulesets:
           - "DOMAIN,www.googleapis.com"
           - "DOMAIN-SUFFIX,googleusercontent.com"
     local_custom: "rules/custom/GoogleDrive.list"
-
-  OneDrive:
-    description: "Microsoft OneDrive services"
-    custom_first: true
-    max_shrink_ratio: 0.15
-    sources:
-      - name: "OneDrive"
-        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OneDrive/OneDrive.list"
-        min_rules: 8
-    local_custom: "rules/custom/OneDrive.list"
 
   Google:
     description: "General Google services and infrastructure"
@@ -133,15 +133,15 @@ rulesets:
           - "USER-AGENT,Google.Drive*"
     local_custom: "rules/custom/Google.list"
 
-  YouTube:
-    description: "YouTube streaming and media services"
+  OneDrive:
+    description: "Microsoft OneDrive services"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
-      - name: "YouTube"
-        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/YouTube/YouTube.list"
-        min_rules: 30
-    local_custom: "rules/custom/YouTube.list"
+      - name: "OneDrive"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OneDrive/OneDrive.list"
+        min_rules: 8
+    local_custom: "rules/custom/OneDrive.list"
 
   Telegram:
     description: "Telegram messaging platform"
@@ -177,21 +177,29 @@ rulesets:
     local_custom: "rules/custom/Discord.list"
 
   PayPal:
-    description: "PayPal payment services (real operational domains only)"
+    description: "PayPal payment services (curated operational domains only)"
     custom_first: true
     local_custom: "rules/custom/PayPal.list"
 
   Gaming:
-    description: "Gaming platforms (Steam and Epic Games)"
+    description: "Gaming platforms (Steam and Epic Games, third-party storefronts/phishing purged)"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
       - name: "Steam"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Steam/Steam.list"
         min_rules: 20
+        filter_excluded:
+          # Non-Steam third-party piracy & independent stores in upstream
+          - "DOMAIN-SUFFIX,steamunlocked.net"
+          - "DOMAIN-SUFFIX,humblebundle.com"
+          - "DOMAIN-SUFFIX,fanatical.com"
       - name: "Epic"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Epic/Epic.list"
         min_rules: 5
+        filter_excluded:
+          # Shared third-party customer support SDK (prevents hijacking other apps)
+          - "DOMAIN-SUFFIX,helpshift.com"
     local_custom: "rules/custom/Gaming.list"
 
   GitHub:
@@ -230,7 +238,7 @@ rulesets:
     local_custom: "rules/custom/Apple-Media.list"
 
   # ======================================================================
-  # DIRECT SERVICES (user typically assigns DIRECT policy)
+  # 2. DIRECT SERVICES (user typically assigns DIRECT policy)
   # ======================================================================
 
   AI-China-Direct:
@@ -271,15 +279,15 @@ rulesets:
     local_custom: "rules/custom/China-Direct.list"
 
   # ======================================================================
-  # STRUCTURAL CATCH-ALLS (bottom of rule chain, before FINAL)
+  # 3. STRUCTURAL CATCH-ALLS (LAN bypass BEFORE GeoIP fallback)
   # ======================================================================
+
+  Lan:
+    description: "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
+    custom_first: true
+    local_custom: "rules/custom/Lan.list"
 
   China-GeoIP:
     description: "GeoIP catch-all for mainland China IP traffic (safety net)"
     custom_first: true
     local_custom: "rules/custom/China-GeoIP.list"
-
-  Lan:
-    description: "LAN and private network bypass (RFC1918/RFC6598)"
-    custom_first: true
-    local_custom: "rules/custom/Lan.list"

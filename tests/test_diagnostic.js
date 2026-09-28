@@ -627,7 +627,7 @@ test('12. Entrypoint Watchdog Fires via Simulated Timer Callback and Emits Real 
   assert.strictEqual(scheduledDelay, 56000, 'Full mode watchdog must be scheduled at exactly 56000ms');
 });
 
-test('13. Backup Release Mirror Checks All 14 Rulesets in Full Mode and Reflects Failures in Total State', async () => {
+test('13. Backup Release Mirror Checks All 19 Rulesets in Full Mode and Reflects Failures in Total State', async () => {
   // Test full mode verifying all rulesets from backup mirror
   const fullManifest = Object.assign({}, sampleManifest, {
     rulesets: {
@@ -694,7 +694,7 @@ test('14. HTTP 404 Reports Resource Missing or Not Yet Published and Skips Rules
   assert.strictEqual(diag.repoOk, false);
   assert.match(diag.report, /HTTP 404 \(资源不存在或尚未发布\)/);
   assert.match(diag.report, /规则正文校验: 未执行 \(主备清单均不可用\)/);
-  assert.doesNotMatch(diag.report, /14\/14 LSR 本地元数据校验匹配/);
+  assert.doesNotMatch(diag.report, /\d+\/\d+ LSR 本地元数据校验匹配/);
 });
 
 test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification', async () => {
@@ -751,22 +751,22 @@ test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification
 });
 
 test('16. Backup Rulesets Incomplete Verification Due to Deadline Triggers Warning Not Green', async () => {
-  // Build a manifest with 14 rulesets
-  const rulesets14 = {};
-  for (let i = 1; i <= 14; i++) {
-    rulesets14[`Ruleset-${i}.lsr`] = {
+  // Build a manifest with 19 rulesets
+  const rulesets19 = {};
+  for (let i = 1; i <= 19; i++) {
+    rulesets19[`Ruleset-${i}.lsr`] = {
       total_rules: 2,
       revision: sampleRevision,
       sha256: sampleSha256
     };
   }
-  const manifest14 = Object.assign({}, sampleManifest, { rulesets: rulesets14 });
+  const manifest19 = Object.assign({}, sampleManifest, { rulesets: rulesets19 });
 
   const mockClient = createMockHttpClient([
     {
       matches: (url) => url.includes('manifest.json'),
       status: 200,
-      data: JSON.stringify(manifest14)
+      data: JSON.stringify(manifest19)
     },
     {
       matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL),

@@ -19,9 +19,8 @@ import ipaddress
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 
-# Standard Loon evaluation order for o-ocn rulesets (narrow/child before broad/parent)
 DEFAULT_REMOTE_RULE_ORDER = [
-    "AI-China-Direct.lsr",
+    "Apple-Push.lsr",
     "AI-Overseas.lsr",
     "YouTube.lsr",
     "GoogleDrive.lsr",
@@ -30,11 +29,16 @@ DEFAULT_REMOTE_RULE_ORDER = [
     "Telegram.lsr",
     "Twitter.lsr",
     "Discord.lsr",
+    "PayPal.lsr",
+    "Gaming.lsr",
+    "GitHub.lsr",
     "TestFlight.lsr",
     "Apple-Media.lsr",
-    "Apple-Push.lsr",
+    "AI-China-Direct.lsr",
     "Apple-Direct.lsr",
-    "China-Direct.lsr"
+    "China-Direct.lsr",
+    "Lan.lsr",
+    "China-GeoIP.lsr"
 ]
 
 def parse_rule_line(raw_line, line_idx=0):

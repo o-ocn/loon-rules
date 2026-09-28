@@ -8,11 +8,21 @@
 (function () {
   'use strict';
 
-  // Config constants
-  const PRIMARY_BASE_URL = 'https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist';
-  const BACKUP_BASE_URL = 'https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist';
-  const PRIMARY_MANIFEST_URL = PRIMARY_BASE_URL + '/diagnostics/manifest.json';
-  const BACKUP_MANIFEST_URL = BACKUP_BASE_URL + '/diagnostics/manifest.json';
+  // Config constants & base URLs (dynamic branch/ref support)
+  let CURRENT_BRANCH = 'main';
+  let PRIMARY_BASE_URL = 'https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist';
+  let BACKUP_BASE_URL = 'https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist';
+  let PRIMARY_MANIFEST_URL = PRIMARY_BASE_URL + '/diagnostics/manifest.json';
+  let BACKUP_MANIFEST_URL = BACKUP_BASE_URL + '/diagnostics/manifest.json';
+
+  function setBranch(branch) {
+    if (!branch || typeof branch !== 'string') return;
+    CURRENT_BRANCH = branch.trim();
+    PRIMARY_BASE_URL = `https://raw.githubusercontent.com/o-ocn/loon-rules/${CURRENT_BRANCH}/dist`;
+    BACKUP_BASE_URL = `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@${CURRENT_BRANCH}/dist`;
+    PRIMARY_MANIFEST_URL = PRIMARY_BASE_URL + '/diagnostics/manifest.json';
+    BACKUP_MANIFEST_URL = BACKUP_BASE_URL + '/diagnostics/manifest.json';
+  }
 
   // Timeouts in milliseconds (Loon official unit for $httpClient is milliseconds)
   const PROBE_TIMEOUT_MS = 5000;
@@ -22,16 +32,20 @@
   // Parse arguments
   function parseArgs() {
     let mode = 'quick';
+    let branch = 'main';
     if (typeof $argument === 'string') {
       const parts = $argument.split('&');
       for (const p of parts) {
         const [k, v] = p.split('=');
         if (k && k.trim() === 'mode' && v) {
           mode = v.trim().toLowerCase();
+        } else if (k && k.trim() === 'branch' && v) {
+          branch = v.trim();
         }
       }
     }
-    return { mode };
+    setBranch(branch);
+    return { mode, branch };
   }
 
   // Pure JavaScript SHA-256 implementation (FIPS 180-4 compliant)
@@ -1043,10 +1057,11 @@
       mapConcurrent,
       currentProgress,
       initLoonEntrypoint,
-      PRIMARY_BASE_URL,
-      BACKUP_BASE_URL,
-      PRIMARY_MANIFEST_URL,
-      BACKUP_MANIFEST_URL,
+      setBranch,
+      get PRIMARY_BASE_URL() { return PRIMARY_BASE_URL; },
+      get BACKUP_BASE_URL() { return BACKUP_BASE_URL; },
+      get PRIMARY_MANIFEST_URL() { return PRIMARY_MANIFEST_URL; },
+      get BACKUP_MANIFEST_URL() { return BACKUP_MANIFEST_URL; },
       PROBE_TIMEOUT_MS,
       CONCURRENCY_LIMIT
     };
