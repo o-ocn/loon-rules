@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T16:37:30.095678+00:00",
-  "content_revision": "0b8b8e0be129",
-  "package_sha256": "0b8b8e0be129d84c60d11f320e65caf9fd01e0f93afafdc40f3ec3177bf62756",
+  "build_timestamp": "2026-09-28T18:46:47.446781+00:00",
+  "content_revision": "041db8613353",
+  "package_sha256": "041db86133531f5c7a98883f77035a4fe45e2a50503dc46fb1c8a66b66b4f20a",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -61,10 +61,28 @@
       "sha256": "10f8ab448c7626f11d4bb29cc35015346401c5bf6668cb38b03cdef63b41e3fe",
       "description": "Discord voice and chat platform"
     },
+    "PayPal.lsr": {
+      "total_rules": 18,
+      "revision": "4fb02bf03491",
+      "sha256": "4fb02bf03491e385ab0077f0fe1453d872affcf3bc64759cb57595570f55dbf3",
+      "description": "PayPal payment services (real operational domains only)"
+    },
+    "Gaming.lsr": {
+      "total_rules": 69,
+      "revision": "53e0a751a179",
+      "sha256": "53e0a751a179023ca0314ea583fa503f0305a3f116755e6d31f16621d8d7247f",
+      "description": "Gaming platforms (Steam and Epic Games)"
+    },
+    "GitHub.lsr": {
+      "total_rules": 31,
+      "revision": "3b18ad5912d7",
+      "sha256": "3b18ad5912d7a0bc4f5caea8ca42849935ccfe05fb5505576066899d63609709",
+      "description": "GitHub development platform and services"
+    },
     "Apple-Direct.lsr": {
-      "total_rules": 80,
-      "revision": "d158568c126a",
-      "sha256": "d158568c126a90a73b76288d75adc49b1cfd248752e3d138fd03c27e0faa1bb5",
+      "total_rules": 155,
+      "revision": "cff12abe2740",
+      "sha256": "cff12abe2740f66a292a85284f295c8201147ac20c40f36ec98fce58bd1c978e",
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
     },
     "Apple-Media.lsr": {
@@ -86,10 +104,22 @@
       "description": "Apple Push Notification service (APNs) minimal authoritative rules"
     },
     "China-Direct.lsr": {
-      "total_rules": 366,
-      "revision": "933339d9d218",
-      "sha256": "933339d9d218f7403acaa0d51c9a6dfd9e748b54477589964539c51f293d4696",
+      "total_rules": 359,
+      "revision": "3f598c94a81a",
+      "sha256": "3f598c94a81acf1d35bb80171e0bb0c3a44308ea0d0a2ea1d0c9b684ad45c1bb",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
+    },
+    "China-GeoIP.lsr": {
+      "total_rules": 1,
+      "revision": "4e14c6b2ef91",
+      "sha256": "4e14c6b2ef91c5ee04a2e78f4e299dfe43fcc0e550591198e8ca4c8151a4f80d",
+      "description": "GeoIP catch-all for mainland China IP traffic (safety net)"
+    },
+    "Lan.lsr": {
+      "total_rules": 9,
+      "revision": "4de015f034d3",
+      "sha256": "4de015f034d3c502b28e11149c2650a5eeedc12dfffd4be0c9f03f65f77453b7",
+      "description": "LAN and private network bypass (RFC1918/RFC6598)"
     }
   },
   "upstream_sync_status": "synced",
@@ -283,6 +313,32 @@
       ],
       "quick": false,
       "note": "仅测试 TCP 443 备用通道可达性。系统 TCP 5223 及锁屏推送必须真机实测"
+    },
+    {
+      "id": "paypal",
+      "name": "PayPal",
+      "category": "PayPal",
+      "url": "https://www.paypal.com/",
+      "expected_status": [
+        200,
+        301,
+        302
+      ],
+      "quick": true,
+      "note": "PayPal payment services"
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "category": "Gaming",
+      "url": "https://store.steampowered.com/",
+      "expected_status": [
+        200,
+        301,
+        302
+      ],
+      "quick": true,
+      "note": "Gaming platforms"
     }
   ],
   "physical_verification_items": [

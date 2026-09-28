@@ -1,8 +1,8 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
 # AUTHOR: o-ocn
-# REVISION: 933339d9d218
-# TOTAL: 366
+# REVISION: 3f598c94a81a
+# TOTAL: 359
 # ==============================================================================
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
@@ -30,13 +30,6 @@ DOMAIN-SUFFIX,zhimg.com
 DOMAIN-SUFFIX,xiaohongshu.com
 DOMAIN-SUFFIX,meituan.com
 DOMAIN-SUFFIX,dianping.com
-IP-CIDR,192.168.0.0/16,no-resolve
-IP-CIDR,10.0.0.0/8,no-resolve
-IP-CIDR,172.16.0.0/12,no-resolve
-IP-CIDR,127.0.0.0/8,no-resolve
-IP-CIDR,100.64.0.0/10,no-resolve
-IP-CIDR,224.0.0.0/4,no-resolve
-IP-CIDR,255.255.255.255/32,no-resolve
 DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
 DOMAIN,slife.xy-asia.com
 DOMAIN-SUFFIX,iot-tencent.com

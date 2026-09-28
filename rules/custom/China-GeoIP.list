@@ -1,0 +1,3 @@
+# GeoIP catch-all for mainland China IPs not matched by domain rules
+# Replaces KeLee REGION_SPLITTER - single GEOIP rule as safety net
+GEOIP,CN

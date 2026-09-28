@@ -160,6 +160,34 @@ rulesets:
         min_rules: 10
     local_custom: "rules/custom/Discord.list"
 
+  PayPal:
+    description: "PayPal payment services (real operational domains only)"
+    custom_first: true
+    local_custom: "rules/custom/PayPal.list"
+
+  Gaming:
+    description: "Gaming platforms (Steam and Epic Games)"
+    custom_first: true
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "Steam"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Steam/Steam.list"
+        min_rules: 20
+      - name: "Epic"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Epic/Epic.list"
+        min_rules: 5
+    local_custom: "rules/custom/Gaming.list"
+
+  GitHub:
+    description: "GitHub development platform and services"
+    custom_first: true
+    max_shrink_ratio: 0.15
+    sources:
+      - name: "GitHub"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GitHub/GitHub.list"
+        min_rules: 10
+    local_custom: "rules/custom/GitHub.list"
+
   Apple-Direct:
     description: "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
     custom_first: true
@@ -171,6 +199,9 @@ rulesets:
       - name: "iCloud"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list"
         min_rules: 20
+      - name: "SystemOTA"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/SystemOTA/SystemOTA.list"
+        min_rules: 30
     local_custom: "rules/custom/Apple-Direct.list"
 
   Apple-Media:
@@ -218,3 +249,13 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/JingDong/JingDong.list"
         min_rules: 30
     local_custom: "rules/custom/China-Direct.list"
+
+  China-GeoIP:
+    description: "GeoIP catch-all for mainland China IP traffic (safety net)"
+    custom_first: true
+    local_custom: "rules/custom/China-GeoIP.list"
+
+  Lan:
+    description: "LAN and private network bypass (RFC1918/RFC6598)"
+    custom_first: true
+    local_custom: "rules/custom/Lan.list"

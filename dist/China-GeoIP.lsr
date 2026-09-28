@@ -1,0 +1,7 @@
+# NAME: China-GeoIP
+# DESCRIPTION: GeoIP catch-all for mainland China IP traffic (safety net)
+# AUTHOR: o-ocn
+# REVISION: 4e14c6b2ef91
+# TOTAL: 1
+# ==============================================================================
+GEOIP,CN

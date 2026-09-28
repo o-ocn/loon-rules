@@ -115,6 +115,22 @@ services:
     quick: false
     note: "仅测试 TCP 443 备用通道可达性。系统 TCP 5223 及锁屏推送必须真机实测"
 
+  - id: "paypal"
+    name: "PayPal"
+    category: "PayPal"
+    url: "https://www.paypal.com/"
+    expected_status: [200, 301, 302]
+    quick: true
+    note: "PayPal payment services"
+
+  - id: "steam"
+    name: "Steam"
+    category: "Gaming"
+    url: "https://store.steampowered.com/"
+    expected_status: [200, 301, 302]
+    quick: true
+    note: "Gaming platforms"
+
 physical_verification_items:
   - "APNs TCP 5223 系统级长连接与锁屏即时通知 (apsd)"
   - "Telegram 锁屏/蜂窝网络下的后台消息唤醒与推送延迟"

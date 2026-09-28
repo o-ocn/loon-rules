@@ -37,7 +37,8 @@ SUPPORTED_TYPES = {
     "IP-CIDR6",
     "USER-AGENT",
     "IP-ASN",
-    "URL-REGEX"
+    "URL-REGEX",
+    "GEOIP"
 }
 
 # Explicitly verified and whitelisted parent-subdomain service delegations.

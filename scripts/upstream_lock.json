@@ -25,9 +25,17 @@
   "Discord": {
     "Discord": 29
   },
+  "Gaming": {
+    "Steam": 54,
+    "Epic": 15
+  },
+  "GitHub": {
+    "GitHub": 31
+  },
   "Apple-Direct": {
     "AppleMusic": 10,
-    "iCloud": 61
+    "iCloud": 61,
+    "SystemOTA": 78
   },
   "Apple-Media": {
     "AppleTV": 9,

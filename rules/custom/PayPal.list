@@ -1,0 +1,21 @@
+# PayPal real operational domains only (phishing/scam domains filtered out)
+# Source: blackmatrix7 PayPal.list, manually curated to exclude 230+ anti-phishing entries
+DOMAIN-SUFFIX,paypal.com
+DOMAIN-SUFFIX,paypalobjects.com
+DOMAIN-SUFFIX,paypal.me
+DOMAIN-SUFFIX,paypal-corp.com
+DOMAIN-SUFFIX,paypalcorp.com
+DOMAIN-SUFFIX,paypal-mktg.com
+DOMAIN-SUFFIX,paypal-prepaid.com
+DOMAIN-SUFFIX,braintreegateway.com
+DOMAIN-SUFFIX,braintreepayments.com
+DOMAIN-SUFFIX,venmo.com
+DOMAIN-SUFFIX,simility.com
+DOMAIN-SUFFIX,paydiant.com
+DOMAIN-SUFFIX,xoom.com
+# PayPal China brands
+DOMAIN-SUFFIX,anfutong.cn
+DOMAIN-SUFFIX,anfutong.com
+DOMAIN-SUFFIX,anfutong.com.cn
+DOMAIN-SUFFIX,beibao.cn
+DOMAIN-SUFFIX,beibao.com

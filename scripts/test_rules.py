@@ -37,7 +37,8 @@ SUPPORTED_TYPES = {
     "IP-CIDR6",
     "USER-AGENT",
     "IP-ASN",
-    "URL-REGEX"
+    "URL-REGEX",
+    "GEOIP"
 }
 
 EXPECTED_RULESETS = {
@@ -54,14 +55,19 @@ EXPECTED_RULESETS = {
     "Apple-Direct.lsr",
     "Apple-Media.lsr",
     "TestFlight.lsr",
-    "China-Direct.lsr"
+    "China-Direct.lsr",
+    "China-GeoIP.lsr",
+    "Lan.lsr",
+    "PayPal.lsr",
+    "Gaming.lsr",
+    "GitHub.lsr"
 }
 
 class TestLoonRulesSuite(unittest.TestCase):
 
     def setUp(self):
         self.lsr_files = [f for f in os.listdir(DIST_DIR) if f.endswith(".lsr")]
-        self.assertTrue(len(self.lsr_files) >= 14, f"Expected at least 14 .lsr files, found {len(self.lsr_files)}")
+        self.assertTrue(len(self.lsr_files) >= 19, f"Expected at least 19 .lsr files, found {len(self.lsr_files)}")
         self.assertEqual(EXPECTED_RULESETS.issubset(set(self.lsr_files)), True, f"Missing rulesets: {EXPECTED_RULESETS - set(self.lsr_files)}")
 
     def test_01_syntax_and_encoding(self):
@@ -391,7 +397,7 @@ rulesets:
             m = json.load(f)
 
         self.assertEqual(m.get("schema_version"), "1.0")
-        self.assertTrue(len(m.get("rulesets", {})) >= 14)
+        self.assertTrue(len(m.get("rulesets", {})) >= 19)
         for rname in EXPECTED_RULESETS:
             self.assertIn(rname, m["rulesets"])
             self.assertGreater(m["rulesets"][rname]["total_rules"], 0)
@@ -628,7 +634,7 @@ rulesets:
         self.assertEqual(matches_push[0]["ruleset"], "Apple-Push.lsr")
 
     def test_22_full_pipeline_evaluation_order_simulation(self):
-        """Verify simulated top-to-bottom rule evaluation across all 14 services."""
+        """Verify simulated top-to-bottom rule evaluation across all 19 services."""
         rules_by_file = simulate_hit.load_dist_rules()
         test_cases = [
             ("deepseek.com", "AI-China-Direct.lsr"),
@@ -963,11 +969,11 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
         self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
 
-        # Verify total rules across all 14 .lsr files is exactly 1532
+        # Verify total rules across all 19 .lsr files is exactly 1728
         total_rules = 0
         for fname in self.lsr_files:
             total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
-        self.assertEqual(total_rules, 1532, f"Expected 1532 rules, got {total_rules}")
+        self.assertEqual(total_rules, 1728, f"Expected 1728 rules, got {total_rules}")
 
     @classmethod
     def tearDownClass(cls):
