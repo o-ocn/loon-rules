@@ -1,7 +1,8 @@
 {
   "AI-Overseas": {
     "OpenAI": 35,
-    "Claude": 3
+    "Claude": 3,
+    "Gemini": 13
   },
   "GoogleDrive": {
     "GoogleDrive": 8
@@ -28,7 +29,7 @@
     "AppleMusic": 10,
     "iCloud": 61
   },
-  "Apple-Media-US": {
+  "Apple-Media": {
     "AppleTV": 9,
     "AppleNews": 2
   },

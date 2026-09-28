@@ -1,7 +1,6 @@
 # ==============================================================================
 # Rule Name: AI-China-Direct (Custom)
-# Target Policy: DIRECT
-# Description: Mainland China AI services explicitly requiring DIRECT (DeepSeek, etc.)
+# Description: Mainland China AI services (DeepSeek, etc.)
 # ==============================================================================
 
 # --- DeepSeek ---

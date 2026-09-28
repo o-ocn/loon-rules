@@ -1,6 +1,5 @@
 # NAME: OneDrive
-# DESCRIPTION: Microsoft OneDrive service, bound to US
-# RECOMMENDED POLICY: US
+# DESCRIPTION: Microsoft OneDrive services
 # AUTHOR: o-ocn
 # REVISION: 94e6e17447f7
 # TOTAL: 17

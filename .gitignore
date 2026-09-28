@@ -7,3 +7,11 @@ __pycache__/
 Thumbs.db
 *.tmp
 *.lcf
+
+# Logs, HAR files and diagnostic data (Strictly ignored to prevent sensitive leaks)
+*.log
+*.har
+*.raw
+logs/
+*.sanitized.json
+*.sanitized.txt

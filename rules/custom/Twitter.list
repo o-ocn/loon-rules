@@ -1,6 +1,5 @@
 # ==============================================================================
 # Rule Name: Twitter (Custom)
-# Target Policy: Final
 # Description: Twitter / X platform
 # Anti-Collision: grok.com and x.ai are strictly isolated in AI-Overseas.lsr
 # ==============================================================================

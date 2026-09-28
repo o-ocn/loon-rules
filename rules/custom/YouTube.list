@@ -1,7 +1,6 @@
 # ==============================================================================
 # Rule Name: YouTube (Custom)
-# Target Policy: US Test
-# Description: YouTube streaming services routing through US Test
+# Description: YouTube streaming services service endpoints Test
 # ==============================================================================
 
 DOMAIN-SUFFIX,youtube.com

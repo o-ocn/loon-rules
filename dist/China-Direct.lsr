@@ -1,9 +1,8 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
-# RECOMMENDED POLICY: DIRECT
 # AUTHOR: o-ocn
-# REVISION: 3fea7e7f3106
-# TOTAL: 372
+# REVISION: 520040bb6fa3
+# TOTAL: 366
 # ==============================================================================
 DOMAIN-SUFFIX,weixin.com
 DOMAIN-SUFFIX,wechat.com
@@ -47,13 +46,7 @@ IP-CIDR,100.64.0.0/10,no-resolve
 IP-CIDR,224.0.0.0/4,no-resolve
 IP-CIDR,255.255.255.255/32,no-resolve
 DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
-DOMAIN,btrace.qq.com
-DOMAIN,dldir1.qq.com
 DOMAIN,slife.xy-asia.com
-DOMAIN,soup.v.qq.com
-DOMAIN,vweixinf.tc.qq.com
-DOMAIN,weixin110.qq.com
-DOMAIN,wup.imtt.qq.com
 DOMAIN-SUFFIX,iot-tencent.com
 DOMAIN-SUFFIX,lbs.gtimg.com
 DOMAIN-SUFFIX,map.qq.com

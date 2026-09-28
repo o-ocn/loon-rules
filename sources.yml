@@ -2,6 +2,7 @@
 # All upstreams are strictly READ-ONLY.
 # Primary Upstream: blackmatrix7/ios_rule_script (GPL-2.0)
 # Secondary Reference: luestr/ShuntRules (Cites blackmatrix7, used solely as structural reference)
+# Strategy Neutrality: All rulesets are pure service classifications without bound policies.
 
 metadata:
   primary_upstream:
@@ -18,7 +19,6 @@ metadata:
 rulesets:
   AI-Overseas:
     description: "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
-    bound_policy: "AI"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -26,9 +26,11 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/OpenAI/OpenAI.list"
         min_rules: 15
         filter_excluded:
-          # Shared SaaS / Payment / Identity / Analytics / Telemetry services to exclude
+          # Shared payment gateway (prevents payment failures across non-AI web)
           - "DOMAIN-SUFFIX,stripe.com"
+          # Shared authentication provider
           - "DOMAIN-SUFFIX,auth0.com"
+          # Shared SaaS / Telemetry / Error tracking
           - "DOMAIN-SUFFIX,sentry.io"
           - "DOMAIN-SUFFIX,intercom.io"
           - "DOMAIN-SUFFIX,intercomcdn.com"
@@ -42,35 +44,32 @@ rulesets:
           - "DOMAIN-SUFFIX,featuregates.org"
           - "DOMAIN,browser-intake-datadoghq.com"
           - "DOMAIN,static.cloudflareinsights.com"
-          - "DOMAIN-SUFFIX,azureedge.net"
           # Shared hosting / broad ASN exclusions (Vultr AS20473 & DigitalOcean IPs)
           - "IP-ASN,20473,no-resolve"
           - "IP-CIDR,24.199.123.28/32,no-resolve"
           - "IP-CIDR,64.23.132.171/32,no-resolve"
-          # Overly broad / Shared infrastructure exclusions (Codex review)
+          # Overly broad / Shared LiveKit infrastructure
           - "DOMAIN-KEYWORD,openai"
           - "DOMAIN-SUFFIX,client-api.arkoselabs.com"
-          - "DOMAIN,client-api.arkoselabs.com"
           - "DOMAIN-SUFFIX,host.livekit.cloud"
-          - "DOMAIN,host.livekit.cloud"
           - "DOMAIN-SUFFIX,turn.livekit.cloud"
-          - "DOMAIN,turn.livekit.cloud"
       - name: "Claude"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Claude/Claude.list"
         min_rules: 2
         filter_excluded:
           - "DOMAIN,cdn.usefathom.com"
+      - name: "Gemini"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Gemini/Gemini.list"
+        min_rules: 5
     local_custom: "rules/custom/AI-Overseas.list"
 
   AI-China-Direct:
-    description: "Mainland China AI services (DeepSeek, etc.) requiring DIRECT"
-    bound_policy: "DIRECT"
+    description: "Mainland China AI services (DeepSeek, etc.)"
     custom_first: true
     local_custom: "rules/custom/AI-China-Direct.list"
 
   GoogleDrive:
-    description: "Google Drive service, bound to HK"
-    bound_policy: "HK"
+    description: "Google Drive storage services"
     custom_first: true
     max_shrink_ratio: 0.20
     sources:
@@ -78,14 +77,13 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/GoogleDrive/GoogleDrive.list"
         min_rules: 5
         filter_excluded:
-          - "DOMAIN-SUFFIX,googleusercontent.com"
-          - "DOMAIN,googleusercontent.com"
+          # Protect shared Google API and generic user content from being hijacked by Google Drive
           - "DOMAIN,www.googleapis.com"
+          - "DOMAIN-SUFFIX,googleusercontent.com"
     local_custom: "rules/custom/GoogleDrive.list"
 
   OneDrive:
-    description: "Microsoft OneDrive service, bound to US"
-    bound_policy: "US"
+    description: "Microsoft OneDrive services"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -95,8 +93,7 @@ rulesets:
     local_custom: "rules/custom/OneDrive.list"
 
   Google:
-    description: "General Google services, bound to US Test"
-    bound_policy: "US Test"
+    description: "General Google services and infrastructure"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -105,30 +102,18 @@ rulesets:
         min_rules: 100
         filter_excluded:
           - "DOMAIN-SUFFIX,googledrive.com"
-          - "DOMAIN,googledrive.com"
-          - "DOMAIN-SUFFIX,drive.google.com"
-          - "DOMAIN,drive.google.com"
           - "DOMAIN-SUFFIX,googleusercontent.com"
-          - "DOMAIN,gemini.google.com"
-          - "DOMAIN,bard.google.com"
-          - "DOMAIN,aistudio.google.com"
-          - "DOMAIN,makersuite.google.com"
-          - "DOMAIN,generativelanguage.googleapis.com"
-          - "DOMAIN,alkalimakersuite-pa.clients6.google.com"
-          - "DOMAIN,proactivebackend-pa.googleapis.com"
-          - "DOMAIN-SUFFIX,youtube.com"
-          - "DOMAIN-SUFFIX,googlevideo.com"
-          - "DOMAIN-SUFFIX,ytimg.com"
-          - "DOMAIN-SUFFIX,youtu.be"
-          # USER-AGENT exclusions for GoogleDrive exclusivity
+          - "DOMAIN-SUFFIX,deepmind.com"
+          - "IP-CIDR,172.110.32.0/21,no-resolve"
+          - "IP-CIDR,216.73.80.0/20,no-resolve"
+          - "IP-CIDR6,2620:120:e000::/40,no-resolve"
           - "USER-AGENT,%E4%BA%91%E7%AB%AF%E7%A1%AC%E7%9B%98*"
           - "USER-AGENT,*com.google.Drive*"
           - "USER-AGENT,Google.Drive*"
     local_custom: "rules/custom/Google.list"
 
   YouTube:
-    description: "YouTube streaming service, bound to US Test"
-    bound_policy: "US Test"
+    description: "YouTube streaming and media services"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -138,8 +123,7 @@ rulesets:
     local_custom: "rules/custom/YouTube.list"
 
   Telegram:
-    description: "Telegram messenger service, bound to Final"
-    bound_policy: "Final"
+    description: "Telegram messaging platform"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -149,8 +133,7 @@ rulesets:
     local_custom: "rules/custom/Telegram.list"
 
   Twitter:
-    description: "Twitter / X platform, bound to Final"
-    bound_policy: "Final"
+    description: "Twitter / X social platform"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -158,16 +141,12 @@ rulesets:
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Twitter/Twitter.list"
         min_rules: 10
         filter_excluded:
+          # Segregate Grok from Twitter main platform
           - "DOMAIN-SUFFIX,grok.com"
-          - "DOMAIN,grok.com"
-          - "DOMAIN-SUFFIX,x.ai"
-          - "DOMAIN,x.ai"
-          - "DOMAIN,api.x.ai"
     local_custom: "rules/custom/Twitter.list"
 
   Discord:
-    description: "Discord communication platform, bound to US"
-    bound_policy: "US"
+    description: "Discord voice and chat platform"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -177,8 +156,7 @@ rulesets:
     local_custom: "rules/custom/Discord.list"
 
   Apple-Direct:
-    description: "Apple baseline services requiring DIRECT (iCloud, CloudKit, App Store, Apple ID, HomeKit, Music)"
-    bound_policy: "DIRECT"
+    description: "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -188,19 +166,10 @@ rulesets:
       - name: "iCloud"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/iCloud/iCloud.list"
         min_rules: 20
-        filter_excluded:
-          - "DOMAIN-SUFFIX,tv.apple.com"
-          - "DOMAIN-SUFFIX,news-client.apple.com"
-          - "DOMAIN-SUFFIX,news-assets.apple.com"
-          - "DOMAIN-SUFFIX,news-edge.apple.com"
-          - "DOMAIN-SUFFIX,apple.news"
-          - "DOMAIN-SUFFIX,fitness.apple.com"
-          - "DOMAIN-SUFFIX,testflight.apple.com"
     local_custom: "rules/custom/Apple-Direct.list"
 
-  Apple-Media-US:
-    description: "Apple US-restricted services (Apple TV+, Apple News, Fitness+)"
-    bound_policy: "US Test"
+  Apple-Media:
+    description: "Apple media services (Apple TV+, Apple News, Fitness+)"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -210,13 +179,12 @@ rulesets:
       - name: "AppleNews"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/AppleNews/AppleNews.list"
         min_rules: 2
-    local_custom: "rules/custom/Apple-Media-US.list"
+    local_custom: "rules/custom/Apple-Media.list"
 
   TestFlight:
-    description: "Apple TestFlight beta testing platform, bound to US"
-    bound_policy: "US"
+    description: "Apple TestFlight beta testing platform"
     custom_first: true
-    max_shrink_ratio: 0.15
+    max_shrink_ratio: 0.35
     sources:
       - name: "TestFlight"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/TestFlight/TestFlight.list"
@@ -225,15 +193,13 @@ rulesets:
           - "DOMAIN,beta.apple.com"
     local_custom: "rules/custom/TestFlight.list"
 
-  Apple-Push-Experimental:
-    description: "Independent experimental APNs rule, bound to Apple Push policy"
-    bound_policy: "Apple Push"
+  Apple-Push:
+    description: "Apple Push Notification service (APNs) minimal authoritative rules"
     custom_first: true
-    local_custom: "rules/custom/Apple-Push-Experimental.list"
+    local_custom: "rules/custom/Apple-Push.list"
 
   China-Direct:
     description: "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
-    bound_policy: "DIRECT"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:

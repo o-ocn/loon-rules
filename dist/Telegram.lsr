@@ -1,6 +1,5 @@
 # NAME: Telegram
-# DESCRIPTION: Telegram messenger service, bound to Final
-# RECOMMENDED POLICY: Final
+# DESCRIPTION: Telegram messaging platform
 # AUTHOR: o-ocn
 # REVISION: c23e30434f8b
 # TOTAL: 48

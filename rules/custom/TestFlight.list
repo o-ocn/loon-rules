@@ -1,6 +1,5 @@
 # ==============================================================================
 # Rule Name: TestFlight (Custom)
-# Target Policy: US
 # Description: Apple TestFlight beta testing platform
 # ==============================================================================
 DOMAIN-SUFFIX,testflight.apple.com

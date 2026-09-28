@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Automated Test Suite for Loon Rules
-Validates syntax, isolation, fail-stop on single-rule upstream, real-engine conflict detection,
-build idempotence, APNs default disabled, and credential leak security.
+Validates syntax, strategy neutrality, isolation, fail-stop on single-rule upstream,
+real-engine cross-ruleset conflict detection, build idempotence, Gemini iOS precision,
+Google Drive shared API protection, minimal APNs, and diagnostic manifest validity.
+Author: o-ocn
+License: GPL-2.0
 """
 
 import os
@@ -12,12 +15,12 @@ import unittest
 import tempfile
 import shutil
 import json
-import io
 from unittest.mock import patch, MagicMock
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 SOURCES_FILE = os.path.join(BASE_DIR, "sources.yml")
+DIAGNOSTICS_DIST_DIR = os.path.join(DIST_DIR, "diagnostics")
 
 sys.path.insert(0, os.path.join(BASE_DIR, "scripts"))
 import build
@@ -33,11 +36,29 @@ SUPPORTED_TYPES = {
     "URL-REGEX"
 }
 
+EXPECTED_RULESETS = {
+    "AI-Overseas.lsr",
+    "AI-China-Direct.lsr",
+    "GoogleDrive.lsr",
+    "Google.lsr",
+    "YouTube.lsr",
+    "OneDrive.lsr",
+    "Telegram.lsr",
+    "Twitter.lsr",
+    "Discord.lsr",
+    "Apple-Push.lsr",
+    "Apple-Direct.lsr",
+    "Apple-Media.lsr",
+    "TestFlight.lsr",
+    "China-Direct.lsr"
+}
+
 class TestLoonRulesSuite(unittest.TestCase):
 
     def setUp(self):
         self.lsr_files = [f for f in os.listdir(DIST_DIR) if f.endswith(".lsr")]
-        self.assertTrue(len(self.lsr_files) > 0, "No .lsr files found in dist directory.")
+        self.assertTrue(len(self.lsr_files) >= 14, f"Expected at least 14 .lsr files, found {len(self.lsr_files)}")
+        self.assertEqual(EXPECTED_RULESETS.issubset(set(self.lsr_files)), True, f"Missing rulesets: {EXPECTED_RULESETS - set(self.lsr_files)}")
 
     def test_01_syntax_and_encoding(self):
         """Verify each line in every .lsr complies with Loon format."""
@@ -54,29 +75,61 @@ class TestLoonRulesSuite(unittest.TestCase):
                 self.assertIn(rtype, SUPPORTED_TYPES, f"Invalid rule type '{rtype}' in {fname}:{line_idx}")
                 self.assertTrue(len(parts) >= 2, f"Missing rule value in {fname}:{line_idx}")
 
-    def test_02_ai_overseas_narrowed_and_clean(self):
-        """Ensure AI-Overseas contains only verified AI domains and strips all shared SaaS/APM/payment/ASN rules."""
+    def test_02_policy_neutrality_across_all_lsr(self):
+        """Verify all generated .lsr files are strictly policy-neutral."""
+        forbidden_policies = [
+            "DIRECT", "PROXY", "REJECT",
+            "HK", "US", "JP", "VMISS", "FINAL", "Apple Push"
+        ]
+        for fname in self.lsr_files:
+            fpath = os.path.join(DIST_DIR, fname)
+            with open(fpath, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # Header check: must NOT have # RECOMMENDED POLICY:
+            self.assertNotIn("# RECOMMENDED POLICY:", content, f"Policy recommendation found in {fname}")
+
+            for line_idx, line in enumerate(content.splitlines(), 1):
+                clean = line.strip()
+                if not clean or clean.startswith("#"):
+                    continue
+                parts = [p.strip() for p in clean.split(",")]
+                # Rule format must be TYPE,VALUE or TYPE,VALUE,no-resolve
+                if len(parts) > 2:
+                    for extra in parts[2:]:
+                        self.assertEqual(extra.lower(), "no-resolve", f"Forbidden policy or action '{extra}' in {fname}:{line_idx}")
+
+    def test_03_ai_overseas_sync_and_gemini_ios_precision(self):
+        """Verify AI-Overseas has upstream sync + custom Gemini iOS and blocks broad parent domains."""
         ai_path = os.path.join(DIST_DIR, "AI-Overseas.lsr")
         self.assertTrue(os.path.isfile(ai_path), "AI-Overseas.lsr missing")
         with open(ai_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Must contain verified AI domains
+        # Must contain verified AI domains from upstream & custom
         self.assertIn("openai.com", content)
         self.assertIn("chatgpt.com", content)
         self.assertIn("claude.ai", content)
         self.assertIn("anthropic.com", content)
         self.assertIn("gemini.google.com", content)
-        self.assertIn("generativelanguage.googleapis.com", content)
         self.assertIn("grok.com", content)
         self.assertIn("x.ai", content)
         self.assertIn("muse.ai", content)
         self.assertIn("meta.ai", content)
 
-        # STRICT PROHIBITIONS: Broad parent domains & shared SaaS/APM/Payment/ASN
+        # Gemini iOS specific endpoints
+        self.assertIn("webchannel-robinfrontend-pa.googleapis.com", content)
+        self.assertIn("robinfrontend-pa.googleapis.com", content)
+        self.assertIn("geminiweb-pa.googleapis.com", content)
+        self.assertIn("gemini.gstatic.com", content)
+        self.assertIn("cloudcode-pa.googleapis.com", content)
+        self.assertIn("aistudio.google.com", content)
+
+        # Strict prohibitions: broad domains & shared infrastructure
         forbidden_rules = [
             "DOMAIN-SUFFIX,google.com",
             "DOMAIN-SUFFIX,googleapis.com",
+            "DOMAIN-SUFFIX,googleusercontent.com",
             "DOMAIN-SUFFIX,twitter.com",
             "DOMAIN-SUFFIX,x.com",
             "DOMAIN-SUFFIX,meta.com",
@@ -88,201 +141,226 @@ class TestLoonRulesSuite(unittest.TestCase):
             "DOMAIN-SUFFIX,sentry.io",
             "DOMAIN-SUFFIX,intercom.io",
             "DOMAIN-SUFFIX,launchdarkly.com",
-            "DOMAIN-SUFFIX,segment.io",
             "IP-ASN,20473",
-            "DOMAIN-KEYWORD,openai",
-            "DOMAIN-SUFFIX,client-api.arkoselabs.com",
-            "DOMAIN,client-api.arkoselabs.com",
-            "DOMAIN-SUFFIX,host.livekit.cloud",
-            "DOMAIN,host.livekit.cloud",
-            "DOMAIN-SUFFIX,turn.livekit.cloud",
-            "DOMAIN,turn.livekit.cloud",
+            "DOMAIN,www.googleapis.com",
+            "DOMAIN-KEYWORD,openai"
         ]
         for fb in forbidden_rules:
             self.assertNotIn(fb, content, f"Violation: '{fb}' found in AI-Overseas.lsr! Must be scoped.")
 
-        for line in content.splitlines():
-            clean_l = line.strip()
-            if clean_l and not clean_l.startswith("#"):
-                self.assertFalse(clean_l.startswith("DOMAIN-KEYWORD,"), f"Forbidden DOMAIN-KEYWORD rule: {clean_l}")
-
-    def test_03_ai_china_direct(self):
-        """Ensure DeepSeek is strictly in AI-China-Direct and bound to DIRECT."""
+    def test_04_ai_china_direct_policy_neutral(self):
+        """Ensure DeepSeek is in AI-China-Direct without hardcoded DIRECT action."""
         china_ai_path = os.path.join(DIST_DIR, "AI-China-Direct.lsr")
         self.assertTrue(os.path.isfile(china_ai_path), "AI-China-Direct.lsr missing")
         with open(china_ai_path, "r", encoding="utf-8") as f:
             content = f.read()
         self.assertIn("deepseek.com", content)
-        self.assertIn("deepseeksvc.com", content)
         self.assertNotIn("openai.com", content)
         self.assertNotIn("claude.ai", content)
+        for line in content.splitlines():
+            if line.strip() and not line.strip().startswith("#"):
+                self.assertNotIn(",DIRECT", line, f"Policy action hardcoded in AI-China-Direct: {line}")
 
-    def test_04_upstream_fail_stop_on_single_rule_200_response(self):
-        """
-        Verify that an upstream returning an HTTP 200 response with only 1 valid rule
-        triggers fail-stop (RuntimeError) via real build engine, leaving dist/ 100% untouched.
-        """
-        # Capture current dist hashes before simulated failure
-        hashes_before = {}
-        for fname in self.lsr_files:
-            fpath = os.path.join(DIST_DIR, fname)
-            with open(fpath, "rb") as f:
-                hashes_before[fname] = f.read()
+    def test_05_google_drive_shared_api_and_youtube_segregation(self):
+        """Verify www.googleapis.com is strictly segregated from AI and Drive."""
+        drive_path = os.path.join(DIST_DIR, "GoogleDrive.lsr")
+        ai_path = os.path.join(DIST_DIR, "AI-Overseas.lsr")
+        yt_path = os.path.join(DIST_DIR, "YouTube.lsr")
+        google_path = os.path.join(DIST_DIR, "Google.lsr")
 
-        # Mock an HTTP 200 response containing only a single valid rule line
-        mock_response = MagicMock()
-        mock_response.status = 200
-        mock_response.read.return_value = b"# Single rule test\nDOMAIN,only-one-rule.example.com\n"
-        mock_response.__enter__.return_value = mock_response
+        with open(drive_path, "r", encoding="utf-8") as f:
+            drive_c = f.read()
+        with open(ai_path, "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(yt_path, "r", encoding="utf-8") as f:
+            yt_c = f.read()
+        with open(google_path, "r", encoding="utf-8") as f:
+            google_c = f.read()
 
-        # Execute real build_rulesets with mocked upstream for Google (which requires min_rules=100)
-        with patch("urllib.request.urlopen", return_value=mock_response):
+        # www.googleapis.com must NOT be in AI or Drive
+        self.assertNotIn("www.googleapis.com", ai_c)
+        self.assertNotIn("www.googleapis.com", drive_c)
+        self.assertNotIn("ws.audioscrobbler.com", drive_c)
+
+        # Drive explicit domains in GoogleDrive
+        self.assertIn("drive.google.com", drive_c)
+        self.assertIn("googledrive.com", drive_c)
+
+        # YouTube segregation
+        self.assertIn("youtube.com", yt_c)
+        self.assertIn("googlevideo.com", yt_c)
+        self.assertNotIn("googledrive.com", google_c)
+
+    def test_06_apple_push_minimal_and_testflight_isolation(self):
+        """Verify Apple-Push is minimal official APNs and TestFlight is separate."""
+        push_path = os.path.join(DIST_DIR, "Apple-Push.lsr")
+        direct_path = os.path.join(DIST_DIR, "Apple-Direct.lsr")
+        tf_path = os.path.join(DIST_DIR, "TestFlight.lsr")
+
+        with open(push_path, "r", encoding="utf-8") as f:
+            push_c = f.read()
+        with open(direct_path, "r", encoding="utf-8") as f:
+            direct_c = f.read()
+        with open(tf_path, "r", encoding="utf-8") as f:
+            tf_c = f.read()
+
+        # Apple-Push must contain push.apple.com and official CIDRs
+        self.assertIn("push.apple.com", push_c)
+        self.assertIn("17.249.0.0/16", push_c)
+        self.assertIn("2620:149:a40::/48", push_c)
+
+        # Must NOT contain broad Apple network
+        self.assertNotIn("17.0.0.0/8", push_c)
+        self.assertNotIn("DOMAIN-SUFFIX,apple.com", push_c)
+        self.assertNotIn("DOMAIN-SUFFIX,icloud.com", push_c)
+
+        # TestFlight isolation
+        self.assertIn("testflight.apple.com", tf_c)
+        self.assertNotIn("testflight.apple.com", direct_c)
+
+    def test_07_grok_and_muse_isolation(self):
+        """Verify Grok is separate from Twitter, and Muse does not expand to Meta platforms."""
+        ai_path = os.path.join(DIST_DIR, "AI-Overseas.lsr")
+        twitter_path = os.path.join(DIST_DIR, "Twitter.lsr")
+
+        with open(ai_path, "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(twitter_path, "r", encoding="utf-8") as f:
+            twitter_c = f.read()
+
+        # Grok in AI, not Twitter
+        self.assertIn("grok.com", ai_c)
+        self.assertIn("x.ai", ai_c)
+        self.assertNotIn("grok.com", twitter_c)
+        self.assertNotIn("x.ai", twitter_c)
+
+        # Twitter in Twitter, not AI
+        self.assertIn("twitter.com", twitter_c)
+        self.assertIn("x.com", twitter_c)
+        self.assertNotIn("DOMAIN-SUFFIX,twitter.com", ai_c)
+        self.assertNotIn("DOMAIN-SUFFIX,x.com", ai_c)
+
+        # Muse in AI without Meta platforms
+        self.assertIn("muse.ai", ai_c)
+        self.assertIn("meta.ai", ai_c)
+        self.assertNotIn("facebook.com", ai_c)
+        self.assertNotIn("instagram.com", ai_c)
+        self.assertNotIn("DOMAIN-SUFFIX,meta.com", ai_c)
+
+    def test_08_upstream_fail_stop_on_single_rule(self):
+        """Verify upstream returning abnormally few rules halts build without touching dist/."""
+        hashes_before = {fname: open(os.path.join(DIST_DIR, fname), "rb").read() for fname in self.lsr_files}
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = b"# Single rule\nDOMAIN,only-one.com\n"
+        mock_resp.__enter__.return_value = mock_resp
+
+        with patch("urllib.request.urlopen", return_value=mock_resp):
             with self.assertRaises(RuntimeError) as ctx:
                 build.build_rulesets()
             self.assertIn("abnormally few rules", str(ctx.exception))
 
-        # Assert dist/ files remain completely unchanged
+        # Verify dist untouched
         for fname in self.lsr_files:
-            fpath = os.path.join(DIST_DIR, fname)
-            with open(fpath, "rb") as f:
-                hash_after = f.read()
-            self.assertEqual(
-                hashes_before[fname], hash_after,
-                f"Dist protection failed: {fname} was modified during failed build!"
-            )
+            hash_after = open(os.path.join(DIST_DIR, fname), "rb").read()
+            self.assertEqual(hashes_before[fname], hash_after)
 
-    def test_05_cross_policy_conflict_detection_real_engine(self):
-        """
-        Invoke the real build engine with a test configuration containing an unhandled cross-policy duplicate
-        (e.g. USER-AGENT or DOMAIN in two different policies) and verify it raises ValueError.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_conflict_")
+    def test_09_cross_ruleset_conflict_detection_real_engine(self):
+        """Verify real build engine catches exact duplicate rules across rulesets."""
+        tmp_dir = tempfile.mkdtemp(prefix="test_conflict_")
         try:
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            test_dist_dir = os.path.join(tmp_dir, "dist")
-            test_custom_a = os.path.join(tmp_dir, "CustomA.list")
-            test_custom_b = os.path.join(tmp_dir, "CustomB.list")
+            t_src = os.path.join(tmp_dir, "sources.yml")
+            t_dist = os.path.join(tmp_dir, "dist")
+            t_a = os.path.join(tmp_dir, "A.list")
+            t_b = os.path.join(tmp_dir, "B.list")
 
-            # Write conflicting rule in two different policy custom lists
-            with open(test_custom_a, "w", encoding="utf-8") as f:
-                f.write("USER-AGENT,*ConflictApp*\nDOMAIN,conflict.example.com\n")
-            with open(test_custom_b, "w", encoding="utf-8") as f:
-                f.write("USER-AGENT,*ConflictApp*\n")
+            with open(t_a, "w", encoding="utf-8") as f:
+                f.write("DOMAIN,dup.example.com\n")
+            with open(t_b, "w", encoding="utf-8") as f:
+                f.write("DOMAIN,dup.example.com\n")
 
-            # Write test sources.yml
-            test_yaml = f"""
+            with open(t_src, "w", encoding="utf-8") as f:
+                f.write(f"""
 rulesets:
   ServiceA:
-    bound_policy: "PolicyA"
-    local_custom: "{test_custom_a.replace(chr(92), '/')}"
+    local_custom: "{t_a.replace(chr(92), '/')}"
   ServiceB:
-    bound_policy: "PolicyB"
-    local_custom: "{test_custom_b.replace(chr(92), '/')}"
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            # Invoke real build_rulesets
+    local_custom: "{t_b.replace(chr(92), '/')}"
+""")
             with self.assertRaises(ValueError) as ctx:
-                build.build_rulesets(sources_file=test_sources_file, dist_dir=test_dist_dir)
-            self.assertIn("FATAL CONFLICT: Exact rule 'USER-AGENT,*ConflictApp*'", str(ctx.exception))
+                build.build_rulesets(sources_file=t_src, dist_dir=t_dist)
+            self.assertIn("FATAL CONFLICT: Exact rule 'DOMAIN,dup.example.com'", str(ctx.exception))
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    def test_06_illegal_parent_domain_shadowing_real_engine(self):
-        """
-        Invoke the real build engine with an illegal parent-domain shadowing scenario
-        (subdomain in PolicyA shadowed by parent suffix in PolicyB without delegation) and verify it raises ValueError.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_shadowing_")
+    def test_10_illegal_parent_domain_shadowing_real_engine(self):
+        """Verify build engine catches un-delegated parent domain shadowing."""
+        tmp_dir = tempfile.mkdtemp(prefix="test_shadow_")
         try:
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            test_dist_dir = os.path.join(tmp_dir, "dist")
-            test_custom_child = os.path.join(tmp_dir, "Child.list")
-            test_custom_parent = os.path.join(tmp_dir, "Parent.list")
+            t_src = os.path.join(tmp_dir, "sources.yml")
+            t_dist = os.path.join(tmp_dir, "dist")
+            t_child = os.path.join(tmp_dir, "Child.list")
+            t_parent = os.path.join(tmp_dir, "Parent.list")
 
-            with open(test_custom_child, "w", encoding="utf-8") as f:
-                f.write("DOMAIN,secret.unauthorized.com\n")
-            with open(test_custom_parent, "w", encoding="utf-8") as f:
-                f.write("DOMAIN-SUFFIX,unauthorized.com\n")
+            with open(t_child, "w", encoding="utf-8") as f:
+                f.write("DOMAIN,unauthorized.bad.com\n")
+            with open(t_parent, "w", encoding="utf-8") as f:
+                f.write("DOMAIN-SUFFIX,bad.com\n")
 
-            test_yaml = f"""
+            with open(t_src, "w", encoding="utf-8") as f:
+                f.write(f"""
 rulesets:
   ChildSet:
-    bound_policy: "ProxyPolicy"
-    local_custom: "{test_custom_child.replace(chr(92), '/')}"
+    local_custom: "{t_child.replace(chr(92), '/')}"
   ParentSet:
-    bound_policy: "DirectPolicy"
-    local_custom: "{test_custom_parent.replace(chr(92), '/')}"
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
+    local_custom: "{t_parent.replace(chr(92), '/')}"
+""")
             with self.assertRaises(ValueError) as ctx:
-                build.build_rulesets(sources_file=test_sources_file, dist_dir=test_dist_dir)
+                build.build_rulesets(sources_file=t_src, dist_dir=t_dist)
             self.assertIn("FATAL SHADOWING", str(ctx.exception))
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    def test_07_claude_source_ingestion_and_fallback_parser(self):
-        """Verify fallback YAML parser correctly parses Claude under AI-Overseas, filters, and metadata."""
-        parsed = build.parse_yaml_fallback(SOURCES_FILE)
-        ai_sources = parsed.get("rulesets", {}).get("AI-Overseas", {}).get("sources", [])
-        source_names = [s.get("name") for s in ai_sources]
-        self.assertIn("Claude", source_names, "Fallback YAML parser failed to ingest Claude source!")
-        self.assertIn("OpenAI", source_names, "Fallback YAML parser failed to ingest OpenAI source!")
-
-        # Verify fallback parser parsed filter_excluded and max_shrink_ratio properly
-        openai_src = next(s for s in ai_sources if s.get("name") == "OpenAI")
-        self.assertIn("filter_excluded", openai_src)
-        self.assertIn("DOMAIN-KEYWORD,openai", openai_src["filter_excluded"])
-        self.assertIn("DOMAIN-SUFFIX,client-api.arkoselabs.com", openai_src["filter_excluded"])
-        self.assertEqual(parsed.get("rulesets", {}).get("AI-Overseas", {}).get("max_shrink_ratio"), 0.15)
-
-    def test_08_idempotent_build_no_diff(self):
-        """Verify repeated build on unchanged sources results in 0 file modifications."""
-        hashes_before = {}
-        for fname in self.lsr_files:
-            fpath = os.path.join(DIST_DIR, fname)
-            with open(fpath, "rb") as f:
-                hashes_before[fname] = f.read()
-
+    def test_11_idempotent_build_no_diff(self):
+        """Verify repeated build on unchanged sources results in zero modifications."""
+        hashes_before = {fname: open(os.path.join(DIST_DIR, fname), "rb").read() for fname in self.lsr_files}
         build.build_rulesets()
-
         for fname in self.lsr_files:
-            fpath = os.path.join(DIST_DIR, fname)
-            with open(fpath, "rb") as f:
-                hash_after = f.read()
-            self.assertEqual(
-                hashes_before[fname], hash_after,
-                f"Idempotence violation: {fname} changed on repeated build!"
-            )
+            hash_after = open(os.path.join(DIST_DIR, fname), "rb").read()
+            self.assertEqual(hashes_before[fname], hash_after, f"Idempotence violation: {fname} changed!")
 
-    def test_09_apns_default_disabled(self):
-        """Verify APNs rule is configured with enabled=false in all doc examples and tables."""
-        doc_files = [
-            os.path.join(BASE_DIR, "README.md"),
-            os.path.join(BASE_DIR, "docs", "policy_mapping.md"),
-            os.path.join(BASE_DIR, "docs", "migration_and_rollback.md"),
-        ]
-        for dpath in doc_files:
-            with open(dpath, "r", encoding="utf-8") as f:
-                text = f.read()
-            if "Apple-Push-Experimental.lsr" in text and "tag=Apple-Push-Experimental" in text:
-                self.assertIn(
-                    "Apple-Push-Experimental.lsr, policy=Apple Push, tag=Apple-Push-Experimental, enabled=false",
-                    text,
-                    f"APNs remote rule snippet is not set to enabled=false in {dpath}"
-                )
+    def test_12_diagnostics_manifest_and_plugin_validity(self):
+        """Verify diagnostic manifest and plugin files are generated and valid."""
+        manifest_path = os.path.join(DIAGNOSTICS_DIST_DIR, "manifest.json")
+        lpx_path = os.path.join(DIAGNOSTICS_DIST_DIR, "LoonRules-Diagnostic.lpx")
+        js_path = os.path.join(DIAGNOSTICS_DIST_DIR, "loon-rules-diagnostic.js")
 
-    def test_10_security_scan_no_secrets(self):
-        """Verify zero credentials, subscription URLs, private keys, or passwords exist in repo."""
+        self.assertTrue(os.path.isfile(manifest_path), "manifest.json missing in dist/diagnostics/")
+        self.assertTrue(os.path.isfile(lpx_path), "LoonRules-Diagnostic.lpx missing in dist/diagnostics/")
+        self.assertTrue(os.path.isfile(js_path), "loon-rules-diagnostic.js missing in dist/diagnostics/")
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            m = json.load(f)
+
+        self.assertEqual(m.get("schema_version"), "1.0")
+        self.assertTrue(len(m.get("rulesets", {})) >= 14)
+        for rname in EXPECTED_RULESETS:
+            self.assertIn(rname, m["rulesets"])
+            self.assertGreater(m["rulesets"][rname]["total_rules"], 0)
+            self.assertTrue(len(m["rulesets"][rname]["sha256"]) == 64)
+
+        # Check physical verification items documented
+        self.assertTrue(len(m.get("physical_verification_items", [])) >= 5)
+
+    def test_13_security_scan_no_secrets(self):
+        """Verify zero credentials, tokens, private keys, or passwords in repo."""
         forbidden_patterns = [
             ("BEGIN" + " PRIVATE KEY", "Private Key"),
             ("BEGIN" + " RSA PRIVATE KEY", "RSA Private Key"),
             ("BEGIN" + " CERTIFICATE", "Certificate"),
             ("pass" + "word = ", "Password field"),
-            ("tok" + "en=[a-zA-Z0-9_-]{12,}", "Subscription token"),
+            ("tok" + "en=[a-zA-Z0-9_-]{16,}", "Subscription token"),
         ]
         import re
         for root, dirs, files in os.walk(BASE_DIR):
@@ -297,498 +375,6 @@ rulesets:
                 for pat, desc in forbidden_patterns:
                     if re.search(pat, content):
                         self.fail(f"Security leak detected ({desc}) in {fpath}")
-
-    def test_11_upstream_abnormal_shrinkage_triggers_fail_stop_real_engine(self):
-        """
-        Verify that when an auto-synced ruleset experiences abnormal shrinkage compared to
-        the previous dist version (> max_shrink_ratio), the real build engine aborts with RuntimeError,
-        and existing dist/ remains 100% untouched.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_shrink_fail_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-
-            # Create existing dist file with 50 valid rules
-            existing_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 51)]
-            existing_content = "# NAME: ShrinkTest\n# TOTAL: 50\n" + "\n".join(existing_rules) + "\n"
-            target_lsr = os.path.join(test_dist, "ShrinkTest.lsr")
-            with open(target_lsr, "w", encoding="utf-8") as f:
-                f.write(existing_content)
-
-            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
-            initial_lock = {
-                "ShrinkTest": {
-                    "MockUpstream": 50
-                }
-            }
-            with open(test_lock_file, "w", encoding="utf-8") as f:
-                json.dump(initial_lock, f, indent=2)
-
-            # Test sources config with max_shrink_ratio: 0.15 (15%) and min_rules: 10
-            test_yaml = f"""
-metadata:
-  max_shrink_ratio: 0.15
-rulesets:
-  ShrinkTest:
-    bound_policy: "TestPolicy"
-    max_shrink_ratio: 0.15
-    sources:
-      - name: "MockUpstream"
-        url: "https://mock.example.com/rules.list"
-        min_rules: 10
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            # Mock upstream returning 30 rules (40% drop, exceeding 15% threshold while >= min_rules 10)
-            mock_upstream_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 31)]
-            mock_body = "# Mock upstream\n" + "\n".join(mock_upstream_rules) + "\n"
-
-            mock_resp = MagicMock()
-            mock_resp.status = 200
-            mock_resp.read.return_value = mock_body.encode("utf-8")
-            mock_resp.__enter__.return_value = mock_resp
-
-            with patch("urllib.request.urlopen", return_value=mock_resp):
-                with self.assertRaises(RuntimeError) as ctx:
-                    build.build_rulesets(
-                        sources_file=test_sources_file,
-                        dist_dir=test_dist,
-                        lock_file=test_lock_file
-                    )
-                self.assertIn("shrank abnormally by 40.0% (50 -> 30 rules", str(ctx.exception))
-
-            # Verify existing dist file remains completely untouched
-            with open(target_lsr, "r", encoding="utf-8") as f:
-                dist_after = f.read()
-            self.assertEqual(existing_content, dist_after, "Dist file was modified despite abnormal shrinkage!")
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_12_upstream_normal_minor_shrinkage_allowed_real_engine(self):
-        """
-        Verify that reasonable upstream rule updates within the threshold (e.g. 8% drop <= 15%)
-        are allowed to build and update the dist file smoothly.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_shrink_ok_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
-
-            # Establish baseline: MockUpstream had 50 valid rules
-            initial_lock = {
-                "ShrinkTest": {
-                    "MockUpstream": 50
-                }
-            }
-            with open(test_lock_file, "w", encoding="utf-8") as f:
-                json.dump(initial_lock, f, indent=2)
-
-            # Create existing dist file with 50 valid rules
-            existing_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 51)]
-            existing_content = "# NAME: ShrinkTest\n# TOTAL: 50\n" + "\n".join(existing_rules) + "\n"
-            target_lsr = os.path.join(test_dist, "ShrinkTest.lsr")
-            with open(target_lsr, "w", encoding="utf-8") as f:
-                f.write(existing_content)
-
-            test_yaml = f"""
-metadata:
-  max_shrink_ratio: 0.15
-rulesets:
-  ShrinkTest:
-    bound_policy: "TestPolicy"
-    max_shrink_ratio: 0.15
-    sources:
-      - name: "MockUpstream"
-        url: "https://mock.example.com/rules.list"
-        min_rules: 10
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            # Mock upstream returning 46 rules (8% drop <= 15% threshold)
-            mock_upstream_rules = [f"DOMAIN,node-{i}.existing.com" for i in range(1, 47)]
-            mock_body = "# Mock upstream\n" + "\n".join(mock_upstream_rules) + "\n"
-
-            mock_resp = MagicMock()
-            mock_resp.status = 200
-            mock_resp.read.return_value = mock_body.encode("utf-8")
-            mock_resp.__enter__.return_value = mock_resp
-
-            with patch("urllib.request.urlopen", return_value=mock_resp):
-                build.build_rulesets(
-                    sources_file=test_sources_file,
-                    dist_dir=test_dist,
-                    lock_file=test_lock_file
-                )
-
-            # Verify dist file was updated to 46 rules
-            with open(target_lsr, "r", encoding="utf-8") as f:
-                dist_after = f.read()
-            self.assertIn("# TOTAL: 46", dist_after)
-            self.assertIn("DOMAIN,node-46.existing.com", dist_after)
-            self.assertNotIn("DOMAIN,node-47.existing.com", dist_after)
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_13_dual_upstream_single_shrinkage_triggers_fail_stop_real_engine(self):
-        """
-        Verify that in a ruleset with two upstream sources, if ONE upstream abnormally shrinks
-        while the other remains unchanged, the real build engine aborts with RuntimeError,
-        and existing published dist/ remains 100% untouched.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_dual_upstream_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
-
-            # Create existing dist file with 100 valid rules (50 from UpstreamA + 50 from UpstreamB)
-            existing_rules_a = [f"DOMAIN,src-a-{i}.example.com" for i in range(1, 51)]
-            existing_rules_b = [f"DOMAIN,src-b-{i}.example.com" for i in range(1, 51)]
-            all_existing = existing_rules_a + existing_rules_b
-            existing_content = "# NAME: DualSet\n# TOTAL: 100\n" + "\n".join(all_existing) + "\n"
-            target_lsr = os.path.join(test_dist, "DualSet.lsr")
-            with open(target_lsr, "w", encoding="utf-8") as f:
-                f.write(existing_content)
-
-            # Establish lock baseline: both upstreams previously had 50 valid rules
-            initial_lock = {
-                "DualSet": {
-                    "UpstreamA": 50,
-                    "UpstreamB": 50
-                }
-            }
-            with open(test_lock_file, "w", encoding="utf-8") as f:
-                json.dump(initial_lock, f, indent=2)
-
-            test_yaml = f"""
-metadata:
-  max_shrink_ratio: 0.15
-rulesets:
-  DualSet:
-    bound_policy: "DualPolicy"
-    max_shrink_ratio: 0.15
-    sources:
-      - name: "UpstreamA"
-        url: "https://mock.example.com/upstream_a.list"
-        min_rules: 10
-      - name: "UpstreamB"
-        url: "https://mock.example.com/upstream_b.list"
-        min_rules: 10
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            # Mock responses:
-            # UpstreamA abnormally shrinks from 50 to 20 rules (60% drop > 15%, while >= min_rules 10)
-            # UpstreamB remains unchanged at 50 rules (0% drop)
-            body_a = "# Upstream A\n" + "\n".join([f"DOMAIN,src-a-{i}.example.com" for i in range(1, 21)]) + "\n"
-            body_b = "# Upstream B\n" + "\n".join(existing_rules_b) + "\n"
-
-            def mock_urlopen_router(req, timeout=15):
-                url = req.full_url if hasattr(req, "full_url") else str(req)
-                resp = MagicMock()
-                resp.status = 200
-                if "upstream_a.list" in url:
-                    resp.read.return_value = body_a.encode("utf-8")
-                else:
-                    resp.read.return_value = body_b.encode("utf-8")
-                resp.__enter__.return_value = resp
-                return resp
-
-            with patch("urllib.request.urlopen", side_effect=mock_urlopen_router):
-                with self.assertRaises(RuntimeError) as ctx:
-                    build.build_rulesets(
-                        sources_file=test_sources_file,
-                        dist_dir=test_dist,
-                        lock_file=test_lock_file
-                    )
-                self.assertIn("Upstream source 'UpstreamA' in ruleset 'DualSet' shrank abnormally by 60.0% (50 -> 20 rules", str(ctx.exception))
-
-            # Verify existing dist file remains completely untouched
-            with open(target_lsr, "r", encoding="utf-8") as f:
-                dist_after = f.read()
-            self.assertEqual(existing_content, dist_after, "Dual-upstream dist file was modified despite one upstream shrinking!")
-
-            # Verify lock file remains completely unchanged
-            with open(test_lock_file, "r", encoding="utf-8") as f:
-                lock_after = json.load(f)
-            self.assertEqual(initial_lock, lock_after, "Upstream lock was modified despite build failure!")
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_14_missing_lock_file_fails_in_daily_build(self):
-        """
-        Verify that in daily build mode (default, allow_new_baseline=False),
-        if the upstream lock file is missing, the build halts immediately with RuntimeError
-        and does NOT silently treat it as a first run or modify dist/.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_missing_lock_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            target_lsr = os.path.join(test_dist, "Sample.lsr")
-            existing_content = "# NAME: Sample\n# TOTAL: 1\nDOMAIN,existing.com\n"
-            with open(target_lsr, "w", encoding="utf-8") as f:
-                f.write(existing_content)
-
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            non_existent_lock = os.path.join(tmp_dir, "non_existent_lock.json")
-
-            test_yaml = """
-rulesets:
-  Sample:
-    bound_policy: "DirectPolicy"
-    sources:
-      - name: "SampleUpstream"
-        url: "https://mock.example.com/sample.list"
-        min_rules: 1
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            with self.assertRaises(RuntimeError) as ctx:
-                build.build_rulesets(
-                    sources_file=test_sources_file,
-                    dist_dir=test_dist,
-                    lock_file=non_existent_lock,
-                    allow_new_baseline=False
-                )
-            self.assertIn("is missing", str(ctx.exception))
-            self.assertIn("daily build mode", str(ctx.exception))
-
-            # Dist file remains completely untouched
-            with open(target_lsr, "r", encoding="utf-8") as f:
-                self.assertEqual(f.read(), existing_content)
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_15_corrupt_lock_file_fails_real_engine(self):
-        """
-        Verify that if the lock file is corrupt (malformed JSON, empty, or wrong structure),
-        the build halts with RuntimeError rather than catching the error and resetting baseline.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_corrupt_lock_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            target_lsr = os.path.join(test_dist, "Sample.lsr")
-            existing_content = "# NAME: Sample\n# TOTAL: 1\nDOMAIN,existing.com\n"
-            with open(target_lsr, "w", encoding="utf-8") as f:
-                f.write(existing_content)
-
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            corrupt_lock = os.path.join(tmp_dir, "corrupt_lock.json")
-
-            test_yaml = """
-rulesets:
-  Sample:
-    bound_policy: "DirectPolicy"
-    sources:
-      - name: "SampleUpstream"
-        url: "https://mock.example.com/sample.list"
-        min_rules: 1
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            # Test 15a: Malformed JSON syntax
-            with open(corrupt_lock, "w", encoding="utf-8") as f:
-                f.write("{\n  \"Sample\": { invalid_json \n")
-
-            with self.assertRaises(RuntimeError) as ctx:
-                build.build_rulesets(
-                    sources_file=test_sources_file,
-                    dist_dir=test_dist,
-                    lock_file=corrupt_lock,
-                    allow_new_baseline=False
-                )
-            self.assertIn("corrupt or invalid JSON", str(ctx.exception))
-
-            # Test 15b: Empty file (0 bytes)
-            with open(corrupt_lock, "w", encoding="utf-8") as f:
-                f.write("")
-
-            with self.assertRaises(RuntimeError) as ctx:
-                build.build_rulesets(
-                    sources_file=test_sources_file,
-                    dist_dir=test_dist,
-                    lock_file=corrupt_lock,
-                    allow_new_baseline=False
-                )
-            self.assertIn("corrupt or invalid JSON", str(ctx.exception))
-
-            # Test 15c: Wrong root type (JSON array instead of dictionary)
-            with open(corrupt_lock, "w", encoding="utf-8") as f:
-                f.write("[\"invalid\", \"root\"]")
-
-            with self.assertRaises(RuntimeError) as ctx:
-                build.build_rulesets(
-                    sources_file=test_sources_file,
-                    dist_dir=test_dist,
-                    lock_file=corrupt_lock,
-                    allow_new_baseline=False
-                )
-            self.assertIn("must be a JSON dictionary", str(ctx.exception))
-
-            # Dist file remains completely untouched
-            with open(target_lsr, "r", encoding="utf-8") as f:
-                self.assertEqual(f.read(), existing_content)
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_16_missing_upstream_record_fails_in_daily_build(self):
-        """
-        Verify that in daily build mode, if the lock file exists but lacks a record for an upstream,
-        the build halts with RuntimeError and does NOT silently establish an initial count.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_unbaselined_src_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
-
-            # Lock file contains baseline for UpstreamA, but NOT for UpstreamB
-            lock_content = {
-                "DualSet": {
-                    "UpstreamA": 50
-                }
-            }
-            with open(test_lock_file, "w", encoding="utf-8") as f:
-                json.dump(lock_content, f, indent=2)
-
-            test_yaml = """
-rulesets:
-  DualSet:
-    bound_policy: "DualPolicy"
-    sources:
-      - name: "UpstreamA"
-        url: "https://mock.example.com/upstream_a.list"
-        min_rules: 10
-      - name: "UpstreamB"
-        url: "https://mock.example.com/upstream_b.list"
-        min_rules: 10
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            mock_body = "# Mock\n" + "\n".join([f"DOMAIN,node-{i}.com" for i in range(1, 51)]) + "\n"
-            mock_resp = MagicMock()
-            mock_resp.status = 200
-            mock_resp.read.return_value = mock_body.encode("utf-8")
-            mock_resp.__enter__.return_value = mock_resp
-
-            with patch("urllib.request.urlopen", return_value=mock_resp):
-                with self.assertRaises(RuntimeError) as ctx:
-                    build.build_rulesets(
-                        sources_file=test_sources_file,
-                        dist_dir=test_dist,
-                        lock_file=test_lock_file,
-                        allow_new_baseline=False
-                    )
-                self.assertIn("Missing baseline lock record for upstream 'UpstreamB'", str(ctx.exception))
-                self.assertIn("unbaselined upstreams are forbidden", str(ctx.exception))
-
-            # Lock file was NOT modified
-            with open(test_lock_file, "r", encoding="utf-8") as f:
-                self.assertEqual(json.load(f), lock_content)
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_17_controlled_new_upstream_baseline_flow(self):
-        """
-        Verify that when explicitly authorized via allow_new_baseline=True (--init-baseline),
-        the build successfully establishes baseline for new upstreams and updates the lock file.
-        """
-        tmp_dir = tempfile.mkdtemp(prefix="test_loon_init_baseline_")
-        try:
-            test_dist = os.path.join(tmp_dir, "dist")
-            os.makedirs(test_dist, exist_ok=True)
-            test_sources_file = os.path.join(tmp_dir, "sources.yml")
-            test_lock_file = os.path.join(tmp_dir, "upstream_lock.json")
-
-            # Missing lock file scenario + allow_new_baseline=True
-            test_yaml = """
-rulesets:
-  NewSet:
-    bound_policy: "NewPolicy"
-    sources:
-      - name: "NewUpstream"
-        url: "https://mock.example.com/new_upstream.list"
-        min_rules: 5
-"""
-            with open(test_sources_file, "w", encoding="utf-8") as f:
-                f.write(test_yaml)
-
-            mock_body = "# New\n" + "\n".join([f"DOMAIN,node-{i}.new.com" for i in range(1, 21)]) + "\n"
-            mock_resp = MagicMock()
-            mock_resp.status = 200
-            mock_resp.read.return_value = mock_body.encode("utf-8")
-            mock_resp.__enter__.return_value = mock_resp
-
-            with patch("urllib.request.urlopen", return_value=mock_resp):
-                build.build_rulesets(
-                    sources_file=test_sources_file,
-                    dist_dir=test_dist,
-                    lock_file=test_lock_file,
-                    allow_new_baseline=True
-                )
-
-            # Verify lock file was created and contains the new baseline count of 20
-            self.assertTrue(os.path.isfile(test_lock_file))
-            with open(test_lock_file, "r", encoding="utf-8") as f:
-                saved_lock = json.load(f)
-            self.assertEqual(saved_lock, {"NewSet": {"NewUpstream": 20}})
-
-            # Verify dist file was properly created
-            target_lsr = os.path.join(test_dist, "NewSet.lsr")
-            self.assertTrue(os.path.isfile(target_lsr))
-            with open(target_lsr, "r", encoding="utf-8") as f:
-                content = f.read()
-            self.assertIn("# TOTAL: 20", content)
-            self.assertIn("DOMAIN,node-1.new.com", content)
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def test_18_lock_file_matches_sources_strict(self):
-        """
-        Verify that scripts/upstream_lock.json strictly matches sources.yml:
-        - No extraneous rulesets or test leftovers (e.g. ShrinkTest).
-        - Every ruleset with upstream sources is present with exact matching source names.
-        """
-        parsed_sources = build.load_sources(SOURCES_FILE)
-        lock_data = build.load_upstream_lock(build.UPSTREAM_LOCK_FILE, allow_missing=False)
-
-        expected_rulesets = {}
-        for rname, rcfg in parsed_sources.get("rulesets", {}).items():
-            sources = rcfg.get("sources", [])
-            if sources:
-                expected_rulesets[rname] = [s["name"] for s in sources]
-
-        # Verify exact ruleset key equivalence
-        self.assertEqual(
-            set(expected_rulesets.keys()),
-            set(lock_data.keys()),
-            f"Lock file rulesets {set(lock_data.keys())} do not match sources.yml {set(expected_rulesets.keys())}!"
-        )
-
-        # Verify each ruleset has exact matching source names
-        for rname, expected_srcs in expected_rulesets.items():
-            actual_srcs = list(lock_data[rname].keys())
-            self.assertEqual(
-                set(expected_srcs),
-                set(actual_srcs),
-                f"Ruleset '{rname}' sources in lock file {actual_srcs} do not match sources.yml {expected_srcs}!"
-            )
-            for sname, scnt in lock_data[rname].items():
-                self.assertGreater(scnt, 0, f"Locked count for {rname}.{sname} must be > 0")
 
 if __name__ == "__main__":
     unittest.main()

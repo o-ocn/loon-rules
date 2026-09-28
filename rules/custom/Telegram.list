@@ -1,6 +1,5 @@
 # ==============================================================================
 # Rule Name: Telegram (Custom)
-# Target Policy: Final (or dedicated low-latency policy group)
 # Description: Telegram messaging network (IP ranges and domains)
 # Note: APNs notifications are governed by system apsd; this rule handles app in-flight traffic.
 # ==============================================================================

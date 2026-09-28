@@ -1,14 +1,11 @@
 # ==============================================================================
-# Rule Name: Apple-Media-US (Custom)
-# Target Policy: US Test (or US)
-# Description: Apple services restricted to US region (Apple TV+, Apple News, Fitness+, TestFlight)
+# Rule Name: Apple-Media (Custom)
+# Description: Apple Media services (Apple TV+, Apple News, Fitness+)
 # ==============================================================================
 
-# --- Apple TV+ & Media Streaming ---
+# --- Apple TV+ ---
 DOMAIN-SUFFIX,tv.apple.com
-DOMAIN-SUFFIX,play-edge.itunes.apple.com
-DOMAIN-SUFFIX,hls.itunes.apple.com
-DOMAIN-SUFFIX,hls-amt.itunes.apple.com
+DOMAIN-SUFFIX,tv.applemusic.com
 DOMAIN-SUFFIX,linear.tv.apple.com
 
 # --- Apple News ---
@@ -20,4 +17,3 @@ DOMAIN-SUFFIX,apple.news
 # --- Apple Fitness+ ---
 DOMAIN-SUFFIX,amp-api.fitness.apple.com
 DOMAIN-SUFFIX,fitness.apple.com
-

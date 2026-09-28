@@ -1,69 +1,70 @@
-# 分流规则成品与 Loon 本地策略组映射规范
+# 分流规则集与 Loon 本地策略组映射规范
 
-本仓库生成的成品均为符合 Loon 订阅标准的 `.lsr` 文件，存放于 `dist/` 目录。
-每份 `.lsr` 独立面向特定策略，避免不同策略规则杂糅。
+本仓库生成的成品均为符合 Loon 订阅标准的纯规则文件（`.lsr` 格式），存放于 `dist/` 目录。
+每份 `.lsr` 保持**策略中立**（不含任何策略组名称、节点或 DIRECT/PROXY/REJECT 动作），由用户在 Loon 中长按规则自由绑定专属策略组或节点。
 
 ---
 
-## 1. 规则集与策略组映射总表
+## 1. 规则集与服务范围总表 (共 14 个独立服务分类)
 
-| 规则成品文件名 (`.lsr`) | 推荐绑定策略组 | 涵盖核心服务与说明 | 防碰撞与隔离准则 |
+| 规则成品文件名 (`.lsr`) | 服务范围说明 | 隔离与防碰撞准则 | 用户策略推荐示例 (可自由调整) |
 | :--- | :--- | :--- | :--- |
-| **`AI-Overseas.lsr`** | **`AI`** | ChatGPT, Claude, Gemini, Grok, Muse from Meta, Perplexity 等海外 AI | **绝对不含** `googleapis.com`、`google.com`、`x.com`、`twitter.com`、`meta.com`、`facebook.com`、通用验证码（`client-api.arkoselabs.com`）、共享 LiveKit 节点（`host/turn.livekit.cloud`）及关键字通配（`DOMAIN-KEYWORD,openai`）。防普通服务被强行劫持到 AI 节点。 |
-| **`AI-China-Direct.lsr`** | **`DIRECT`** | DeepSeek（用户明确要求直连） | 严格直连，避免境外代理绕行与网络封控。 |
-| **`GoogleDrive.lsr`** | **`HK`** | Google Drive 云端硬盘专属域名 | 保持现有偏好：Google Drive 走香港节点。已从通用 Google 中完全剔除。 |
-| **`OneDrive.lsr`** | **`US`** | 微软 OneDrive、SharePoint 服务 | 保持现有偏好：OneDrive 走美国节点。 |
-| **`Google.lsr`** | **`US Test`** | 普通 Google 服务、搜索、基础设施 | 优先走美国节点。已与 Google Drive 及 Gemini 隔离。 |
-| **`YouTube.lsr`** | **`US Test`** | YouTube 视频流媒体、图片与 CDN | 绑定美国节点或测速组。 |
-| **`Telegram.lsr`** | **`Final`** (或独立) | Telegram 官方 IP 段与核心域名 | 独立低延迟策略。注意：仅接管 App 前台通信流量，不代表系统 APNs 通道。 |
-| **`Twitter.lsr`** | **`Final`** | Twitter / X 平台主干及图床 | 已完全剔除 `grok.com` 与 `x.ai`，避免与 Grok 冲突。 |
-| **`Discord.lsr`** | **`US`** | Discord 语音与即时通讯 | 绑定低延迟海外节点。 |
-| **`Apple-Direct.lsr`** | **`DIRECT`** | iCloud, CloudKit, App Store, Apple ID, Apple Music, HomeKit, OTA | **稳定基线**。严格直连，绝对禁止把整个 `apple.com` 或 `17.0.0.0/8` 当作代理捷径。 |
-| **`Apple-Media-US.lsr`** | **`US Test`** | Apple TV+, Apple News, Fitness+, TestFlight | 仅将受美区锁区限制的流媒体与 TestFlight 分流至美区策略。 |
-| **`Apple-Push-Experimental.lsr`** | **`Apple Push`** | APNs 专用测试分流（`push.apple.com` 及推送 CIDR） | **实验性规则，默认保持关闭 (`enabled=false`)**。用于验证 APNs 流量命中；与主干 Apple 规则完全解耦。 |
-| **`China-Direct.lsr`** | **`DIRECT`** | 微信、淘宝、天猫、京东、闲鱼、抖音、B站、局域网私网段 | 大陆日常高频 App 直连，保障支付、定位及即时通知稳定。 |
+| **`AI-Overseas.lsr`** | ChatGPT, Claude, Gemini, Grok, Muse from Meta, Perplexity 等海外 AI | **绝对不含** `googleapis.com`、`google.com`、`x.com`、`twitter.com`、`meta.com`、`facebook.com`、通用验证码及共享 LiveKit 节点。 | `AI` (或自建节点 / 节点自选) |
+| **`AI-China-Direct.lsr`** | DeepSeek（大陆 AI 服务） | 严格直连，避免境外代理绕行与不必要封控。 | `DIRECT` |
+| **`GoogleDrive.lsr`** | Google Drive 云端硬盘专属域名 | 独立保护大流量；绝对不含 `www.googleapis.com`。 | `HK` (或低倍率大流量节点) |
+| **`OneDrive.lsr`** | 微软 OneDrive、SharePoint 服务 | 独立维护，不与微软通用服务杂糅。 | `US` |
+| **`Google.lsr`** | 普通 Google 服务、搜索、基础设施 | 已与 Google Drive 及 Gemini 隔离；承载通用 `www.googleapis.com`。 | `US Test` (或通用美区) |
+| **`YouTube.lsr`** | YouTube 视频流媒体、图片与 CDN | 独立维护流媒体流量，不被普通 Google 规则带跑。 | `US Test` (或流媒体节点) |
+| **`Telegram.lsr`** | Telegram 官方 IP 段与核心域名 | 独立低延迟策略（接管 App 通信流量，非系统 APNs 通道）。 | `Final` (或独立低延迟策略) |
+| **`Twitter.lsr`** | Twitter / X 平台主干及图床 | 已完全剔除 `grok.com` 与 `x.ai`，避免与 Grok 冲突。 | `Final` |
+| **`Discord.lsr`** | Discord 语音与即时通讯 | 绑定低延迟海外节点。 | `US` |
+| **`Apple-Media.lsr`** | Apple TV+, Apple News, Fitness+ | 仅将受美区锁区限制的媒体分流，不影响系统基础服务。 | `US Test` |
+| **`TestFlight.lsr`** | Apple TestFlight 内测分发平台 | 独立维护，解决部分网络下无法加载 Beta 应用的问题。 | `US` (或代理节点) |
+| **`Apple-Direct.lsr`** | iCloud, CloudKit, App Store, Apple ID, Apple Music, HomeKit, OTA | **稳定基线**。严格直连，绝对禁止把整个 `apple.com` 或 `17.0.0.0/8` 当作代理捷径。 | `DIRECT` |
+| **`Apple-Push.lsr`** | APNs 官方最小推送（`push.apple.com` 及官方 CIDR） | **官方最小范围**。默认保持关闭 (`enabled=false`)，单变量测试 APNs。 | `Apple Push` (或 DIRECT) |
+| **`China-Direct.lsr`** | 微信、淘宝、天猫、京东、闲鱼、抖音、B站、局域网私网段 | 大陆日常高频 App 直连，保障支付、定位及即时通知稳定。 | `DIRECT` |
 
 ---
 
 ## 2. 本地 `.lcf` 配置调整示例
 
-### A. 本地 `[Proxy Group]` 补充 `AI` 策略组定义
-在本地配置的 `[Proxy Group]` 节中加入 `AI` 策略（将 `[你的VMISS-9929节点名]` 替换为本地节点的真实名称）：
-
-```ini
-[Proxy Group]
-# 新建 AI 专属策略组，默认优先 VMISS 9929，支持手动切换至 US、HK 等备用节点
-AI = select, [你的VMISS-9929节点名], US, HK, JP, DIRECT, img-url = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bot.png
-```
-
-### B. 本地 `[Remote Rule]` 规则订阅段示例
+### A. 本地 `[Remote Rule]` 规则订阅段示例
 将本地原有的第三方杂合规则替换为本仓库专属的独立 `.lsr`：
 
 ```ini
 [Remote Rule]
-# --- AI 规则（严格隔离分类）---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr, policy=AI, tag=AI-Overseas, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr, policy=DIRECT, tag=AI-China-Direct, enabled=true
+# --- AI 服务分类 ---
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr, policy = AI, tag = AI-Overseas, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr, policy = DIRECT, tag = AI-China-Direct, enabled = true
 
-# --- 偏好分流（港美特定策略）---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GoogleDrive.lsr, policy=HK, tag=GoogleDrive, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/OneDrive.lsr, policy=US, tag=OneDrive, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr, policy=US Test, tag=Google, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr, policy=US Test, tag=YouTube, enabled=true
+# --- 偏好分流与独立大流量 ---
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GoogleDrive.lsr, policy = HK, tag = GoogleDrive, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/OneDrive.lsr, policy = US, tag = OneDrive, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr, policy = US Test, tag = YouTube, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr, policy = US Test, tag = Google, enabled = true
 
 # --- 独立通讯与社交 ---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Telegram.lsr, policy=Final, tag=Telegram, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr, policy=Final, tag=Twitter, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr, policy=US, tag=Discord, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Telegram.lsr, policy = Final, tag = Telegram, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr, policy = Final, tag = Twitter, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr, policy = US, tag = Discord, enabled = true
 
-# --- Apple 服务（注意：美区媒体必须置于直连之前，确保媒体边缘优先命中）---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media-US.lsr, policy=US Test, tag=Apple-Media-US, enabled=true
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy=DIRECT, tag=Apple-Direct, enabled=true
+# --- Apple 服务（顺序注意：媒体与 TestFlight 置于直连之前优先命中）---
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr, policy = US Test, tag = Apple-Media, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/TestFlight.lsr, policy = US, tag = TestFlight, enabled = true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy = DIRECT, tag = Apple-Direct, enabled = true
 
+# --- APNs 权威推送规则（单变量验证，默认建议保持关闭）---
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr, policy = Apple Push, tag = Apple-Push, enabled = false
 
-# --- APNs 实验性推送（独立可控，默认关闭）---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push-Experimental.lsr, policy=Apple Push, tag=Apple-Push-Experimental, enabled=false
+# --- 大陆日常直连与局域网 ---
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, policy = DIRECT, tag = China-Direct, enabled = true
+```
 
-# --- 大陆直连与内网穿透 ---
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, policy=DIRECT, tag=China-Direct, enabled=true
+### B. 本地 `[Plugin]` 一键诊断插件配置
+在 `.lcf` 的 `[Plugin]` 节中加入本仓库专属的一键诊断插件：
+
+```ini
+[Plugin]
+# Loon 一键规则与核心服务诊断插件 (策略中立、零隐私上传、手动触发)
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/LoonRules-Diagnostic.lpx, tag = LoonRules-Diagnostic
 ```

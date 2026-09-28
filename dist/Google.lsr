@@ -1,16 +1,13 @@
 # NAME: Google
-# DESCRIPTION: General Google services, bound to US Test
-# RECOMMENDED POLICY: US Test
+# DESCRIPTION: General Google services and infrastructure
 # AUTHOR: o-ocn
-# REVISION: f5290d51cc41
-# TOTAL: 696
+# REVISION: 83897e11e205
+# TOTAL: 690
 # ==============================================================================
 DOMAIN-SUFFIX,google.com
 DOMAIN-SUFFIX,google.com.hk
 DOMAIN-SUFFIX,googleapis.com
-DOMAIN-SUFFIX,googlevideo.com
 DOMAIN-SUFFIX,gstatic.com
-DOMAIN-SUFFIX,ggpht.com
 DOMAIN-SUFFIX,googleusercontent.com
 DOMAIN-SUFFIX,google-analytics.com
 DOMAIN-SUFFIX,1e100.net
@@ -200,7 +197,6 @@ DOMAIN-SUFFIX,data-vocabulary.org
 DOMAIN-SUFFIX,dataliberation.org
 DOMAIN-SUFFIX,debug.com
 DOMAIN-SUFFIX,debugproject.com
-DOMAIN-SUFFIX,deepmind.com
 DOMAIN-SUFFIX,deja.com
 DOMAIN-SUFFIX,deps.dev
 DOMAIN-SUFFIX,deps.info
@@ -696,8 +692,5 @@ DOMAIN-KEYWORD,appspot
 DOMAIN-KEYWORD,blogspot
 DOMAIN-KEYWORD,gmail
 DOMAIN-KEYWORD,recaptcha
-IP-CIDR,172.110.32.0/21,no-resolve
 IP-CIDR,173.194.0.0/16,no-resolve
-IP-CIDR,216.73.80.0/20,no-resolve
 IP-CIDR,74.125.0.0/16,no-resolve
-IP-CIDR6,2620:120:e000::/40,no-resolve

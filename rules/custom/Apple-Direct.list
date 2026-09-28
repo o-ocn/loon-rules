@@ -1,6 +1,5 @@
 # ==============================================================================
 # Rule Name: Apple-Direct (Custom)
-# Target Policy: DIRECT
 # Description: Baseline Apple services requiring DIRECT connection
 # Scope: iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, Apple Dev, OTA
 # Strict Restriction: DO NOT blanket route apple.com, 17.0.0.0/8, or Apple CDN to proxy
