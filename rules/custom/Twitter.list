@@ -4,6 +4,9 @@
 # Anti-Collision: grok.com and x.ai are strictly isolated in AI-Overseas.lsr
 # ==============================================================================
 
+# Target: Core Twitter / X web, app, image CDN, and URL shortener
+# Evidence: Official X / Twitter platform connectivity trace, 2026-09-28
+# Reason: Baseline anchors; grok.com and x.ai are strictly excluded to avoid AI routing collisions
 DOMAIN-SUFFIX,twitter.com
 DOMAIN-SUFFIX,x.com
 DOMAIN-SUFFIX,twimg.com

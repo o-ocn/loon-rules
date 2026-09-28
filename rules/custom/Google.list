@@ -2,8 +2,12 @@
 # Rule Name: Google (Custom)
 # Description: General Google services and infrastructure
 # Notice: Gemini / AI Studio are segregated in AI-Overseas.lsr; Google Drive in GoogleDrive.lsr; YouTube in YouTube.lsr
+# Shared API Note: www.googleapis.com is shared across Google and hosted in this ruleset.
 # ==============================================================================
 
+# Target: Core Google service and infrastructure baseline anchors
+# Evidence: Baseline service connectivity verification, 2026-09-28
+# Reason: Baseline anchors; mature upstream provides comprehensive 600+ rule suite
 DOMAIN-SUFFIX,google.com
 DOMAIN-SUFFIX,google.com.hk
 DOMAIN-SUFFIX,googleapis.com

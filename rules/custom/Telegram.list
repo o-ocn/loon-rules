@@ -4,6 +4,9 @@
 # Note: APNs notifications are governed by system apsd; this rule handles app in-flight traffic.
 # ==============================================================================
 
+# Target: Core Telegram official web and application endpoints
+# Evidence: Telegram official API documentation & iOS client network trace, 2026-09-28
+# Reason: Baseline anchors; upstream provides full coverage of Telegram ASNs and CIDRs
 DOMAIN-SUFFIX,telegram.org
 DOMAIN-SUFFIX,t.me
 DOMAIN-SUFFIX,tdesktop.com

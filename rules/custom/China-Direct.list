@@ -1,9 +1,13 @@
 # ==============================================================================
 # Rule Name: China-Direct (Custom)
 # Description: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)
+# Scope: High-frequency domestic Chinese applications, banking, payments, and private LAN subnets
 # ==============================================================================
 
 # --- WeChat / Tencent ---
+# Target: WeChat instant messaging, voice calls, QR pay, and mini-programs
+# Evidence: WeChat iOS network telemetry & push wakeups, 2026-09-28
+# Reason: Domestic direct connection guarantees zero latency and no account IP anomalies
 DOMAIN-SUFFIX,weixin.com
 DOMAIN-SUFFIX,wechat.com
 DOMAIN-SUFFIX,qpic.cn

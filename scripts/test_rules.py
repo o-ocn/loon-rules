@@ -24,6 +24,7 @@ DIAGNOSTICS_DIST_DIR = os.path.join(DIST_DIR, "diagnostics")
 
 sys.path.insert(0, os.path.join(BASE_DIR, "scripts"))
 import build
+import simulate_hit
 
 SUPPORTED_TYPES = {
     "DOMAIN",
@@ -323,12 +324,26 @@ rulesets:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
     def test_11_idempotent_build_no_diff(self):
-        """Verify repeated build on unchanged sources results in zero modifications."""
-        hashes_before = {fname: open(os.path.join(DIST_DIR, fname), "rb").read() for fname in self.lsr_files}
-        build.build_rulesets()
+        """Verify repeated build on unchanged sources results in zero modifications and preserves manifest."""
+        hashes_before = {}
         for fname in self.lsr_files:
-            hash_after = open(os.path.join(DIST_DIR, fname), "rb").read()
+            with open(os.path.join(DIST_DIR, fname), "rb") as f:
+                hashes_before[fname] = f.read()
+        manifest_path = os.path.join(DIAGNOSTICS_DIST_DIR, "manifest.json")
+        with open(manifest_path, "rb") as f:
+            manifest_before = f.read()
+
+        res = build.build_rulesets()
+        self.assertEqual(res.get("updated_count"), 0)
+        self.assertTrue(res.get("is_zero_change"))
+
+        for fname in self.lsr_files:
+            with open(os.path.join(DIST_DIR, fname), "rb") as f:
+                hash_after = f.read()
             self.assertEqual(hashes_before[fname], hash_after, f"Idempotence violation: {fname} changed!")
+        with open(manifest_path, "rb") as f:
+            manifest_after = f.read()
+        self.assertEqual(manifest_before, manifest_after, "Idempotence violation: manifest.json changed on zero changes!")
 
     def test_12_diagnostics_manifest_and_plugin_validity(self):
         """Verify diagnostic manifest and plugin files are generated and valid."""
@@ -375,6 +390,250 @@ rulesets:
                 for pat, desc in forbidden_patterns:
                     if re.search(pat, content):
                         self.fail(f"Security leak detected ({desc}) in {fpath}")
+
+    def test_14_boundary_01_gemini_vs_google(self):
+        """Boundary 1: Gemini vs Ordinary Google. Gemini endpoints in AI-Overseas, broad google in Google."""
+        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(os.path.join(DIST_DIR, "Google.lsr"), "r", encoding="utf-8") as f:
+            google_c = f.read()
+
+        gemini_endpoints = [
+            "gemini.google.com",
+            "aistudio.google.com",
+            "makersuite.google.com",
+            "deepmind.com",
+            "generativelanguage.googleapis.com",
+            "proactivebackend-pa.googleapis.com",
+            "webchannel-robinfrontend-pa.googleapis.com",
+            "robinfrontend-pa.googleapis.com",
+            "geminiweb-pa.googleapis.com",
+            "gemini.gstatic.com",
+            "cloudcode-pa.googleapis.com",
+        ]
+        for ep in gemini_endpoints:
+            self.assertIn(ep, ai_c, f"Gemini endpoint '{ep}' missing from AI-Overseas.lsr")
+            self.assertNotIn(f"DOMAIN,{ep}", google_c, f"Gemini endpoint '{ep}' must not be claimed by Google.lsr")
+
+        # Broad parent domains prohibited in AI-Overseas
+        self.assertNotIn("DOMAIN-SUFFIX,google.com", ai_c)
+        self.assertNotIn("DOMAIN-SUFFIX,googleapis.com", ai_c)
+
+        # Simulation check: gemini.google.com must resolve to AI-Overseas.lsr
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches = simulate_hit.match_domain("gemini.google.com", rules_by_file)
+        self.assertTrue(len(matches) >= 1)
+        self.assertEqual(matches[0]["ruleset"], "AI-Overseas.lsr", "gemini.google.com was not matched first by AI-Overseas.lsr")
+
+    def test_15_boundary_02_gemini_vs_drive(self):
+        """Boundary 2: Gemini vs Google Drive. Clean separation of storage vs AI."""
+        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(os.path.join(DIST_DIR, "GoogleDrive.lsr"), "r", encoding="utf-8") as f:
+            drive_c = f.read()
+
+        self.assertIn("drive.google.com", drive_c)
+        self.assertIn("docs.google.com", drive_c)
+        self.assertNotIn("drive.google.com", ai_c)
+        self.assertNotIn("docs.google.com", ai_c)
+
+        self.assertNotIn("gemini.google.com", drive_c)
+        self.assertNotIn("aistudio.google.com", drive_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches = simulate_hit.match_domain("drive.google.com", rules_by_file)
+        self.assertEqual(matches[0]["ruleset"], "GoogleDrive.lsr")
+
+    def test_16_boundary_03_drive_vs_shared_api(self):
+        """Boundary 3: Google Drive vs Google Shared API (www.googleapis.com). Shared APIs must not be hijacked."""
+        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(os.path.join(DIST_DIR, "GoogleDrive.lsr"), "r", encoding="utf-8") as f:
+            drive_c = f.read()
+        with open(os.path.join(DIST_DIR, "Google.lsr"), "r", encoding="utf-8") as f:
+            google_c = f.read()
+
+        # Requirement 7: www.googleapis.com is shared and must NOT be in Drive or AI
+        self.assertNotIn("www.googleapis.com", drive_c)
+        self.assertNotIn("www.googleapis.com", ai_c)
+        self.assertIn("googleapis.com", google_c)
+
+        # Broad googleusercontent.com must not be in GoogleDrive
+        self.assertNotIn("DOMAIN-SUFFIX,googleusercontent.com", drive_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches = simulate_hit.match_domain("www.googleapis.com", rules_by_file)
+        self.assertEqual(matches[0]["ruleset"], "Google.lsr")
+
+    def test_17_boundary_04_youtube_vs_google(self):
+        """Boundary 4: YouTube vs Ordinary Google. YouTube streaming & CDN isolated from Google."""
+        with open(os.path.join(DIST_DIR, "YouTube.lsr"), "r", encoding="utf-8") as f:
+            yt_c = f.read()
+        with open(os.path.join(DIST_DIR, "Google.lsr"), "r", encoding="utf-8") as f:
+            google_c = f.read()
+        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
+            ai_c = f.read()
+
+        self.assertIn("youtube.com", yt_c)
+        self.assertIn("googlevideo.com", yt_c)
+        self.assertIn("172.110.32.0/21", yt_c)
+        self.assertIn("216.73.80.0/20", yt_c)
+
+        # YouTube CDN IPs excluded from Google.lsr
+        self.assertNotIn("172.110.32.0/21", google_c)
+        self.assertNotIn("216.73.80.0/20", google_c)
+
+        # deepmind.com in AI, not Google
+        self.assertIn("deepmind.com", ai_c)
+        self.assertNotIn("deepmind.com", google_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches = simulate_hit.match_domain("www.youtube.com", rules_by_file)
+        self.assertEqual(matches[0]["ruleset"], "YouTube.lsr")
+
+    def test_18_boundary_05_grok_vs_twitter(self):
+        """Boundary 5: Grok vs Twitter/X. Grok in AI-Overseas, Twitter in Twitter."""
+        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
+            ai_c = f.read()
+        with open(os.path.join(DIST_DIR, "Twitter.lsr"), "r", encoding="utf-8") as f:
+            twitter_c = f.read()
+
+        self.assertIn("grok.com", ai_c)
+        self.assertIn("x.ai", ai_c)
+        self.assertNotIn("grok.com", twitter_c)
+        self.assertNotIn("x.ai", twitter_c)
+
+        self.assertIn("twitter.com", twitter_c)
+        self.assertIn("x.com", twitter_c)
+        self.assertNotIn("DOMAIN-SUFFIX,twitter.com", ai_c)
+        self.assertNotIn("DOMAIN-SUFFIX,x.com", ai_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches_grok = simulate_hit.match_domain("api.grok.com", rules_by_file)
+        self.assertEqual(matches_grok[0]["ruleset"], "AI-Overseas.lsr")
+
+        matches_xai = simulate_hit.match_domain("api.x.ai", rules_by_file)
+        self.assertEqual(matches_xai[0]["ruleset"], "AI-Overseas.lsr")
+
+        matches_twitter = simulate_hit.match_domain("api.twitter.com", rules_by_file)
+        self.assertEqual(matches_twitter[0]["ruleset"], "Twitter.lsr")
+
+    def test_19_boundary_06_muse_vs_meta(self):
+        """Boundary 6: Muse vs Meta. Differentiates muse.ai from Muse from Meta (id6760173601)."""
+        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
+            ai_c = f.read()
+
+        # Both muse.ai (video platform) and meta.ai (Meta audio app backend) in AI-Overseas
+        self.assertIn("muse.ai", ai_c)
+        self.assertIn("meta.ai", ai_c)
+
+        # Meta broad platforms strictly forbidden
+        forbidden_meta = [
+            "facebook.com", "instagram.com", "meta.com", "whatsapp.com", "fbcdn.net"
+        ]
+        for fm in forbidden_meta:
+            self.assertNotIn(f"DOMAIN-SUFFIX,{fm}", ai_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches_muse = simulate_hit.match_domain("muse.ai", rules_by_file)
+        self.assertEqual(matches_muse[0]["ruleset"], "AI-Overseas.lsr")
+
+        matches_meta_ai = simulate_hit.match_domain("api.meta.ai", rules_by_file)
+        self.assertEqual(matches_meta_ai[0]["ruleset"], "AI-Overseas.lsr")
+
+    def test_20_boundary_07_testflight_vs_apple_media_vs_apple_direct(self):
+        """Boundary 7: TestFlight vs Apple Media vs Apple Direct."""
+        with open(os.path.join(DIST_DIR, "TestFlight.lsr"), "r", encoding="utf-8") as f:
+            tf_c = f.read()
+        with open(os.path.join(DIST_DIR, "Apple-Media.lsr"), "r", encoding="utf-8") as f:
+            media_c = f.read()
+        with open(os.path.join(DIST_DIR, "Apple-Direct.lsr"), "r", encoding="utf-8") as f:
+            direct_c = f.read()
+
+        self.assertIn("testflight.apple.com", tf_c)
+        self.assertNotIn("testflight.apple.com", direct_c)
+        self.assertNotIn("DOMAIN-SUFFIX,apple.com", tf_c)
+
+        self.assertIn("tv.apple.com", media_c)
+        self.assertIn("apple.news", media_c)
+        self.assertNotIn("DOMAIN-SUFFIX,apple.com", media_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches_tf = simulate_hit.match_domain("testflight.apple.com", rules_by_file)
+        self.assertEqual(matches_tf[0]["ruleset"], "TestFlight.lsr")
+
+        matches_media = simulate_hit.match_domain("tv.apple.com", rules_by_file)
+        self.assertEqual(matches_media[0]["ruleset"], "Apple-Media.lsr")
+
+        matches_direct = simulate_hit.match_domain("icloud.com", rules_by_file)
+        self.assertEqual(matches_direct[0]["ruleset"], "Apple-Direct.lsr")
+
+    def test_21_boundary_08_apns_vs_apple_direct(self):
+        """Boundary 8: APNs vs Apple Direct. Minimal official APNs isolated from base Apple."""
+        with open(os.path.join(DIST_DIR, "Apple-Push.lsr"), "r", encoding="utf-8") as f:
+            push_c = f.read()
+        with open(os.path.join(DIST_DIR, "Apple-Direct.lsr"), "r", encoding="utf-8") as f:
+            direct_c = f.read()
+
+        self.assertIn("push.apple.com", push_c)
+        self.assertIn("17.249.0.0/16", push_c)
+        self.assertNotIn("17.0.0.0/8", push_c)
+        self.assertNotIn("DOMAIN-SUFFIX,apple.com", push_c)
+
+        rules_by_file = simulate_hit.load_dist_rules()
+        matches_push = simulate_hit.match_domain("courier.push.apple.com", rules_by_file)
+        self.assertEqual(matches_push[0]["ruleset"], "Apple-Push.lsr")
+
+    def test_22_full_pipeline_evaluation_order_simulation(self):
+        """Verify simulated top-to-bottom rule evaluation across all 14 services."""
+        rules_by_file = simulate_hit.load_dist_rules()
+        test_cases = [
+            ("deepseek.com", "AI-China-Direct.lsr"),
+            ("chatgpt.com", "AI-Overseas.lsr"),
+            ("gemini.google.com", "AI-Overseas.lsr"),
+            ("youtube.com", "YouTube.lsr"),
+            ("drive.google.com", "GoogleDrive.lsr"),
+            ("google.com", "Google.lsr"),
+            ("onedrive.live.com", "OneDrive.lsr"),
+            ("t.me", "Telegram.lsr"),
+            ("twitter.com", "Twitter.lsr"),
+            ("discord.com", "Discord.lsr"),
+            ("testflight.apple.com", "TestFlight.lsr"),
+            ("tv.apple.com", "Apple-Media.lsr"),
+            ("push.apple.com", "Apple-Push.lsr"),
+            ("icloud.com", "Apple-Direct.lsr"),
+            ("weixin.com", "China-Direct.lsr"),
+        ]
+        for domain, expected_ruleset in test_cases:
+            matches = simulate_hit.match_domain(domain, rules_by_file)
+            self.assertTrue(len(matches) >= 1, f"Domain '{domain}' did not match any rule!")
+            self.assertEqual(matches[0]["ruleset"], expected_ruleset,
+                             f"Domain '{domain}' matched '{matches[0]['ruleset']}' instead of expected '{expected_ruleset}'")
+
+    def test_23_upstream_overlap_detection_functionality(self):
+        """Verify automated prompt is generated when upstream officially incorporates a custom rule."""
+        res = build.build_rulesets()
+        overlaps = res.get("overlaps", [])
+        self.assertIsInstance(overlaps, list)
+        overlap_rules = [o["rule"] for o in overlaps]
+        self.assertIn("DOMAIN-SUFFIX,drive.google.com", overlap_rules)
+
+    def test_24_china_cold_start_mirrors_and_offline_boot(self):
+        """Verify China cold-start mirrors are configured in manifest.json and accessible format."""
+        manifest_path = os.path.join(DIAGNOSTICS_DIST_DIR, "manifest.json")
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            m = json.load(f)
+
+        self.assertIn("primary_base", m)
+        self.assertIn("backup_base", m)
+        self.assertTrue(m["primary_base"].startswith("https://raw.githubusercontent.com"))
+        self.assertTrue(m["backup_base"].startswith("https://fastly.jsdelivr.net"))
+
+        for rname in EXPECTED_RULESETS:
+            primary_url = f"{m['primary_base']}/{rname}"
+            backup_url = f"{m['backup_base']}/{rname}"
+            self.assertTrue(primary_url.endswith(".lsr"))
+            self.assertTrue(backup_url.endswith(".lsr"))
 
 if __name__ == "__main__":
     unittest.main()

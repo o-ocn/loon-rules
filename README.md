@@ -5,29 +5,31 @@
 
 ---
 
-## 核心设计准则
+## 核心设计准则与三层架构
 
-1. **策略绝对中立（Policy-Neutral）**：
+1. **三层规则结构**：
+   - **成熟上游负责服务主体**：以 `blackmatrix7/ios_rule_script` (GPL-2.0) 为主要规则源，保障 Gemini、Telegram、Google Drive、Apple 等成熟服务规则的全面性与健壮度，不要求用户长期抓包补域名。`luestr/ShuntRules` 仅用于分流结构与遗漏核对。
+   - **自动断言保护分类边界**：CI/CD 与本地测试套件对 8 大关键分类边界实施 100% 机器可执行断言（包含域名归属、禁止宽泛父域、执行优先级与跨集冲突检测）。
+   - **Custom 仅补有证据的例外与遗漏**：自定义规则必须附带来源/抓包证据、加入原因及日期。当成熟上游官方收录后，构建系统自动提示清理重复 Custom。
+2. **策略绝对中立（Policy-Neutral）**：
    - 仓库只负责判断“流量属于什么服务”，绝不决定“走什么节点、地区或策略”。
    - 所有生成的 `.lsr` 绝不写入用户策略组名称、地区（HK/US/JP）、机场/VMISS 节点名称，也不写入 DIRECT/PROXY/REJECT 等策略动作。
    - 用户在 Loon 中长按每个远程规则，自由绑定专属策略组、内置策略或指定节点。
-2. **AI 精准分流与上游优先**：
-   - **`AI-Overseas.lsr`**：正式自动同步 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的 Gemini、OpenAI、Claude 开源规则集；Custom 仅补充验证过的全新端点（重点包含 Google Gemini iOS 客户端的 `webchannel-robinfrontend-pa.googleapis.com` 实时流式端点）。
-   - **严格防碰撞**：严禁向 AI 写入通配域 `google.com`、`googleapis.com`、`googleusercontent.com`、`twitter.com`、`x.com`、`meta.com`、`facebook.com`、`instagram.com`、`whatsapp.com`。
-   - **`AI-China-Direct.lsr`**：独立收录 DeepSeek 等中国大陆 AI 服务，规则内不硬编码 DIRECT，策略由用户在 Loon 自主指定。
-   - **Grok 与 Twitter 分离**；**Muse from Meta 精准收录，不扩展为 Meta 全家桶**。
-3. **Google Drive 大流量保护与共享 API 隔离**：
-   - 用户使用 Primuse 从 Google Drive 播放音乐，已观察到 `www.googleapis.com` 承载数十至上百兆音频流。
-   - `www.googleapis.com` 属于共享 Google API，**绝不进入 AI-Overseas，也绝不粗暴塞入 Google Drive**，归入普通 Google 规则；明确的 Google Drive 域名归入 `GoogleDrive.lsr`。
-   - `ws.audioscrobbler.com` (Last.fm) 绝不误归为 Google Drive。
-4. **Apple 生态稳定性第一与权威 APNs 最小收录**：
-   - 严禁将 `apple.com`、`icloud.com`、Apple CDN 或 `17.0.0.0/8` 整段代理。
-   - 基础直连服务（`Apple-Direct.lsr`）与媒体流媒体（`Apple-Media.lsr`）分开维护；`TestFlight.lsr` 独立维护。
-   - **`Apple-Push.lsr`**：维护唯一的权威最小 APNs 规则，仅含 `*.push.apple.com` 及 Apple 官方验证的 IPv4/IPv6 CIDR，注释说明主要使用 TCP 5223 并可回退至 443。
-   - **明确边界**：规则仓库不能保证在 Loon【包含 APNS】关闭时系统连接一定会命中，此为 iOS 内核机制限制。
-5. **只读上游与构建安全保障**：
-   - 主要同步来源为 `blackmatrix7/ios_rule_script`（遵循 GPL-2.0）；`luestr/ShuntRules` 仅作结构与遗漏对照，不直接复制无明确许可证内容。
-   - 建立「最低规则数 + 相对上一版本缩水阈值 + 逐上游锁定基线（`upstream_lock.json`）」三重防护机制。构建失败或异常缩水时保留上一版成品，绝不破坏现有生产。
+3. **8 大服务边界与防碰撞保护**：
+   - **Gemini / 普通 Google**：Gemini 专属端点（含 iOS WebChannel、gRPC 流式及官方 API）归入 `AI-Overseas`；允许无害交叉（少量登录与静态资源走 Google）；禁止 `google.com`、`googleapis.com` 宽泛父域进入 AI；`AI-Overseas` 排在 `Google` 之前。
+   - **Gemini / Google Drive**：Drive 专属域名归入 `GoogleDrive`，Gemini 端点归入 `AI-Overseas`，互不混杂。
+   - **Google Drive / 共享 API**：`www.googleapis.com` 承载 Primuse 音乐串流等多业务共享，严禁归入 Drive 或 AI，统一归于 `Google.lsr`。
+   - **YouTube / 普通 Google**：YouTube 视频、CDN IP-CIDRs (`172.110.32.0/21`, `216.73.80.0/20`) 专属于 `YouTube`。`deepmind.com` 归于 AI；YouTube 排在 Google 之前。
+   - **Grok / Twitter/X**：`grok.com`、`x.ai` 归入 `AI-Overseas`；Twitter 平台主干归入 `Twitter`；禁止跨集污染。
+   - **Muse / Meta 精准核实**：严格区分独立 AI 视频检索平台 `https://muse.ai/` 与 Meta 生成式音乐应用 `Muse from Meta` (App Store ID: 6760173601，使用 `meta.ai` / `api.meta.ai`)；严禁引入 Meta 社交套件 (`facebook.com`, `instagram.com`, `meta.com` 等)。
+   - **TestFlight / Apple Media / Apple Direct**：TestFlight 独立分发；Apple TV/News 媒体分流；基础直连锁定 iCloud、CloudKit、OTA；排在 Direct 之前生效。
+   - **APNs / Apple 基础服务**：`Apple-Push.lsr` 仅收录官方最小 `push.apple.com` 及 5 个 IPv4 + 4 个 IPv6 官方推送 CIDR；保留 `Apple Push` 策略组；严禁混入 `17.0.0.0/8` 或 `apple.com`；排在 Direct 之前生效。
+4. **中国大陆冷启动与双镜像发布**：
+   - 首次导入 `.lcf`，节点未就绪或 GitHub Raw 暂时不可达时，依靠本地旁路与大陆直连保障基础联网。
+   - 所有规则与插件均同步提供 Fastly jsDelivr 备用 CDN 镜像；Loon 具备离线缓存运行能力。
+5. **零变更构建幂等性**：
+   - 自动构建没有规则内容变化时，严格禁止修改发布文件、版本号、构建时间或 `manifest.json`，杜绝幽灵提交。
+   - 下载失败、异常缩水、语法错误或冲突增加时，自动熔断并保留上一版成品。
 
 ---
 

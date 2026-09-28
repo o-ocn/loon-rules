@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T12:03:09.143453+00:00",
-  "release_commit": "8a8da46",
+  "build_timestamp": "2026-09-28T12:17:20.212805+00:00",
+  "release_commit": "8775f82",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
   "rulesets": {
     "AI-Overseas.lsr": {
-      "total_rules": 42,
-      "revision": "1bc117d668d6",
-      "sha256": "1bc117d668d60f5ec17a65f00d2a058086a13a182b8367b162766d9b6082dcec",
+      "total_rules": 43,
+      "revision": "f1972f6bf6d7",
+      "sha256": "f1972f6bf6d799a6fdf59b038c2d5cf5702ba57e5dd995998b3b3dd4ef3ab68c",
       "description": "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     },
     "AI-China-Direct.lsr": {

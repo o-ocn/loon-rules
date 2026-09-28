@@ -1,8 +1,8 @@
 # NAME: AI-Overseas
 # DESCRIPTION: Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)
 # AUTHOR: o-ocn
-# REVISION: 1bc117d668d6
-# TOTAL: 42
+# REVISION: f1972f6bf6d7
+# TOTAL: 43
 # ==============================================================================
 DOMAIN,webchannel-robinfrontend-pa.googleapis.com
 DOMAIN,robinfrontend-pa.googleapis.com
@@ -10,6 +10,7 @@ DOMAIN,geminiweb-pa.googleapis.com
 DOMAIN,gemini.gstatic.com
 DOMAIN,cloudcode-pa.googleapis.com
 DOMAIN,aistudio.google.com
+DOMAIN,generativelanguage.googleapis.com
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,x.ai
 DOMAIN-SUFFIX,muse.ai

@@ -13,10 +13,10 @@ import sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 
-# Standard Loon evaluation order for o-ocn rulesets
+# Standard Loon evaluation order for o-ocn rulesets (narrow/child before broad/parent)
 RULE_EVALUATION_ORDER = [
-    "AI-Overseas.lsr",
     "AI-China-Direct.lsr",
+    "AI-Overseas.lsr",
     "YouTube.lsr",
     "GoogleDrive.lsr",
     "Google.lsr",
@@ -24,8 +24,8 @@ RULE_EVALUATION_ORDER = [
     "Telegram.lsr",
     "Twitter.lsr",
     "Discord.lsr",
-    "Apple-Media.lsr",
     "TestFlight.lsr",
+    "Apple-Media.lsr",
     "Apple-Push.lsr",
     "Apple-Direct.lsr",
     "China-Direct.lsr"

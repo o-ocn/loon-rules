@@ -3,7 +3,7 @@
 > **审计对象**：`2026_09_28_00_10_30_550_自动配置.lcf`  
 > **审计时间**：2026-09-28  
 > **合规级别**：严格脱敏（零凭据、零真实节点、零私有密钥、零个人主机名泄漏）  
-> **对接目标**：为 ChatGPT Work 提供权威对照报告，指导 `.lcf` 中第三方杂合 Apple 规则与 Legacy 禁用条目的安全清理。
+> **对接目标**：为 ChatGPT Work 对话提供权威对照报告，指导 `.lcf` 中第三方杂合 Apple 规则与 Legacy 禁用条目的安全清理，并核对生效顺序。
 
 ---
 
@@ -43,10 +43,10 @@
 
 | 业务场景 | 本仓库权威自有规则 (`dist/`) | 对应第三方常见规则（可清理） | 本仓库优势与安全防护 |
 | :--- | :--- | :--- | :--- |
+| **内测分发** | **`TestFlight.lsr`** (3 条) | 杂合在 `AppleProxy.lsr` 或 `Apple.lsr` | **独立隔离**。因用户实测 TestFlight 直连可能无法打开，故单独提取为独立 `.lsr`，排在 Apple-Direct 之前，解决锁区及卡加载。 |
+| **Apple 媒体锁区** | **`Apple-Media.lsr`** (18 条) | `AppleMedia.lsr` / `AppleProxy.lsr` / `AppleTV.lsr` / `AppleNews.lsr` | **精准收录**。仅收录 Apple TV+、Apple News、Fitness+ 流媒体核心切片与 API，排在 Apple-Direct 之前，不绑架系统其他流量。 |
+| **推送通道** | **`Apple-Push.lsr`** (10 条) | 散落的内联 `[Rule]` 或第三方 Push 规则 | **官方最小范围**。仅含 `push.apple.com` 及官方 5 个 IPv4 CIDR + 4 个 IPv6 CIDR，说明 TCP 5223 / 443 回退机制。保留 `Apple Push` 策略组。 |
 | **Apple 基础核心** | **`Apple-Direct.lsr`** (80 条) | `Apple.lsr` (Kelee) / `Apple_Direct.list` | **绝不通配代理**。严格锁定 iCloud、CloudKit、Apple ID、App Store、Apple Music 直连，严禁混入 `17.0.0.0/8` 或 `DOMAIN-SUFFIX,apple.com`。 |
-| **Apple 媒体锁区** | **`Apple-Media.lsr`** (18 条) | `AppleMedia.lsr` / `AppleProxy.lsr` / `AppleTV.lsr` / `AppleNews.lsr` | **精准收录**。仅收录 Apple TV+、Apple News、Fitness+ 流媒体核心切片与 API，不绑架系统其他流量。 |
-| **内测分发** | **`TestFlight.lsr`** (3 条) | 杂合在 `AppleProxy.lsr` 或 `Apple.lsr` | **独立隔离**。因用户实测 TestFlight 直连可能无法打开，故单独提取为独立 `.lsr`，不与 Direct 冲突。 |
-| **推送通道** | **`Apple-Push.lsr`** (10 条) | 散落的内联 `[Rule]` 或第三方 Push 规则 | **官方最小范围**。仅含 `push.apple.com` 及官方 5 个 IPv4 CIDR + 4 个 IPv6 CIDR，注释说明 TCP 5223 / 443 回退。 |
 
 ### B. ChatGPT Work 针对 `.lcf` 的具体清理建议
 
@@ -55,16 +55,24 @@
      * `https://rule.kelee.one/Loon/Apple.lsr` (或 `AppleProxy.lsr`)
      * `https://rule.kelee.one/Loon/AppleMedia.lsr`
      * 任何第三方的 `AppleTV.lsr` 与 `AppleNews.lsr`
-   - **替换为本仓库唯一权威源**：
-     * `Apple-Media.lsr`
-     * `TestFlight.lsr`
-     * `Apple-Direct.lsr`
-     * `Apple-Push.lsr` (默认建议 enabled=false，需测试时手动开启)
-2. **清理冗余 Legacy 禁用条目**：
+   - **替换为本仓库唯一权威源 (严格自顶向下顺序)**：
+     ```ini
+     https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/TestFlight.lsr, policy = US, tag = TestFlight, enabled = true
+     https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr, policy = US Test, tag = Apple-Media, enabled = true
+     https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr, policy = Apple Push, tag = Apple-Push, enabled = false
+     https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy = DIRECT, tag = Apple-Direct, enabled = true
+     ```
+2. **`Apple Push` 策略组保留与内联规则安全清理**：
+   - **保留策略组**：保留用户 `.lcf` 中原有的 `Apple Push` 策略组，不新增同类组，也不擅自删除。
+   - **清理前确认**：在移除本地 `[Rule]` 中遗留的 APNs 条目（如 `17.0.0.0/8` 或 `push.apple.com`）之前，必须先确认：
+     1) 远程 `Apple-Push.lsr` 已配置并排在 `Apple-Direct.lsr` 之前；
+     2) `Apple Push` 策略组有效（直连或指定节点可用）；
+     3) 锁屏即时通知（微信、Telegram、HomeKit 门铃推送）测试无异常。
+3. **清理冗余 Legacy 禁用条目**：
    - 原始 `.lcf` 中存在多条带 `#` 注释或 `enabled=false` 的过时历史订阅（如老旧的第三方合并规则、重复节点规则）。
    - **清理原则**：无需保留 `*-Legacy` 条目。Git 提交历史与 Release Tag 已提供完整的版本回滚支撑，清理后的 `.lcf` 应保持最精简状态。
-3. **插件集成**：
-   - 在 `.lcf` 中直接引用本仓库一键诊断插件：
+4. **插件集成**：
+   - 在 `.lcf` 中直接引用本仓库一键诊断插件（支持 GitHub Raw 与 Fastly jsDelivr 双镜像）：
      ```ini
      [Plugin]
      https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/LoonRules-Diagnostic.lpx, tag = LoonRules-Diagnostic
@@ -72,26 +80,34 @@
 
 ---
 
-## 4. 插件审计与分流规则执行优先级定律
-
-原始配置加载了 37 个插件（包括 `iRingo.WeatherKit`, `iRingo.Siri`, `Block_HTTPDNS`, `BlockAdvertisers`, `Prevent_DNS_Leaks` 及主流 App 去广告插件）。
-
-### Loon 核心规则优先级法则
+## 4. Loon 核心规则优先级法则与生效顺序
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ 1. 本地规则 [Rule] (最高优先级)                         │
-├─────────────────────────────────────────────────────────┤
-│ 2. 插件规则 [Plugin] 内部声明的 [Rule] (次高优先级)    │
-├─────────────────────────────────────────────────────────┤
-│ 3. 远程订阅规则 [Remote Rule] (GitHub .lsr, 较低优先级) │
-├─────────────────────────────────────────────────────────┤
-│ 4. 兜底策略 FINAL (最低优先级)                          │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ 1. 本地规则 [Rule] (最高优先级)                              │
+├─────────────────────────────────────────────────────────────┤
+│ 2. 插件规则 [Plugin] 内部声明的 [Rule] (次高优先级)          │
+│    * 本仓库诊断插件未声明任何分流规则，零侵入，零副作用       │
+├─────────────────────────────────────────────────────────────┤
+│ 3. 远程订阅规则 [Remote Rule] (GitHub .lsr, 按顺序逐一匹配)  │
+│    * 精确子规则排在宽泛父域规则之前                          │
+├─────────────────────────────────────────────────────────────┤
+│ 4. 兜底策略 FINAL (最低优先级)                               │
+│    * 命中 FINAL 本身是正常网络行为，绝不代表分流失效         │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 > [!WARNING]
 > **重要架构事实**：
 > 远程订阅 `.lsr` 处于第 3 层，其优先级**天然低于插件内置规则与本地规则**。
-> - 若 `BlockAdvertisers` 插件内部强制将某个域名置为 `REJECT`，即使我们在 `AI-Overseas.lsr` 中将该域名写入分流，Loon 也会由于插件优先级更高而优先执行 `REJECT`。
+> - 若去广告插件内部强制将某个域名置为 `REJECT`，即使我们在 `AI-Overseas.lsr` 中将该域名写入分流，Loon 也会由于插件优先级更高而优先执行 `REJECT`。
 > - 任何需要绝对无条件优先的分流例外，必须保留在本地 `.lcf` 的 `[Rule]` 顶层。
+
+---
+
+## 5. 中国大陆冷启动保障
+
+首次导入 `.lcf` 时，若代理节点尚未就绪或 GitHub Raw 暂时被阻断，Loon 依靠本地旁路与大陆直连规则保障基础通信正常启动。
+同时，所有规则文件均提供 Fastly jsDelivr 备用 CDN 镜像：
+`https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/<规则名>.lsr`
+确保即便在无代理状态下也能顺利拉取初始规则集。

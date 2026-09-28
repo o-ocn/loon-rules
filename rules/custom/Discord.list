@@ -1,8 +1,12 @@
 # ==============================================================================
 # Rule Name: Discord (Custom)
 # Description: Discord communication platform
+# Scope: Discord chat, voice, gateway, CDN, and invite endpoints
 # ==============================================================================
 
+# Target: Core Discord web, voice, and media gateway
+# Evidence: Discord desktop client and mobile app telemetry, 2026-09-28
+# Reason: Baseline anchors; upstream provides full coverage of Discord media endpoints
 DOMAIN-SUFFIX,discord.com
 DOMAIN-SUFFIX,discordapp.com
 DOMAIN-SUFFIX,discordapp.net

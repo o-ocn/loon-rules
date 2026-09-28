@@ -482,11 +482,13 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
     staged_rules_by_set = {}
     rule_to_set_map = {}       # (rule_type, rule_val) -> ruleset_name
     parent_domains = {}        # domain_suffix -> ruleset_name
+    upstream_overlaps = []     # List of overlapping custom rules covered by upstream
 
     for name, rcfg in rulesets.items():
         custom_file_rel = rcfg.get("local_custom", "")
         custom_file = os.path.join(BASE_DIR, custom_file_rel) if custom_file_rel else ""
         collected_rules = []
+        custom_rules_for_set = set()
         seen = set()
 
         # 1. Load custom rules first (highest author priority)
@@ -501,6 +503,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                         if cleaned not in seen:
                             seen.add(cleaned)
                             collected_rules.append(cleaned)
+                            custom_rules_for_set.add(cleaned)
 
         # 2. Ingest upstream sources strictly
         upstream_sources = rcfg.get("sources", [])
@@ -548,6 +551,13 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                         raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
                     if cleaned in excluded:
                         continue
+                    if cleaned in custom_rules_for_set:
+                        upstream_overlaps.append({
+                            "ruleset": name,
+                            "custom_file": custom_file_rel,
+                            "rule": cleaned,
+                            "upstream": sname
+                        })
                     if cleaned not in seen:
                         seen.add(cleaned)
                         collected_rules.append(cleaned)
@@ -694,104 +704,129 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 "description": desc
             }
 
-        # 7. Generate diagnostic manifest.json
+        # 7. Check for changes against existing dist/
+        os.makedirs(dist_dir, exist_ok=True)
+        os.makedirs(DIST_DIAGNOSTICS_DIR, exist_ok=True)
+
+        files_to_update = {}
+        for name, s_file in generated_files.items():
+            target_file = os.path.join(dist_dir, f"{name}.lsr")
+            with open(s_file, "r", encoding="utf-8") as f:
+                new_data = f.read()
+            if os.path.isfile(target_file):
+                with open(target_file, "r", encoding="utf-8") as f:
+                    old_data = f.read()
+                if old_data != new_data:
+                    files_to_update[name] = new_data
+            else:
+                files_to_update[name] = new_data
+
+        lpx_src = os.path.join(DIAGNOSTICS_DIR, "LoonRules-Diagnostic.lpx")
+        js_src = os.path.join(DIAGNOSTICS_DIR, "loon-rules-diagnostic.js")
+        lpx_dst = os.path.join(DIST_DIAGNOSTICS_DIR, "LoonRules-Diagnostic.lpx")
+        js_dst = os.path.join(DIST_DIAGNOSTICS_DIR, "loon-rules-diagnostic.js")
+        manifest_dst = os.path.join(DIST_DIAGNOSTICS_DIR, "manifest.json")
+
+        diag_scripts_changed = False
+        for s_p, d_p in [(lpx_src, lpx_dst), (js_src, js_dst)]:
+            if os.path.isfile(s_p):
+                with open(s_p, "rb") as f:
+                    s_b = f.read()
+                d_b = b""
+                if os.path.isfile(d_p):
+                    with open(d_p, "rb") as f:
+                        d_b = f.read()
+                if s_b != d_b:
+                    diag_scripts_changed = True
+
+        has_manifest = os.path.isfile(manifest_dst)
+
+        # Requirement 16: Zero-change build idempotence
+        # If no ruleset changed and diagnostic scripts didn't change and manifest exists,
+        # preserve previous release artifacts and manifest.json without modifying timestamps!
+        is_zero_change = (len(files_to_update) == 0 and not diag_scripts_changed and has_manifest)
+
         services_cfg = load_yaml(SERVICES_FILE) if os.path.isfile(SERVICES_FILE) else {}
         git_rev = get_git_revision()
         build_time = datetime.now(timezone.utc).isoformat()
-
-        manifest_data = {
-            "schema_version": "1.0",
-            "build_timestamp": build_time,
-            "release_commit": git_rev,
-            "repository": "https://github.com/o-ocn/loon-rules",
-            "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
-            "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
-            "rulesets": ruleset_metadata,
-            "upstream_sync_status": "synced",
-            "services": services_cfg.get("services", []),
-            "physical_verification_items": services_cfg.get("physical_verification_items", [
-                "APNs TCP 5223 系统级长连接与锁屏即时通知 (apsd)",
-                "Telegram 锁屏/蜂窝网络下的后台消息唤醒与推送延迟",
-                "HomeKit 室内摄像头即时视频画面流推流与门铃",
-                "Apple Watch 独立 Wi-Fi/蜂窝联网与天气表盘刷新",
-                "第三方依赖 CloudKit 的 App (爱乐记、猿音) 真实多端双向同步"
-            ])
-        }
-
-        staging_manifest_file = os.path.join(staging_diag_dir, "manifest.json")
-        with open(staging_manifest_file, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(manifest_data, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-
-        # Copy diagnostics plugin definition & script to staging
-        lpx_src = os.path.join(DIAGNOSTICS_DIR, "LoonRules-Diagnostic.lpx")
-        js_src = os.path.join(DIAGNOSTICS_DIR, "loon-rules-diagnostic.js")
-        if os.path.isfile(lpx_src):
-            shutil.copy2(lpx_src, os.path.join(staging_diag_dir, "LoonRules-Diagnostic.lpx"))
-        if os.path.isfile(js_src):
-            shutil.copy2(js_src, os.path.join(staging_diag_dir, "loon-rules-diagnostic.js"))
-
-        # 8. Idempotent sync to dist/
-        os.makedirs(dist_dir, exist_ok=True)
-        os.makedirs(DIST_DIAGNOSTICS_DIR, exist_ok=True)
-        updated_count = 0
 
         change_summary_lines = []
         change_summary_lines.append("\n==================== 规则构建与诊断更新摘要 ====================")
         change_summary_lines.append(f"构建时间: {build_time} | Git Revision: {git_rev}")
         change_summary_lines.append(f"维护规则集: 共 {len(generated_files)} 个独立服务分类 (策略中立)")
 
-        for name, s_file in generated_files.items():
-            target_file = os.path.join(dist_dir, f"{name}.lsr")
-            with open(s_file, "r", encoding="utf-8") as f:
-                new_data = f.read()
+        if is_zero_change:
+            for name in generated_files:
+                target_file = os.path.join(dist_dir, f"{name}.lsr")
+                cnt = count_lsr_rules(target_file)
+                change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {cnt} 条规则 (内容一致)")
+            change_summary_lines.append(f"  [PRESERVED]  diagnostics/manifest.json: 规则无变化，保留上一版时间戳与构建成品 (满足第16条)")
+            updated_count = 0
+        else:
+            updated_count = 0
+            for name, s_file in generated_files.items():
+                target_file = os.path.join(dist_dir, f"{name}.lsr")
+                new_cnt = len(staged_rules_by_set.get(name, []))
+                if name in files_to_update:
+                    with open(target_file, "w", encoding="utf-8", newline="\n") as f:
+                        f.write(files_to_update[name])
+                    prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
+                    delta = new_cnt - prev_cnt
+                    delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(修改)"
+                    change_summary_lines.append(f"  [UPDATED]    {name}.lsr: {new_cnt} 条规则 {delta_str}")
+                    updated_count += 1
+                else:
+                    change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
 
-            prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
-            new_cnt = len(staged_rules_by_set.get(name, []))
-            delta = new_cnt - prev_cnt
-            delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(无变化)"
+            # Copy diagnostic scripts
+            for s_p, d_p in [(lpx_src, lpx_dst), (js_src, js_dst)]:
+                if os.path.isfile(s_p):
+                    shutil.copy2(s_p, d_p)
 
-            should_write = True
-            if os.path.isfile(target_file):
-                with open(target_file, "r", encoding="utf-8") as f:
-                    old_data = f.read()
-                if old_data == new_data:
-                    should_write = False
+            # Generate and write new manifest.json
+            manifest_data = {
+                "schema_version": "1.0",
+                "build_timestamp": build_time,
+                "release_commit": git_rev,
+                "repository": "https://github.com/o-ocn/loon-rules",
+                "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
+                "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
+                "rulesets": ruleset_metadata,
+                "upstream_sync_status": "synced",
+                "services": services_cfg.get("services", []),
+                "physical_verification_items": services_cfg.get("physical_verification_items", [
+                    "APNs TCP 5223 系统级长连接与锁屏即时通知 (apsd)",
+                    "Telegram 锁屏/蜂窝网络下的后台消息唤醒与推送延迟",
+                    "HomeKit 室内摄像头即时视频画面流推流与门铃",
+                    "Apple Watch 独立 Wi-Fi/蜂窝联网与天气表盘刷新",
+                    "第三方依赖 CloudKit 的 App (爱乐记、猿音) 真实多端双向同步"
+                ])
+            }
+            with open(manifest_dst, "w", encoding="utf-8", newline="\n") as f:
+                json.dump(manifest_data, f, indent=2, ensure_ascii=False)
+                f.write("\n")
+            print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time})")
 
-            if should_write:
-                with open(target_file, "w", encoding="utf-8", newline="\n") as f:
-                    f.write(new_data)
-                updated_count += 1
-                change_summary_lines.append(f"  [UPDATED]    {name}.lsr: {new_cnt} 条规则 {delta_str}")
-            else:
-                change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
+            # Update lock baseline when dist genuinely updated
+            if has_upstream_sources:
+                save_upstream_lock(new_lock_data, lock_file)
+                print(f"[LOCKED] Upstream rule baselines saved to {lock_file}")
 
-        # Sync diagnostics artifacts
-        for diag_fname in ("manifest.json", "LoonRules-Diagnostic.lpx", "loon-rules-diagnostic.js"):
-            src_p = os.path.join(staging_diag_dir, diag_fname)
-            dst_p = os.path.join(DIST_DIAGNOSTICS_DIR, diag_fname)
-            if os.path.isfile(src_p):
-                with open(src_p, "rb") as f:
-                    s_bytes = f.read()
-                d_bytes = b""
-                if os.path.isfile(dst_p):
-                    with open(dst_p, "rb") as f:
-                        d_bytes = f.read()
-                if s_bytes != d_bytes:
-                    with open(dst_p, "wb") as f:
-                        f.write(s_bytes)
-                    print(f"[UPDATED] diagnostics/{diag_fname}")
-
-        # 9. Update upstream lock file only after all validations pass and dist is updated
-        if has_upstream_sources:
-            save_upstream_lock(new_lock_data, lock_file)
-            print(f"[LOCKED] Upstream rule baselines saved to {lock_file}")
+        # Requirement 9: Prompt user if upstream officially covers custom rules
+        if upstream_overlaps:
+            change_summary_lines.append("\n-------------------- [UPSTREAM OVERLAP NOTICE] --------------------")
+            change_summary_lines.append(f"提示: 检测到 {len(upstream_overlaps)} 条自定义规则已被成熟上游正式收录。")
+            change_summary_lines.append("根据规则三层结构准则 (上游覆盖主体，Custom 仅补例外)，建议核对后从 rules/custom/*.list 中清理：")
+            for ov in upstream_overlaps:
+                change_summary_lines.append(f"  - [{ov['ruleset']}] '{ov['rule']}' 已被上游 '{ov['upstream']}' 收录 (文件: {ov['custom_file']})")
+            change_summary_lines.append("-------------------------------------------------------------------")
 
         change_summary_lines.append("----------------------------------------------------------------")
         change_summary_lines.append("策略中立声明: 所有 .lsr 均未写入策略组名称、节点或动作，用户在 Loon 中自由绑定。")
         change_summary_lines.append("================================================================")
         print("\n".join(change_summary_lines))
         print(f"\n[SUCCESS] Build complete. {updated_count} ruleset files updated in {dist_dir}.")
+        return {"updated_count": updated_count, "overlaps": upstream_overlaps, "rulesets": ruleset_metadata, "is_zero_change": is_zero_change}
 
     finally:
         shutil.rmtree(staging_dir, ignore_errors=True)

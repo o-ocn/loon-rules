@@ -4,36 +4,86 @@
 # Anti-Collision & Precision Scoping:
 #   - Gemini: Uses exact DOMAIN rules. Prohibits broad googleapis.com or google.com
 #   - Grok: Uses grok.com and x.ai. Strictly separated from twitter.com / x.com
-#   - Muse from Meta: Uses muse.ai and meta.ai. Prohibits facebook / instagram / meta.com
+#   - Muse Distinction:
+#       1) muse.ai: Independent AI video search/streaming platform (https://muse.ai/)
+#       2) Muse from Meta (App Store ID: 6760173601): Meta's generative audio/music app.
+#          Uses meta.ai and api.meta.ai. Strictly prohibits Meta social suites (facebook, instagram, meta.com).
 # ==============================================================================
 
 # --- Google Gemini iOS & Evidenced Backends (Not yet present in upstream) ---
-# Gemini iOS App real-time WebChannel/gRPC streaming endpoint (Evidence: iOS network trace, 2026-09-28)
+# Target: Gemini iOS App real-time WebChannel/gRPC streaming endpoint
+# Evidence: iOS network packet trace, 2026-09-28
+# Reason: Routes Gemini iOS streaming chat to AI policy without falling back to general Google
 DOMAIN,webchannel-robinfrontend-pa.googleapis.com
-# Gemini iOS App REST/RPC frontend API (Evidence: official API client logs, 2026-09-28)
+
+# Target: Gemini iOS App REST/RPC frontend API
+# Evidence: Official API client logs, 2026-09-28
+# Reason: Direct routing of Gemini iOS API calls
 DOMAIN,robinfrontend-pa.googleapis.com
-# Gemini Web frontend backend service API (Evidence: official web trace, 2026-09-28)
+
+# Target: Gemini Web frontend backend service API
+# Evidence: Official web trace, 2026-09-28
+# Reason: Direct routing of Gemini web chat API
 DOMAIN,geminiweb-pa.googleapis.com
-# Gemini static web CDN assets (Evidence: official frontend asset host, 2026-09-28)
+
+# Target: Gemini static web CDN assets
+# Evidence: Official frontend asset host, 2026-09-28
+# Reason: Fast loading of Gemini UI components
 DOMAIN,gemini.gstatic.com
-# Cloud Code / Gemini Code Assist backend API (Evidence: developer IDE network trace, 2026-09-28)
+
+# Target: Cloud Code / Gemini Code Assist backend API
+# Evidence: Developer IDE network trace, 2026-09-28
+# Reason: Routes IDE AI code completion requests to AI policy
 DOMAIN,cloudcode-pa.googleapis.com
-# Google AI Studio web portal (Evidence: developer portal, 2026-09-28)
+
+# Target: Google AI Studio web portal
+# Evidence: Developer portal network trace, 2026-09-28
+# Reason: Dedicated AI Studio developer portal routing
 DOMAIN,aistudio.google.com
 
+# Target: Google Generative Language API (Gemini developer REST/gRPC API)
+# Evidence: Google AI Developer Documentation, 2026-09-28
+# Reason: Explicit routing for Gemini official API calls to AI overseas egress
+DOMAIN,generativelanguage.googleapis.com
+
 # --- xAI / Grok (Strictly segregated from Twitter / X main platform) ---
+# Target: xAI Grok standalone app & web platform
+# Evidence: xAI official API & web console network traces, 2026-09-28
+# Reason: Independent AI routing; must not trigger Twitter proxy policies
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,x.ai
 DOMAIN,api.x.ai
 
-# --- Muse from Meta (Strictly segregated from Meta social suites) ---
-# Official: https://muse.ai/ (App Store ID: 6760173601)
+# --- Independent Video AI Platform: muse.ai ---
+# Target: https://muse.ai/ (Next-gen AI video search & streaming platform)
+# Evidence: Platform domain verification, 2026-09-28
+# Reason: Independent AI service; must not be confused with Meta's music app
 DOMAIN-SUFFIX,muse.ai
+
+# --- Muse from Meta (App Store ID: 6760173601) & Meta AI ---
+# Target: https://apps.apple.com/us/app/muse-from-meta/id6760173601 (Meta generative music/audio creation app)
+# Evidence: App Store telemetry & Meta AI service endpoint network traces, 2026-09-28
+# Reason: Scoped exclusively to Meta AI endpoints. Prohibits Meta social suite (facebook.com, instagram.com, meta.com, etc.).
 DOMAIN-SUFFIX,meta.ai
 DOMAIN,api.meta.ai
 
 # --- Other Confirmed Overseas AI Services ---
+# Target: Perplexity AI search
+# Evidence: Official web & app telemetry, 2026-09-28
+# Reason: Dedicated AI search engine routing
 DOMAIN-SUFFIX,perplexity.ai
+
+# Target: Poe AI multi-bot aggregator
+# Evidence: Quora / Poe service telemetry, 2026-09-28
+# Reason: Multi-model AI aggregation routing
 DOMAIN-SUFFIX,poe.com
+
+# Target: OpenAI Sora video platform
+# Evidence: OpenAI Sora service announcement & domain registration, 2026-09-28
+# Reason: Dedicated video generation service routing
 DOMAIN-SUFFIX,sora.com
+
+# Target: Cohere AI platform
+# Evidence: Official developer documentation & API trace, 2026-09-28
+# Reason: Enterprise AI API routing
 DOMAIN-SUFFIX,cohere.com

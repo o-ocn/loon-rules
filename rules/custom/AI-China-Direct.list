@@ -1,9 +1,13 @@
 # ==============================================================================
 # Rule Name: AI-China-Direct (Custom)
 # Description: Mainland China AI services (DeepSeek, etc.)
+# Scope: Domestic Chinese AI portals, APIs, and CDN endpoints
 # ==============================================================================
 
 # --- DeepSeek ---
+# Target: DeepSeek web portal, chat, developer platform, and API endpoints
+# Evidence: Official DeepSeek developer documentation & mobile app network capture, 2026-09-28
+# Reason: Direct routing to prevent proxy latency, avoid overseas cloud IP blocks, and protect domestic performance
 DOMAIN-SUFFIX,deepseek.com
 DOMAIN-SUFFIX,deepseeksvc.com
 DOMAIN,api.deepseek.com

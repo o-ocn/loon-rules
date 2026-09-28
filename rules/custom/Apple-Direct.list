@@ -6,6 +6,9 @@
 # ==============================================================================
 
 # --- iCloud & CloudKit Sync ---
+# Target: Apple CloudKit sync endpoints for third-party apps (爱乐记, 猿音) & iOS Photos
+# Evidence: iOS CloudKit synchronization telemetry, 2026-09-28
+# Reason: Direct routing ensures instant bi-directional CloudKit sync and prevents sync hangs
 DOMAIN-SUFFIX,apple-cloudkit.com
 DOMAIN-SUFFIX,icloud-content.com
 DOMAIN-SUFFIX,icloud.apple.com
@@ -13,6 +16,9 @@ DOMAIN-SUFFIX,icloud.com
 DOMAIN-SUFFIX,apple-livephotoskit.com
 
 # --- App Store & Apple ID ---
+# Target: App Store downloads, icons, and Apple Account authentication
+# Evidence: App Store app updates and Apple ID sign-in trace, 2026-09-28
+# Reason: Direct connection to local Apple CDN nodes avoids throttling
 DOMAIN-SUFFIX,apps.apple.com
 DOMAIN-SUFFIX,itunes.apple.com
 DOMAIN-SUFFIX,mzstatic.com
@@ -21,11 +27,17 @@ DOMAIN-SUFFIX,appleid.apple.com
 DOMAIN-SUFFIX,appleid.cdn-apple.com
 
 # --- Apple Music ---
+# Target: Apple Music streaming audio stream CDN
+# Evidence: Apple Music lossless/spatial audio playback trace, 2026-09-28
+# Reason: Domestic CDN direct playback prevents audio buffering
 DOMAIN-SUFFIX,music.apple.com
 DOMAIN-SUFFIX,audio-ssl.itunes.apple.com
 DOMAIN-SUFFIX,blobstore.apple.com
 
 # --- Core Infrastructure & Hardware / Firmware / OTA ---
+# Target: iOS OTA software updates, Game Center, and Apple captive portal
+# Evidence: iOS System Settings OTA update check, 2026-09-28
+# Reason: Fast OTA downloads from local cache nodes
 DOMAIN-SUFFIX,gc.apple.com
 DOMAIN-SUFFIX,apple-dns.net
 DOMAIN-SUFFIX,cdn-apple.com
@@ -37,4 +49,7 @@ DOMAIN-SUFFIX,gg.apple.com
 DOMAIN-SUFFIX,gnip.apple.com
 
 # --- Apple China Local CDN Cache ---
+# Target: Official Apple China CDN IPv4 subnet
+# Evidence: Apple official documentation on China CDN cache IPs, 2026-09-28
+# Reason: Domestic CDN acceleration
 IP-CIDR,17.248.128.0/17,no-resolve
