@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 Loon Rule Hit Simulator (Strategy-Neutral, Multi-Stage Evaluation)
-Simulates complete top-to-bottom rule evaluation order in Loon:
-  Stage 1: Local [Rule] (configuration file local rules)
+Simulates top-to-bottom rule evaluation order in Loon:
+  Stage 1: Local [Rule] (configuration file local rules, sanitized)
   Stage 2: Plugin [Rule] (active plugin injected rules)
   Stage 3: [Remote Rule] (remote subscription rulesets in declaration order)
   Stage 4: FINAL (fallback default rule)
@@ -14,6 +14,7 @@ License: GPL-2.0
 import os
 import sys
 import re
+import ipaddress
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "dist")
@@ -46,15 +47,29 @@ def parse_rule_line(raw_line, line_idx=0):
         return None
     rtype = parts[0].upper()
     rval = parts[1].strip() if len(parts) > 1 else ""
-    # Extract options like no-resolve
     options = [p.strip() for p in parts[2:]]
     return {
         "type": rtype,
         "value": rval,
         "options": options,
-        "raw": clean,
+        "raw": f"{rtype},{rval}" if rval else rtype,
         "line": line_idx
     }
+
+def is_ip(val):
+    try:
+        ipaddress.ip_address(val.strip())
+        return True
+    except ValueError:
+        return False
+
+def check_ip_in_network(ip_str, cidr_str):
+    try:
+        ip_obj = ipaddress.ip_address(ip_str.strip())
+        net_obj = ipaddress.ip_network(cidr_str.strip(), strict=False)
+        return ip_obj in net_obj
+    except ValueError:
+        return False
 
 def load_dist_rules(order=None):
     """Loads all dist/*.lsr remote rules in explicit top-to-bottom evaluation order."""
@@ -76,8 +91,8 @@ def load_dist_rules(order=None):
 def load_lcf_pipeline(lcf_path):
     """
     Parses an actual .lcf configuration file to extract:
-    1. Local [Rule]
-    2. Remote [Remote Rule] declaration order
+    1. Local [Rule] (skipping disabled rules, discarding private comments)
+    2. Remote [Remote Rule] declaration order (skipping disabled rules)
     3. FINAL rule
     """
     local_rules = []
@@ -97,16 +112,25 @@ def load_lcf_pipeline(lcf_path):
                 current_section = clean[1:-1].strip()
                 continue
 
+            # Skip explicitly disabled entries (e.g. enabled=false or enable=false)
+            clean_lower = clean.lower()
+            if re.search(r'\benabled?\s*=\s*false\b', clean_lower):
+                continue
+
             if current_section == "Rule":
                 p = parse_rule_line(clean, line_idx)
                 if p:
                     if p["type"] == "FINAL":
                         final_policy = p["value"] or "DIRECT"
                     else:
-                        local_rules.append(p)
+                        local_rules.append({
+                            "type": p["type"],
+                            "value": p["value"],
+                            "raw": f"{p['type']},{p['value']}",
+                            "line": line_idx
+                        })
             elif current_section == "Remote Rule":
                 # e.g.: https://raw.githubusercontent.com/.../dist/AI-Overseas.lsr, policy=..., tag=AI-Overseas
-                # Extract filename or tag
                 m = re.search(r'([a-zA-Z0-9_\-]+\.lsr)', clean)
                 if m:
                     rname = m.group(1)
@@ -119,35 +143,42 @@ def load_lcf_pipeline(lcf_path):
         "final_policy": final_policy
     }
 
-def match_domain(domain, rules_by_file, local_rules=None, plugin_rules=None):
+def match_target(target, rules_by_file, local_rules=None, plugin_rules=None):
     """
-    Simulates complete multi-stage evaluation:
+    Simulates complete multi-stage evaluation for domain or IP:
       Stage 1: Local [Rule]
       Stage 2: Plugin [Rule]
       Stage 3: [Remote Rule] (ordered .lsr files)
       Stage 4: FINAL
     """
-    domain = domain.lower().strip()
+    clean_target = target.strip()
+    target_is_ip = is_ip(clean_target)
+    domain_lower = clean_target.lower() if not target_is_ip else ""
     matches = []
 
-    def check_rule_hit(rtype, rval):
-        rval_lower = rval.lower()
-        if rtype == "DOMAIN":
-            return domain == rval_lower
-        elif rtype == "DOMAIN-SUFFIX":
-            return domain == rval_lower or domain.endswith("." + rval_lower)
-        elif rtype == "DOMAIN-KEYWORD":
-            return rval_lower in domain
-        return False
+    def check_hit(rtype, rval):
+        if target_is_ip:
+            if rtype in ("IP-CIDR", "IP-CIDR6"):
+                return check_ip_in_network(clean_target, rval)
+            return False
+        else:
+            rval_lower = rval.lower()
+            if rtype == "DOMAIN":
+                return domain_lower == rval_lower
+            elif rtype == "DOMAIN-SUFFIX":
+                return domain_lower == rval_lower or domain_lower.endswith("." + rval_lower)
+            elif rtype == "DOMAIN-KEYWORD":
+                return rval_lower in domain_lower
+            return False
 
     # Stage 1: Local [Rule]
     if local_rules:
         for r in local_rules:
-            if check_rule_hit(r["type"], r["value"]):
+            if check_hit(r["type"], r["value"]):
                 matches.append({
                     "stage": "Stage 1 (Local [Rule])",
                     "ruleset": "Local [Rule]",
-                    "rule": r["raw"],
+                    "rule": r.get("raw", f"{r['type']},{r['value']}"),
                     "type": r["type"],
                     "value": r["value"].lower(),
                     "line": r.get("line", 0)
@@ -156,11 +187,11 @@ def match_domain(domain, rules_by_file, local_rules=None, plugin_rules=None):
     # Stage 2: Plugin [Rule]
     if plugin_rules:
         for r in plugin_rules:
-            if check_rule_hit(r["type"], r["value"]):
+            if check_hit(r["type"], r["value"]):
                 matches.append({
                     "stage": "Stage 2 (Plugin [Rule])",
                     "ruleset": "Plugin [Rule]",
-                    "rule": r["raw"],
+                    "rule": r.get("raw", f"{r['type']},{r['value']}"),
                     "type": r["type"],
                     "value": r["value"].lower(),
                     "line": r.get("line", 0)
@@ -169,7 +200,7 @@ def match_domain(domain, rules_by_file, local_rules=None, plugin_rules=None):
     # Stage 3: Remote Rules
     for fname, rule_list in rules_by_file:
         for rtype, rval, raw_line, line_idx in rule_list:
-            if check_rule_hit(rtype, rval):
+            if check_hit(rtype, rval):
                 matches.append({
                     "stage": f"Stage 3 ([Remote Rule]: {fname})",
                     "ruleset": fname,
@@ -181,10 +212,17 @@ def match_domain(domain, rules_by_file, local_rules=None, plugin_rules=None):
 
     return matches
 
-def simulate(domain, rules_by_file, local_rules=None, plugin_rules=None, lcf_meta=None):
-    matches = match_domain(domain, rules_by_file, local_rules, plugin_rules)
+def match_domain(domain, rules_by_file, local_rules=None, plugin_rules=None):
+    """Backward compatibility alias for match_target."""
+    return match_target(domain, rules_by_file, local_rules, plugin_rules)
+
+def simulate(target, rules_by_file, local_rules=None, plugin_rules=None, lcf_meta=None):
+    matches = match_target(target, rules_by_file, local_rules, plugin_rules)
     print("=" * 64)
-    print(f"输入测试域名: {domain}")
+    print(f"输入测试目标: {target} ({'IP地址' if is_ip(target) else '域名'})")
+
+    if plugin_rules is None:
+        print("[状态: 插件注入规则未加载 - 第三方插件规则无法脱机静态推演，实际生效以真机 TUN 抓包为准]")
 
     if not matches:
         final_pol = lcf_meta.get("final_policy", "DIRECT") if lcf_meta else "FINAL"
@@ -213,19 +251,18 @@ def simulate(domain, rules_by_file, local_rules=None, plugin_rules=None, lcf_met
         else:
             print("跨规则集冲突: 否 (仅同一规则集内部不同粒度重合)")
 
-    print("[提示]: 第三方未审查插件注入规则无法脱机静态推演，实际生效以真机 TUN 抓包为准。")
     print("=" * 64)
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Simulate complete Loon multi-stage rule evaluation.")
-    parser.add_argument("domains", nargs="*", help="Domain names to simulate")
+    parser.add_argument("targets", nargs="*", help="Domain names or IP addresses to simulate")
     parser.add_argument("--lcf", dest="lcf_file", default=None, help="Path to actual .lcf configuration file")
     args = parser.parse_args()
 
-    if not args.domains:
-        print("用法: python scripts/simulate_hit.py <domain1> [domain2 ...] [--lcf <path.lcf>]")
-        print("示例: python scripts/simulate_hit.py webchannel-robinfrontend-pa.googleapis.com www.googleapis.com")
+    if not args.targets:
+        print("用法: python scripts/simulate_hit.py <domain_or_ip_1> [target2 ...] [--lcf <path.lcf>]")
+        print("示例: python scripts/simulate_hit.py webchannel-robinfrontend-pa.googleapis.com 17.249.1.5")
         sys.exit(1)
 
     lcf_meta = load_lcf_pipeline(args.lcf_file) if args.lcf_file else None
@@ -233,8 +270,8 @@ def main():
     remote_order = lcf_meta["remote_order"] if lcf_meta else DEFAULT_REMOTE_RULE_ORDER
 
     rules_by_file = load_dist_rules(remote_order)
-    for d in args.domains:
-        simulate(d, rules_by_file, local_rules=local_rules, lcf_meta=lcf_meta)
+    for t in args.targets:
+        simulate(t, rules_by_file, local_rules=local_rules, lcf_meta=lcf_meta)
 
 if __name__ == "__main__":
     main()

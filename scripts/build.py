@@ -209,6 +209,24 @@ def save_upstream_lock(lock_data, lock_file=UPSTREAM_LOCK_FILE):
         f.write("\n")
     os.replace(temp_lock, lock_file)
 
+def detect_upstream_overlaps(custom_rules, upstream_rules_by_source, ruleset_name=""):
+    """
+    Finds custom rules that are already officially covered by upstream sources.
+    Returns list of overlap dicts: [{'ruleset': ..., 'rule': ..., 'upstream': ..., 'custom_file': ...}]
+    """
+    overlaps = []
+    c_set = set(custom_rules) if isinstance(custom_rules, (list, tuple, set)) else set()
+    for sname, up_rules in upstream_rules_by_source.items():
+        for r in up_rules:
+            if r in c_set:
+                overlaps.append({
+                    "ruleset": ruleset_name or "Custom",
+                    "custom_file": f"rules/custom/{ruleset_name}.list" if ruleset_name else "rules/custom/*.list",
+                    "rule": r,
+                    "upstream": sname
+                })
+    return overlaps
+
 def parse_yaml_fallback(filepath):
     """Robust stack-based indentation YAML parser for sources.yml and services.yml."""
     with open(filepath, "r", encoding="utf-8") as f:
@@ -435,9 +453,17 @@ def prune_intra_set_redundancies(rules):
         pruned.append(r)
     return pruned
 
-def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3):
-    """Fetches upstream rule list with strict retries and fail-stop guarantees."""
+UPSTREAM_CACHE_DIR = os.path.join(BASE_DIR, "scripts", ".upstream_cache")
+
+def get_upstream_cache_path(url):
+    url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+    return os.path.join(UPSTREAM_CACHE_DIR, f"{url_hash}.list")
+
+def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3, allow_offline_cache=True):
+    """Fetches upstream rule list with strict retries, caching, and fail-stop guarantees."""
+    cache_path = get_upstream_cache_path(url)
     last_err = None
+    network_failed = False
     for attempt in range(1, max_retries + 1):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Loon-Rules-Builder/2.0"})
@@ -447,16 +473,40 @@ def fetch_upstream_strict(url, min_rules=2, timeout=15, max_retries=3):
                 body = response.read().decode("utf-8", errors="strict")
                 lines = [l.strip() for l in body.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
                 if len(lines) < min_rules:
+                    # Abnormally few rules is a fatal corruption from upstream; must NOT fall back to cache
                     raise RuntimeError(
                         f"Upstream returned abnormally few rules ({len(lines)} < min_rules {min_rules}) from {url}"
                     )
+                try:
+                    os.makedirs(UPSTREAM_CACHE_DIR, exist_ok=True)
+                    with open(cache_path, "w", encoding="utf-8", newline="\n") as f:
+                        f.write(body)
+                except Exception:
+                    pass
                 return body
-        except Exception as e:
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
             last_err = e
+            network_failed = True
             if attempt < max_retries:
                 import time
-                time.sleep(1.0)
+                time.sleep(0.5)
                 continue
+        except Exception as e:
+            # Fatal upstream response error (e.g. abnormally few rules, HTTP 500, syntax error); fail immediately!
+            raise
+
+    # Fallback to local cache ONLY when network is genuinely unavailable/offline
+    if network_failed and allow_offline_cache and os.path.isfile(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                cached_body = f.read()
+            lines = [l.strip() for l in cached_body.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+            if len(lines) >= min_rules:
+                print(f"  [OFFLINE CACHE] Network unavailable, loaded {len(lines)} rules from cache for {url}")
+                return cached_body
+        except Exception:
+            pass
+
     raise RuntimeError(f"CRITICAL: Failed to fetch upstream rule from {url} after {max_retries} attempts: {last_err}") from last_err
 
 def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTREAM_LOCK_FILE, allow_new_baseline=False):
@@ -741,10 +791,27 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
 
         has_manifest = os.path.isfile(manifest_dst)
 
+        # Compute deterministic package signature across all sorted rulesets
+        pkg_h = hashlib.sha256()
+        for rname in sorted(ruleset_metadata.keys()):
+            m = ruleset_metadata[rname]
+            pkg_h.update(f"{rname}:{m['sha256']}:{m['revision']}:{m['total_rules']}\n".encode("utf-8"))
+        package_sha256 = pkg_h.hexdigest()
+        content_rev = package_sha256[:12]
+
+        existing_manifest_content_rev = None
+        if os.path.isfile(manifest_dst):
+            try:
+                with open(manifest_dst, "r", encoding="utf-8") as f:
+                    old_m = json.load(f)
+                    existing_manifest_content_rev = old_m.get("content_revision")
+            except Exception:
+                existing_manifest_content_rev = None
+
         # Requirement 16: Zero-change build idempotence
-        # If no ruleset changed and diagnostic scripts didn't change and manifest exists,
+        # If no ruleset changed and diagnostic scripts didn't change and manifest exists with matching content hash,
         # preserve previous release artifacts and manifest.json without modifying timestamps!
-        is_zero_change = (len(files_to_update) == 0 and not diag_scripts_changed and has_manifest)
+        is_zero_change = (len(files_to_update) == 0 and not diag_scripts_changed and has_manifest and (existing_manifest_content_rev == content_rev))
 
         services_cfg = load_yaml(SERVICES_FILE) if os.path.isfile(SERVICES_FILE) else {}
         git_rev = get_git_revision()
@@ -752,7 +819,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
 
         change_summary_lines = []
         change_summary_lines.append("\n==================== 规则构建与诊断更新摘要 ====================")
-        change_summary_lines.append(f"构建时间: {build_time} | Git Revision: {git_rev}")
+        change_summary_lines.append(f"构建时间: {build_time} | Content Revision: {content_rev} | Git Source: {git_rev}")
         change_summary_lines.append(f"维护规则集: 共 {len(generated_files)} 个独立服务分类 (策略中立)")
 
         if is_zero_change:
@@ -763,34 +830,27 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
             change_summary_lines.append(f"  [PRESERVED]  diagnostics/manifest.json: 规则无变化，保留上一版时间戳与构建成品 (满足第16条)")
             updated_count = 0
         else:
-            updated_count = 0
+            # Transactional deployment: Stage entire dist structure first, then swap with rollback protection
+            dist_backup = os.path.join(BASE_DIR, ".dist_backup")
+            dist_new = os.path.join(staging_dir, "dist_new")
+            dist_new_diag = os.path.join(dist_new, "diagnostics")
+            os.makedirs(dist_new_diag, exist_ok=True)
+
+            # Copy all generated .lsr files to dist_new
             for name, s_file in generated_files.items():
-                target_file = os.path.join(dist_dir, f"{name}.lsr")
-                new_cnt = len(staged_rules_by_set.get(name, []))
-                if name in files_to_update:
-                    tmp_target = target_file + ".tmp"
-                    with open(tmp_target, "w", encoding="utf-8", newline="\n") as f:
-                        f.write(files_to_update[name])
-                    os.replace(tmp_target, target_file)
-                    prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
-                    delta = new_cnt - prev_cnt
-                    delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(修改)"
-                    change_summary_lines.append(f"  [UPDATED]    {name}.lsr: {new_cnt} 条规则 {delta_str}")
-                    updated_count += 1
-                else:
-                    change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
+                shutil.copy2(s_file, os.path.join(dist_new, f"{name}.lsr"))
 
-            # Copy diagnostic scripts atomically
-            for s_p, d_p in [(lpx_src, lpx_dst), (js_src, js_dst)]:
+            # Copy diagnostic scripts to dist_new
+            for s_p, d_fname in [(lpx_src, "LoonRules-Diagnostic.lpx"), (js_src, "loon-rules-diagnostic.js")]:
                 if os.path.isfile(s_p):
-                    tmp_d = d_p + ".tmp"
-                    shutil.copy2(s_p, tmp_d)
-                    os.replace(tmp_d, d_p)
+                    shutil.copy2(s_p, os.path.join(dist_new_diag, d_fname))
 
-            # Generate and write new manifest.json atomically
+            # Generate and write new manifest.json atomically to dist_new
             manifest_data = {
                 "schema_version": "1.0",
                 "build_timestamp": build_time,
+                "content_revision": content_rev,
+                "package_sha256": package_sha256,
                 "release_commit": git_rev,
                 "repository": "https://github.com/o-ocn/loon-rules",
                 "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
@@ -806,12 +866,52 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                     "第三方依赖 CloudKit 的 App (爱乐记、猿音) 真实多端双向同步"
                 ])
             }
-            tmp_manifest = manifest_dst + ".tmp"
-            with open(tmp_manifest, "w", encoding="utf-8", newline="\n") as f:
+            with open(os.path.join(dist_new_diag, "manifest.json"), "w", encoding="utf-8", newline="\n") as f:
                 json.dump(manifest_data, f, indent=2, ensure_ascii=False)
                 f.write("\n")
-            os.replace(tmp_manifest, manifest_dst)
-            print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time})")
+
+            # Backup current dist if exists
+            if os.path.exists(dist_backup):
+                shutil.rmtree(dist_backup, ignore_errors=True)
+            if os.path.exists(dist_dir):
+                shutil.copytree(dist_dir, dist_backup)
+
+            try:
+                updated_count = 0
+                for name, s_file in generated_files.items():
+                    target_file = os.path.join(dist_dir, f"{name}.lsr")
+                    new_cnt = len(staged_rules_by_set.get(name, []))
+                    if name in files_to_update:
+                        prev_cnt = count_lsr_rules(target_file) if os.path.isfile(target_file) else 0
+                        delta = new_cnt - prev_cnt
+                        delta_str = f"({'+' if delta > 0 else ''}{delta})" if delta != 0 else "(修改)"
+                        change_summary_lines.append(f"  [UPDATED]    {name}.lsr: {new_cnt} 条规则 {delta_str}")
+                        updated_count += 1
+                    else:
+                        change_summary_lines.append(f"  [UNCHANGED]  {name}.lsr: {new_cnt} 条规则 (内容一致)")
+
+                # Apply staged files to dist_dir
+                for root, dirs, files in os.walk(dist_new):
+                    rel = os.path.relpath(root, dist_new)
+                    target_root = os.path.join(dist_dir, rel) if rel != "." else dist_dir
+                    os.makedirs(target_root, exist_ok=True)
+                    for f in files:
+                        src_f = os.path.join(root, f)
+                        dst_f = os.path.join(target_root, f)
+                        tmp_f = dst_f + ".tmp"
+                        shutil.copy2(src_f, tmp_f)
+                        os.replace(tmp_f, dst_f)
+
+                print(f"[UPDATED] diagnostics/manifest.json (build_timestamp: {build_time}, content_revision: {content_rev})")
+            except Exception as e:
+                # Rollback on failure
+                if os.path.exists(dist_backup):
+                    shutil.rmtree(dist_dir, ignore_errors=True)
+                    shutil.copytree(dist_backup, dist_dir)
+                raise RuntimeError(f"Build deployment failed, restored previous dist from backup: {e}")
+            finally:
+                if os.path.exists(dist_backup):
+                    shutil.rmtree(dist_backup, ignore_errors=True)
 
             # Update lock baseline when dist genuinely updated
             if has_upstream_sources:

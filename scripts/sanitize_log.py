@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Loon Log Sanitizing Analyzer (Zero-Privacy Leakage)
+Loon Log Sanitizing Analyzer (Strict Privacy Protection)
 Parses Loon request logs or HAR files, strictly extracts only verified hostnames,
 timestamps, HTTP status codes, safe rule/policy labels, traffic volumes, and fixed
 error categories. Completely discards URL paths, query strings, headers, bodies,
@@ -23,6 +23,19 @@ HIGH_BANDWIDTH_THRESHOLD_BYTES = 5 * 1024 * 1024  # 5 MB
 
 # Hostname validation regex (RFC 1123 compliant label characters)
 HOSTNAME_REGEX = re.compile(r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$')
+
+# Strict ISO8601 timestamp validation regex
+SAFE_TIMESTAMP_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$')
+
+# Safe built-in policy labels in Loon
+SAFE_BUILTIN_POLICIES = {"DIRECT", "PROXY", "REJECT", "REJECT-TINYGIF", "REJECT-DROP", "FINAL"}
+
+# Safe rule prefixes
+SAFE_RULE_PREFIXES = (
+    "DOMAIN,", "DOMAIN-SUFFIX,", "DOMAIN-KEYWORD,",
+    "IP-CIDR,", "IP-CIDR6,", "IP-ASN,",
+    "GEOIP,", "USER-AGENT,", "URL-REGEX,", "RULE-SET,"
+)
 
 # Fixed safe error categories (Enum)
 class ErrorCategory:
@@ -62,6 +75,84 @@ def extract_safe_host(url_or_host):
         return "invalid_host"
     except Exception:
         return "invalid_host"
+
+def validate_safe_timestamp(raw_ts):
+    """
+    Validates that a timestamp strictly conforms to standard date/time format.
+    Rejects and strips arbitrary text, usernames, or leaked tokens in timestamp fields.
+    """
+    if not raw_ts:
+        return ""
+    clean = str(raw_ts).strip()
+    if SAFE_TIMESTAMP_REGEX.match(clean):
+        return clean
+    return ""
+
+def sanitize_safe_rule_label(raw_rule):
+    """
+    Sanitizes rule label. Strictly admits only standard rule types or ruleset names.
+    Rejects and discards sensitive tokens, HTTP headers (e.g. 'Authorization: Bearer'),
+    passwords, cookies, or arbitrary user strings.
+    """
+    if not raw_rule:
+        return ""
+    clean = str(raw_rule).strip()
+    lower = clean.lower()
+
+    # Strict rejection of sensitive tokens, auth headers, and user info
+    for bad in ("bearer", "authorization", "token", "secret", "password", "cookie", "session", "user@", "pass=", "api_key", "apikey"):
+        if bad in lower:
+            return ""
+
+    if ":" in clean:
+        return ""
+
+    upper = clean.upper()
+    if upper == "FINAL":
+        return "FINAL"
+
+    # If it is a standard rule prefix like DOMAIN,foo.com or IP-CIDR,1.2.3.4/24
+    if any(upper.startswith(p) for p in SAFE_RULE_PREFIXES):
+        parts = [p.strip() for p in clean.split(",")]
+        rtype = parts[0].upper()
+        rval = parts[1].strip() if len(parts) > 1 else ""
+        if re.match(r'^[a-zA-Z0-9_\-\.:/]+$', rval) and len(rval) <= 80:
+            return f"{rtype},{rval}"
+        return rtype
+
+    # If it is a clean ruleset filename or identifier, e.g. AI-Overseas.lsr, GoogleDrive
+    if re.match(r'^[a-zA-Z0-9_\-\.]{1,40}$', clean):
+        return clean
+
+    return ""
+
+def sanitize_safe_policy_label(raw_policy):
+    """
+    Sanitizes policy label.
+    Preserves standard built-in actions (DIRECT, PROXY, REJECT, FINAL) or clean group category names.
+    Strips and sanitizes private node names, device identifiers, host:ports, or tokens.
+    """
+    if not raw_policy:
+        return ""
+    clean = str(raw_policy).strip()
+    upper = clean.upper()
+    if upper in SAFE_BUILTIN_POLICIES:
+        return upper
+
+    lower = clean.lower()
+    for bad in ("device-id", "device_", "node", "server", "bearer", "secret", "token", "password", "session", "@", ":", "/", "=", "?", "&"):
+        if bad in lower:
+            return "PROXY"
+
+    # Allow safe category/group names like 'AI', 'Apple Push', 'Global', 'Google', 'China'
+    if re.match(r'^[a-zA-Z0-9_\- ]{1,30}$', clean):
+        return clean
+
+    return "PROXY"
+
+def sanitize_safe_label(label):
+    """Fallback helper for backward compatibility."""
+    return sanitize_safe_rule_label(label) or sanitize_safe_policy_label(label)
 
 def classify_error_category(status, error_str=None):
     """
@@ -124,16 +215,6 @@ def is_domain_collected(host, known_exact, known_suffixes):
             return True
     return False
 
-def sanitize_safe_label(label):
-    """Sanitizes rule or policy label to avoid leaking user tokens or URL fragments."""
-    if not label:
-        return ""
-    clean = str(label).strip()
-    # Strip any potential url or auth parameters if inadvertently logged in label
-    clean = re.sub(r'https?://[^\s]+', '[url]', clean)
-    clean = re.sub(r'(token|auth|key|secret|pass)=[^&\s]+', r'\1=[redacted]', clean, flags=re.I)
-    return clean[:60]
-
 def sanitize_har(har_data, known_exact, known_suffixes):
     """
     Sanitizes HTTP Archive (HAR) format.
@@ -162,8 +243,12 @@ def sanitize_har(har_data, known_exact, known_suffixes):
         error_hint = entry.get("_error", "") or (resp.get("statusText", "") if status >= 400 else "")
         error_cat = classify_error_category(status, error_hint)
 
-        rule = sanitize_safe_label(entry.get("_rule", "") or entry.get("_matchRule", ""))
-        policy = sanitize_safe_label(entry.get("_policy", "") or entry.get("_proxy", ""))
+        raw_rule = entry.get("_rule", "") or entry.get("_matchRule", "")
+        raw_pol = entry.get("_policy", "") or entry.get("_proxy", "")
+
+        rule = sanitize_safe_rule_label(raw_rule)
+        policy = sanitize_safe_policy_label(raw_pol)
+        timestamp = validate_safe_timestamp(entry.get("startedDateTime", ""))
 
         is_failed = error_cat != ErrorCategory.NONE
         is_final = "final" in rule.lower() or "final" in policy.lower()
@@ -178,7 +263,7 @@ def sanitize_har(har_data, known_exact, known_suffixes):
             suspected_issue = "Gemini 流量落入通用 Google 策略"
 
         sanitized_records.append({
-            "timestamp": entry.get("startedDateTime", ""),
+            "timestamp": timestamp,
             "host": host,
             "status": status,
             "rule": rule,
@@ -216,17 +301,17 @@ def sanitize_text_log(text_content, known_exact, known_suffixes):
         if not host:
             continue
 
-        ts_match = re.search(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}', clean)
-        timestamp = ts_match.group(0) if ts_match else ""
+        ts_match = re.search(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?', clean)
+        timestamp = validate_safe_timestamp(ts_match.group(0) if ts_match else "")
 
         status_match = re.search(r'\b(?:status[:\s=]+|code[:\s=]+)?([1-5]\d{2})\b', clean, re.IGNORECASE)
         status = int(status_match.group(1)) if status_match else 200
 
         pol_match = re.search(r'\[?(?:policy|proxy)[:\s=]+([^\]\s,]+)', clean, re.IGNORECASE)
-        policy = sanitize_safe_label(pol_match.group(1) if pol_match else "")
+        policy = sanitize_safe_policy_label(pol_match.group(1) if pol_match else "")
 
         rule_match = re.search(r'\[?(?:rule)[:\s=]+([^\]\s]+)', clean, re.IGNORECASE)
-        rule = sanitize_safe_label(rule_match.group(1) if rule_match else "")
+        rule = sanitize_safe_rule_label(rule_match.group(1) if rule_match else "")
 
         byte_match = re.search(r'(\d+)\s*(?:bytes|b|kb|mb)', clean, re.IGNORECASE)
         bytes_val = int(byte_match.group(1)) if byte_match else 0

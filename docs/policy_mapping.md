@@ -149,3 +149,14 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, p
 
 当上游与自定义规则内容均无变动时，构建系统**严格禁止修改发布文件、版本号、时间戳或 `manifest.json`**。
 `git status` 将保持干净无差异，彻底杜绝虚假提交（Phantom Commits）。
+
+---
+
+## 8. 日常诊断与排查边界说明
+
+1. **日常运维标准流程**：
+   - 打开 Loon -> 运行“规则诊断(快速)” -> 复制简短中文报告（10~15行）-> 粘贴给 ChatGPT 或 Gemini 进行策略评估。
+   - 插件语法遵循 Loon 3.5.1+ Generic Script v2 规范 (`generic then script(...) with ...`)，静态规范合规，待 PR 合并后在真机客户端首次导入点击确认。
+2. **工具边界声明**：
+   - Loon 官方 Script API 未提供直接读取历史请求记录的接口，本项目不承诺也不存在 Loon 原生请求日志导出插件。
+   - `scripts/sanitize_log.py` 严格属于离线本地命令行脱敏分析工具，仅在遇到疑难跨分类排查需分析手动导出的 HAR 时使用，严禁向 AI 上传未脱敏原始日志。

@@ -26,6 +26,9 @@ sys.path.insert(0, os.path.join(BASE_DIR, "scripts"))
 import build
 import simulate_hit
 
+TEST_TMP_DIR = os.path.join(BASE_DIR, ".test_tmp")
+os.makedirs(TEST_TMP_DIR, exist_ok=True)
+
 SUPPORTED_TYPES = {
     "DOMAIN",
     "DOMAIN-SUFFIX",
@@ -280,7 +283,7 @@ class TestLoonRulesSuite(unittest.TestCase):
 
     def test_09_cross_ruleset_conflict_detection_real_engine(self):
         """Verify real build engine catches exact duplicate rules across rulesets."""
-        tmp_dir = tempfile.mkdtemp(prefix="test_conflict_")
+        tmp_dir = tempfile.mkdtemp(prefix="test_conflict_", dir=TEST_TMP_DIR)
         try:
             t_src = os.path.join(tmp_dir, "sources.yml")
             t_dist = os.path.join(tmp_dir, "dist")
@@ -308,7 +311,7 @@ rulesets:
 
     def test_10_illegal_parent_domain_shadowing_real_engine(self):
         """Verify build engine catches un-delegated parent domain shadowing."""
-        tmp_dir = tempfile.mkdtemp(prefix="test_shadow_")
+        tmp_dir = tempfile.mkdtemp(prefix="test_shadow_", dir=TEST_TMP_DIR)
         try:
             t_src = os.path.join(tmp_dir, "sources.yml")
             t_dist = os.path.join(tmp_dir, "dist")
@@ -634,16 +637,14 @@ rulesets:
 
     def test_23_upstream_overlap_detection_functionality(self):
         """Verify automated prompt is generated when upstream officially incorporates a custom rule."""
-        # Test overlap detection logic using custom rule sets against known upstream rules
         custom_rules = {"DOMAIN-SUFFIX,1drv.com", "DOMAIN-SUFFIX,custom-new.com"}
-        upstream_rules = ["DOMAIN-SUFFIX,1drv.com", "DOMAIN-SUFFIX,onedrive.com"]
-        overlaps = []
-        for r in upstream_rules:
-            if r in custom_rules:
-                overlaps.append({"ruleset": "OneDrive", "rule": r, "upstream": "OneDrive"})
+        upstream_rules_by_source = {"OneDrive": ["DOMAIN-SUFFIX,1drv.com", "DOMAIN-SUFFIX,onedrive.com"]}
+        overlaps = build.detect_upstream_overlaps(custom_rules, upstream_rules_by_source, ruleset_name="OneDrive")
 
         self.assertEqual(len(overlaps), 1)
         self.assertEqual(overlaps[0]["rule"], "DOMAIN-SUFFIX,1drv.com")
+        self.assertEqual(overlaps[0]["ruleset"], "OneDrive")
+        self.assertEqual(overlaps[0]["upstream"], "OneDrive")
 
     def test_24_manifest_mirror_endpoints_structure(self):
         """Verify China-accessible backup mirror and primary mirror endpoints configured in manifest.json."""
@@ -696,32 +697,84 @@ rulesets:
                         "_error": "Bearer token sk-secret-bearer-token-12345 failed authentication",
                         "_rule": "DOMAIN-SUFFIX,openai.com",
                         "_policy": "AI"
+                    },
+                    {
+                        "startedDateTime": "user@example.com",
+                        "request": {
+                            "url": "https://api.github.com/zen",
+                            "method": "GET"
+                        },
+                        "response": {"status": 200},
+                        "_rule": "Authorization: Bearer SECRETXYZ",
+                        "_proxy": "Device-ID-ABC123"
                     }
                 ]
             }
         }
 
         records = sanitize_har(synthetic_har, set(), set())
-        self.assertEqual(len(records), 1)
+        self.assertEqual(len(records), 2)
         rec = records[0]
+        rec2 = records[1]
 
         # Check host extracted safely
         self.assertEqual(rec["host"], "api.openai.com")
-        # url field must NOT exist in sanitized record
         self.assertNotIn("url", rec)
-        # status code preserved
         self.assertEqual(rec["status"], 401)
-        # error_category must be a fixed enum string
         self.assertEqual(rec["error_category"], ErrorCategory.HTTP_4XX)
 
+        # Check second entry privacy enforcement
+        self.assertEqual(rec2["host"], "api.github.com")
+        self.assertEqual(rec2["timestamp"], "")   # user@example.com redacted
+        self.assertEqual(rec2["rule"], "")        # Authorization: Bearer redacted
+        self.assertEqual(rec2["policy"], "PROXY") # Device-ID redacted to safe PROXY
+
         # Verify zero leakage of credentials, tokens, paths, cookies in serialized output
-        rec_json = json.dumps(rec)
+        all_json = json.dumps(records)
         leaked_secrets = [
             "admin", "super_secret", "password123", "tok_secret", "sk-secret",
-            "sess_secret", "user_secret", "/v1/chat/completions", "confidential"
+            "sess_secret", "user_secret", "/v1/chat/completions", "confidential",
+            "SECRETXYZ", "Device-ID-ABC123", "user@example.com", "Authorization"
         ]
         for secret in leaked_secrets:
-            self.assertNotIn(secret, rec_json, f"Privacy leak detected: '{secret}' found in sanitized record!")
+            self.assertNotIn(secret, all_json, f"Privacy leak detected: '{secret}' found in sanitized record!")
+
+    def test_26_simulate_hit_ip_and_disabled_lcf_rules(self):
+        """Verify simulator correctly matches IP-CIDR / IP-CIDR6 and ignores disabled LCF rules."""
+        rules_by_file = simulate_hit.load_dist_rules()
+
+        # APNs IPv4 CIDR matching
+        m_ip4 = simulate_hit.match_target("17.249.1.5", rules_by_file)
+        self.assertTrue(len(m_ip4) >= 1)
+        self.assertEqual(m_ip4[0]["ruleset"], "Apple-Push.lsr")
+
+        # APNs IPv6 CIDR matching
+        m_ip6 = simulate_hit.match_target("2620:149:a44::1", rules_by_file)
+        self.assertTrue(len(m_ip6) >= 1)
+        self.assertEqual(m_ip6[0]["ruleset"], "Apple-Push.lsr")
+
+        # LCF simulation skipping enabled=false
+        mock_lcf = os.path.join(TEST_TMP_DIR, "mock.lcf")
+        with open(mock_lcf, "w", encoding="utf-8") as f:
+            f.write("""[Rule]
+DOMAIN,disabled-rule.com,DIRECT,enabled=false
+DOMAIN,enabled-rule.com,DIRECT
+
+[Remote Rule]
+https://raw.githubusercontent.com/.../dist/Disabled.lsr, policy=DIRECT, tag=Disabled, enabled=false
+https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Apple-Push
+""")
+        pipe = simulate_hit.load_lcf_pipeline(mock_lcf)
+        self.assertIsNotNone(pipe)
+        local_values = [r["value"] for r in pipe["local_rules"]]
+        self.assertIn("enabled-rule.com", local_values)
+        self.assertNotIn("disabled-rule.com", local_values)
+        self.assertIn("Apple-Push.lsr", pipe["remote_order"])
+        self.assertNotIn("Disabled.lsr", pipe["remote_order"])
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)
 
 if __name__ == "__main__":
     unittest.main()

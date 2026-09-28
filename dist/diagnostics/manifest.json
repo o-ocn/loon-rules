@@ -1,7 +1,9 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T13:01:52.564742+00:00",
-  "release_commit": "51d5864",
+  "build_timestamp": "2026-09-28T15:16:50.380115+00:00",
+  "content_revision": "4cbd4f67f6a4",
+  "package_sha256": "4cbd4f67f6a4f6022b8674f7bbdccce199d43a512cee58dd3b6b9699bb5c115a",
+  "release_commit": "54973ea",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",

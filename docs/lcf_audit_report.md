@@ -77,6 +77,8 @@
      [Plugin]
      https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/LoonRules-Diagnostic.lpx, tag = LoonRules-Diagnostic
      ```
+   - **语法与执行规范**：插件脚本定义已完全遵循 Loon 官方 3.5.1+ Generic Script v2 规范 (`generic then script(...) with ...`)，静态规范合规，待 PR 合并后在真机客户端首次导入点击确认。
+   - **日志工具说明**：Loon 官方 Script API 未提供直接读取历史请求记录的接口，本仓库不存在也不提供 Loon 内置请求日志导出插件。日常排查请使用该一键诊断插件复制简短中文报告；`scripts/sanitize_log.py` 严格作为离线本地命令行脱敏工具使用。
 
 ---
 
