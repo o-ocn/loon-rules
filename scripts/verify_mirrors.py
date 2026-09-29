@@ -113,24 +113,33 @@ def verify_mirrors(branch="feature/expand-rulesets-v2", manifest_path=MANIFEST_P
         for rname, meta in rulesets.items():
             expected_sha = meta["sha256"]
             rule_url = f"{base_url}/{rname}"
-            try:
-                r_req = urllib.request.Request(rule_url, headers=headers)
-                with opener(r_req, context=ctx, timeout=10) if urlopen_fn is None else opener(r_req) as r_resp:
-                    r_status = getattr(r_resp, "status", 200)
-                    if r_status != 200:
-                        m_errors.append(f"{rname}: HTTP {r_status}")
-                        continue
-                    body_bytes = r_resp.read()
-                    if not body_bytes:
-                        m_errors.append(f"{rname}: Empty file (0 bytes)")
-                        continue
-                    computed_sha = compute_rule_body_sha256(body_bytes)
-                    if computed_sha == expected_sha:
-                        match_count += 1
-                    else:
-                        m_errors.append(f"{rname}: SHA256 mismatch (expected {expected_sha[:12]}, got {computed_sha[:12]})")
-            except Exception as e:
-                m_errors.append(f"{rname}: Fetch failed: {e}")
+            fetched = False
+            last_err = None
+            for attempt in range(2):
+                try:
+                    r_req = urllib.request.Request(rule_url, headers=headers)
+                    with opener(r_req, context=ctx, timeout=12) if urlopen_fn is None else opener(r_req) as r_resp:
+                        r_status = getattr(r_resp, "status", 200)
+                        if r_status != 200:
+                            m_errors.append(f"{rname}: HTTP {r_status}")
+                            fetched = True
+                            break
+                        body_bytes = r_resp.read()
+                        if not body_bytes:
+                            m_errors.append(f"{rname}: Empty file (0 bytes)")
+                            fetched = True
+                            break
+                        computed_sha = compute_rule_body_sha256(body_bytes)
+                        if computed_sha == expected_sha:
+                            match_count += 1
+                        else:
+                            m_errors.append(f"{rname}: SHA256 mismatch (expected {expected_sha[:12]}, got {computed_sha[:12]})")
+                        fetched = True
+                        break
+                except Exception as e:
+                    last_err = f"{rname}: Fetch failed: {e}"
+            if not fetched and last_err:
+                m_errors.append(last_err)
 
         if m_errors:
             all_passed = False
