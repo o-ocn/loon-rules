@@ -1764,6 +1764,117 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertIn("[ERR_UNEXPECTED_RULESET]", out_unexp)
         self.assertNotIn("SecretRuleset_User123", out_unexp, "Non-standard ruleset name must NOT be leaked")
 
+        # 13. Verified backup mirror (fastly.jsdelivr.net) passes completely
+        backup_content = content.replace(
+            "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/",
+            "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/"
+        )
+        backup_file = os.path.join(TEST_TMP_DIR, "backup_mirror.fixture")
+        with open(backup_file, "w", encoding="utf-8") as f:
+            f.write(backup_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_backup = verify_private_lcf.verify_private_lcf(backup_file)
+        self.assertTrue(res_backup, f"fastly.jsdelivr.net backup fixture should pass verify_private_lcf! Output:\n{buf.getvalue()}")
+
+        # 14. Fault injection: URL with query token (?token=fixture_secret)
+        query_token_content = content.replace(
+            "YouTube.lsr, policy=PROXIES",
+            "YouTube.lsr?token=fixture_secret, policy=PROXIES"
+        )
+        query_token_file = os.path.join(TEST_TMP_DIR, "query_token.fixture")
+        with open(query_token_file, "w", encoding="utf-8") as f:
+            f.write(query_token_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_query = verify_private_lcf.verify_private_lcf(query_token_file)
+        self.assertFalse(res_query, "verify_private_lcf must fail when ruleset URL contains query parameters!")
+        out_query = buf.getvalue()
+        self.assertIn("[ERR_INVALID_URL]", out_query)
+        self.assertNotIn("fixture_secret", out_query, "Secret query parameter must NOT be leaked in output")
+        self.assertNotIn("?token=", out_query, "Query string syntax must NOT be leaked in output")
+
+        # 15. Fault injection: URL with userinfo / credentials in netloc
+        userinfo_content = backup_content.replace(
+            "https://fastly.jsdelivr.net",
+            "https://fixture_secret@fastly.jsdelivr.net"
+        )
+        userinfo_file = os.path.join(TEST_TMP_DIR, "userinfo.fixture")
+        with open(userinfo_file, "w", encoding="utf-8") as f:
+            f.write(userinfo_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_userinfo = verify_private_lcf.verify_private_lcf(userinfo_file)
+        self.assertFalse(res_userinfo, "verify_private_lcf must fail when ruleset URL contains userinfo/credentials!")
+        out_userinfo = buf.getvalue()
+        self.assertIn("[ERR_INVALID_URL]", out_userinfo)
+        self.assertNotIn("fixture_secret", out_userinfo, "Userinfo credentials must NOT be leaked in output")
+
+        # 16. Fault injection: URL with fragment and unexpected port
+        frag_content = content.replace(
+            "YouTube.lsr, policy=PROXIES",
+            "YouTube.lsr#fixture_fragment, policy=PROXIES"
+        )
+        frag_file = os.path.join(TEST_TMP_DIR, "fragment.fixture")
+        with open(frag_file, "w", encoding="utf-8") as f:
+            f.write(frag_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_frag = verify_private_lcf.verify_private_lcf(frag_file)
+        self.assertFalse(res_frag, "verify_private_lcf must fail when ruleset URL contains a fragment!")
+        out_frag = buf.getvalue()
+        self.assertIn("[ERR_INVALID_URL]", out_frag)
+        self.assertNotIn("fixture_fragment", out_frag)
+
+        port_content = content.replace(
+            "https://raw.githubusercontent.com/",
+            "https://raw.githubusercontent.com:8443/"
+        )
+        port_file = os.path.join(TEST_TMP_DIR, "port.fixture")
+        with open(port_file, "w", encoding="utf-8") as f:
+            f.write(port_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_port = verify_private_lcf.verify_private_lcf(port_file)
+        self.assertFalse(res_port, "verify_private_lcf must fail when ruleset URL has non-standard port!")
+        out_port = buf.getvalue()
+        self.assertIn("[ERR_INVALID_URL]", out_port)
+        self.assertNotIn("8443", out_port)
+
+        # 17. Fault injection: Unverified jsDelivr subdomains
+        for unverified_host in ["cdn.jsdelivr.net", "testingcf.jsdelivr.net", "evil.jsdelivr.net"]:
+            bad_cdn_content = backup_content.replace(
+                "https://fastly.jsdelivr.net",
+                f"https://{unverified_host}"
+            )
+            bad_cdn_file = os.path.join(TEST_TMP_DIR, f"bad_cdn_{unverified_host}.fixture")
+            with open(bad_cdn_file, "w", encoding="utf-8") as f:
+                f.write(bad_cdn_content)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                res_bad_cdn = verify_private_lcf.verify_private_lcf(bad_cdn_file)
+            self.assertFalse(res_bad_cdn, f"verify_private_lcf must reject unverified host: {unverified_host}")
+            out_bad_cdn = buf.getvalue()
+            self.assertIn("[ERR_INVALID_URL]", out_bad_cdn)
+            self.assertNotIn(unverified_host, out_bad_cdn, f"Host {unverified_host} must NOT be echoed in failure report")
+
+        # 18. Direct unit validation of validate_ruleset_url contract
+        self.assertTrue(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertTrue(verify_private_lcf.validate_ruleset_url("https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertTrue(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/feature/expand-rulesets-v2/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertTrue(verify_private_lcf.validate_ruleset_url("https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@feature/expand-rulesets-v2/dist/YouTube.lsr", "YouTube.lsr")[0])
+
+        # Negative unit tests: query, userinfo, fragment, non-443 port, unverified hosts, wrong branch, wrong filename
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr?token=secret", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://secret@fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://user:pass@raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr#frag", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com:8443/o-ocn/loon-rules/main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://cdn.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://evil.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/dev/dist/YouTube.lsr", "YouTube.lsr")[0])
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)

@@ -130,24 +130,51 @@ def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
     """
     Validates that a remote ruleset URL points to the authorized o-ocn/loon-rules
     repository on an allowed branch (main or feature/expand-rulesets-v2) and path dist/<Ruleset>.lsr.
+    Enforces strict privacy and authorization requirements:
+      - HTTPS scheme only
+      - No credentials or userinfo (username/password/@)
+      - No query parameters
+      - No URL fragment
+      - Standard HTTPS port only (None or 443)
+      - Strictly verified hostnames (raw.githubusercontent.com, fastly.jsdelivr.net)
+      - Exact repository, branch, path, and expected .lsr filename match
     Returns (is_valid, reason).
-    NEVER echo the input url in error reason for desensitization.
+    NEVER echo the input url, query, credentials, or unexpected tokens in error reason for desensitization.
     """
     if not url_str or not url_str.startswith("https://"):
         return False, "URL must use HTTPS protocol"
 
     try:
         parsed = urllib.parse.urlparse(url_str)
+        port = parsed.port
     except Exception:
         return False, "URL parse error"
 
-    netloc = parsed.netloc.lower()
-    path = parsed.path
+    if parsed.scheme.lower() != "https":
+        return False, "URL scheme must be HTTPS"
+
+    # Reject credentials or userinfo in URL
+    if parsed.username is not None or parsed.password is not None or "@" in (parsed.netloc or ""):
+        return False, "URL must not contain credentials or userinfo"
+
+    # Reject query parameters
+    if parsed.query:
+        return False, "URL must not contain query parameters"
+
+    # Reject fragment identifier
+    if parsed.fragment:
+        return False, "URL must not contain fragment identifier"
+
+    # Reject non-standard/unexpected ports
+    if port is not None and port != 443:
+        return False, "URL must use standard HTTPS port (443)"
+
+    hostname = (parsed.hostname or "").lower()
 
     # Host 1: GitHub Raw
-    if netloc == "raw.githubusercontent.com":
+    if hostname == "raw.githubusercontent.com":
         pattern = r'^/o-ocn/loon-rules/(main|feature/expand-rulesets-v2)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
-        m = re.match(pattern, path)
+        m = re.match(pattern, parsed.path)
         if not m:
             return False, "GitHub Raw URL path or branch unauthorized"
         branch, rname = m.group(1), m.group(2)
@@ -155,11 +182,10 @@ def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
             return False, "URL filename does not match expected ruleset name"
         return True, "Valid GitHub Raw URL"
 
-    # Host 2: jsDelivr CDN
-    jsdelivr_hosts = ("fastly.jsdelivr.net", "cdn.jsdelivr.net", "testingcf.jsdelivr.net", "gcore.jsdelivr.net")
-    if netloc in jsdelivr_hosts or netloc.endswith(".jsdelivr.net"):
+    # Host 2: Verified jsDelivr CDN (only fastly.jsdelivr.net is verified)
+    if hostname == "fastly.jsdelivr.net":
         pattern = r'^/gh/o-ocn/loon-rules@(main|feature/expand-rulesets-v2)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
-        m = re.match(pattern, path)
+        m = re.match(pattern, parsed.path)
         if not m:
             return False, "jsDelivr URL path or branch unauthorized"
         branch, rname = m.group(1), m.group(2)
