@@ -20,6 +20,7 @@
 ## 当前状态
 
 * **当前分支**：`feature/expand-rulesets-v2`（对应 GitHub PR #2，待合并至 `main`）。
+* **当前 HEAD**：已推送到 `origin/feature/expand-rulesets-v2`（核心实现提交 `9b7087d`）。
 * **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
