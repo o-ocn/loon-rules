@@ -20,7 +20,7 @@
 ## 当前状态
 
 * **当前分支**：`main`（PR #2 已正式合并至 `main`，合并提交 `2bcf05e`）。
-* **当前 HEAD**：`2bcf05e`，正式发布包含全量 **19 个规则集**（共 **21,092 条有效规则**）。
+* **当前 HEAD**：`54951e0`，正式发布包含全量 **19 个规则集**（共 **21,092 条有效规则**），诊断插件已完全指向 `main`。
 * **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
@@ -33,7 +33,7 @@
      - 拒绝任何 URL 片段标识符（fragment，如 `#...`）；
      - 拒绝非预期端口（仅允许默认 443 或无端口，拒绝 `:8443` 等）；
      - 发布主机严格限定于经实际验收的主机（`raw.githubusercontent.com` 与 `fastly.jsdelivr.net`），拒绝未经验证的泛 jsDelivr 子域名；
-     - 严格匹配仓库路径、允许分支（`main` 或 `feature/expand-rulesets-v2`）与期待文件名；
+     - 严格匹配仓库路径、仅允许 `main` 分支与期待文件名（开发分支已合并并从白名单移除）；
      - 校验失败时绝不回显输入 URL 或任何测试字符串，实现 100% 脱敏保护。
   3. **Loon 原生语法段落与单条末尾 FINAL 强校验**：规范修正公开测试夹具 `sample_order_19.fixture`，将误放在 `[Remote Rule]` 下的 FINAL 规则移回 `[Rule]` 末尾；验收器严格校验 `FINAL` 必须存在且仅有一条启用的规则位于 `[Rule]` 段末尾，严禁错段置于 `[Remote Rule]`、`[Plugin]` 或在其后追加其他规则，分别报告 `[ERR_FINAL_WRONG_SECTION]`、`[ERR_FINAL_DUPLICATE]`、`[ERR_FINAL_NOT_LAST]` 或 `[ERR_FINAL_MISSING]`。
   4. **未知/私人规则文件名脱敏保护**：建立 `safe_ruleset_name` 脱敏转换机制，仅对官方公开 19 个规则集回显名称；若用户配置中存在未知或第三方自建规则集，一律遮罩为 `[NON_STANDARD_RULESET]` 并单独统计报告 `[ERR_UNEXPECTED_RULESET]` 总数，杜绝因规则文件名包含用户名、私有订阅或 Token 导致信息外泄。
@@ -76,13 +76,18 @@
 - **构建器权限重置操作全面收紧**：
   - 移除宽泛且静默忽略失败的 `icacls dist /reset /T`，仅保留针对 staging 容器目录且严格报错的 `icacls /reset`。
 - **诊断短报告样例真实化输出**：分别针对真实快速模式（4 规则/12 服务）与真实完整模式（19 规则/16 服务/含谨慎提示）提供夹具验证报告。
+- **诊断插件开发分支引用修正与分支白名单收紧**（commit `54951e0`）：
+  - `.lpx` 脚本 URL 和 `branch=` 参数从已合并的 `feature/expand-rulesets-v2` 修正为 `main`，诊断功能不再依赖开发分支。
+  - `validate_ruleset_url` 分支白名单从 `main|feature/expand-rulesets-v2` 收紧为仅允许 `main`，开发分支 URL 被正确拒绝。
+  - `test_42` 断言同步更新，开发分支 URL 从 `assertTrue` 改为 `assertFalse`。
+  - manifest `content_revision` 更新至 `fd6919cad455`，诊断产物 SHA256 与包签名同步重算。
 
 ---
 
 ## 当前正在处理
 
-* **阶段**：PR #2 已正式合并至 `main`（合并提交 `2bcf05e`）；正在执行 `main` 分支主备发布源（GitHub Raw 与 Fastly jsDelivr）只读核验。
-* **下一步工作**：完成 `main` 主备发布源只读核验；ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`（修正 YouTube/Lan 顺序并保留用户私人设置）；用户导入正式配置进行 Loon 真机实测。
+* **阶段**：PR #2 已正式合并至 `main`（合并提交 `2bcf05e`）；诊断插件开发分支引用已修正（commit `54951e0`）；GitHub Raw 主源 19/19 已同步至 `fd6919cad455`；jsDelivr CDN 边缘缓存传播中。
+* **下一步工作**：等待 jsDelivr CDN 完成传播后复验备用源；ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`（修正 YouTube/Lan 顺序并保留用户私人设置）；用户导入正式配置进行 Loon 真机实测。
 
 ---
 
@@ -131,9 +136,11 @@
 
 ## 最近一次修改
 
-* `scripts/verify_private_lcf.py`：增强 `validate_ruleset_url` 隐私边界，全面拒绝账号、密码、查询参数、片段及非预期端口，主机白名单收紧为仅限 `raw.githubusercontent.com` 与 `fastly.jsdelivr.net`，错误报告绝不回显 URL 或测试字符串。
-* `scripts/test_rules.py`：在 `test_42` 中扩充 6 项针对 URL 隐私与备用源的回归测试（Fastly jsDelivr 备用源通过、query token 拦截且不回显、userinfo 认证拦截且不回显、fragment/port 拦截且不回显、未验证 jsDelivr 子域名拦截且不回显、validate_ruleset_url 契约单测）；全量 42 项 Python 规则测试稳定通过。
-* `PROJECT_STATE.md`：保留 ChatGPT Work 独立复核记录，同步合并 URL 隐私缺口修复事实与测试断言。
+* `diagnostics/LoonRules-Diagnostic.lpx` + `dist/diagnostics/LoonRules-Diagnostic.lpx`：将脚本 URL 和 `branch=` 参数从 `feature/expand-rulesets-v2` 修正为 `main`，彻底消除诊断功能对已合并开发分支的依赖。
+* `dist/diagnostics/manifest.json`：因 `.lpx` 内容变更触发 `content_revision` 更新至 `fd6919cad455`，诊断产物 SHA256 与包签名同步重算。
+* `scripts/verify_private_lcf.py`：`validate_ruleset_url` 分支白名单从 `main|feature/expand-rulesets-v2` 收紧为仅允许 `main`；错误消息同步更新。
+* `scripts/test_rules.py`：`test_42` 中开发分支 URL 的断言从 `assertTrue` 改为 `assertFalse`，确认已合并分支被正确拒绝。
+* `PROJECT_STATE.md`：反映诊断分支修复与分支白名单收紧。
 
 ---
 
@@ -191,7 +198,7 @@
 
 ## 下一步
 
-1. 执行 `main` 分支主备发布源（GitHub Raw 与 Fastly）19/19 规则、manifest 和诊断产物只读核验。
+1. 等待 jsDelivr CDN 边缘缓存完全传播后，复验备用源 19/19 规则及诊断产物（revision `fd6919cad455`）。
 2. ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`，修正 YouTube/Lan 顺序，切到 `main` 引用并验证结构与私人设置保留。
 3. 用户导入这一份正式配置后进行 Loon 真机实测。
 
@@ -210,9 +217,5 @@
 ## 最后更新
 
 - 时间：2026-09-29
-- 执行者：Gemini / Antigravity；ChatGPT Work 独立复核
-- 本轮工作：`214880a` 已修复 URL 隐私缺口，Gemini 报告 Python 42/42；ChatGPT Work 公开夹具 12 组独立故障注入、Node 18/18、本地预发布及 GitHub CI 均通过。最新手机配置只读检查确认 19 条自有规则、1 条诊断插件、0 条 KeLee 远程规则及两处顺序待修；`main` 尚为 14 条规则集，待合并发布后装配唯一私人 `.lcf`。
-
-- 时间：2026-09-29
-- 执行者：Gemini / Antigravity
-- 本轮工作：PR #2 已正式合并至 `main` 分支（合并提交 `2bcf05e`）；`main` 分支正式包含全量 19 个自托管规则集、诊断插件及验收器；推送到 `origin main` 并执行主备发布源只读核验。
+- 执行者：Gemini / Antigravity（自审计）
+- 本轮工作：修复 ChatGPT Work 发现的诊断插件开发分支硬编码引用（commit `54951e0`）。`.lpx` 脚本 URL 和 `branch=` 参数从 `feature/expand-rulesets-v2` 修正为 `main`；`validate_ruleset_url` 分支白名单收紧为仅 `main`；测试断言同步更新。Python 42/42、Node 18/18、预发布门禁通过。GitHub Raw 已同步 19/19 + 诊断产物；jsDelivr CDN 边缘缓存传播中。
