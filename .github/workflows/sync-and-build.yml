@@ -54,7 +54,10 @@ jobs:
         run: |
           node --test tests/test_diagnostic.js
 
-      - name: Pre-Release Local Integrity Gate
+      - name: Pre-Release Local Integrity Gate (Fail-Stop Release Barrier)
+        # Strict local barrier: stops pipeline BEFORE git commit or push if any rule,
+        # hash, policy token, or diagnostic artifact check fails.
+        # Remote repository, main branch, and CDN mirrors remain 100% untouched on failure.
         run: |
           python scripts/verify_mirrors.py --pre-release
 
@@ -73,7 +76,11 @@ jobs:
             git push origin HEAD --tags
           fi
 
-      - name: Post-Release Mirrors and CDN Verification
+      - name: Post-Release Mirrors and CDN Health Alert Gate
+        # Health check & alert gate: Runs after push to verify edge propagation and CDN mirror consistency.
+        # NOTE: If remote CDN or edge replication fails, this step exits with code 1 and flags the job red
+        # to alert maintainers. Per CI/CD architectural reality, it does NOT perform destructive git force-push
+        # rollbacks on public branches.
         if: github.event_name != 'pull_request'
         run: |
           # Grace period for GitHub Raw edge cache replication

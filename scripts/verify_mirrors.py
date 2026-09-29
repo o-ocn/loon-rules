@@ -120,14 +120,30 @@ def verify_local_pre_release(dist_dir=DIST_DIR, manifest_path=MANIFEST_PATH, exi
         if computed_sha != expected_sha:
             errors.append(f"{rname} SHA256 mismatch: expected {expected_sha[:12]}, got {computed_sha[:12]}")
 
-    # 2. Verify diagnostic plugin artifacts in dist/diagnostics/
-    lpx_path = os.path.join(dist_dir, "diagnostics", "LoonRules-Diagnostic.lpx")
-    js_path = os.path.join(dist_dir, "diagnostics", "loon-rules-diagnostic.js")
-
-    if not os.path.isfile(lpx_path) or os.path.getsize(lpx_path) < 50:
-        errors.append("Diagnostic plugin LoonRules-Diagnostic.lpx missing or too small")
-    if not os.path.isfile(js_path) or os.path.getsize(js_path) < 1000:
-        errors.append("Diagnostic script loon-rules-diagnostic.js missing or too small")
+    # 2. Verify diagnostic plugin artifacts in dist/diagnostics/ with SHA256 integrity
+    diag_meta = manifest.get("diagnostic_artifacts", {})
+    for d_fname in ["LoonRules-Diagnostic.lpx", "loon-rules-diagnostic.js"]:
+        fpath = os.path.join(dist_dir, "diagnostics", d_fname)
+        if not os.path.isfile(fpath):
+            errors.append(f"Diagnostic artifact missing: {d_fname}")
+            continue
+        size = os.path.getsize(fpath)
+        if size < 50:
+            errors.append(f"Diagnostic artifact too small ({size} bytes): {d_fname}")
+            continue
+        with open(fpath, "rb") as df:
+            computed_d_sha = hashlib.sha256(df.read()).hexdigest()
+        if d_fname in diag_meta:
+            expected_d_sha = diag_meta[d_fname].get("sha256", "")
+            if computed_d_sha != expected_d_sha:
+                errors.append(f"Diagnostic artifact {d_fname} SHA256 mismatch: expected {expected_d_sha[:12]}, got {computed_d_sha[:12]}")
+        # Also verify against source file in diagnostics/
+        src_fpath = os.path.join(BASE_DIR, "diagnostics", d_fname)
+        if os.path.isfile(src_fpath):
+            with open(src_fpath, "rb") as sf:
+                src_sha = hashlib.sha256(sf.read()).hexdigest()
+            if computed_d_sha != src_sha:
+                errors.append(f"Diagnostic artifact {d_fname} does not match source file in diagnostics/ (SHA mismatch)")
 
     if errors:
         print(f"\n[FAIL] Pre-release integrity check failed with {len(errors)} error(s):")
@@ -221,10 +237,38 @@ def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
         if local_rev and remote_rev and local_rev != remote_rev:
             m_errors.append(f"Revision mismatch: local {local_rev}, remote {remote_rev}")
 
+        local_pkg_sha = local_manifest.get("package_sha256", "")
+        remote_pkg_sha = remote_manifest.get("package_sha256", "")
+        if local_pkg_sha and remote_pkg_sha and local_pkg_sha != remote_pkg_sha:
+            m_errors.append(f"Package signature mismatch: local {local_pkg_sha[:12]}, remote {remote_pkg_sha[:12]}")
+
+        # Check that remote manifest ruleset metadata has NOT been tampered
+        for rname, meta in rulesets.items():
+            if rname not in remote_rulesets:
+                m_errors.append(f"Remote manifest missing ruleset entry: {rname}")
+                continue
+            r_meta = remote_rulesets[rname]
+            if r_meta.get("sha256") != meta.get("sha256"):
+                m_errors.append(f"Remote manifest metadata tampered for {rname}: SHA256 mismatch (expected {meta['sha256'][:12]}, got {r_meta.get('sha256', '')[:12]})")
+            if r_meta.get("total_rules") != meta.get("total_rules"):
+                m_errors.append(f"Remote manifest metadata tampered for {rname}: rule count mismatch (expected {meta['total_rules']}, got {r_meta.get('total_rules')})")
+
+        # Check diagnostic_artifacts metadata in remote manifest if present in local manifest
+        local_diag_meta = local_manifest.get("diagnostic_artifacts", {})
+        remote_diag_meta = remote_manifest.get("diagnostic_artifacts", {})
+        if local_diag_meta and remote_diag_meta:
+            for d_name, d_info in local_diag_meta.items():
+                if d_name not in remote_diag_meta:
+                    m_errors.append(f"Remote manifest missing diagnostic artifact entry: {d_name}")
+                    continue
+                if remote_diag_meta[d_name].get("sha256") != d_info.get("sha256"):
+                    m_errors.append(f"Remote manifest diagnostic artifact {d_name} SHA256 mismatch (expected {d_info.get('sha256', '')[:12]}, got {remote_diag_meta[d_name].get('sha256', '')[:12]})")
+
         print(f"  [OK] Remote manifest accessible. Declares {len(remote_rulesets)} rulesets (revision: {remote_rev}).")
 
-        # 2. Check diagnostic files (.lpx and .js)
+        # 2. Check diagnostic files (.lpx and .js) with full SHA256 verification
         for diag_rel in ["diagnostics/LoonRules-Diagnostic.lpx", "diagnostics/loon-rules-diagnostic.js"]:
+            diag_fname = os.path.basename(diag_rel)
             diag_url = f"{base_url}/{diag_rel}"
             diag_fetched = False
             for attempt in range(2):
@@ -239,6 +283,19 @@ def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
                         d_bytes = d_resp.read()
                         if len(d_bytes) < 50:
                             m_errors.append(f"{diag_rel}: File too small ({len(d_bytes)} bytes)")
+                        # Verify SHA256 against local manifest or local dist file
+                        exp_sha = None
+                        if diag_fname in local_diag_meta:
+                            exp_sha = local_diag_meta[diag_fname].get("sha256")
+                        else:
+                            local_diag_fpath = os.path.join(dist_dir, "diagnostics", diag_fname)
+                            if os.path.isfile(local_diag_fpath):
+                                with open(local_diag_fpath, "rb") as ldf:
+                                    exp_sha = hashlib.sha256(ldf.read()).hexdigest()
+                        if exp_sha:
+                            actual_sha = hashlib.sha256(d_bytes).hexdigest()
+                            if actual_sha != exp_sha:
+                                m_errors.append(f"{diag_rel}: SHA256 mismatch (expected {exp_sha[:12]}, got {actual_sha[:12]})")
                         diag_fetched = True
                         break
                 except Exception as e:

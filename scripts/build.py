@@ -577,6 +577,11 @@ def switch_dist_directory(dist_new: str, dist_dir: str = DIST_DIR) -> None:
         os.rename(dist_new, dist_dir)
         if os.path.exists(dist_old):
             shutil.rmtree(dist_old, ignore_errors=True)
+        if os.name == "nt":
+            try:
+                subprocess.run(["icacls", dist_dir, "/reset", "/T"], capture_output=True, check=False)
+            except Exception:
+                pass
         print(f"[STAGED SWITCH] Successfully replaced entire dist/ directory with crash-recovery protection.")
     except Exception as e:
         # In-flight rollback: restore .dist_old -> dist_dir
@@ -805,7 +810,11 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 )
 
     # 6. Atomic write to temporary staging directory on E: drive first
-    staging_dir = tempfile.mkdtemp(prefix="loon_dist_staging_", dir=BASE_DIR)
+    # Avoid tempfile.mkdtemp on Windows NTFS as it sets a restricted DACL that blocks inheritance
+    staging_dir = os.path.join(BASE_DIR, ".dist_staging")
+    if os.path.exists(staging_dir):
+        shutil.rmtree(staging_dir, ignore_errors=True)
+    os.makedirs(staging_dir, exist_ok=True)
     staging_diag_dir = os.path.join(staging_dir, "diagnostics")
     os.makedirs(staging_diag_dir, exist_ok=True)
 
@@ -876,11 +885,24 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
 
         has_manifest = os.path.isfile(manifest_dst)
 
-        # Compute deterministic package signature across all sorted rulesets
+        diag_metadata = {}
+        for d_name, d_src_path in [("LoonRules-Diagnostic.lpx", lpx_src), ("loon-rules-diagnostic.js", js_src)]:
+            if os.path.isfile(d_src_path):
+                with open(d_src_path, "rb") as df:
+                    d_bytes = df.read()
+                diag_metadata[d_name] = {
+                    "size": len(d_bytes),
+                    "sha256": hashlib.sha256(d_bytes).hexdigest()
+                }
+
+        # Compute deterministic package signature across all sorted rulesets AND diagnostic artifacts
         pkg_h = hashlib.sha256()
         for rname in sorted(ruleset_metadata.keys()):
             m = ruleset_metadata[rname]
             pkg_h.update(f"{rname}:{m['sha256']}:{m['revision']}:{m['total_rules']}\n".encode("utf-8"))
+        for dname in sorted(diag_metadata.keys()):
+            dm = diag_metadata[dname]
+            pkg_h.update(f"{dname}:{dm['sha256']}:{dm['size']}\n".encode("utf-8"))
         package_sha256 = pkg_h.hexdigest()
         content_rev = package_sha256[:12]
 
@@ -940,6 +962,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
                 "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
                 "rulesets": ruleset_metadata,
+                "diagnostic_artifacts": diag_metadata,
                 "upstream_sync_status": "offline_cached (离线缓存构建，非实时同步)" if any_offline_cache_used else "synced",
                 "services": services_cfg.get("services", []),
                 "physical_verification_items": services_cfg.get("physical_verification_items", [

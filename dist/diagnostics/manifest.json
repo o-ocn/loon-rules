@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-29T08:15:41.570009+00:00",
-  "content_revision": "6c5f8599d6f9",
-  "package_sha256": "6c5f8599d6f9bcf81a4178eb948283b64d66429e3bfd4b8cc2753ba9e2ff2a80",
+  "build_timestamp": "2026-09-29T09:36:09.833362+00:00",
+  "content_revision": "042caa01a89c",
+  "package_sha256": "042caa01a89c9e8d10c39ec23d2373e9cbcfb8ecdb152db26ce9e772b148979f",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -120,6 +120,16 @@
       "revision": "f8e3f65e0774",
       "sha256": "f8e3f65e0774ebb4e36b0794f3e56b5deef5a1ba3bca1a6d7359b01991d8f5ae",
       "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
+    }
+  },
+  "diagnostic_artifacts": {
+    "LoonRules-Diagnostic.lpx": {
+      "size": 1187,
+      "sha256": "3b0ed4a52ba6e7aaf3d55bd3e20803373f77b2032be106b748bfc3a3ce349bc5"
+    },
+    "loon-rules-diagnostic.js": {
+      "size": 47837,
+      "sha256": "c3834a4ee046785a7ded0fdecab6e2aa92207959ad4262c9292c59e68b3677ce"
     }
   },
   "upstream_sync_status": "synced",
