@@ -33,7 +33,7 @@
 
 ---
 
-## 规则订阅清单 (共 20 个独立服务分类)
+## 规则订阅清单 (共 19 个独立服务分类)
 
 | 规则成品 (`dist/`) | 涵盖核心服务说明 | 订阅链接 (GitHub Raw) |
 | :--- | :--- | :--- |
@@ -47,8 +47,7 @@
 | **`Twitter.lsr`** | Twitter / X 平台主干（不含 Grok） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr) |
 | **`Discord.lsr`** | Discord 语音与即时通讯 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr) |
 | **`PayPal.lsr`** | PayPal 官方支付运营域名（精选官方与备案域名，剔除钓鱼仿冒） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/PayPal.lsr) |
-| **`Steam.lsr`** | Steam 游戏平台（剔除第三方盗版与非平台分销站） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Steam.lsr) |
-| **`Epic.lsr`** | Epic Games 商店与虚幻引擎（剔除第三方客服 SDK） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Epic.lsr) |
+| **`Gaming.lsr`** | Steam 游戏平台与 Epic Games 商店（剔除第三方盗版、非平台分销站及客服SDK） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Gaming.lsr) |
 | **`GitHub.lsr`** | GitHub 开发平台、API 与代码托管 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GitHub.lsr) |
 | **`TestFlight.lsr`** | Apple TestFlight 内测分发平台 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/TestFlight.lsr) |
 | **`Apple-Media.lsr`** | Apple TV+, Apple News, Fitness+ 锁区媒体 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr) |
@@ -56,7 +55,7 @@
 | **`Apple-Direct.lsr`** | iCloud, CloudKit, App Store, Apple ID, HomeKit, 音乐, SystemOTA | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr) |
 | **`China-Direct.lsr`** | 微信、淘宝、京东、闲鱼、抖音/字节国内生态、B站等高频应用 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr) |
 | **`Lan.lsr`** | RFC 1918/6598/6890/2544/4291/4193 局域网与保留网段直连旁路 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Lan.lsr) |
-| **`China-GeoIP.lsr`** | 中国大陆 IP 最终兜底保护（排在 Lan 之后） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-GeoIP.lsr) |
+| **`China-GeoIP.lsr`** | 中国大陆 IP 最终兜底保护（含 ChinaIPs IPv4/IPv6，排在 Lan 之后） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-GeoIP.lsr) |
 
 *(备用 CDN 镜像列表详见 [`docs/migration_and_rollback.md`](docs/migration_and_rollback.md))*
 

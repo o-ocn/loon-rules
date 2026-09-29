@@ -638,64 +638,64 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                             collected_rules.append(cleaned)
                             custom_rules_for_set.add(cleaned)
 
-            # 2. Ingest upstream sources strictly
-            upstream_sources = rcfg.get("sources", [])
-            if upstream_sources:
-                new_lock_data[name] = {}
-            for src in upstream_sources:
-                sname = src.get("name")
-                surl = src.get("url")
-                min_r = src.get("min_rules", 2)
-                excluded = set(src.get("filter_excluded", []))
-                print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
-                raw_text, used_cache = fetch_upstream_strict(surl, min_rules=min_r, allow_offline_cache=offline_mode)
-                if used_cache:
-                    any_offline_cache_used = True
+        # 2. Ingest upstream sources strictly
+        upstream_sources = rcfg.get("sources", [])
+        if upstream_sources:
+            new_lock_data[name] = {}
+        for src in upstream_sources:
+            sname = src.get("name")
+            surl = src.get("url")
+            min_r = src.get("min_rules", 2)
+            excluded = set(src.get("filter_excluded", []))
+            print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
+            raw_text, used_cache = fetch_upstream_strict(surl, min_rules=min_r, allow_offline_cache=offline_mode)
+            if used_cache:
+                any_offline_cache_used = True
 
-                # Count valid non-comment rule lines in upstream source
-                valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
-                src_count = len(valid_src_lines)
-                new_lock_data[name][sname] = src_count
+            # Count valid non-comment rule lines in upstream source
+            valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+            src_count = len(valid_src_lines)
+            new_lock_data[name][sname] = src_count
 
-                # Per-upstream shrinkage protection against previous valid lock baseline
-                prev_src_count = lock_data.get(name, {}).get(sname)
-                src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
-                if prev_src_count is not None and prev_src_count > 0:
-                    if src_count < prev_src_count:
-                        drop = prev_src_count - src_count
-                        shrink_ratio = drop / float(prev_src_count)
-                        if shrink_ratio > src_max_shrink:
-                            raise RuntimeError(
-                                f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
-                                f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
-                                f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
-                            )
-                else:
-                    if not allow_new_baseline:
+            # Per-upstream shrinkage protection against previous valid lock baseline
+            prev_src_count = lock_data.get(name, {}).get(sname)
+            src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
+            if prev_src_count is not None and prev_src_count > 0:
+                if src_count < prev_src_count:
+                    drop = prev_src_count - src_count
+                    shrink_ratio = drop / float(prev_src_count)
+                    if shrink_ratio > src_max_shrink:
                         raise RuntimeError(
-                            f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
-                            f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
-                            f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
+                            f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
+                            f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
+                            f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
                         )
-                    print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
+            else:
+                if not allow_new_baseline:
+                    raise RuntimeError(
+                        f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
+                        f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
+                        f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
+                    )
+                print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
 
-                for line in raw_text.splitlines():
-                    cleaned = clean_rule_line(line)
-                    if cleaned:
-                        if cleaned.startswith("INVALID_SYNTAX:"):
-                            raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
-                        if cleaned in excluded:
-                            continue
-                        if cleaned in custom_rules_for_set:
-                            upstream_overlaps.append({
-                                "ruleset": name,
-                                "custom_file": custom_file_rel,
-                                "rule": cleaned,
-                                "upstream": sname
-                            })
-                        if cleaned not in seen:
-                            seen.add(cleaned)
-                            collected_rules.append(cleaned)
+            for line in raw_text.splitlines():
+                cleaned = clean_rule_line(line)
+                if cleaned:
+                    if cleaned.startswith("INVALID_SYNTAX:"):
+                        raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
+                    if cleaned in excluded:
+                        continue
+                    if cleaned in custom_rules_for_set:
+                        upstream_overlaps.append({
+                            "ruleset": name,
+                            "custom_file": custom_file_rel,
+                            "rule": cleaned,
+                            "upstream": sname
+                        })
+                    if cleaned not in seen:
+                        seen.add(cleaned)
+                        collected_rules.append(cleaned)
 
         # Intra-ruleset deduplication and parent domain pruning
         pruned_rules = prune_intra_set_redundancies(collected_rules)

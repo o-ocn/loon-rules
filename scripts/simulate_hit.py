@@ -30,8 +30,7 @@ DEFAULT_REMOTE_RULE_ORDER = [
     "Twitter.lsr",
     "Discord.lsr",
     "PayPal.lsr",
-    "Steam.lsr",
-    "Epic.lsr",
+    "Gaming.lsr",
     "GitHub.lsr",
     "TestFlight.lsr",
     "Apple-Media.lsr",
@@ -68,11 +67,20 @@ def is_ip(val):
     except ValueError:
         return False
 
+import functools
+
+@functools.lru_cache(maxsize=32768)
+def _get_ip_network(cidr_str):
+    try:
+        return ipaddress.ip_network(cidr_str.strip(), strict=False)
+    except ValueError:
+        return None
+
 def check_ip_in_network(ip_str, cidr_str):
     try:
         ip_obj = ipaddress.ip_address(ip_str.strip())
-        net_obj = ipaddress.ip_network(cidr_str.strip(), strict=False)
-        return ip_obj in net_obj
+        net_obj = _get_ip_network(cidr_str)
+        return ip_obj in net_obj if net_obj else False
     except ValueError:
         return False
 

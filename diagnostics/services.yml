@@ -92,12 +92,12 @@ services:
     note: "海外 AI，与 Twitter 主干隔离"
 
   - id: "muse"
-    name: "Muse from Meta"
+    name: "Muse from Meta (网站探针)"
     category: "AI-Overseas"
     url: "https://muse.ai/"
     expected_status: [200, 301, 302]
     quick: false
-    note: "精准 Muse 服务，不含 Meta 全家桶"
+    note: "网站探针，仅探测 muse.ai 网站主页，不代表 App 实际功能，不含 Meta 全家桶"
 
   - id: "testflight"
     name: "Apple TestFlight"
@@ -105,15 +105,15 @@ services:
     url: "https://testflight.apple.com/v1/session"
     expected_status: [200, 401, 403, 404]
     quick: false
-    note: "TestFlight 独立分流"
+    note: "TestFlight 独立分流端点响应 (401/403/404表示端点有响应，应用下载功能需真机实测)"
 
   - id: "apns_safe"
-    name: "Apple APNs (HTTPS安全测试)"
+    name: "Apple APNs (HTTPS 443探针)"
     category: "Apple-Push"
     url: "https://courier.push.apple.com/"
     expected_status: [200, 400, 403, 404, 502]
     quick: false
-    note: "仅测试 TCP 443 备用通道可达性。系统 TCP 5223 及锁屏推送必须真机实测"
+    note: "仅测试 TCP 443 备用通道响应。系统 TCP 5223 与锁屏推送需真机实测"
 
   - id: "paypal"
     name: "PayPal"
@@ -123,13 +123,13 @@ services:
     quick: true
     note: "PayPal payment services"
 
-  - id: "steam"
-    name: "Steam"
+  - id: "gaming"
+    name: "Gaming (Steam / Epic)"
     category: "Gaming"
     url: "https://store.steampowered.com/"
     expected_status: [200, 301, 302]
     quick: true
-    note: "Gaming platforms"
+    note: "Gaming 游戏平台 (Steam 与 Epic Games 策略中立分流)"
 
 physical_verification_items:
   - "APNs TCP 5223 系统级长连接与锁屏即时通知 (apsd)"

@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-29T06:00:24.696165+00:00",
-  "content_revision": "ff7d88133840",
-  "package_sha256": "ff7d88133840d36305aafe7a9561110b6d4c1c8c28fde357f6f489c382abdde2",
+  "build_timestamp": "2026-09-29T08:15:41.570009+00:00",
+  "content_revision": "6c5f8599d6f9",
+  "package_sha256": "6c5f8599d6f9bcf81a4178eb948283b64d66429e3bfd4b8cc2753ba9e2ff2a80",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -67,17 +67,11 @@
       "sha256": "90af227e8713dc156c7cddcef9b7f4be4ed5458ffef395d5d1072480e86fd3c9",
       "description": "PayPal payment services (curated operational domains only)"
     },
-    "Steam.lsr": {
-      "total_rules": 51,
-      "revision": "3c791ebe3a87",
-      "sha256": "3c791ebe3a871cf25ee744deee8a6a6e2e7d41a06413f2e9b35944b0c6f8a5d4",
-      "description": "Steam gaming platform (third-party piracy and stores purged)"
-    },
-    "Epic.lsr": {
-      "total_rules": 14,
-      "revision": "d00f7e358e4e",
-      "sha256": "d00f7e358e4e5294fb99cf2ed3600a2846c73315910e7a3817944e6aca83b2a7",
-      "description": "Epic Games store and Unreal Engine platform"
+    "Gaming.lsr": {
+      "total_rules": 65,
+      "revision": "06b2809abf75",
+      "sha256": "06b2809abf759c898d09756382672d04b2ed94b96bf35d968455d5ccbfc22a28",
+      "description": "Gaming platforms (Steam and Epic Games, third-party piracy and stores purged)"
     },
     "GitHub.lsr": {
       "total_rules": 31,
@@ -122,10 +116,10 @@
       "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
     },
     "China-GeoIP.lsr": {
-      "total_rules": 1,
-      "revision": "4e14c6b2ef91",
-      "sha256": "4e14c6b2ef91c5ee04a2e78f4e299dfe43fcc0e550591198e8ca4c8151a4f80d",
-      "description": "GeoIP catch-all for mainland China IP traffic (safety net)"
+      "total_rules": 19209,
+      "revision": "f8e3f65e0774",
+      "sha256": "f8e3f65e0774ebb4e36b0794f3e56b5deef5a1ba3bca1a6d7359b01991d8f5ae",
+      "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
     }
   },
   "upstream_sync_status": "synced",
@@ -280,7 +274,7 @@
     },
     {
       "id": "muse",
-      "name": "Muse from Meta",
+      "name": "Muse from Meta (网站探针)",
       "category": "AI-Overseas",
       "url": "https://muse.ai/",
       "expected_status": [
@@ -289,7 +283,7 @@
         302
       ],
       "quick": false,
-      "note": "精准 Muse 服务，不含 Meta 全家桶"
+      "note": "网站探针，仅探测 muse.ai 网站主页，不代表 App 实际功能，不含 Meta 全家桶"
     },
     {
       "id": "testflight",
@@ -303,11 +297,11 @@
         404
       ],
       "quick": false,
-      "note": "TestFlight 独立分流"
+      "note": "TestFlight 独立分流端点响应 (401/403/404表示端点有响应，应用下载功能需真机实测)"
     },
     {
       "id": "apns_safe",
-      "name": "Apple APNs (HTTPS安全测试)",
+      "name": "Apple APNs (HTTPS 443探针)",
       "category": "Apple-Push",
       "url": "https://courier.push.apple.com/",
       "expected_status": [
@@ -318,7 +312,7 @@
         502
       ],
       "quick": false,
-      "note": "仅测试 TCP 443 备用通道可达性。系统 TCP 5223 及锁屏推送必须真机实测"
+      "note": "仅测试 TCP 443 备用通道响应。系统 TCP 5223 与锁屏推送需真机实测"
     },
     {
       "id": "paypal",
@@ -334,8 +328,8 @@
       "note": "PayPal payment services"
     },
     {
-      "id": "steam",
-      "name": "Steam",
+      "id": "gaming",
+      "name": "Gaming (Steam / Epic)",
       "category": "Gaming",
       "url": "https://store.steampowered.com/",
       "expected_status": [
@@ -344,7 +338,7 @@
         302
       ],
       "quick": true,
-      "note": "Gaming platforms"
+      "note": "Gaming 游戏平台 (Steam 与 Epic Games 策略中立分流)"
     }
   ],
   "physical_verification_items": [

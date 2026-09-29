@@ -751,22 +751,22 @@ test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification
 });
 
 test('16. Backup Rulesets Incomplete Verification Due to Deadline Triggers Warning Not Green', async () => {
-  // Build a manifest with 20 rulesets
-  const rulesets20 = {};
-  for (let i = 1; i <= 20; i++) {
-    rulesets20[`Ruleset-${i}.lsr`] = {
+  // Build a manifest with 19 rulesets
+  const rulesets19 = {};
+  for (let i = 1; i <= 19; i++) {
+    rulesets19[`Ruleset-${i}.lsr`] = {
       total_rules: 2,
       revision: sampleRevision,
       sha256: sampleSha256
     };
   }
-  const manifest20 = Object.assign({}, sampleManifest, { rulesets: rulesets20 });
+  const manifest19 = Object.assign({}, sampleManifest, { rulesets: rulesets19 });
 
   const mockClient = createMockHttpClient([
     {
       matches: (url) => url.includes('manifest.json'),
       status: 200,
-      data: JSON.stringify(manifest20)
+      data: JSON.stringify(manifest19)
     },
     {
       matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL),

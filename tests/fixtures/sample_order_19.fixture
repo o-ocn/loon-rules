@@ -1,4 +1,4 @@
-# Public Strategy-Neutral 20-Class Order Fixture for Test Pipeline
+# Public Strategy-Neutral 19-Class Order Fixture for Test Pipeline
 # Contains ZERO private credentials, tokens, or subscription endpoints.
 
 [General]
@@ -11,7 +11,7 @@ DOMAIN,local-override.example.com,DIRECT
 IP-CIDR,192.168.100.1/32,DIRECT
 
 [Remote Rule]
-# Stage 3: Remote Rules (Strict 20-Class Order: Specific/Narrow BEFORE Broad/Parent)
+# Stage 3: Remote Rules (Strict 19-Class Order: Specific/Narrow BEFORE Broad/Parent)
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr, policy=Apple Push, tag=Apple-Push, enabled=true
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr, policy=PROXIES, tag=AI-Overseas, enabled=true
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr, policy=PROXIES, tag=YouTube, enabled=true

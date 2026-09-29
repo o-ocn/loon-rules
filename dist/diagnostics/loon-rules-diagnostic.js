@@ -510,13 +510,23 @@
     const routeReachable = routeRes.ok && expected.includes(routeRes.status);
     const directReachable = directRes.ok && expected.includes(directRes.status);
 
+    let statusNote = '';
+    if ([401, 403, 404, 502].includes(routeRes.status)) {
+      statusNote = ` [HTTP ${routeRes.status}响应,应用功能未验证]`;
+    }
+    if (service.id === 'apns_safe') {
+      statusNote += ' [443探测响应,TCP5223与推送待实测]';
+    } else if (service.id === 'muse') {
+      statusNote += ' [网站探针,不代表App功能]';
+    }
+
     let verdict = '';
     let symbol = '✔';
 
     if (routeReachable && directReachable) {
-      verdict = `当前路由可达(${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)`;
+      verdict = `当前路由可达 (脚本默认路径: ${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)${statusNote}`;
     } else if (routeReachable && !directReachable) {
-      verdict = `当前路由可达(${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)`;
+      verdict = `当前路由可达 (脚本默认路径: ${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)${statusNote}`;
     } else if (!routeReachable && directReachable) {
       symbol = '✘';
       const errName = routeRes.status ? `HTTP ${routeRes.status}` : classifyError(routeRes.error);
