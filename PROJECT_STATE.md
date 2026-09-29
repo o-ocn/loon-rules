@@ -20,8 +20,8 @@
 ## 当前状态
 
 * **当前分支**：`main`（PR #2 已正式合并至 `main`，合并提交 `2bcf05e`）。
-* **当前 HEAD**：`bb941bd`，正式发布包含全量 **19 个规则集**（共 **21,093 条有效规则**），补齐 Apple OCSP v2 验签直连，诊断插件已完全指向 `main`。
-* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,093 条有效规则**）。
+* **当前 HEAD**：`b2dc325`，正式发布包含全量 **19 个规则集**（共 **21,098 条有效规则**），补齐抖音机房、电商、汽水音乐及 Apple NTP 授时直连，诊断插件已完全指向 `main`。
+* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,098 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
 * **私人配置验收器原有三类假通过已封堵，URL 隐私缺口已全链路闭合**：
@@ -138,9 +138,10 @@
 
 ## 最近一次修改
 
-* `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `DOMAIN-SUFFIX,ocsp2.apple.com`，补齐 Apple 现代在线证书吊销验证（OCSP v2）服务器，消除未收录导致的 FINAL 误拦截；总有效规则数更新为 **21,093 条**。
-* `scripts/test_rules.py`：更新 `test_31` 全量规则断言为 21,093，通过全量 42 项 Python 规则测试与 18 项 Node 诊断测试。
-* `PROJECT_STATE.md`：记录 DNS 分流原理、国内 CDN 调度卡顿根因、Apple OCSP v2 验签直连决策。
+* `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `bytetos.com`（抖音廊坊/端侧智能）、`ecombdapi.com`（抖音电商）、`qishui.com`（汽水音乐）、`wasu.tv`（华数TV），彻底修复国内 App 关键子域走 Final 的卡顿；
+* `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `time.apple.com`（NTP 时间同步，防止代理节点丢弃 123 端口导致时钟漂移）；
+* `dist/diagnostics/manifest.json`：总规则数更新为 **21,098 条**，构建产物 revision 更新至 `5e6f37e11a00`；
+* `scripts/test_rules.py`：更新 `test_31` 全量规则断言为 21,098，全量 42 项 Python 规则测试、18 项 Node 诊断测试与预发布完整性门禁全部通过。
 
 ---
 
@@ -219,4 +220,4 @@
 
 - 时间：2026-09-29
 - 执行者：Gemini / Antigravity（自审计 & 用户体验调优）
-- 本轮工作：1) 诊断插件开发分支修复与发布白名单收紧（`54951e0`）；2) 发现并修复 Apple 证书吊销验签（`ocsp2.apple.com`）遗漏导致走 FINAL 的缺陷，统一收敛纳入 `Apple-Direct.lsr`（总规则 21,093 条，commit `bb941bd`），杜绝本地配置重复打补丁；3) 诊断排查国内 App 卡顿根因（纯境外 DoH 导致 CDN 跨洋调度漂移），在私人配置文件中注入主流国内大厂与 `*.cn` 的 `[Host]` DNS 极速分流方案。全量 42 项 Python 规则测试、18 项 Node 诊断测试与预发布完整性门禁全部通过。
+- 本轮工作：1) 诊断插件开发分支修复与发布白名单收紧（`54951e0`）；2) 补齐 Apple OCSP v2（`ocsp2.apple.com`）与 NTP（`time.apple.com`）直连；3) 补齐抖音关键漏网子域（`bytetos.com`、`ecombdapi.com`、`qishui.com`、`wasu.tv`），全库规则总数更新为 **21,098 条**（commit `b2dc325`）；4) 私人配置注入主流大厂 `[Host]` DNS 极速分流方案。全量 42 项 Python 规则测试、18 项 Node 诊断测试与预发布完整性门禁全部通过。
