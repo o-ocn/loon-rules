@@ -173,6 +173,11 @@
   - 核心改进：引入 `--soft-cdn` 参数及主动调用 jsDelivr Purge API 机制。将 GitHub Raw 作为唯一的强阻断门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning，彻底解决推送后因 CDN 边缘缓存时间差导致的假红叉问题；
 * `scripts/test_rules.py`：新增 `test_43_shared_domain_and_conflict_checker`，涵盖跨生态防泄漏检测与 3 类核心故障注入（独占域名泄露到直连、独占域名泄露到国内 DNS、Apple 红线域名违规指派国内 DNS），单测规模扩充至 43 项全绿；
 * `dist/diagnostics/manifest.json`：总规则数稳定在 **21,105 条**，构建产物 revision 更新至 `7b2e988e4805`；
+* `README.md`：
+  - 新增顶部醒目的【🤖 AI 协作者与新开发者接手必读】专栏，确立 `PROJECT_STATE.md` 唯一事实源地位、列明四大铁律并提供 30 秒本地快速全量自测命令；
+  - 全面同步三层架构体系（规则路由层 / DNS 调度层 / 冲突防护层）与双镜像机制；
+  - 完整校准目录树结构，补齐 `plugins/`、`shared_domains.yml` 与全套 scripts 描述，并将全库规则集统一修正为 19 类；
+* `docs/policy_mapping.md`：全面更新第二节规则总表与第三节远程规则排序为完整的 19 规则集体系，修复历史残留的 14 规则集描述，与 `sample_order_19.fixture` 严格对齐；
 * 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
 
 ---
@@ -251,5 +256,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（落实 ChatGPT 审查建议：App Store CDN 区域 DNS 优化、两阶段解耦准则与防撞车红线防护）
-- 本轮工作：1) 落地 App Store 静态 CDN 区域 DNS 极速分流：在 `plugins/Loon-China-DNS.lpx` 中新增 `*.mzstatic.com = server:223.5.5.5`，解决因境外 DoH 调度至美西 Apple 节点导致直连加载超时空白的问题；2) 确立 Apple 体系 5 层精细化分层与红线隔离标准：在 `RULE_DESIGN.md` 中建立《规则层与 DNS 层的两阶段解耦准则》，严禁将 `*.apple.com` 与 `*.icloud.com` 泛解析至国内 DNS；3) 升级防撞车检测器：在 `shared_domains.yml` 与 `scripts/check_conflicts.py` 中引入 `forbidden_domestic_dns_domains`（`apple.com`, `icloud.com`）红线检测，并在 `scripts/test_rules.py` 的 `test_43` 中加入故障注入验证；4) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及脱敏私人配置验收工具 100% 验证通过。
+- 执行者：Gemini / Antigravity（全库 AI 协作接手性审查与全量文档规范化校准）
+- 本轮工作：1) 建立 AI 协作者与新开发者零门槛接手机制：在 `README.md` 顶部显著位置增设【🤖 AI 协作者与新开发者接手必读】专栏，确立 `PROJECT_STATE.md` 唯一事实源地位，重申策略中立/用户主权/Apple 禁区/修改必更新四大铁律，并提供 30 秒全量快速自测流水线；2) 同步三层体系架构至对外文档：更新 `README.md` 与 `docs/policy_mapping.md`，将规则集全量校准为 19 个独立规则集（21,105 条规则），补全 DNS 分流插件与防撞车检测层说明；3) 消除历史残留矛盾：彻底修正历史遗留的“14 规则集”陈旧引用，统一架构、测试与文档的一致性；4) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及防撞车严格检测全部通过。

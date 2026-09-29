@@ -13,24 +13,29 @@
 
 ---
 
-## 2. 规则集与服务范围总表 (共 14 个独立服务分类)
+## 2. 规则集与服务范围总表 (共 19 个独立服务分类)
 
 | 规则成品文件名 (`.lsr`) | 服务范围说明 | 隔离准则与关键边界保护 | 用户策略推荐示例 (可自由调整) |
 | :--- | :--- | :--- | :--- |
-| **`AI-China-Direct.lsr`** | DeepSeek（大陆 AI 门户及 API） | 严格直连，避免境外节点绕行或服务封控。 | `DIRECT` |
-| **`AI-Overseas.lsr`** | ChatGPT, Claude, Gemini, Grok, Muse, Perplexity 等海外 AI | **防碰撞严格约束**：包含官方 Gemini iOS / WebChannel 及 API，绝对排除 `googleapis.com`、`google.com`、`x.com`、`twitter.com`、`facebook.com`、`meta.com` 通用大域；严格区分 `muse.ai` 与 `Muse from Meta`，绝不引入 Meta 社交套件。 | `AI` (自建或专属节点) |
-| **`YouTube.lsr`** | YouTube 视频流媒体、图片与 CDN | 独立维护流媒体流量，包含 YouTube CDN IP-CIDR，不被普通 Google 规则带跑。排在 Google 之前。 | `US Test` (或流媒体节点) |
-| **`GoogleDrive.lsr`** | Google Drive 云端硬盘专属域名 | 独立保护大流量；绝对不包含共享 API `www.googleapis.com`，排在 Google 之前。 | `HK` (大流量低倍率节点) |
+| **`Apple-Push.lsr`** | APNs 官方最小推送通道 | 仅含 APNs 必要 IP 与域名，排在 Apple-Direct 之前；保留 `Apple Push` 策略组。 | `Apple Push` (或 DIRECT) |
+| **`AI-Overseas.lsr`** | ChatGPT, Claude, Gemini, Grok, Muse, Perplexity 等海外 AI | **防碰撞严格约束**：包含官方 Gemini iOS / WebChannel 及 API，绝对排除 `googleapis.com`、`google.com` 等通用大域；排在 Google 之前。 | `AI` (自建或专属代理) |
+| **`YouTube.lsr`** | YouTube 视频流媒体、图片与 CDN | 独立流媒体流量，包含 YouTube CDN IP-CIDRs，排在 Google 之前。 | `US Test` (或流媒体代理) |
+| **`GoogleDrive.lsr`** | Google Drive 云端硬盘专属域名 | 独立保护大流量；绝对不包含共享 API `www.googleapis.com`，排在 Google 之前。 | `HK` (大流量低倍率代理) |
 | **`Google.lsr`** | 普通 Google 服务、搜索、基础设施 | 承载通用 `www.googleapis.com` 共享 API。排在 AI、YouTube、Drive 之后。 | `US Test` (通用美区) |
 | **`OneDrive.lsr`** | 微软 OneDrive、SharePoint 服务 | 独立维护云存储，不与微软通用服务杂糅。 | `US` |
-| **`Telegram.lsr`** | Telegram 官方 IP 段与核心域名 | 独立低延迟策略（接管 App 通信流量，非系统 APNs 通道）。 | `Final` (或独立策略) |
+| **`Telegram.lsr`** | Telegram 官方 IP 段与核心域名 | 独立低延迟策略（接管 App 通信流量，非系统 APNs 通道）。 | `Final` (或代理) |
 | **`Twitter.lsr`** | Twitter / X 平台主干及图床 | 已完全剔除 `grok.com` 与 `x.ai`，避免与 Grok 冲突。 | `Final` |
 | **`Discord.lsr`** | Discord 语音与即时通讯 | 绑定低延迟海外节点。 | `US` |
-| **`TestFlight.lsr`** | Apple TestFlight 内测分发平台 | 独立提取为专用 `.lsr`，排在 Apple-Direct 之前，解决直连打不开的问题。 | `US` (或代理节点) |
+| **`PayPal.lsr`** | PayPal 官方支付运营域名 | 精选官方及备案域名，剔除 230+ 仿冒钓鱼域。 | `US` |
+| **`Gaming.lsr`** | Steam 游戏平台与 Epic Games 商店 | 合并 Steam 与 Epic 规则，消除 404 故障，统一游戏平台分流。 | `Steam` (或代理) |
+| **`GitHub.lsr`** | GitHub 开发平台、API 与代码托管 | 独立代码托管平台，保障开发者体验。 | `US` |
+| **`TestFlight.lsr`** | Apple TestFlight 内测分发平台 | 独立专用分发规则，排在 Apple-Direct 之前，解决直连卡顿。 | `US` (或代理) |
 | **`Apple-Media.lsr`** | Apple TV+, Apple News, Fitness+ | 仅将受美区锁区限制的媒体分流，排在 Apple-Direct 之前。 | `US Test` |
-| **`Apple-Push.lsr`** | APNs 官方最小推送（`push.apple.com` 及官方 CIDR） | **官方最小范围**。仅含 APNs 必要 IP 与域名，排在 Apple-Direct 之前；保留 `Apple Push` 策略组。 | `Apple Push` (或 DIRECT) |
-| **`Apple-Direct.lsr`** | iCloud, CloudKit, App Store, Apple ID, Apple Music, HomeKit, OTA | **稳定基线**。严格直连，绝对禁止把整个 `apple.com` 或 `17.0.0.0/8` 当作代理捷径。 | `DIRECT` |
-| **`China-Direct.lsr`** | 微信、淘宝、天猫、京东、闲鱼、抖音、B站、局域网私网段 | 大陆日常高频 App 直连，保障支付、定位及即时通知稳定。 | `DIRECT` |
+| **`AI-China-Direct.lsr`** | DeepSeek、Kimi、通义千问等国内 AI 门户及 API | 严格直连，避免境外节点绕行或服务封控。 | `DIRECT` |
+| **`Apple-Direct.lsr`** | iCloud, CloudKit, App Store, Apple ID, Music, HomeKit, OTA | 严格直连基线，禁止把 `apple.com` 当作代理捷径；静态 CDN 配合 DNS 优化。 | `DIRECT` |
+| **`China-Direct.lsr`** | 微信、淘宝、天猫、京东、闲鱼、抖音、B站等国内主流服务 | 大陆日常高频 App 直连，保障支付、定位及即时通知稳定。 | `DIRECT` |
+| **`Lan.lsr`** | RFC 1918/6598 等局域网与私网网段 | 局域网旁路直连，排在 China-GeoIP 之前。 | `DIRECT` |
+| **`China-GeoIP.lsr`** | 中国大陆 IP 最终兜底保护 (含 ChinaIPs 19,209 条 CIDR) | 大陆 IP 兜底，防止境内直连请求漏入 FINAL 代理。 | `DIRECT` |
 
 ---
 
@@ -57,8 +62,8 @@ Loon 对流量的分流判定严格遵循以下四层流水线：
 
 ```ini
 [Remote Rule]
-# 1. 大陆 AI 直连 (避免境外代理绕行)
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr, policy = DIRECT, tag = AI-China-Direct, enabled = true
+# 1. Apple APNs 权威推送 (必须排在 Apple-Direct 之前；保留 Apple Push 策略组)
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr, policy = Apple Push, tag = Apple-Push, enabled = false
 
 # 2. 海外 AI 核心 (必须排在 Google 与 Twitter 之前)
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr, policy = AI, tag = AI-Overseas, enabled = true
@@ -84,20 +89,35 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr, policy
 # 9. Discord 语音通讯
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr, policy = US, tag = Discord, enabled = true
 
-# 10. Apple TestFlight (精确内测，必须排在 Apple-Direct 之前)
+# 10. PayPal 国际支付
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/PayPal.lsr, policy = US, tag = PayPal, enabled = true
+
+# 11. Gaming 游戏平台 (Steam / Epic)
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Gaming.lsr, policy = Steam, tag = Gaming, enabled = true
+
+# 12. GitHub 开发平台与代码托管
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GitHub.lsr, policy = US, tag = GitHub, enabled = true
+
+# 13. Apple TestFlight (精确内测，必须排在 Apple-Direct 之前)
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/TestFlight.lsr, policy = US, tag = TestFlight, enabled = true
 
-# 11. Apple 媒体流媒体 (美区锁区，必须排在 Apple-Direct 之前)
+# 14. Apple 媒体流媒体 (美区锁区，必须排在 Apple-Direct 之前)
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr, policy = US Test, tag = Apple-Media, enabled = true
 
-# 12. Apple APNs 权威推送 (必须排在 Apple-Direct 之前；保留 Apple Push 策略组)
-https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr, policy = Apple Push, tag = Apple-Push, enabled = false
+# 15. 大陆 AI 直连 (避免境外代理绕行)
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr, policy = DIRECT, tag = AI-China-Direct, enabled = true
 
-# 13. Apple 基础服务基线 (系统级直连基线)
+# 16. Apple 基础服务基线 (系统级直连基线)
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy = DIRECT, tag = Apple-Direct, enabled = true
 
-# 14. 大陆高频 App 直连与局域网私网段
+# 17. 大陆高频 App 直连
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, policy = DIRECT, tag = China-Direct, enabled = true
+
+# 18. 局域网私网段旁路直连
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Lan.lsr, policy = DIRECT, tag = Lan, enabled = true
+
+# 19. 中国大陆 IP 最终兜底保护 (ChinaIPs)
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-GeoIP.lsr, policy = DIRECT, tag = China-GeoIP, enabled = true
 ```
 
 ---

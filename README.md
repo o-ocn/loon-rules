@@ -1,32 +1,47 @@
 # Loon Rules 分流规则集（策略中立・自动化维护・原生一键诊断）
 
-本项目是一个公开、独立维护的 **Loon 分流规则仓库**（`.lsr` 格式）。
-仓库秉持**“上游覆盖为主、Custom 补丁为辅、少量必要过滤、策略严格中立”**的原则，解决第三方聚合规则中常见的“规则粗暴混杂、AI 与普通服务交叉碰撞、Apple 生态易受干扰”等问题。
+本项目是一个公开、独立维护的 **Loon 原生分流规则与极速分流插件仓库**。
+仓库秉持**“成熟上游覆盖为主、Custom 补丁为辅、策略严格中立、自动化防撞车门禁”**的原则，解决第三方聚合规则中常见的“规则粗暴混杂、AI 与普通服务交叉碰撞、Apple 生态易受干扰、海外 DoH 导致国内 CDN 跨洋漂移”等底层痛点。
+
+> [!IMPORTANT]
+> ### 🤖 AI 协作者与新开发者接手必读 (AI & Developer Onboarding Guide)
+>
+> 本项目采用根目录 **[`PROJECT_STATE.md`](PROJECT_STATE.md)** 作为当前工程进度与架构决策的**唯一事实源（Single Source of Truth）**。
+> 无论你是 **ChatGPT / Claude / Gemini / Cursor / GitHub Copilot** 还是任何接手本项目的 AI Agent 或开发者：
+> 1. **开始任务前**：必须首先读取 [`PROJECT_STATE.md`](PROJECT_STATE.md)，并根据需要查阅 [`AGENTS.md`](AGENTS.md)（交接规则与强制更新规范）和 [`RULE_DESIGN.md`](RULE_DESIGN.md)（三层架构设计与跨国孪生业务隔离准则）；
+> 2. **最高依据**：以仓库中实际代码、规则文件和自动化测试结果为准，**严禁凭历史记忆猜测进度**；
+> 3. **四大铁律**：
+>    - **策略绝对中立**：所有分流规则文件（`.lsr`）严禁包含任何策略组名称或出口动作（DIRECT/PROXY/REJECT/HK/US/All 等）；
+>    - **用户主权解耦**：私密配置（`.lcf`）中用户的策略组指派归属用户主权，严禁擅自改写策略绑定；
+>    - **Apple DNS 绝对红线**：严禁将 `*.apple.com` 或 `*.icloud.com` 泛解析至国内 DNS；
+>    - **完成工作必更新**：凡对代码、规则、测试或配置产生实质影响的工作，任务结束前**必须更新 [`PROJECT_STATE.md`](PROJECT_STATE.md)**。
+> 4. **30 秒本地快速全量自测**：
+>    ```bash
+>    pip install -r requirements.txt
+>    python -B -m unittest scripts.test_rules && python scripts/check_conflicts.py --strict && node --test tests/test_diagnostic.js && python scripts/verify_mirrors.py --pre-release
+>    ```
 
 ---
 
-## 核心设计准则与三层架构
+## 核心设计准则与三层架构体系
 
-1. **三层规则结构**：
-   - **成熟上游负责服务主体**：以 `blackmatrix7/ios_rule_script` (GPL-2.0) 为主要规则源，保障 Gemini、Telegram、Google Drive、Apple 等成熟服务规则的全面性与健壮度，不要求用户长期抓包补域名。`luestr/ShuntRules` 仅用于分流结构与遗漏核对。
-   - **自动断言保护分类边界**：CI/CD 与本地测试套件对 8 大关键分类边界实施 100% 机器可执行断言（包含域名归属、禁止宽泛父域、执行优先级与跨集冲突检测）。
-   - **Custom 仅补有证据的例外与遗漏**：自定义规则必须附带来源/抓包证据、加入原因及日期。当成熟上游官方收录后，构建系统自动提示清理重复 Custom。
-2. **策略绝对中立（Policy-Neutral）**：
-   - 仓库只负责判断“流量属于什么服务”，绝不决定“走什么节点、地区或策略”。
-   - 所有生成的 `.lsr` 绝不写入用户策略组名称、地区（HK/US/JP）、机场/VMISS 节点名称，也不写入 DIRECT/PROXY/REJECT 等策略动作。
-   - 用户在 Loon 中长按每个远程规则，自由绑定专属策略组、内置策略或指定节点。
-3. **8 大服务边界与防碰撞保护**：
-   - **Gemini / 普通 Google**：Gemini 专属端点（含 iOS WebChannel、gRPC 流式及官方 API）归入 `AI-Overseas`；允许无害交叉（少量登录与静态资源走 Google）；禁止 `google.com`、`googleapis.com` 宽泛父域进入 AI；`AI-Overseas` 排在 `Google` 之前。
-   - **Gemini / Google Drive**：Drive 专属域名归入 `GoogleDrive`，Gemini 端点归入 `AI-Overseas`，互不混杂。
-   - **Google Drive / 共享 API**：`www.googleapis.com` 承载 Primuse 音乐串流等多业务共享，严禁归入 Drive 或 AI，统一归于 `Google.lsr`。
-   - **YouTube / 普通 Google**：YouTube 视频、CDN IP-CIDRs (`172.110.32.0/21`, `216.73.80.0/20`) 专属于 `YouTube`。`deepmind.com` 归于 AI；YouTube 排在 Google 之前。
-   - **Grok / Twitter/X**：`grok.com`、`x.ai` 归入 `AI-Overseas`；Twitter 平台主干归入 `Twitter`；禁止跨集污染。
-   - **Muse from Meta 精准核实**：Muse from Meta (App Store ID: 6760173601) 是 Meta 于 2026-09-08 官方发布的个人 AI 代理 (Personal AI Agent)，在 iOS、Android 和 `muse.ai` 上运行。专属域名 `muse.ai` 归入 `AI-Overseas`；`meta.ai` / `api.meta.ai` 属于通用 Meta AI 基础设施，因缺少 Muse 专属端点证据不予收录；严禁引入 Meta 社交套件 (`facebook.com`, `instagram.com`, `meta.com` 等)。
-   - **TestFlight / Apple Media / Apple Direct**：TestFlight 独立分发；Apple TV/News 媒体分流；基础直连锁定 iCloud、CloudKit、OTA；排在 Direct 之前生效。
-   - **APNs / Apple 基础服务**：`Apple-Push.lsr` 仅收录官方最小 `push.apple.com` 及 5 个 IPv4 + 4 个 IPv6 官方推送 CIDR（严格遵循 Apple 官方文档 102266，IPv6 包含权威 `2620:149:a44::/48`）；保留 `Apple Push` 策略组；严禁混入 `17.0.0.0/8` 或 `apple.com`；排在 Direct 之前生效。
-4. **中国大陆冷启动与双镜像发布 (待真机验证)**：
+本项目建立了一套高度工程化的**“规则路由层 + DNS 调度层 + 冲突防护层”**三层协同体系：
+
+1. **第 1 层：规则路由层（Routing Layer・19 个策略中立规则集，共 21,105 条规则）**：
+   - **职责**：决定网络请求“去向何方”（走 DIRECT 还是 PROXY）。
+   - **成熟上游为主**：以 `blackmatrix7/ios_rule_script` (GPL-2.0) 为主要规则源，保障 Gemini、Telegram、Google Drive、Apple 等成熟服务规则的全面性与健壮度，不要求用户长期手动抓包补域名。
+   - **策略绝对中立**：所有 `.lsr` 绝不写入用户策略组名称、地区（HK/US/JP）、节点名称或策略动作。用户在 Loon 中按需自由绑定专属策略组。
+   - **8 大服务边界与防碰撞**：包含 Gemini 与普通 Google、YouTube 与 Google、Grok 与 Twitter、Muse from Meta 精准识别、TestFlight/Media 与 Direct 隔离等。
+2. **第 2 层：DNS 调度层（Resolution Layer・国内大厂与区域 CDN 极速分流）**：
+   - **职责**：决定 DIRECT 直连流量“找哪个就近边缘节点”（解决 IP 调度质量）。
+   - **解决直连反向卡顿**：防范全局纯境外 DoH 导致国内 CDN（阿里 1688、抖音支付、App Store 静态图）被调度至美西或香港 Anycast IP，进而引发直连断崖式卡顿。
+   - **精细化区域优化**：在 `plugins/Loon-China-DNS.lpx` 中为国内大厂及 Apple 静态资源 CDN（`*.mzstatic.com`）指定国内极速 DNS（`223.5.5.5`），实现毫秒级秒开；同时对 `apple.com`、`icloud.com` 保持严格隔离，绝不泛绑定。
+3. **第 3 层：冲突防护层（Conflict & Boundary Guard・自动化 CI 强门禁）**：
+   - **职责**：守卫生态边界，严防跨国孪生业务（抖音 vs TikTok、微信 vs WeChat）及 Apple 禁区打穿。
+   - **规格化防撞车**：由 `shared_domains.yml` 明确定义共享基础设施与海外独占域名；由 `scripts/check_conflicts.py --strict` 执行双向审查，CI 自动化强拦截任何违规外泄。
+4. **中国大陆冷启动与双镜像发布**：
    - 首次导入 `.lcf`，节点未就绪或 GitHub Raw 暂时不可达时，依靠本地 `[Rule]` 中的内网段旁路与必要直连规则维持基础联网。
-   - 所有规则与插件均同步提供 Fastly jsDelivr 备用 CDN 镜像。根据 Loon 官方文档，规则订阅 LRU 为近期查询缓存，离线冷启动表现需待真机首次导入验证。
+   - 所有规则与插件均同步提供 Fastly jsDelivr 备用 CDN 镜像，保障高可用。
 5. **零变更构建幂等性**：
    - 自动构建没有规则内容变化时，严格禁止修改发布文件、版本号、构建时间或 `manifest.json`，杜绝幽灵提交。
    - 下载失败、异常缩水、语法错误或冲突增加时，自动熔断并保留上一版成品。
@@ -91,7 +106,7 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/LoonRul
 诊断模式: 快速诊断 (核心规则与服务) | 生成时间: 2026-09-28 16:44:04 UTC
 ----------------------------------------
 [✓] 发布源状态: 主备双源均可达且内容同版本一致 (GitHub + jsDelivr)
-- 版本标识: 0b8b8e0be129 (构建时间: 2026-09-28T16:37:30.095678+00:00, 清单: 14 个规则集)
+- 版本标识: 0b8b8e0be129 (构建时间: 2026-09-30T04:00:00Z, 清单: 19 个规则集)
 ----------------------------------------
 [✓] 规则集校验: 全部 4 个规则集正文、条数与 SHA256 均校验通过 (版本: a1f362bd587f)
 ----------------------------------------
@@ -142,51 +157,75 @@ python scripts/sanitize_log.py path_to_log.har
 loon-rules/
 ├── .github/
 │   └── workflows/
-│       └── sync-and-build.yml     # 每周自动同步 upstream、校验与发版流水线
+│       └── sync-and-build.yml     # 每周自动同步 upstream、严格测试、发版与 CDN 监控流水线
 ├── diagnostics/                   # 原生诊断插件源码
-│   ├── LoonRules-Diagnostic.lpx   # Loon 插件定义清单
+│   ├── LoonRules-Diagnostic.lpx   # Loon 诊断插件定义清单
 │   ├── loon-rules-diagnostic.js   # 诊断核心脚本 (JS)
 │   └── services.yml               # 诊断服务测试端点与真机标注配置
-├── dist/                          # Loon 最终订阅的 .lsr 与诊断产物
-│   ├── *.lsr                      # 14 个独立服务分类规则文件 (策略中立)
+├── plugins/                       # DNS 分流插件源码
+│   └── Loon-China-DNS.lpx         # 国内大厂与区域 CDN 极速分流插件
+├── dist/                          # Loon 最终订阅的 .lsr 与发布产物
+│   ├── *.lsr                      # 19 个独立服务分类规则文件 (共 21,105 条策略中立规则)
+│   ├── plugins/
+│   │   └── Loon-China-DNS.lpx     # 发布版 DNS 极速分流插件
 │   └── diagnostics/
 │       ├── LoonRules-Diagnostic.lpx
 │       ├── loon-rules-diagnostic.js
-│       └── manifest.json          # 规则版本、SHA256校验值与服务清单
+│       └── manifest.json          # 规则版本、SHA256 校验值、包签名与服务清单
 ├── docs/                          # 详细运维与对照报告
 │   ├── lcf_audit_report.md        # 原始配置脱敏与 Apple 规则清理对照报告
-│   ├── policy_mapping.md          # 策略组映射与 [Remote Rule] 配置示例
+│   ├── policy_mapping.md          # 19 规则集策略映射与 [Remote Rule] 配置总表
 │   ├── plugin_compatibility.md    # 外部插件兼容性与互操作指南
 │   ├── apple_apns_test_guide.md   # Apple 生态与 APNs 权威推送验证指南
 │   └── migration_and_rollback.md  # 逐组平滑迁移步骤与分步回滚方案
 ├── rules/
-│   └── custom/                    # 个人自定义规则（最高优先级，新域名补丁）
+│   └── custom/                    # 个人自定义规则（最高优先级，新域名补丁与来源追踪注释）
 ├── scripts/
-│   ├── build.py                   # 拉取、校验、去重、冲突检测与 manifest 生成引擎
-│   ├── test_rules.py              # 自动化单元测试（语法、防碰撞、隔离断言）
-│   ├── simulate_hit.py            # 规则命中模拟器
+│   ├── build.py                   # 规则拉取、清洗、去重与 manifest 签名生成引擎
+│   ├── check_conflicts.py         # 跨国孪生业务与 Apple DNS 禁区防撞车检测器 (--strict)
+│   ├── test_rules.py              # 自动化单元测试套件 (43 项测试，含多阶段仿真与故障注入)
+│   ├── verify_mirrors.py          # 交付物哈希自校验、预发布强门禁与 CDN 健康探针
+│   ├── verify_private_lcf.py      # 本地脱敏私人配置结构与隐私验收工具
+│   ├── simulate_hit.py            # 4 阶段离线规则命中模拟器
 │   ├── sanitize_log.py            # 日志脱敏分析器
 │   └── upstream_lock.json         # 各上游有效规则数锁定基线
 ├── tests/
-│   └── test_diagnostic.js         # 诊断插件本地夹具测试套件 (Node.js)
+│   ├── test_diagnostic.js         # 诊断插件 Node.js 本地离线测试套件 (19 项测试)
+│   └── fixtures/                  # 公开、脱敏的测试夹具 (含 sample_order_19.fixture)
+├── shared_domains.yml             # 跨国孪生业务共享基建、独占域名与 DNS 禁区规范清单
 ├── sources.yml                    # 声明式只读上游来源配置
+├── requirements.txt               # Python 依赖 (pyyaml)
+├── PROJECT_STATE.md               # 项目当前工程进度唯一事实源 (Single Source of Truth)
+├── AGENTS.md                      # AI 协作者与开发者接手规则
+├── RULE_DESIGN.md                 # 规则系统、DNS 解耦与跨国业务隔离核心设计规范
 ├── README.md
 └── LICENSE                        # 完整 GPL-2.0 授权文本
 ```
 
 ---
 
-## 构建与测试验证
+## 本地构建与全量测试验证
+
+接手本项目后，推荐运行以下命令完成本地环境准备与 100% 离线自测：
 
 ```bash
-# 1. 编译规则集并生成诊断 manifest
+# 1. 安装基础依赖 (仅需 pyyaml)
+pip install -r requirements.txt
+
+# 2. 编译规则集并生成诊断 manifest (构建幂等性，无变更时不产生幽灵提交)
 python scripts/build.py
 
-# 2. 运行规则完整性与防碰撞测试
-python scripts/test_rules.py
+# 3. 运行 Python 规则完整性与防撞车测试套件 (全量 43 项测试通过)
+python -B -m unittest scripts.test_rules
 
-# 3. 运行诊断插件本地夹具测试 (覆盖 8 种异常与回退场景)
+# 4. 运行跨国孪生业务与 DNS 禁区严格防碰撞校验 (零未授权碰撞)
+python scripts/check_conflicts.py --strict
+
+# 5. 运行诊断插件 Node.js 离线全量测试套件 (全量 19 项测试通过)
 node --test tests/test_diagnostic.js
+
+# 6. 运行发布前本地完整性强门禁 (校验 19 规则集、诊断产物与全包签名)
+python scripts/verify_mirrors.py --pre-release
 ```
 
 ---
