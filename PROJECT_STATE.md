@@ -148,6 +148,8 @@
 * `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.1688.com`, `*.doupay.com`, `*.idlefish.com` 阿里极速 DNS（223.5.5.5）分流解析，并添加共享底层架构注释；
 * `RULE_DESIGN.md`：建立《跨国孪生业务与共享基础设施隔离准则》，明确出海孪生业务（抖音/TikTok、微信/WeChat）的独占域名与共享域名划分红线，以及 GeoIP 与 DNS 分流联动的双重保险准则；
 * `shared_domains.yml` + `scripts/check_conflicts.py`：建立跨国孪生业务（字节跳动 Douyin/TikTok、腾讯 WeChat/微信、苹果生态、阿里生态）共享基础设施与防碰撞检测器，自动化检测海外独占域名泄露与跨策略组未授权碰撞；并在 `.github/workflows/sync-and-build.yml` 中集成 `--strict` 检查；
+* `RULE_DESIGN.md`：确立《自定义规则准入与来源追踪规范》，制定“真实日志捕获 -> 三维评估 -> 分流与 DNS 协同 -> 单测防碰撞”四步法，并规范元数据（Target / Source / Reason）注释标准；
+* `rules/custom/China-Direct.list`：补齐 `1688.com`, `blank_1688.com`, `doupay.com` 的捕获时间与技术原因来源注释；
 * `scripts/verify_mirrors.py` + `.github/workflows/sync-and-build.yml`：
   - 核心改进：引入 `--soft-cdn` 参数及主动调用 jsDelivr Purge API 机制。将 GitHub Raw 作为唯一的强阻断门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning，彻底解决推送后因 CDN 边缘缓存时间差导致的假红叉问题；
 * `scripts/test_rules.py`：新增 `test_43_shared_domain_and_conflict_checker`，涵盖跨生态防泄漏检测与 2 类故障注入（独占域名泄露到直连、独占域名泄露到国内 DNS），单测规模扩充至 43 项全绿；
@@ -230,5 +232,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（落实 ChatGPT 审查建议：跨生态冲突检测器、soft-cdn 门禁与 CI 全链路优化）
-- 本轮工作：1) 建立跨国孪生业务防撞车体系：新增 `shared_domains.yml` 与 `scripts/check_conflicts.py`，覆盖字节跳动（抖音 vs TikTok）、腾讯（微信 vs 国际 WeChat）、苹果生态与阿里生态共享基础设施，在 GitHub Actions 中集成 `--strict` 门禁，并在 `scripts/test_rules.py` 中新增 `test_43` 单测与故障注入；2) 彻底消除 CI 假红叉：在 `scripts/verify_mirrors.py` 与 `.github/workflows/sync-and-build.yml` 中引入 `--soft-cdn` 及主动调用 jsDelivr Purge API，将 GitHub Raw 作为唯一的强阻断硬门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning；3) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及脱敏私人配置验收工具 100% 验证通过。
+- 执行者：Gemini / Antigravity（落实 ChatGPT 审查建议：防撞车体系、来源追踪规范、soft-cdn 门禁与 CI 全链路优化）
+- 本轮工作：1) 建立跨国孪生业务防撞车体系：新增 `shared_domains.yml` 与 `scripts/check_conflicts.py`，覆盖字节跳动（抖音 vs TikTok）、腾讯（微信 vs 国际 WeChat）、苹果生态与阿里生态共享基础设施，在 GitHub Actions 中集成 `--strict` 门禁，并在 `scripts/test_rules.py` 中新增 `test_43` 单测与故障注入；2) 落地规则准入与来源追踪规范：在 `RULE_DESIGN.md` 中确立四步决策法与来源元数据标准，并为 `China-Direct.list` 新增规则补齐捕获时间与技术原因来源注释；3) 彻底消除 CI 假红叉：在 `scripts/verify_mirrors.py` 与 `.github/workflows/sync-and-build.yml` 中引入 `--soft-cdn` 及主动调用 jsDelivr Purge API，将 GitHub Raw 作为唯一的强阻断硬门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning；4) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及脱敏私人配置验收工具 100% 验证通过。

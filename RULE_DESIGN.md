@@ -92,3 +92,31 @@ AI 协作接手本项目时，只允许在以下范围内工作：
   1. **明确的域名规则**（如 `rules/custom/China-Direct.list` 中收录 `1688.com`, `doupay.com`）；
   2. **国内极速 DNS 分流**（在 `plugins/Loon-China-DNS.lpx` 中绑定 `server:223.5.5.5`，确保权威 DNS 始终返回国内边缘节点 IP）。
 
+---
+
+## 自定义规则准入与来源追踪规范 (Custom Rule Admission & Source Tracking Protocol)
+
+项目目前已全面进入工程维护与稳定期。为防止盲目膨胀导致规则泛化与边界模糊，未来任何新增规则必须严格遵循以下准入与注释规范：
+
+### 1. 新规则准入决策四步法
+1. **真实日志捕获（First Source）**：以 Loon 客户端的抓包记录或“最近请求”日志为唯一客观事实源，杜绝主观臆测。
+2. **三维评估（Three-Dimensional Evaluation）**：
+   - 是否为用户日常高频核心业务？
+   - 是否采用全球 Anycast / 多国 CDN 架构？
+   - 是否存在因海外 DoH 解析导致香港/海外 IP 绕过 GeoIP 跌落 FINAL 的风险？
+3. **分流与 DNS 协同决策（Action Decision）**：
+   - 纯域名规则：若无 CDN 漂移风险，仅加入对应规则集；
+   - 规则 + DNS：若存在 Geo-DNS 跨洋漂移，必须同步追加至 `plugins/Loon-China-DNS.lpx`；
+   - 不处理：若为无害内部假域名（如 `blank_xxx`）或低频非核心流量，允许由兜底规则自然处理，杜绝冗余规则堆砌。
+4. **单元测试与跨生态防碰撞校验（Verification）**：运行 `python scripts/check_conflicts.py --strict` 及自动化测试套件。
+
+### 2. 自定义规则来源注释格式规范
+在 `rules/custom/*.list` 中新增的每一条或每一批自定义规则，必须附带以下格式的元数据注释：
+```text
+# Target: 目标服务与场景说明
+# Source: Loon 真实日志捕获时间（如 2026-09-29）
+# Reason: 纳入直连或代理的核心技术原因（如海外 DoH 返回 HK Anycast 节点绕过 GeoIP）
+DOMAIN-SUFFIX,example.com
+```
+
+
