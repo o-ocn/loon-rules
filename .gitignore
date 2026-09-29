@@ -8,8 +8,6 @@ Thumbs.db
 *.tmp
 loon_dist_staging_*
 *.lcf
-.upstream_cache/
-scripts/.upstream_cache/
 .test_tmp/
 
 # Logs, HAR files and diagnostic data (Strictly ignored to prevent sensitive leaks)

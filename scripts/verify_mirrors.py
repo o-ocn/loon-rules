@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Standalone Live Mirror Verification Tool for Loon Rules
-Strictly validates accessibility, byte-integrity, and SHA256 matching
-across GitHub Raw and jsDelivr CDN mirrors for all 19 rulesets.
-Does NOT skip on network errors; fails fast with non-zero exit code.
+Standalone Mirror & Artifact Verification Tool for Loon Rules
+Strictly validates accessibility, byte-integrity, policy-neutrality, and SHA256 matching
+across local artifacts (pre-release gate) and remote mirrors (post-release gate).
 Author: o-ocn
 License: GPL-2.0
 """
@@ -14,6 +13,8 @@ import sys
 import json
 import ssl
 import hashlib
+import argparse
+import subprocess
 import urllib.request
 import urllib.error
 
@@ -21,6 +22,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 MANIFEST_PATH = os.path.join(DIST_DIR, "diagnostics", "manifest.json")
 EXPECTED_RULESET_COUNT = 19
+DIAGNOSTIC_FILES = [
+    "diagnostics/manifest.json",
+    "diagnostics/LoonRules-Diagnostic.lpx",
+    "diagnostics/loon-rules-diagnostic.js"
+]
+
+FORBIDDEN_POLICY_TOKENS = [
+    ",PROXY", ",DIRECT", ",REJECT", ",US", ",HK", ",JP", ",Final", ",All"
+]
 
 def compute_rule_body_sha256(content_bytes):
     """Computes SHA256 of rule body excluding comments and blank lines."""
@@ -31,13 +41,115 @@ def compute_rule_body_sha256(content_bytes):
     ]
     return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
-def verify_mirrors(branch="feature/expand-rulesets-v2", manifest_path=MANIFEST_PATH,
+def get_current_git_branch():
+    """Detects current git branch or falls back to main."""
+    try:
+        res = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                             cwd=BASE_DIR, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        branch = res.stdout.strip()
+        if branch and branch != "HEAD":
+            return branch
+    except Exception:
+        pass
+    return os.getenv("TARGET_BRANCH", "main")
+
+def verify_local_pre_release(dist_dir=DIST_DIR, manifest_path=MANIFEST_PATH, exit_on_failure=True):
+    """
+    Pre-Release Local Integrity Gate:
+    Runs BEFORE git commit/push to guarantee dist/ integrity.
+    If ANY check fails, halts pipeline immediately to protect release stability.
+    """
+    print("[*] Starting Pre-Release Local Integrity Verification...")
+    errors = []
+
+    if not os.path.isfile(manifest_path):
+        errors.append(f"Manifest missing: {manifest_path}")
+        print(f"[FAIL] {errors[-1]}")
+        if exit_on_failure:
+            sys.exit(1)
+        return False
+
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+    except Exception as e:
+        errors.append(f"Manifest JSON parse error: {e}")
+        print(f"[FAIL] {errors[-1]}")
+        if exit_on_failure:
+            sys.exit(1)
+        return False
+
+    rulesets = manifest.get("rulesets", {})
+    if len(rulesets) != EXPECTED_RULESET_COUNT:
+        errors.append(f"Expected {EXPECTED_RULESET_COUNT} rulesets in manifest, found {len(rulesets)}")
+
+    # 1. Verify each ruleset file in dist/
+    for rname, meta in rulesets.items():
+        fpath = os.path.join(dist_dir, rname)
+        if not os.path.isfile(fpath):
+            errors.append(f"Ruleset file missing: {rname}")
+            continue
+
+        size = os.path.getsize(fpath)
+        if size == 0:
+            errors.append(f"Ruleset file empty (0 bytes): {rname}")
+            continue
+
+        with open(fpath, "rb") as f:
+            content_bytes = f.read()
+
+        # Policy neutrality check
+        content_text = content_bytes.decode("utf-8", errors="ignore")
+        for token in FORBIDDEN_POLICY_TOKENS:
+            if token in content_text:
+                errors.append(f"Forbidden policy token '{token}' in {rname}")
+
+        # Rule count check
+        valid_lines = [
+            l.strip()
+            for l in content_text.splitlines()
+            if l.strip() and not l.strip().startswith(("#", ";"))
+        ]
+        expected_cnt = meta.get("total_rules", 0)
+        if len(valid_lines) != expected_cnt:
+            errors.append(f"{rname} rule count mismatch: expected {expected_cnt}, got {len(valid_lines)}")
+
+        # SHA-256 check
+        expected_sha = meta.get("sha256", "")
+        computed_sha = compute_rule_body_sha256(content_bytes)
+        if computed_sha != expected_sha:
+            errors.append(f"{rname} SHA256 mismatch: expected {expected_sha[:12]}, got {computed_sha[:12]}")
+
+    # 2. Verify diagnostic plugin artifacts in dist/diagnostics/
+    lpx_path = os.path.join(dist_dir, "diagnostics", "LoonRules-Diagnostic.lpx")
+    js_path = os.path.join(dist_dir, "diagnostics", "loon-rules-diagnostic.js")
+
+    if not os.path.isfile(lpx_path) or os.path.getsize(lpx_path) < 50:
+        errors.append("Diagnostic plugin LoonRules-Diagnostic.lpx missing or too small")
+    if not os.path.isfile(js_path) or os.path.getsize(js_path) < 1000:
+        errors.append("Diagnostic script loon-rules-diagnostic.js missing or too small")
+
+    if errors:
+        print(f"\n[FAIL] Pre-release integrity check failed with {len(errors)} error(s):")
+        for err in errors:
+            print(f"  - {err}")
+        if exit_on_failure:
+            sys.exit(1)
+        return False
+
+    print(f"[PASS] Pre-release integrity verified: {len(rulesets)} rulesets and diagnostic artifacts valid.")
+    return True
+
+def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
                    mirrors=None, exit_on_failure=True, urlopen_fn=None):
     """
-    Verifies primary and backup mirrors against manifest.
-    Returns True if all mirrors pass completely, False otherwise.
-    If exit_on_failure is True, terminates with sys.exit(1) on any failure.
+    Post-Release Live Mirror Verification:
+    Validates accessibility, byte-integrity, and SHA256 matching
+    across GitHub Raw and jsDelivr CDN mirrors for rulesets AND diagnostic artifacts.
     """
+    if branch is None:
+        branch = get_current_git_branch()
+
     print(f"[*] Starting Live Mirror Verification on branch '{branch}'...")
 
     if not os.path.isfile(manifest_path):
@@ -79,21 +191,24 @@ def verify_mirrors(branch="feature/expand-rulesets-v2", manifest_path=MANIFEST_P
 
         # 1. Fetch remote manifest
         man_url = f"{base_url}/diagnostics/manifest.json"
-        try:
-            req = urllib.request.Request(man_url, headers=headers)
-            with opener(req, context=ctx, timeout=12) if urlopen_fn is None else opener(req) as resp:
-                status = getattr(resp, "status", 200)
-                if status != 200:
-                    m_errors.append(f"Remote manifest HTTP {status}")
-                else:
+        remote_manifest = None
+        for attempt in range(2):
+            try:
+                req = urllib.request.Request(man_url, headers=headers)
+                with opener(req, context=ctx, timeout=12) if urlopen_fn is None else opener(req) as resp:
+                    status = getattr(resp, "status", 200)
+                    if status != 200:
+                        m_errors.append(f"Remote manifest HTTP {status}")
+                        break
                     remote_manifest_bytes = resp.read()
                     remote_manifest = json.loads(remote_manifest_bytes.decode("utf-8"))
-        except Exception as e:
-            m_errors.append(f"Could not fetch manifest: {e}")
-            remote_manifest = None
+                    break
+            except Exception as e:
+                if attempt == 1:
+                    m_errors.append(f"Could not fetch manifest: {e}")
 
         if not remote_manifest:
-            print(f"  [FAIL] Remote manifest inaccessible on {m_name}: {m_errors[-1]}")
+            print(f"  [FAIL] Remote manifest inaccessible on {m_name}: {m_errors[-1] if m_errors else 'unknown'}")
             all_passed = False
             mirror_reports[m_name] = {"passed": False, "errors": m_errors}
             continue
@@ -108,7 +223,31 @@ def verify_mirrors(branch="feature/expand-rulesets-v2", manifest_path=MANIFEST_P
 
         print(f"  [OK] Remote manifest accessible. Declares {len(remote_rulesets)} rulesets (revision: {remote_rev}).")
 
-        # 2. Check each ruleset
+        # 2. Check diagnostic files (.lpx and .js)
+        for diag_rel in ["diagnostics/LoonRules-Diagnostic.lpx", "diagnostics/loon-rules-diagnostic.js"]:
+            diag_url = f"{base_url}/{diag_rel}"
+            diag_fetched = False
+            for attempt in range(2):
+                try:
+                    d_req = urllib.request.Request(diag_url, headers=headers)
+                    with opener(d_req, context=ctx, timeout=12) if urlopen_fn is None else opener(d_req) as d_resp:
+                        d_status = getattr(d_resp, "status", 200)
+                        if d_status != 200:
+                            m_errors.append(f"{diag_rel}: HTTP {d_status}")
+                            diag_fetched = True
+                            break
+                        d_bytes = d_resp.read()
+                        if len(d_bytes) < 50:
+                            m_errors.append(f"{diag_rel}: File too small ({len(d_bytes)} bytes)")
+                        diag_fetched = True
+                        break
+                except Exception as e:
+                    if attempt == 1:
+                        m_errors.append(f"{diag_rel}: Fetch failed: {e}")
+            if not diag_fetched and len(m_errors) == 0:
+                m_errors.append(f"{diag_rel}: Fetch failed after retries")
+
+        # 3. Check each ruleset
         match_count = 0
         for rname, meta in rulesets.items():
             expected_sha = meta["sha256"]
@@ -151,7 +290,7 @@ def verify_mirrors(branch="feature/expand-rulesets-v2", manifest_path=MANIFEST_P
                 print(f"    - ... and {len(m_errors) - 5} more errors")
         else:
             mirror_reports[m_name] = {"passed": True, "errors": [], "matched": match_count}
-            print(f"  [PASS] Verified {match_count}/{len(rulesets)} rulesets with matching SHA256 on {m_name}.")
+            print(f"  [PASS] Verified 19/19 rulesets and diagnostic artifacts on {m_name}.")
 
     print("\n" + "=" * 60)
     if all_passed:
@@ -163,6 +302,20 @@ def verify_mirrors(branch="feature/expand-rulesets-v2", manifest_path=MANIFEST_P
             sys.exit(1)
         return False
 
+def main():
+    parser = argparse.ArgumentParser(description="Verify Loon rules artifacts locally or across mirrors.")
+    parser.add_argument("--pre-release", "--local-only", dest="pre_release", action="store_true",
+                        help="Run pre-release local integrity gate on dist/ directory.")
+    parser.add_argument("--post-release", dest="post_release", action="store_true",
+                        help="Run post-release remote mirror and CDN verification.")
+    parser.add_argument("--branch", dest="branch", default=None,
+                        help="Target git branch to verify on remote mirrors.")
+    args = parser.parse_args()
+
+    if args.pre_release:
+        verify_local_pre_release(exit_on_failure=True)
+    else:
+        verify_mirrors(branch=args.branch, exit_on_failure=True)
+
 if __name__ == "__main__":
-    target_branch = sys.argv[1] if len(sys.argv) > 1 else "feature/expand-rulesets-v2"
-    verify_mirrors(target_branch)
+    main()

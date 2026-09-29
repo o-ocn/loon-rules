@@ -54,6 +54,10 @@ jobs:
         run: |
           node --test tests/test_diagnostic.js
 
+      - name: Pre-Release Local Integrity Gate
+        run: |
+          python scripts/verify_mirrors.py --pre-release
+
       - name: Commit and Push if Changed
         if: github.event_name != 'pull_request'
         run: |
@@ -68,3 +72,10 @@ jobs:
             git tag "release-$(date -u +"%Y%m%d-%H%M%S")"
             git push origin HEAD --tags
           fi
+
+      - name: Post-Release Mirrors and CDN Verification
+        if: github.event_name != 'pull_request'
+        run: |
+          # Grace period for GitHub Raw edge cache replication
+          sleep 10
+          python scripts/verify_mirrors.py --branch ${{ github.ref_name }}
