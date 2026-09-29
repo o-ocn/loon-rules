@@ -37,6 +37,8 @@ DOMAIN-SUFFIX,swcdn.apple.com
 DOMAIN-SUFFIX,updates-http.cdn-apple.com
 DOMAIN-SUFFIX,gg.apple.com
 DOMAIN-SUFFIX,gnip.apple.com
+# Apple certificate revocation checks (OCSP v2 responder, fixes falling to Final)
+DOMAIN-SUFFIX,ocsp2.apple.com
 
 # --- Apple China Local CDN Cache ---
 # Target: Official Apple China CDN IPv4 subnet
