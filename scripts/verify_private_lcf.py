@@ -129,7 +129,7 @@ BENCHMARK_PROBES = [
 def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
     """
     Validates that a remote ruleset URL points to the authorized o-ocn/loon-rules
-    repository on an allowed branch (main or feature/expand-rulesets-v2) and path dist/<Ruleset>.lsr.
+    repository on the main branch and path dist/<Ruleset>.lsr.
     Enforces strict privacy and authorization requirements:
       - HTTPS scheme only
       - No credentials or userinfo (username/password/@)
@@ -173,7 +173,7 @@ def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
 
     # Host 1: GitHub Raw
     if hostname == "raw.githubusercontent.com":
-        pattern = r'^/o-ocn/loon-rules/(main|feature/expand-rulesets-v2)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
+        pattern = r'^/o-ocn/loon-rules/(main)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
         m = re.match(pattern, parsed.path)
         if not m:
             return False, "GitHub Raw URL path or branch unauthorized"
@@ -184,7 +184,7 @@ def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
 
     # Host 2: Verified jsDelivr CDN (only fastly.jsdelivr.net is verified)
     if hostname == "fastly.jsdelivr.net":
-        pattern = r'^/gh/o-ocn/loon-rules@(main|feature/expand-rulesets-v2)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
+        pattern = r'^/gh/o-ocn/loon-rules@(main)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
         m = re.match(pattern, parsed.path)
         if not m:
             return False, "jsDelivr URL path or branch unauthorized"
@@ -278,7 +278,7 @@ def verify_private_lcf(lcf_path: str, allow_unverified_plugins: bool = False) ->
                 sname = safe_ruleset_name(rname)
                 errors.append(
                     f"[ERR_INVALID_URL] Remote ruleset '{sname}' has invalid or unauthorized source URL "
-                    f"(expected official o-ocn/loon-rules release URL on main or feature/expand-rulesets-v2)"
+                    f"(expected official o-ocn/loon-rules release URL on main branch)"
                 )
 
     # 5. Check for unexpected non-standard remote rulesets

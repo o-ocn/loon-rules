@@ -1861,8 +1861,8 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         # 18. Direct unit validation of validate_ruleset_url contract
         self.assertTrue(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr", "YouTube.lsr")[0])
         self.assertTrue(verify_private_lcf.validate_ruleset_url("https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist/YouTube.lsr", "YouTube.lsr")[0])
-        self.assertTrue(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/feature/expand-rulesets-v2/dist/YouTube.lsr", "YouTube.lsr")[0])
-        self.assertTrue(verify_private_lcf.validate_ruleset_url("https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@feature/expand-rulesets-v2/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/feature/expand-rulesets-v2/dist/YouTube.lsr", "YouTube.lsr")[0])
+        self.assertFalse(verify_private_lcf.validate_ruleset_url("https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@feature/expand-rulesets-v2/dist/YouTube.lsr", "YouTube.lsr")[0])
 
         # Negative unit tests: query, userinfo, fragment, non-443 port, unverified hosts, wrong branch, wrong filename
         self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr?token=secret", "YouTube.lsr")[0])

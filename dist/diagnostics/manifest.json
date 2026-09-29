@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-29T09:41:59.235680+00:00",
-  "content_revision": "5d76a6200a78",
-  "package_sha256": "5d76a6200a782db40da57f00b8b626e2fe1d533b60d4678164e07c3616dfe377",
+  "build_timestamp": "2026-09-29T13:03:10.146736+00:00",
+  "content_revision": "fd6919cad455",
+  "package_sha256": "fd6919cad455c05dfba53829d7020850073da0b871d6ef21f80a0ea69685ec2f",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -124,8 +124,8 @@
   },
   "diagnostic_artifacts": {
     "LoonRules-Diagnostic.lpx": {
-      "size": 1187,
-      "sha256": "3b0ed4a52ba6e7aaf3d55bd3e20803373f77b2032be106b748bfc3a3ce349bc5"
+      "size": 1099,
+      "sha256": "edaf701e94d5f1518e4cd6bd3488d17dcd505c6a55c9c7fe8fd76a0b7077cbeb"
     },
     "loon-rules-diagnostic.js": {
       "size": 46719,
