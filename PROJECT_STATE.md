@@ -20,8 +20,8 @@
 ## 当前状态
 
 * **当前分支**：`main`（PR #2 已正式合并至 `main`，合并提交 `2bcf05e`）。
-* **当前 HEAD**：`54951e0`，正式发布包含全量 **19 个规则集**（共 **21,092 条有效规则**），诊断插件已完全指向 `main`。
-* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
+* **当前 HEAD**：`bb941bd`，正式发布包含全量 **19 个规则集**（共 **21,093 条有效规则**），补齐 Apple OCSP v2 验签直连，诊断插件已完全指向 `main`。
+* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,093 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
 * **私人配置验收器原有三类假通过已封堵，URL 隐私缺口已全链路闭合**：
@@ -106,6 +106,8 @@
 11. **远程规则 URL 必须强校验主机与路径白名单**：仅允许官方仓库与合法发布分支，且报错时严禁回显私有 URL 或私密规则名。
 12. **Loon 原生配置中 FINAL 必须严格且仅有一条位于 [Rule] 段末尾**：严禁将 FINAL 置于 [Remote Rule] 或其他段落，也严禁在 FINAL 后继续声明规则。
 13. **发布 URL 必须严格拒绝 query、userinfo、fragment 和非预期端口**：防止用户或插件误将包含 token 或账号信息的私有订阅地址带入远程规则，且 jsDelivr 备用源必须精确到已验收的主机（`fastly.jsdelivr.net`），禁止使用通配子域名。
+14. **拒绝全局纯海外 DoH 导致的国内 CDN 调度瘫痪**：为防范盲目追求 BrowserLeaks 零运营商泄漏而全局禁用系统 DNS 并仅设境外 DoH，导致国内常用大厂 App（抖音、B站、淘宝等）解析至海外或远端 CDN 节点引起断崖式卡顿。正解方案是在 Loon 的 `[Host]` 模块为 `*.cn` 及国内互联网大厂根域名指定国内极速 DNS（如 223.5.5.5 / 119.29.29.29），既保障国内就近调度秒开，又让外网服务严格走境外 DoH 绝不泄漏。
+15. **Apple 证书在线验签（OCSP v2）归入直连保护**：现代 iOS/macOS 大量采用 `ocsp2.apple.com` 响应证书吊销状态，缺失此域名会导致系统应用启动慢并回落至 FINAL 代理；必须将其纳入 `Apple-Direct.lsr` 进行直连加速。
 
 ---
 
@@ -136,11 +138,9 @@
 
 ## 最近一次修改
 
-* `diagnostics/LoonRules-Diagnostic.lpx` + `dist/diagnostics/LoonRules-Diagnostic.lpx`：将脚本 URL 和 `branch=` 参数从 `feature/expand-rulesets-v2` 修正为 `main`，彻底消除诊断功能对已合并开发分支的依赖。
-* `dist/diagnostics/manifest.json`：因 `.lpx` 内容变更触发 `content_revision` 更新至 `fd6919cad455`，诊断产物 SHA256 与包签名同步重算。
-* `scripts/verify_private_lcf.py`：`validate_ruleset_url` 分支白名单从 `main|feature/expand-rulesets-v2` 收紧为仅允许 `main`；错误消息同步更新。
-* `scripts/test_rules.py`：`test_42` 中开发分支 URL 的断言从 `assertTrue` 改为 `assertFalse`，确认已合并分支被正确拒绝。
-* `PROJECT_STATE.md`：反映诊断分支修复与分支白名单收紧。
+* `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `DOMAIN-SUFFIX,ocsp2.apple.com`，补齐 Apple 现代在线证书吊销验证（OCSP v2）服务器，消除未收录导致的 FINAL 误拦截；总有效规则数更新为 **21,093 条**。
+* `scripts/test_rules.py`：更新 `test_31` 全量规则断言为 21,093，通过全量 42 项 Python 规则测试与 18 项 Node 诊断测试。
+* `PROJECT_STATE.md`：记录 DNS 分流原理、国内 CDN 调度卡顿根因、Apple OCSP v2 验签直连决策。
 
 ---
 
@@ -193,6 +193,7 @@
 11. **远程规则 URL 必须强校验主机与路径白名单**：仅允许官方仓库与合法发布分支，且报错时严禁回显私有 URL 或私密规则名。
 12. **Loon 原生配置中 FINAL 必须严格且仅有一条位于 [Rule] 段末尾**：严禁将 FINAL 置于 [Remote Rule] 或其他段落，也严禁在 FINAL 后继续声明规则。
 13. **发布 URL 必须严格拒绝 query、userinfo、fragment 和非预期端口**：防止用户或插件误将包含 token 或账号信息的私有订阅地址带入远程规则，且 jsDelivr 备用源必须精确到已验收的主机（`fastly.jsdelivr.net`），禁止使用通配子域名。
+14. **切忌盲目追求 BrowserLeaks 纯净而全局只开境外 DoH 并禁用系统 DNS**：该极端配置会导致所有国内主流 App（抖音、B站、淘宝等）的 CDN 域名向境外 DNS 查询，解析出海外或劣质远端节点，直连发生跨洋跨省拉取引发断崖式卡顿；必须在客户端采用 `[Host]` 分流让国内大厂及 `.cn` 走国内 DNS（223.5.5.5 / 119.29.29.29）实现就近秒开。
 
 ---
 
@@ -217,5 +218,5 @@
 ## 最后更新
 
 - 时间：2026-09-29
-- 执行者：Gemini / Antigravity（自审计）
-- 本轮工作：修复 ChatGPT Work 发现的诊断插件开发分支硬编码引用（commit `54951e0`）。`.lpx` 脚本 URL 和 `branch=` 参数从 `feature/expand-rulesets-v2` 修正为 `main`；`validate_ruleset_url` 分支白名单收紧为仅 `main`；测试断言同步更新。Python 42/42、Node 18/18、预发布门禁通过。GitHub Raw 已同步 19/19 + 诊断产物；jsDelivr CDN 边缘缓存传播中。
+- 执行者：Gemini / Antigravity（自审计 & 用户体验调优）
+- 本轮工作：1) 诊断插件开发分支修复与发布白名单收紧（`54951e0`）；2) 发现并修复 Apple 证书吊销验签（`ocsp2.apple.com`）遗漏导致走 FINAL 的缺陷，补入 `Apple-Direct.lsr`（总规则 21,093 条，commit `bb941bd`）；3) 诊断排查国内 App 卡顿根因（纯境外 DoH 导致 CDN 跨洋调度漂移），在私人配置文件中注入主流国内大厂与 `*.cn` 的 `[Host]` DNS 极速分流方案。全量 42 项 Python 规则测试、18 项 Node 诊断测试与预发布完整性门禁全部通过。
