@@ -958,6 +958,11 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 if os.path.isfile(s_p):
                     shutil.copy2(s_p, os.path.join(dist_new_diag, d_fname))
 
+            # Copy plugins to dist_new
+            plugins_src = os.path.join(BASE_DIR, "plugins")
+            if os.path.isdir(plugins_src):
+                shutil.copytree(plugins_src, os.path.join(dist_new, "plugins"), dirs_exist_ok=True)
+
             # Generate and write new manifest.json atomically to dist_new
             manifest_data = {
                 "schema_version": "1.0",

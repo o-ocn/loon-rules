@@ -1,0 +1,60 @@
+#!name = 国内大厂 DNS 极速分流
+#!desc = 为国内大厂（字节/阿里/腾讯/B站/京东/天气等）与 .cn 域名提供阿里/腾讯极速 DNS 解析，防止全走海外 DoH 导致 CDN 跨洋调度漂移卡顿
+#!author = o-ocn
+#!homepage = https://github.com/o-ocn/loon-rules
+#!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Speedtest.png
+#!date = 2026-09-29
+
+[Host]
+# 顶级域名
+*.cn = server:223.5.5.5
+
+# 字节跳动 / 抖音全系
+*.douyin.com = server:223.5.5.5
+*.douyincdn.com = server:223.5.5.5
+*.zijieapi.com = server:223.5.5.5
+*.bytedance.com = server:223.5.5.5
+*.bytetos.com = server:223.5.5.5
+*.ecombdapi.com = server:223.5.5.5
+*.qishui.com = server:223.5.5.5
+*.amemv.com = server:223.5.5.5
+*.iesdouyin.com = server:223.5.5.5
+*.snssdk.com = server:223.5.5.5
+*.toutiao.com = server:223.5.5.5
+
+# 哔哩哔哩 (B站视频与图片)
+*.bilibili.com = server:223.5.5.5
+*.bilivideo.com = server:223.5.5.5
+*.hdslb.com = server:223.5.5.5
+
+# 阿里巴巴 / 淘宝 / 闲鱼 / 支付宝 / 高德
+*.taobao.com = server:223.5.5.5
+*.alicdn.com = server:223.5.5.5
+*.alipay.com = server:223.5.5.5
+*.tmall.com = server:223.5.5.5
+*.amap.com = server:223.5.5.5
+
+# 腾讯 / 微信 / 视频
+*.qq.com = server:119.29.29.29
+*.tencent.com = server:119.29.29.29
+*.weixin.com = server:119.29.29.29
+*.qpic.cn = server:119.29.29.29
+
+# 国内视听 / 天气 (彩云天气、和风天气、华数TV)
+*.caiyunapp.com = server:223.5.5.5
+*.qweather.com = server:223.5.5.5
+*.wasu.tv = server:223.5.5.5
+
+# 京东 / 拼多多 / 快手 / 小红书 / 美团 / 网易 / 百度
+*.jd.com = server:223.5.5.5
+*.360buyimg.com = server:223.5.5.5
+*.pinduoduo.com = server:223.5.5.5
+*.yangkeduo.com = server:223.5.5.5
+*.kuaishou.com = server:223.5.5.5
+*.yximgs.com = server:223.5.5.5
+*.xiaohongshu.com = server:223.5.5.5
+*.meituan.com = server:223.5.5.5
+*.dianping.com = server:223.5.5.5
+*.163.com = server:223.5.5.5
+*.126.net = server:223.5.5.5
+*.baidu.com = server:223.5.5.5
