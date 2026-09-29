@@ -70,8 +70,8 @@ services:
   - id: "github"
     name: "GitHub 规则源"
     category: "基线网络"
-    url: "https://api.github.com/zen"
-    expected_status: [200]
+    url: "https://github.com/robots.txt"
+    expected_status: [200, 301, 302]
     quick: true
     note: "规则订阅与版本更新网络"
 

@@ -996,4 +996,102 @@ test('18. Caution Services (APNs, Muse, 401/403) Explicitly Displayed in Final C
   assert.ok(lineCount <= 25, `Report exceeded 25 lines: got ${lineCount}`);
 });
 
+test('19. Policy Group Resolution for AI-Overseas and Custom Policy Groups', async () => {
+  // Test unit function directly
+  assert.strictEqual(
+    diagnostic.resolveTargetNode({ category: 'AI-Overseas' }, { all_policy_groups: ['All', 'HK', 'US'] }),
+    'All'
+  );
+  assert.strictEqual(
+    diagnostic.resolveTargetNode({ category: 'AI-Overseas' }, { all_policy_groups: ['HK', 'US'] }),
+    'US'
+  );
+  assert.strictEqual(
+    diagnostic.resolveTargetNode({ category: 'AI-Overseas' }, { all_policy_groups: ['AI-Overseas', 'All'] }),
+    'AI-Overseas'
+  );
+  assert.strictEqual(
+    diagnostic.resolveTargetNode({ category: 'YouTube' }, { all_policy_groups: ['YouTube', 'All'] }),
+    'YouTube'
+  );
+  assert.strictEqual(
+    diagnostic.resolveTargetNode({ category: 'Google' }, { all_policy_groups: ['All', 'HK'] }),
+    null
+  );
+
+  // Test full flow with mockClient
+  let capturedOpts = null;
+  const mockClient = {
+    get: function (opts, callback) {
+      if (opts.node !== 'DIRECT') {
+        capturedOpts = opts;
+      }
+      setTimeout(() => callback(null, { status: 200 }, 'OK'), 10);
+    }
+  };
+
+  const testManifest = {
+    schema_version: '1.0',
+    build_timestamp: '2026-09-29T12:00:00Z',
+    content_revision: 'abc123456789',
+    package_sha256: 'abc123456789abcdef123456789abcdef123456789abcdef123456789abcdef12',
+    release_commit: 'abc1234',
+    rulesets: {
+      'AI-Overseas.lsr': {
+        total_rules: 2,
+        revision: sampleRevision,
+        sha256: sampleSha256,
+        description: 'Overseas AI services'
+      }
+    },
+    services: [
+      {
+        id: 'chatgpt',
+        name: 'ChatGPT',
+        category: 'AI-Overseas',
+        url: 'https://chatgpt.com/favicon.ico',
+        expected_status: [200],
+        quick: true
+      }
+    ]
+  };
+
+  const manifestClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL || url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(testManifest)
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: (url, isDirect, opts) => {
+        if (!isDirect) {
+          capturedOpts = opts;
+        }
+        return url.includes('chatgpt.com');
+      },
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  const singleTest = await diagnostic.testService(testManifest.services[0], manifestClient, 'All');
+  assert.match(singleTest.verdict, /策略组\[All\]/);
+
+  const diag = await diagnostic.runDiagnostic({
+    httpClient: manifestClient,
+    mode: 'quick',
+    config: {
+      all_policy_groups: ['All', 'HK', 'US', 'Final']
+    }
+  });
+
+  assert.ok(capturedOpts, 'Expected non-DIRECT request to be captured');
+  assert.strictEqual(capturedOpts.node, 'All', 'AI-Overseas should route to All policy group');
+});
+
 

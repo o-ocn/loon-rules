@@ -21,6 +21,8 @@ DOMAIN-SUFFIX,2.taobao.com
 DOMAIN-SUFFIX,idlefish.com
 DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipayobjects.com
+DOMAIN-SUFFIX,1688.com
+DOMAIN-SUFFIX,blank_1688.com
 
 # --- Other Mainland Services ---
 # Douyin / ByteDance domestic ecosystem & CDNs
@@ -32,6 +34,7 @@ DOMAIN-SUFFIX,zijieapi.com
 DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,bytetos.com
 DOMAIN-SUFFIX,ecombdapi.com
+DOMAIN-SUFFIX,doupay.com
 DOMAIN-SUFFIX,qishui.com
 DOMAIN-SUFFIX,wasu.tv
 DOMAIN-SUFFIX,caiyunapp.com

@@ -488,17 +488,47 @@
     };
   }
 
+  // Resolve active policy group for a service based on Loon runtime config
+  // Prevents overseas AI services from defaulting to Hong Kong FINAL where AI endpoints are blocked
+  function resolveTargetNode(service, loonConfig) {
+    if (!loonConfig || !Array.isArray(loonConfig.all_policy_groups) || loonConfig.all_policy_groups.length === 0) {
+      return null;
+    }
+    const allGroups = loonConfig.all_policy_groups;
+
+    // 1. Direct match with service category (e.g. if user has a policy group named 'AI-Overseas')
+    if (allGroups.includes(service.category)) {
+      return service.category;
+    }
+
+    // 2. Specific matching for AI-Overseas services (avoid defaulting to Hong Kong FINAL where AI APIs are blocked)
+    if (service.category === 'AI-Overseas') {
+      const overseasCandidates = ['AI-Overseas', 'AI', 'All', 'US', 'Proxy', '全球节点', '节点选择'];
+      for (const cand of overseasCandidates) {
+        if (allGroups.includes(cand)) {
+          return cand;
+        }
+      }
+    }
+
+    return null;
+  }
+
   // Test single service endpoint on current route and DIRECT
   // Uses strictly neutral, factual observation
-  async function testService(service, httpClient) {
+  async function testService(service, httpClient, targetNode = null) {
     const expected = service.expected_status || [200, 204];
 
-    // Current route request (via Loon proxy / rule matching)
-    const routeRes = await httpRequest({
+    // Current route request (via Loon proxy / rule matching or resolved policy group)
+    const routeReq = {
       url: service.url,
       method: service.method || 'GET',
       timeout: PROBE_TIMEOUT_MS
-    }, httpClient);
+    };
+    if (targetNode) {
+      routeReq.node = targetNode;
+    }
+    const routeRes = await httpRequest(routeReq, httpClient);
 
     // DIRECT request (forced bypass)
     const directRes = await httpRequest({
@@ -528,13 +558,14 @@
     const statusNote = cautionNotes.length > 0 ? ` [${cautionNotes.join('; ')}]` : '';
     const cautionNote = cautionNotes.join('; ');
 
+    const routeDesc = targetNode ? `策略组[${targetNode}]` : '脚本默认路径';
     let verdict = '';
     let symbol = '✔';
 
     if (routeReachable && directReachable) {
-      verdict = `当前路由可达 (脚本默认路径: ${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)${statusNote}`;
+      verdict = `当前路由可达 (${routeDesc}: ${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)${statusNote}`;
     } else if (routeReachable && !directReachable) {
-      verdict = `当前路由可达 (脚本默认路径: ${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)${statusNote}`;
+      verdict = `当前路由可达 (${routeDesc}: ${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)${statusNote}`;
     } else if (!routeReachable && directReachable) {
       symbol = '✘';
       const errName = routeRes.status ? `HTTP ${routeRes.status}` : classifyError(routeRes.error);
@@ -556,6 +587,7 @@
       routeDuration: routeRes.duration,
       directDuration: directRes.duration,
       status: routeRes.status,
+      targetNode,
       isCaution,
       cautionNote,
       verdict
@@ -667,6 +699,15 @@
     const mode = options.mode || parseArgs().mode;
     const startTime = Date.now();
     const deadlineMs = options.deadlineMs || ((mode === 'full') ? 52000 : 25000);
+
+    // Retrieve active policy groups from Loon configuration if available
+    let loonConfig = (options && options.config) || null;
+    if (!loonConfig && typeof $config !== 'undefined' && typeof $config.getConfig === 'function') {
+      try {
+        const confRaw = $config.getConfig();
+        loonConfig = typeof confRaw === 'string' ? JSON.parse(confRaw) : confRaw;
+      } catch (e) {}
+    }
 
     currentProgress.reset(mode);
 
@@ -827,7 +868,7 @@
         { id: 'google', name: 'Google 通用服务', url: 'https://www.google.com/generate_204', expected_status: [204, 200], quick: true },
         { id: 'youtube', name: 'YouTube 流媒体', url: 'https://www.youtube.com/generate_204', expected_status: [204, 200], quick: true },
         { id: 'telegram', name: 'Telegram 平台', url: 'https://t.me/telegram', expected_status: [200, 301, 302], quick: true },
-        { id: 'github', name: 'GitHub 规则源', url: 'https://api.github.com/zen', expected_status: [200], quick: true },
+        { id: 'github', name: 'GitHub 规则源', url: 'https://github.com/robots.txt', expected_status: [200, 301, 302], quick: true },
         { id: 'icloud', name: 'Apple iCloud', url: 'https://www.icloud.com/', expected_status: [200, 301, 302], quick: true },
         { id: 'grok', name: 'xAI / Grok', url: 'https://grok.com/', expected_status: [200, 301, 302, 401, 403, 404], quick: false },
         { id: 'muse', name: 'Muse from Meta', url: 'https://muse.ai/', expected_status: [200, 301, 302], quick: false },
@@ -850,7 +891,8 @@
     let totalTested = 0;
 
     const sResults = await mapConcurrent(serviceList, CONCURRENCY_LIMIT, async (s) => {
-      return await testService(s, httpClient);
+      const targetNode = resolveTargetNode(s, loonConfig);
+      return await testService(s, httpClient, targetNode);
     }, isDeadlineExceeded, (s, res) => {
       if (!res) return;
       let statusDesc = '';
@@ -1097,6 +1139,7 @@
     module.exports = {
       runDiagnostic,
       testService,
+      resolveTargetNode,
       fetchManifestFromUrl,
       checkReleaseSources,
       verifyRulesetFile,

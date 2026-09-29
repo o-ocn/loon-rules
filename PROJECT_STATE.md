@@ -20,8 +20,8 @@
 ## 当前状态
 
 * **当前分支**：`main`（PR #2 已正式合并至 `main`，合并提交 `2bcf05e`）。
-* **当前 HEAD**：`59346ff`，正式发布包含全量 **19 个规则集**（共 **21,100 条有效规则**），补齐抖音、电商、天气（彩云/和风）及 Apple NTP 授时直连，发布远程 `Loon-China-DNS.lpx` 并收敛诊断语法。
-* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,100 条有效规则**）。
+* **当前 HEAD**：包含全量 **19 个规则集**（共 **21,104 条有效规则**），补齐 Apple App Attest 硬件认证直连、阿里巴巴 1688 / 页面重置直连、抖音支付直连与极速 DNS 分流，并升级诊断探针支持海外 AI 动态策略组路由与 GitHub 免流控端点。
+* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,104 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
 * **私人配置验收器原有三类假通过已封堵，URL 隐私缺口已全链路闭合**：
@@ -141,10 +141,15 @@
 
 ## 最近一次修改
 
-* `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `bytetos.com`（抖音廊坊/端侧智能）、`ecombdapi.com`（抖音电商）、`qishui.com`（汽水音乐）、`wasu.tv`（华数TV），彻底修复国内 App 关键子域走 Final 的卡顿；
-* `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `time.apple.com`（NTP 时间同步，防止代理节点丢弃 123 端口导致时钟漂移）；
-* `dist/diagnostics/manifest.json`：总规则数更新为 **21,098 条**，构建产物 revision 更新至 `5e6f37e11a00`；
-* `scripts/test_rules.py`：更新 `test_31` 全量规则断言为 21,098，全量 42 项 Python 规则测试、18 项 Node 诊断测试与预发布完整性门禁全部通过。
+* `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `appattest.apple.com`（Apple DeviceCheck / App Attest 设备硬件安全认证与防欺诈，避免认证请求误走代理导致硬件鉴权失效）；
+* `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `1688.com`（阿里巴巴 1688 批发 API/网关）、`blank_1688.com`（1688 App 内部 WebView 容器重置页面）及 `doupay.com`（抖音支付火山引擎 DCDN 网关），彻底阻断电商与支付关键流量落入 FINAL；
+* `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.1688.com` 与 `*.doupay.com` 阿里极速 DNS（223.5.5.5）分流解析；
+* `diagnostics/loon-rules-diagnostic.js` + `dist/diagnostics/loon-rules-diagnostic.js`：
+  - 核心突破：引入 `resolveTargetNode` 动态策略组嗅探能力，当执行 Generic 脚本时，检测用户配置中的策略组（如 `AI-Overseas`、`All`、`US`），自动将海外 AI 探针绑定至对应策略组发出，彻底消除因脚本默认落入香港 FINAL 导致 OpenAI/Claude/Grok 误报“双向不可达”的假故障，同时严格保持规则策略中立；
+  - 探针端点优化：将 `github` 连通性测试端点从受 GitHub API 匿名 IP 频次限制（HTTP 403 限流）的 `api.github.com/zen` 切换为高可用静态端点 `github.com/robots.txt`，消除假红标误报；
+* `tests/test_diagnostic.js`：新增 Subtest 19 覆盖策略组嗅探与动态绑定逻辑，19/19 项 Node.js 离线单测全绿；
+* `dist/diagnostics/manifest.json`：总规则数更新为 **21,104 条**，构建产物 revision 更新至 `4772047f4e7e`；
+* `scripts/test_rules.py`：更新 `test_31` 全量规则断言为 21,104，全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
 
 ---
 
@@ -153,7 +158,7 @@
 ### 已验证
 - [x] **ChatGPT Work 对 `214880a` 的独立复核**：9 组 URL 契约及 3 组完整公开夹具故障注入通过；Node 18/18、本地预发布门禁、该提交的 GitHub `build-and-validate` 通过。当前本机缺少 PyYAML，未独立重跑 Python 全量 42 项；Gemini 报告与 GitHub CI 均显示通过。
 - [x] **干净克隆 Python 单元测试（42/42）**：全量 42 项测试通过（`python -B -m unittest scripts.test_rules`，Ran 42 tests in ~176s, OK, 0 fail, 0 skip）。
-- [x] **Node.js 诊断测试（18/18）**：全量 18 项通过（`node --test tests/test_diagnostic.js`，1.6s，0 fail）。
+- [x] **Node.js 诊断测试（19/19）**：全量 19 项通过（`node --test tests/test_diagnostic.js`，1.7s，0 fail）。
 - [x] **预发布本地完整性强门禁**：`python scripts/verify_mirrors.py --pre-release` 严格校验 19 个规则集策略中立、条数、SHA256、必填诊断元数据及全包签名重算自校验，退出码 0。
 - [x] **URL 隐私边界与主备源验证**：正常主源 (GitHub Raw) 与备用源 (fastly.jsdelivr.net) 通过；query (`?token=...`)、userinfo (`user:pass@` / `fixture_secret@`)、fragment (`#...`)、异常端口 (`:8443`) 及未验证 jsDelivr 子域名 (`cdn` / `testingcf` / `evil.jsdelivr.net`) 100% 触发拒绝，且报错信息中绝无敏感字符串回显。
 - [x] **验收器原有假通过漏洞 8 类故障注入实测**：零引用、禁用规则、重复引用、伪造 URL、错段 FINAL、重复 FINAL、FINAL 后追加规则、未知规则名遮罩全部触发拦截，退出码 1，无任何私密数据泄漏。
@@ -222,5 +227,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（自审计 & 用户体验调优）
-- 本轮工作：1) 创建 `RULE_DESIGN.md` 并更新 `AGENTS.md`，永久确立“规则与策略彻底解耦、严禁篡改用户策略组绑定”之铁律；2) 查明 Loon 脚本 `$httpClient` 不走 TUN 规则分流、直接回落 `FINAL`（香港节点）之底层机制，消除用户对美国 VPS 策略连通性的疑虑；3) 本地私人配置 `Loon-v2-19Rules-fixed.lcf` 恢复 `AI-Overseas` 为用户指定的 `policy=All`；4) 将快速/完整诊断脚本直接注入 `[Script]` 段（含图标与超时参数），无缝呈现于手机“本地脚本”管理大厅；5) 修复 `[Mitm]` 段 `ca-p12` 证书 Base64 字符串缺失单个字符导致的 `Invalid p12 base64 string` 导入故障，并在 `verify_private_lcf.py` 中引入自动证书强校验门禁；全量验收测试全绿通过。
+- 执行者：Gemini / Antigravity（规则收敛与探针智能化升级）
+- 本轮工作：1) 新增 4 条高频业务直连规则：`appattest.apple.com`（Apple 设备完整性/防欺诈认证）、`1688.com`（阿里巴巴 1688 批发 API）、`blank_1688.com`（1688 容器重置）及 `doupay.com`（抖音支付网关），彻底杜绝电商与支付流量落入 FINAL，全库规则扩充至 21,104 条；2) `Loon-China-DNS.lpx` 同步扩充 1688 与抖音支付国内极速 DNS 分流解析；3) 解决规则诊断探针误报：在 `loon-rules-diagnostic.js` 中引入 `resolveTargetNode` 动态策略组探测，在不侵犯规则中立性的前提下让海外 AI 探针动态绑定用户活动代理组（如 `All`），消除落入香港节点导致的误报，并将 GitHub 探针升级为高可用静态端点（`github.com/robots.txt`）免除 403 API 限流；4) 编写 Node.js Subtest 19 覆盖动态策略组路由；全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及本地脱敏私人配置验收工具 100% 验证通过。
