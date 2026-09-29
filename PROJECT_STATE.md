@@ -223,4 +223,4 @@
 
 - 时间：2026-09-30
 - 执行者：Gemini / Antigravity（自审计 & 用户体验调优）
-- 本轮工作：1) 创建 `RULE_DESIGN.md` 并更新 `AGENTS.md`，永久确立“规则与策略彻底解耦、严禁篡改用户策略组绑定”之铁律；2) 查明 Loon 脚本 `$httpClient` 不走 TUN 规则分流、直接回落 `FINAL`（香港节点）之底层机制，消除用户对美国 VPS 策略连通性的疑虑；3) 本地私人配置 `Loon-v2-19Rules-fixed.lcf` 恢复 `AI-Overseas` 为用户指定的 `policy=All`；4) 将快速/完整诊断脚本直接注入 `[Script]` 段（含图标与超时参数），无缝呈现于手机“本地脚本”管理大厅；全量验收测试全绿通过。
+- 本轮工作：1) 创建 `RULE_DESIGN.md` 并更新 `AGENTS.md`，永久确立“规则与策略彻底解耦、严禁篡改用户策略组绑定”之铁律；2) 查明 Loon 脚本 `$httpClient` 不走 TUN 规则分流、直接回落 `FINAL`（香港节点）之底层机制，消除用户对美国 VPS 策略连通性的疑虑；3) 本地私人配置 `Loon-v2-19Rules-fixed.lcf` 恢复 `AI-Overseas` 为用户指定的 `policy=All`；4) 将快速/完整诊断脚本直接注入 `[Script]` 段（含图标与超时参数），无缝呈现于手机“本地脚本”管理大厅；5) 修复 `[Mitm]` 段 `ca-p12` 证书 Base64 字符串缺失单个字符导致的 `Invalid p12 base64 string` 导入故障，并在 `verify_private_lcf.py` 中引入自动证书强校验门禁；全量验收测试全绿通过。
