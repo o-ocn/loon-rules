@@ -9,6 +9,8 @@ skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8
 # Stage 1: Local overrides
 DOMAIN,local-override.example.com,DIRECT
 IP-CIDR,192.168.100.1/32,DIRECT
+# Stage 4: FINAL fallback (strictly at end of [Rule] section)
+FINAL, PROXY
 
 [Remote Rule]
 # Stage 3: Remote Rules (Strict 19-Class Order: Specific/Narrow BEFORE Broad/Parent)
@@ -31,6 +33,3 @@ https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, p
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, policy=DIRECT, tag=China-Direct, enabled=true
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Lan.lsr, policy=DIRECT, tag=Lan, enabled=true
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-GeoIP.lsr, policy=DIRECT, tag=China-GeoIP, enabled=true
-
-# Stage 4: FINAL fallback
-FINAL, PROXY

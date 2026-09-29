@@ -3,14 +3,16 @@
 """
 Local Private .lcf Acceptance Tool (Desensitized & Multi-Stage)
 Strictly validates private Loon configuration file for ruleset references,
-local rule preemptions, active plugin injections, and First Match Wins precedence.
+authorized repository URLs, local rule preemptions, active plugin injections,
+and First Match Wins precedence.
 
 Failure Modes:
 - Missing file / parse failure: exits code 1 with sanitized error code (no paths leaked)
+- Zero remote rules / missing rulesets / disabled rulesets / duplicate rulesets: exits code 1
+- Invalid or unauthorized source URLs (non-o-ocn repository or untrusted hosts): exits code 1
 - Local rule preemption (e.g. DOMAIN,drive.google.com,DIRECT): exits code 1
 - Remote ruleset precedence violation (e.g. YouTube < Google = False): exits code 1
-- Missing required rulesets (< 19 rulesets): exits code 1
-- Missing FINAL fallback: exits code 1
+- FINAL rule wrong section / missing / duplicate / not at end of [Rule]: exits code 1
 - Active unverified plugins: marked UNVERIFIED, cannot grant full pass
 
 Author: o-ocn
@@ -19,7 +21,9 @@ License: GPL-2.0
 
 import os
 import sys
+import re
 import argparse
+import urllib.parse
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE_DIR, "scripts"))
@@ -122,10 +126,60 @@ BENCHMARK_PROBES = [
     }
 ]
 
+def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
+    """
+    Validates that a remote ruleset URL points to the authorized o-ocn/loon-rules
+    repository on an allowed branch (main or feature/expand-rulesets-v2) and path dist/<Ruleset>.lsr.
+    Returns (is_valid, reason).
+    NEVER echo the input url in error reason for desensitization.
+    """
+    if not url_str or not url_str.startswith("https://"):
+        return False, "URL must use HTTPS protocol"
+
+    try:
+        parsed = urllib.parse.urlparse(url_str)
+    except Exception:
+        return False, "URL parse error"
+
+    netloc = parsed.netloc.lower()
+    path = parsed.path
+
+    # Host 1: GitHub Raw
+    if netloc == "raw.githubusercontent.com":
+        pattern = r'^/o-ocn/loon-rules/(main|feature/expand-rulesets-v2)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
+        m = re.match(pattern, path)
+        if not m:
+            return False, "GitHub Raw URL path or branch unauthorized"
+        branch, rname = m.group(1), m.group(2)
+        if rname != expected_rname:
+            return False, "URL filename does not match expected ruleset name"
+        return True, "Valid GitHub Raw URL"
+
+    # Host 2: jsDelivr CDN
+    jsdelivr_hosts = ("fastly.jsdelivr.net", "cdn.jsdelivr.net", "testingcf.jsdelivr.net", "gcore.jsdelivr.net")
+    if netloc in jsdelivr_hosts or netloc.endswith(".jsdelivr.net"):
+        pattern = r'^/gh/o-ocn/loon-rules@(main|feature/expand-rulesets-v2)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
+        m = re.match(pattern, path)
+        if not m:
+            return False, "jsDelivr URL path or branch unauthorized"
+        branch, rname = m.group(1), m.group(2)
+        if rname != expected_rname:
+            return False, "URL filename does not match expected ruleset name"
+        return True, "Valid jsDelivr CDN URL"
+
+    return False, "Unauthorized URL host"
+
+def safe_ruleset_name(rname: str) -> str:
+    """Returns the ruleset name if it is an expected public ruleset; otherwise returns a generic masked placeholder."""
+    if rname in EXPECTED_19_RULESETS:
+        return rname
+    return "[NON_STANDARD_RULESET]"
+
+
 def verify_private_lcf(lcf_path: str, allow_unverified_plugins: bool = False) -> bool:
     """
     Validates a private .lcf file strictly and desensitized.
-    Never prints full file paths, proxies, credentials, or private tokens.
+    Never prints full file paths, URLs, proxies, credentials, or private tokens.
     Returns True if 100% compliant, False otherwise.
     """
     if not lcf_path:
@@ -152,27 +206,69 @@ def verify_private_lcf(lcf_path: str, allow_unverified_plugins: bool = False) ->
         return False
 
     remote_order = pipeline.get("remote_order", [])
+    remote_entries = pipeline.get("remote_entries", [])
     local_rules = pipeline.get("local_rules", [])
     has_final = pipeline.get("has_final", False)
+    final_count = pipeline.get("final_count", 0)
     final_is_last = pipeline.get("final_is_last", True)
+    final_wrong_section = pipeline.get("final_wrong_section", [])
     active_plugin_count = pipeline.get("active_plugin_count", 0)
 
-    print(f"\n[+] Total Remote Rulesets Found: {len(remote_order)} (Expected: 19)")
+    print(f"\n[+] Total Active Remote Rulesets Found: {len(remote_order)} (Expected: 19)")
     print("--- Remote Ruleset Sequence ---")
     for idx, rname in enumerate(remote_order):
-        print(f"  [{idx:02d}] {rname}")
+        print(f"  [{idx:02d}] {safe_ruleset_name(rname)}")
 
     errors = []
 
-    # 1. Verify 19 rulesets are present
+    # 1. Check for zero remote rules
+    if len(remote_entries) == 0 or len(remote_order) == 0:
+        errors.append("[ERR_ZERO_RULESETS] No active remote rulesets found in [Remote Rule] section")
+
+    # 2. Check for disabled remote rules
+    for entry in remote_entries:
+        if not entry["enabled"]:
+            sname = safe_ruleset_name(entry["name"]) if entry["name"] else "unknown"
+            errors.append(f"[ERR_DISABLED_RULESET] Remote ruleset is disabled: {sname}")
+
+    # 3. Check for duplicate remote rules
+    seen_rnames = set()
+    for entry in remote_entries:
+        rname = entry["name"]
+        if rname:
+            if rname in seen_rnames:
+                sname = safe_ruleset_name(rname)
+                errors.append(f"[ERR_DUPLICATE_RULESET] Duplicate remote ruleset reference found: {sname}")
+            seen_rnames.add(rname)
+        else:
+            errors.append("[ERR_MALFORMED_RULESET] Line in [Remote Rule] section missing valid .lsr filename")
+
+    # 4. Check URL source and host authorization
+    for entry in remote_entries:
+        rname = entry["name"]
+        if rname:
+            is_valid, _ = validate_ruleset_url(entry["url"], rname)
+            if not is_valid:
+                sname = safe_ruleset_name(rname)
+                errors.append(
+                    f"[ERR_INVALID_URL] Remote ruleset '{sname}' has invalid or unauthorized source URL "
+                    f"(expected official o-ocn/loon-rules release URL on main or feature/expand-rulesets-v2)"
+                )
+
+    # 5. Check for unexpected non-standard remote rulesets
+    unexpected_count = sum(1 for r in remote_order if r not in EXPECTED_19_RULESETS)
+    if unexpected_count > 0:
+        errors.append(f"[ERR_UNEXPECTED_RULESET] Found {unexpected_count} unexpected or non-standard remote ruleset(s)")
+
+    # 6. Verify 19 rulesets are present
     missing_rulesets = [r for r in EXPECTED_19_RULESETS if r not in remote_order]
     if missing_rulesets:
         errors.append(f"[ERR_MISSING_RULESET] Missing required rulesets ({len(missing_rulesets)}): {', '.join(missing_rulesets)}")
 
     if len(remote_order) != 19:
-        errors.append(f"[ERR_RULESET_COUNT] Expected exactly 19 remote rulesets, found {len(remote_order)}")
+        errors.append(f"[ERR_RULESET_COUNT] Expected exactly 19 active remote rulesets, found {len(remote_order)}")
 
-    # 2. Strict Precedence Checks (First Match Wins) between remote rules
+    # 6. Strict Precedence Checks (First Match Wins) between remote rules
     checks = {}
 
     # YouTube vs Google
@@ -222,48 +318,59 @@ def verify_private_lcf(lcf_path: str, allow_unverified_plugins: bool = False) ->
         status_tag = "[PASS]" if res else "[FAIL]"
         print(f"  {status_tag:6s} {check_name} = {res}")
 
-    # 3. Multi-Stage First Hit Simulation Check (Local [Rule] vs [Remote Rule])
+    # 7. Multi-Stage First Hit Simulation Check (Local [Rule] vs [Remote Rule])
     print(f"\n--- Multi-Stage Pipeline Evaluation (Local Rules: {len(local_rules)}, Remote Rulesets: {len(remote_order)}) ---")
-    rules_by_file = simulate_hit.load_dist_rules(remote_order)
-    preemption_errors = []
+    if remote_order:
+        rules_by_file = simulate_hit.load_dist_rules(remote_order)
+        preemption_errors = []
 
-    for b in BENCHMARK_PROBES:
-        probe = b["probe"]
-        exp_rs = b["expected_ruleset"]
-        matches = simulate_hit.match_target(probe, rules_by_file, local_rules=local_rules)
-        if not matches:
-            preemption_errors.append(f"[ERR_PROBE_MISS] Probe '{probe}' did not match any rule (expected {exp_rs})")
-            continue
-        first_hit = matches[0]
-        if first_hit["ruleset"] == "Local [Rule]":
-            preemption_errors.append(
-                f"[ERR_LOCAL_PREEMPTION] Probe '{probe}' ({b['category']}) was preempted by Local [Rule] (line {first_hit['line']}) instead of expected '{exp_rs}'"
-            )
-        elif first_hit["ruleset"] != exp_rs:
-            preemption_errors.append(
-                f"[ERR_PRECEDENCE_VIOLATION] Probe '{probe}' ({b['category']}) first hit '{first_hit['ruleset']}' instead of expected '{exp_rs}'"
-            )
+        for b in BENCHMARK_PROBES:
+            probe = b["probe"]
+            exp_rs = b["expected_ruleset"]
+            matches = simulate_hit.match_target(probe, rules_by_file, local_rules=local_rules)
+            if not matches:
+                preemption_errors.append(f"[ERR_PROBE_MISS] Probe '{probe}' did not match any rule (expected {exp_rs})")
+                continue
+            first_hit = matches[0]
+            if first_hit["ruleset"] == "Local [Rule]":
+                preemption_errors.append(
+                    f"[ERR_LOCAL_PREEMPTION] Probe '{probe}' ({b['category']}) was preempted by Local [Rule] (line {first_hit['line']}) instead of expected '{exp_rs}'"
+                )
+            elif first_hit["ruleset"] != exp_rs:
+                hit_name = safe_ruleset_name(first_hit["ruleset"])
+                preemption_errors.append(
+                    f"[ERR_PRECEDENCE_VIOLATION] Probe '{probe}' ({b['category']}) first hit '{hit_name}' instead of expected '{exp_rs}'"
+                )
 
-    if preemption_errors:
-        errors.extend(preemption_errors)
-        for pe in preemption_errors:
-            print(f"  [FAIL] {pe}")
-    else:
-        print(f"  [PASS] All {len(BENCHMARK_PROBES)} benchmark probes achieved expected first-hit ruleset.")
-
-    # 4. FINAL Rule Check
-    print("\n--- Fallback FINAL Rule Check ---")
-    if not has_final:
-        errors.append("[ERR_FINAL_MISSING] Missing FINAL fallback rule in [Rule] section")
-        print("  [FAIL] FINAL rule: MISSING")
-    else:
-        if not final_is_last:
-            errors.append("[ERR_FINAL_NOT_LAST] FINAL rule is not at the end of [Rule] section")
-            print("  [FAIL] FINAL rule: Present but not at end of [Rule] section")
+        if preemption_errors:
+            errors.extend(preemption_errors)
+            for pe in preemption_errors:
+                print(f"  [FAIL] {pe}")
         else:
-            print("  [PASS] FINAL rule: Present and positioned at end of [Rule] section")
+            print(f"  [PASS] All {len(BENCHMARK_PROBES)} benchmark probes achieved expected first-hit ruleset.")
+    else:
+        print("  [FAIL] Skipping probe evaluation due to missing remote rulesets.")
 
-    # 5. Plugin Rule Verification Status
+    # 8. FINAL Rule Section and Placement Check
+    print("\n--- Fallback FINAL Rule Check ---")
+    if final_wrong_section:
+        for sec, line in final_wrong_section:
+            errors.append(f"[ERR_FINAL_WRONG_SECTION] FINAL rule misplaced in [{sec}] section (line {line}); FINAL must strictly reside at end of [Rule] section")
+            print(f"  [FAIL] FINAL rule misplaced in [{sec}] section (line {line})")
+
+    if not has_final or final_count == 0:
+        errors.append("[ERR_FINAL_MISSING] Missing enabled FINAL fallback rule in [Rule] section")
+        print("  [FAIL] FINAL rule: MISSING in [Rule] section")
+    elif final_count > 1:
+        errors.append(f"[ERR_FINAL_DUPLICATE] Multiple enabled FINAL rules found in [Rule] section (count: {final_count}); expected exactly 1")
+        print(f"  [FAIL] FINAL rule: DUPLICATE ({final_count} entries in [Rule])")
+    elif not final_is_last:
+        errors.append("[ERR_FINAL_NOT_LAST] FINAL rule is not at the end of [Rule] section (other rules appear after FINAL)")
+        print("  [FAIL] FINAL rule: Present in [Rule] but other rules appear after it")
+    else:
+        print("  [PASS] FINAL rule: Present and positioned at end of [Rule] section")
+
+    # 9. Plugin Rule Verification Status
     print("\n--- Plugin Injected Rules Status ---")
     if active_plugin_count > 0:
         print(f"  [-] Plugin Injected Rules: UNVERIFIED")
@@ -271,29 +378,29 @@ def verify_private_lcf(lcf_path: str, allow_unverified_plugins: bool = False) ->
     else:
         print("  [PASS] Plugin Injected Rules: NONE (0 active plugins)")
 
-    # 6. Overall Acceptance Determination
+    # 10. Overall Acceptance Determination
     if errors:
         print("\n[!] Acceptance Failures Detected:")
         for err in errors:
             print(f"  - {err}")
         print("\n============================================================")
-        print("[FAIL] Configuration acceptance FAILED: Precedence, rulesets, or local conflicts detected.")
+        print("[FAIL] Configuration acceptance FAILED: Precedence, rulesets, or section conflicts detected.")
         print("============================================================")
         return False
 
     if active_plugin_count > 0:
         print("\n============================================================")
-        print(f"[PARTIAL_PASS] Precedence, local rules, and FINAL verified.")
-        print(f"               Configuration contains {active_plugin_count} unverified active plugin(s).")
+        print(f"[PARTIAL_PASS] Ruleset precedence, local rules, and FINAL verified.")
+        print(f"               Configuration contains {active_plugin_count} active plugin(s) whose injected rules are UNVERIFIED.")
         print(f"               Overall Status: UNVERIFIED_PLUGINS")
-        print(f"               (Cannot grant FULL PASS without on-device TUN confirmation)")
+        print(f"               (Remote rulesets certified; overall pass pending on-device observation)")
         print("============================================================")
         if not allow_unverified_plugins:
             return False
         return True
 
     print("\n============================================================")
-    print("[SUCCESS] Configuration acceptance PASSED: 19 rulesets and multi-stage precedence verified.")
+    print("[SUCCESS] Configuration acceptance PASSED: 19 rulesets, valid URLs, and multi-stage precedence verified.")
     print("============================================================")
     return True
 

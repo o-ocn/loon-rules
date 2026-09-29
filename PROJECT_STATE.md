@@ -20,23 +20,22 @@
 ## 当前状态
 
 * **当前分支**：`feature/expand-rulesets-v2`（对应 GitHub PR #2，待合并至 `main`）。
-* **本地已提交 HEAD**：`4b44f3b`。已全面解决 ChatGPT Work 在 `8f428d6` 独立复测中发现的所有阻断项（首命中多阶段模型、本地抢占检出、未验证插件状态、manifest 必填自校验重算、分支备用源有限重试与超时报警、构建器权限重置收紧）。
 * **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
-* **私人配置多阶段验收与本地规则抢占彻底治理**：
-  * `scripts/verify_private_lcf.py` 接入完整多阶段仿真引擎（Local `[Rule]` -> Plugin `[Rule]` -> `[Remote Rule]` -> `FINAL`），预置 12 项典型服务基准探针；
-  * 实测能够精准捕获本地更高优先级规则抢占（例如在 `[Rule]` 加入 `DOMAIN,drive.google.com,DIRECT`，工具立即报出 `[ERR_LOCAL_PREEMPTION]` 并以退出码 1 失败退出）；
-  * 强制核验 `FINAL` 兜底规则的存在性与位置合规性；
-  * 检测到配置中包含第三方活跃插件时，明确标注 `Plugin Injected Rules: UNVERIFIED`，禁止给出“完全通过”，避免虚假安全感；
-  * **完全脱敏**：所有失败分支采用标准化错误码（如 `[ERR_FILE_NOT_FOUND]`, `[ERR_LOCAL_PREEMPTION]`），绝不回显文件路径或原始异常堆栈。
+* **私人配置验收器三大假通过漏洞已全链路封堵并完成脱敏**：
+  1. **零远程引用防伪与全覆盖强校验**：移除了 `scripts/simulate_hit.py` 在零引用时对默认 19 条规则的静默回退，严格如实返回解析所得的远程规则列表；任何缺失、禁用（`enabled=false`）、重复或零远程规则引用均触发 `[ERR_ZERO_RULESETS]`、`[ERR_MISSING_RULESET]` 或 `[ERR_DUPLICATE_RULESET]` 并在验收器中报错退出。
+  2. **发布 URL 与来源主机/分支严格白名单授权**：建立 `validate_ruleset_url` 强校验机制，严格限定 HTTPS 协议与官方授权主机（`raw.githubusercontent.com` 及 `*.jsdelivr.net`）、官方仓库 `o-ocn/loon-rules`、允许分支（`main` 或 `feature/expand-rulesets-v2`）及目标产物路径 `dist/<Ruleset>.lsr`；任何指向伪造/第三方站点的 URL 均以 `[ERR_INVALID_URL]` 拦截，且错误信息中绝不回显任何私人或未授权 URL，实现 100% 路径与隐私脱敏。
+  3. **Loon 原生语法段落与单条末尾 FINAL 强校验**：规范修正公开测试夹具 `sample_order_19.fixture`，将误放在 `[Remote Rule]` 下的 FINAL 规则移回 `[Rule]` 末尾；验收器严格校验 `FINAL` 必须存在且仅有一条启用的规则位于 `[Rule]` 段末尾，严禁错段置于 `[Remote Rule]`、`[Plugin]` 或在其后追加其他规则，分别报告 `[ERR_FINAL_WRONG_SECTION]`、`[ERR_FINAL_DUPLICATE]`、`[ERR_FINAL_NOT_LAST]` 或 `[ERR_FINAL_MISSING]`。
+  4. **未知/私人规则文件名脱敏保护**：建立 `safe_ruleset_name` 脱敏转换机制，仅对官方公开 19 个规则集回显名称；若用户配置中存在未知或第三方自建规则集，一律遮罩为 `[NON_STANDARD_RULESET]` 并单独统计报告 `[ERR_UNEXPECTED_RULESET]` 总数，杜绝因规则文件名包含用户名、私有订阅或 Token 导致信息外泄。
+  5. **公开回归测试全面扩充（test_42）**：`scripts/test_rules.py` 的 `test_42` 扩充涵盖零引用、禁用规则、重复规则、未授权伪造 URL、错段 FINAL、重复 FINAL、FINAL 后置规则、未知规则名脱敏等 12 类场景，实测 100% 触发预期失败与脱敏断言。
 * **交付物清单强制字段与包签名自重算强校验**：
   * `scripts/verify_mirrors.py` 将 `rulesets`, `diagnostic_artifacts`, `package_sha256`, `content_revision` 设为严格必填项；
   * 无论是本地预发布还是远端镜像校验，均依据清单中声明的规则集元数据与诊断产物元数据，重新计算 SHA256 包签名进行二次核对，杜绝任何全零哈希或篡改元数据绕过；
   * `test_40` 故障注入场景扩充至 12 类，包括缺诊断元数据、缺包签名、本地全零包签名等，实测 100% 触发校验失败。
 * **真实分支备用源同步与有限重试门禁**：
   * `verify_mirrors.py` 增加重试机制（默认 3 次重试，间隔 6 秒），妥善处理 CDN 边缘缓存传播延迟，并在超时后输出清晰的 `[TIMEOUT/FAIL]` 状态诊断；
-  * 经 Fastly HTTP PURGE 刷新，当前 `feature/expand-rulesets-v2` 分支在 GitHub Raw 与 jsDelivr CDN 均已 100% 达到版本 `5d76a6200a78`，所有 19 个规则集及诊断产物校验全部通过。
+  * 真实分支 `feature/expand-rulesets-v2` 在 GitHub Raw 与 jsDelivr CDN 均已 100% 达到版本 `5d76a6200a78`，所有 19 个规则集及诊断产物校验全部通过。
 * **构建流水线权限重置收紧**：
   * 彻底移除 `switch_dist_directory` 中对整个 `dist/` 递归执行且静默忽略失败的 `icacls /reset /T`；
   * 收紧为仅在创建 `.dist_staging` 容器目录时执行 `icacls staging_dir /reset`，且严格检查返回码，若非零立即抛出显式 `RuntimeError`，杜绝静默吞掉异常或递归影响 Git 跟踪文件。
@@ -48,14 +47,16 @@
 ### 1. PR #1 阶段（已合并至 main，commit 9a703b3）
 - 建立初始 14 个自托管规则集、自动构建流水线 `build.py`、8 大服务边界隔离断言及原生诊断插件。
 
-### 2. PR #2 阶段（当前开发中，复核发现问题已全部解决）
+### 2. PR #2 阶段（当前开发中，验收器假通过阻断项已全面修复并通过回归测试）
 - **Gaming.lsr 404 修复与 Steam/Epic 策略合并**：消除 404 故障，维持 19 个规则集体系与用户出口偏好一致。
 - **抖音事故 IP 兜底与中国 IP 自治**：为 `China-GeoIP` 引入 blackmatrix7 成熟开源 `ChinaIPs`（19,209 条规则），事故 IP `119.147.195.212` 命中 `IP-CIDR,119.144.0.0/14,no-resolve`。
 - **构建流水线健壮性修复（缩进 Bug）**：修复 `scripts/build.py` 上游抓取逻辑被错误缩进在 `if custom_file:` 条件块内的隐患。
 - **离线受控缓存入库与干净克隆 42/42 测试通过**：将 `scripts/.upstream_cache/7871aa32a3ea6248.list` 正式纳入 Git 跟踪并移除忽略规则，干净克隆稳定 42/42 通过。
 - **公开 CI 与本地私人配置验收彻底分离**：
   - `test_41` 仅运行仓库内的公开夹具 `tests/fixtures/sample_order_19.fixture`；
-  - 交付独立本地工具 `scripts/verify_private_lcf.py`，支持多阶段仿真、本地抢占检测、FINAL 验证与未验证插件标记，错误输出路径完全脱敏；`test_42` 专门保障其回归行为。
+  - 交付独立本地工具 `scripts/verify_private_lcf.py`，完整检查 Local `[Rule]`、Plugin `[Rule]`、`[Remote Rule]`、`FINAL` 四阶段；
+  - 封堵零远程引用回退、伪造发布 URL、错段/重复/缺失 FINAL 等假通过漏洞；
+  - 错误输出不回显任何未知文件路径、私有 URL 或私密规则名；检测到活跃第三方插件时明确标注 `Plugin Injected Rules: UNVERIFIED`，禁止给出“完全通过”。
 - **诊断产物与清单哈希一致性强校验闭环**：
   - `manifest.json` 将 `diagnostic_artifacts` 与 `package_sha256` 设为必填，并包含精确大小与 SHA256；
   - `verify_mirrors.py` 与 `verify_local_pre_release` 均重算全包签名进行自校验，杜绝缺字段与全零伪通过；`test_40` 补充 12 类故障注入。
@@ -70,8 +71,8 @@
 
 ## 当前正在处理
 
-* **阶段**：PR #2 所有代码修复与测试已闭环（HEAD: `4b44f3b`），待推送到 GitHub PR #2。
-* **下一步工作**：提交并推送代码；由 ChatGPT Work 基于最新手机导出配置装配修正唯一私人 `.lcf`，再进行 Loon 真机实测。
+* **阶段**：PR #2 验收器三大假通过漏洞已完全修复并通过 `test_42` 12 类故障注入回归验证；42/42 Python 测试、18/18 Node.js 测试、预发布门禁与分支双源镜像校验全部通过。
+* **下一步工作**：交付最新提交号与故障注入输出供 ChatGPT Work 独立复核；随后由 ChatGPT Work 基于最新手机导出配置装配唯一私人 `.lcf` 文件（修正 YouTube/Lan 顺序），再进行 Loon 真机实测。
 
 ---
 
@@ -86,6 +87,9 @@
 7. **交付物哈希全闭环强校验**：不仅规则集正文校验 SHA256，诊断 `.lpx`、`.js` 以及清单中的每一项元数据均必须存在，且由工具依据实体内容动态重算 `package_sha256` 进行自校验。
 8. **CI 门禁客观透明，杜绝虚假承诺**：发布前本地门禁 100% 阻止坏版本推送；发布后远端检查作为监控告警，引入有限重试应对 CDN 边缘传播，检测到不同步时退出码 1 报警，不虚假承诺无损自动回滚。
 9. **跨账户与沙箱文件系统权限继承准则**：在 Windows 开发环境中严禁使用 `tempfile.mkdtemp` 等产生私有 DACL 的 API 充当成品目录源，必须保证所有成品目录完全继承标准文件系统 ACL；权限重置仅作用于暂存容器并严格校验返回值。
+10. **私人配置验收器严禁在零引用时静默回退默认规则**：必须真实反映文件内容，缺规则、禁用规则或重复引用必须显式报错拦截。
+11. **远程规则 URL 必须强校验主机与路径白名单**：仅允许官方仓库与合法发布分支，且报错时严禁回显私有 URL 或私密规则名。
+12. **Loon 原生配置中 FINAL 必须严格且仅有一条位于 [Rule] 段末尾**：严禁将 FINAL 置于 [Remote Rule] 或其他段落，也严禁在 FINAL 后继续声明规则。
 
 ---
 
@@ -100,39 +104,40 @@
 | `dist/` | 构建生成的 19 个策略中立 `.lsr` 文件及诊断产物（共 21,092 条规则） |
 | `rules/custom/` | 各服务本地补充与例外规则（需有抓包或官方依据） |
 | `scripts/build.py` | 规则抓取、清洗、构建与带收紧 ACL 继承保障的目录切换流水线 |
-| `scripts/test_rules.py` | 规则系统公开单元测试套件（全量 42 项测试，含 12 种故障注入与 verify_private_lcf 回归） |
-| `scripts/simulate_hit.py` | 本地流量命中仿真测试工具（支持 4 阶段流水线与 LRU 缓存） |
+| `scripts/test_rules.py` | 规则系统公开单元测试套件（全量 42 项测试，含 12 种清单故障注入与 12 类 verify_private_lcf 行为回归） |
+| `scripts/simulate_hit.py` | 本地流量命中仿真测试工具（支持 4 阶段流水线、严格段落/FINAL 解析与 LRU 缓存） |
 | `scripts/verify_mirrors.py` | 独立镜像与预发布校验工具（含必填元数据校验、包签名重算与 CDN 有限重试） |
-| `scripts/verify_private_lcf.py` | 独立本地脱敏私人 `.lcf` 验收工具（多阶段仿真、本地抢占拦截、插件未验证标记、路径零泄露） |
+| `scripts/verify_private_lcf.py` | 独立本地脱敏私人 `.lcf` 验收工具（URL 白名单、段落结构、FINAL 定位、多阶段仿真、本地抢占拦截、插件未验证标记、路径与规则名零泄露） |
 | `.github/workflows/sync-and-build.yml` | GitHub Actions 自动化流水线（发布前本地强门禁 + 发布后 CDN 监控告警） |
 | `diagnostics/loon-rules-diagnostic.js` | Loon 原生诊断脚本（精确标注 HTTP 状态与能力边界，报告可见） |
 | `diagnostics/LoonRules-Diagnostic.lpx` | Loon 诊断插件声明文件（19 规则集配置） |
 | `diagnostics/services.yml` | 诊断探针服务元数据（12 快速 / 4 完整项） |
 | `tests/test_diagnostic.js` | 诊断插件 Node.js 离线全量测试（18 项测试） |
-| `tests/fixtures/sample_order_19.fixture` | 公开、脱敏、策略中立的 19 类规则顺序测试夹具 |
+| `tests/fixtures/sample_order_19.fixture` | 公开、脱敏、策略中立、符合 Loon 原生段落结构的 19 类规则顺序测试夹具 |
 | `E:\Document\ChatGPT\Loon-Migration\` | 外部独立审查、交付配置与报告专属目录 |
 
 ---
 
 ## 最近一次修改
 
-* `scripts/verify_private_lcf.py` & `scripts/simulate_hit.py`：升级多阶段仿真模型，支持检测本地 `[Rule]` 抢占（如 `DOMAIN,drive.google.com,DIRECT`）；检查 `FINAL` 兜底规则；检测活跃第三方插件并标注 `UNVERIFIED`，禁止给予“完全通过”；错误输出路径与异常完全脱敏。
-* `scripts/verify_mirrors.py`：将 `diagnostic_artifacts` 与 `package_sha256` 设为必填；本地与远端检查均动态重新计算全包签名对比验证；为远端 CDN 检查增加有限重试与明确超时输出。
-* `scripts/test_rules.py`：新增 `test_42` 专项测试 `verify_private_lcf.py` 的本地抢占、插件未验证与路径脱敏行为；在 `test_40` 中补齐缺诊断元数据、缺包签名、本地全零签名 4 项故障注入测试（测试总数升至 42 项）。
-* `scripts/build.py`：收紧 ACL 权限处理，移除对整个 `dist/` 递归执行且静默忽略失败的 `icacls /reset /T`，仅在暂存目录上重置并严格检查返回码。
-* `PROJECT_STATE.md`：同步最新修复数据与提交状态。
+* `scripts/simulate_hit.py`：移除 `remote_order` 在零引用时的默认回退；精准捕获 `remote_entries`（包含启用状态与 URL）；严格区分 `[Rule]` 内外的 FINAL，检测错段（`final_wrong_section`）、重复计数与是否为末尾规则。
+* `scripts/verify_private_lcf.py`：增加 `validate_ruleset_url` 强校验（限 GitHub Raw 与 jsDelivr 官方仓库及分支，不回显 URL）；增加 `safe_ruleset_name` 对未知规则名进行脱敏遮罩；增加对零规则、禁用规则、重复规则、未授权 URL、错段/缺失/重复/非末尾 FINAL 及非标准规则集数量的严格拦截。
+* `tests/fixtures/sample_order_19.fixture`：依照 Loon 官方标准结构，将 `FINAL, PROXY` 修正置于 `[Rule]` 末尾，移出 `[Remote Rule]` 段。
+* `scripts/test_rules.py`：在 `test_42` 中扩充 8 项故障注入断言（零引用、禁用规则、重复规则、伪造 URL 与 URL 零回显、错段 FINAL、重复 FINAL、FINAL 后置规则、未知规则名脱敏遮罩）；全量 42 项 Python 规则测试通过。
+* `PROJECT_STATE.md`：同步最新修复数据与交接状态。
 
 ---
 
 ## 验证状态
 
 ### 已验证
-- [x] **干净克隆 Python 单元测试（42/42）**：全量 42 项测试通过（`python -B -m unittest scripts.test_rules`，OK，0 fail，0 skip）。
-- [x] **Node.js 诊断测试（18/18）**：全量 18 项通过（`node --test tests/test_diagnostic.js`，1.7s，0 fail）。
+- [x] **干净克隆 Python 单元测试（42/42）**：全量 42 项测试通过（`python -B -m unittest scripts.test_rules`，Ran 42 tests in ~177s, OK, 0 fail, 0 skip）。
+- [x] **Node.js 诊断测试（18/18）**：全量 18 项通过（`node --test tests/test_diagnostic.js`，1.5s，0 fail）。
 - [x] **预发布本地完整性强门禁**：`python scripts/verify_mirrors.py --pre-release` 严格校验 19 个规则集策略中立、条数、SHA256、必填诊断元数据及全包签名重算自校验，退出码 0。
+- [x] **验收器假通过漏洞 8 类故障注入实测**：零引用、禁用规则、重复引用、伪造 URL、错段 FINAL、重复 FINAL、FINAL 后追加规则、未知规则名遮罩全部触发拦截，退出码 1，无任何私密数据泄漏。
 - [x] **镜像与交付物 12 类故障注入实测**：覆盖网络故障、404、规则集数量不符、正文篡改、诊断脚本篡改、元数据单项篡改、远端签名篡改、缺诊断元数据、缺包签名、本地缺元数据、本地全零包签名等，100% 触发校验失败并以退出码 1 退出。
-- [x] **本地私人配置验收与本地规则抢占拦截**：测试验证公开夹具加入 `DOMAIN,drive.google.com,DIRECT` 能够精准触发 `[ERR_LOCAL_PREEMPTION]` 并失败退出；加入第三方插件触发 `Plugin Injected Rules: UNVERIFIED` 并禁止通过；缺文件仅输出通用错误代码且不泄露路径。
-- [x] **真实分支主备源一致性验证**：`feature/expand-rulesets-v2` 分支经 Fastly PURGE 刷新，GitHub Raw 与 jsDelivr CDN 均已同步至版本 `5d76a6200a78`，19/19 规则及诊断产物实测完全通过。
+- [x] **本地抢占、插件未验证与缺文件行为**：完整多阶段仿真引擎精准捕获本地规则抢占，对活跃第三方插件明确标记 `UNVERIFIED`，文件不存在时显式报错且无路径泄漏。
+- [x] **真实分支主备源一致性验证**：`feature/expand-rulesets-v2` 分支在 GitHub Raw 与 jsDelivr CDN 均已同步至版本 `5d76a6200a78`，19/19 规则及诊断产物实测完全通过。
 - [x] **原开发工作区 dist/ 权限与现场确认**：ACL 继承正常，工作区 22 个成品文件完整有效。
 - [x] **双模式真实短报告生成**：真实快速模式（4 规则/12 服务，17 行）与真实完整模式（19 规则/16 服务/含谨慎说明，25 行）已脱敏验证输出。
 
@@ -147,11 +152,11 @@
 
 ## 已知问题 / 风险
 
-1. **当前手机配置顺序待修**：最新手机导出配置中 YouTube 仍位于 Google 之后，Lan 仍位于 China-GeoIP 之后；待由 ChatGPT Work 在装配唯一交付配置时予以修正。
-2. **分支引用临时性**：当前诊断插件和测试引用的是 `feature/expand-rulesets-v2` 分支地址。PR #2 合并至 `main` 后，需统一切回 `main` 分支地址并再次验证主备源。
-3. **iOS APNs 系统绕行**：若用户未在 Loon 设置中开启“包含 APNS”或连接走非 TUN 栈，TCP 5223 不经过 Loon 代理（属于 iOS 系统机制，需在文档中持续向用户提示）。
-4. **诊断插件仅能反映探针连通性**：无法探测未知的动态 App CDN，真机若遇分流异常仍需依赖脱敏请求记录核验。
-5. **Loon 真机大规则集性能需观测**：`China-GeoIP.lsr` 包含 19,209 条 CIDR 规则，真机加载耗时需在导入单文件后初次观察。
+1. **私人配置验收器假通过漏洞**：已全面修复并由 `test_42` 12 种回归场景覆盖，零远程引用、错误发布 URL、错段/重复/缺失 FINAL 均已被严格拦截，未知规则名已全脱敏。
+2. **当前手机配置顺序待修**：YouTube 在 Google 之后、Lan 在 China-GeoIP 之后；由 ChatGPT Work 在装配最终单文件时修正。
+3. **插件边界**：当前配置有 36 个启用插件，静态工具只标记其规则注入为未验证，不能声称插件已通过，也不应默认要求用户为全部插件抓包。
+4. **分支引用临时性**：插件和规则仍引用 `feature/expand-rulesets-v2`；PR 合并后需切到 `main` 并再次验证主备源。
+5. **真机边界**：诊断探针无法代替 APNs TCP 5223、Telegram 蜂窝锁屏推送、HomeKit、Apple Watch、CloudKit 或 19,209 条 CIDR 在 Loon 真机的加载测试。
 
 ---
 
@@ -166,15 +171,17 @@
 7. **Windows NTFS 下严禁使用 tempfile.mkdtemp 充当发布产物暂存目录**：`mkdtemp` 默认设置私有 DACL 阻断继承，会导致跨用户（如 Codex/ChatGPT 沙箱账户）读取被拒绝报空目录或删除假象；必须使用标准目录创建并确保 ACL 继承。
 8. **公开 CI 测试严禁引用本地私密路径**：私密路径缺失会导致测试静默跳过而形成虚假安全感；公开测试只测公开夹具，私密测试使用专用工具显式传参并强制校验存在性。
 9. **私人配置验收不能仅比对远程规则顺序**：必须运行完整多阶段仿真拦截本地高优先级抢占，且对第三方插件规则标记未验证，禁止给出虚假全通结论。
+10. **私人配置验收器严禁在零引用时静默回退默认规则**：必须真实反映文件内容，缺规则、禁用规则或重复引用必须显式报错拦截。
+11. **远程规则 URL 必须强校验主机与路径白名单**：仅允许官方仓库与合法发布分支，且报错时严禁回显私有 URL 或私密规则名。
+12. **Loon 原生配置中 FINAL 必须严格且仅有一条位于 [Rule] 段末尾**：严禁将 FINAL 置于 [Remote Rule] 或其他段落，也严禁在 FINAL 后继续声明规则。
 
 ---
 
 ## 下一步
 
-1. 提交并推送到 GitHub PR #2。
-2. 交付 ChatGPT Work 复核最新提交与镜像状态。
-3. 由 ChatGPT Work 基于最新手机导出配置装配修正唯一私人 `.lcf`，交付用户导入。
-4. 用户在真实网络环境中进行 Loon 真机确认。
+1. ChatGPT Work 复核最新提交并装配唯一合规私人 `.lcf` 文件（调整 YouTube/Lan 顺序并保持用户所有私人设置）。
+2. PR #2 合并至 `main`。
+3. 校验 `main` 主备发布源并由用户在手机 Loon 客户端导入进行真机实测。
 
 ---
 
@@ -190,11 +197,6 @@
 
 ## 最后更新
 
-- **时间**：2026-09-29
-- **执行者**：Antigravity (Gemini)
-- **本轮工作**：全面响应并闭环复核阻断项：
-  1. 升级 `verify_private_lcf.py` 为多阶段仿真引擎，增加本地规则抢占检测、FINAL 校验与未验证插件标记，错误输出路径完全脱敏；
-  2. 强化清单元数据与全包签名动态重算自校验，在 `verify_mirrors.py` 与 `test_rules.py` 中补充 4 项故障注入，彻底消除假通过隐患；
-  3. 为 `verify_mirrors.py` 增加 CDN 传播有限重试与明确超时输出，经 Fastly PURGE 刷新，分支主备双源均已同步至版本 `5d76a6200a78`；
-  4. 收紧构建器 ACL 权限处理，移除宽泛递归静默重置，仅针对 staging 容器并在失败时显式报错；
-  5. 离线全量单元测试扩充至 42/42 通过，Node 诊断测试 18/18 通过。
+- 时间：2026-09-29
+- 执行者：Gemini / Antigravity
+- 本轮工作：封堵配置验收器三大假通过漏洞（零远程引用防静默回退、URL 主机与仓库分支白名单校验、Loon 原生语法段落与 FINAL 单条末尾定位校验、未知规则名脱敏保护）；修正公开测试夹具结构；在 `test_42` 中新增 8 类故障注入回归测试；本地 42/42、18/18 及分支双源校验全部通过。

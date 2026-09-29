@@ -110,10 +110,13 @@ def load_lcf_pipeline(lcf_path):
     """
     local_rules = []
     remote_rulesets = []
+    remote_entries = []
     final_policy = "DIRECT"
     has_final = False
+    final_count = 0
     final_line = None
     final_is_last = True
+    final_wrong_section = []
     active_plugins = []
 
     if not os.path.isfile(lcf_path):
@@ -129,44 +132,70 @@ def load_lcf_pipeline(lcf_path):
                 current_section = clean[1:-1].strip()
                 continue
 
-            # Skip explicitly disabled entries (e.g. enabled=false or enable=false)
+            # Check if entry is explicitly disabled (e.g. enabled=false or enable=false)
             clean_lower = clean.lower()
-            if re.search(r'\benabled?\s*=\s*false\b', clean_lower):
-                continue
+            is_disabled = bool(re.search(r'\benabled?\s*=\s*false\b', clean_lower))
 
-            if current_section in ("Rule", "Remote Rule"):
+            # Check if this line is a FINAL rule
+            clean_upper = clean.upper()
+            is_final_rule = clean_upper.startswith("FINAL,") or clean_upper == "FINAL"
+
+            if current_section == "Rule":
                 p = parse_rule_line(clean, line_idx)
                 if p:
                     if p["type"] == "FINAL":
-                        has_final = True
-                        final_line = line_idx
-                        final_policy = p["value"] or "DIRECT"
-                    elif current_section == "Rule":
-                        if has_final:
+                        final_count += 1
+                        if not is_disabled:
+                            has_final = True
+                            final_line = line_idx
+                            final_policy = p["value"] or "DIRECT"
+                    else:
+                        if final_count > 0:
                             final_is_last = False
-                        local_rules.append({
-                            "type": p["type"],
-                            "value": p["value"],
-                            "raw": f"{p['type']},{p['value']}",
-                            "line": line_idx
-                        })
-            if current_section == "Remote Rule":
-                # e.g.: https://raw.githubusercontent.com/.../dist/AI-Overseas.lsr, policy=..., tag=AI-Overseas
-                m = re.search(r'([a-zA-Z0-9_\-]+\.lsr)', clean)
-                if m:
-                    rname = m.group(1)
-                    if rname not in remote_rulesets:
-                        remote_rulesets.append(rname)
+                        if not is_disabled:
+                            local_rules.append({
+                                "type": p["type"],
+                                "value": p["value"],
+                                "raw": f"{p['type']},{p['value']}",
+                                "line": line_idx
+                            })
+            elif current_section == "Remote Rule":
+                if is_final_rule:
+                    final_wrong_section.append(("Remote Rule", line_idx))
+                    continue
+                # Extract URL token and .lsr filename
+                url_token = clean.split(",")[0].strip()
+                m = re.search(r'([a-zA-Z0-9_\-]+\.lsr)', url_token)
+                rname = m.group(1) if m else None
+                remote_entries.append({
+                    "name": rname,
+                    "url": url_token,
+                    "enabled": not is_disabled,
+                    "line": line_idx,
+                    "raw": clean
+                })
+                if rname and not is_disabled:
+                    remote_rulesets.append(rname)
             elif current_section == "Plugin":
-                active_plugins.append(clean)
+                if is_final_rule:
+                    final_wrong_section.append(("Plugin", line_idx))
+                    continue
+                if not is_disabled:
+                    active_plugins.append(clean)
+            else:
+                if is_final_rule:
+                    final_wrong_section.append((current_section or "Unknown", line_idx))
 
     return {
         "local_rules": local_rules,
-        "remote_order": remote_rulesets or DEFAULT_REMOTE_RULE_ORDER,
+        "remote_order": remote_rulesets,  # Strictly parsed from file; NO silent fallback to default
+        "remote_entries": remote_entries,
         "final_policy": final_policy,
         "has_final": has_final,
+        "final_count": final_count,
         "final_line": final_line,
-        "final_is_last": final_is_last,
+        "final_is_last": final_is_last and (final_count == 1),
+        "final_wrong_section": final_wrong_section,
         "active_plugins": active_plugins,
         "active_plugin_count": len(active_plugins)
     }

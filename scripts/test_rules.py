@@ -11,6 +11,7 @@ License: GPL-2.0
 
 import os
 import sys
+import re
 import unittest
 import tempfile
 import shutil
@@ -1659,6 +1660,109 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertFalse(res_plugin, "verify_private_lcf must not grant full pass when plugins are active!")
         self.assertIn("Plugin Injected Rules: UNVERIFIED", buf.getvalue())
         self.assertIn("UNVERIFIED_PLUGINS", buf.getvalue())
+
+        # 5. Fault injection: Zero remote rules in [Remote Rule] section
+        zero_remote_content = re.sub(r'\[Remote Rule\].*', '[Remote Rule]\n# No remote rules here', content, flags=re.DOTALL)
+        zero_remote_file = os.path.join(TEST_TMP_DIR, "zero_remote.fixture")
+        with open(zero_remote_file, "w", encoding="utf-8") as f:
+            f.write(zero_remote_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_zero = verify_private_lcf.verify_private_lcf(zero_remote_file)
+        self.assertFalse(res_zero, "verify_private_lcf must fail when zero remote rulesets are present!")
+        out_zero = buf.getvalue()
+        self.assertIn("[ERR_ZERO_RULESETS]", out_zero)
+        self.assertIn("[ERR_MISSING_RULESET]", out_zero)
+        self.assertIn("[ERR_RULESET_COUNT]", out_zero)
+
+        # 6. Fault injection: Disabled remote ruleset
+        disabled_content = content.replace("tag=YouTube, enabled=true", "tag=YouTube, enabled=false")
+        disabled_file = os.path.join(TEST_TMP_DIR, "disabled_ruleset.fixture")
+        with open(disabled_file, "w", encoding="utf-8") as f:
+            f.write(disabled_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_disabled = verify_private_lcf.verify_private_lcf(disabled_file)
+        self.assertFalse(res_disabled, "verify_private_lcf must fail when a remote ruleset is disabled!")
+        self.assertIn("[ERR_DISABLED_RULESET]", buf.getvalue())
+
+        # 7. Fault injection: Duplicate remote ruleset
+        dup_content = content.replace("tag=YouTube, enabled=true", "tag=YouTube, enabled=true\nhttps://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr, policy=PROXY, tag=YouTube-Dup, enabled=true")
+        dup_file = os.path.join(TEST_TMP_DIR, "dup_ruleset.fixture")
+        with open(dup_file, "w", encoding="utf-8") as f:
+            f.write(dup_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_dup = verify_private_lcf.verify_private_lcf(dup_file)
+        self.assertFalse(res_dup, "verify_private_lcf must fail when duplicate remote rulesets exist!")
+        self.assertIn("[ERR_DUPLICATE_RULESET]", buf.getvalue())
+
+        # 8. Fault injection: Unauthorized / fake URL host (e.g. example.invalid)
+        fake_url_content = content.replace(
+            "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/",
+            "https://example.invalid/fake/"
+        )
+        fake_url_file = os.path.join(TEST_TMP_DIR, "fake_url.fixture")
+        with open(fake_url_file, "w", encoding="utf-8") as f:
+            f.write(fake_url_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_fake_url = verify_private_lcf.verify_private_lcf(fake_url_file)
+        self.assertFalse(res_fake_url, "verify_private_lcf must fail when remote rulesets point to unauthorized URLs!")
+        out_fake = buf.getvalue()
+        self.assertIn("[ERR_INVALID_URL]", out_fake)
+        self.assertNotIn("example.invalid", out_fake, "Unauthorized URL must NOT be echoed in output")
+
+        # 9. Fault injection: Misplaced FINAL in [Remote Rule] section
+        wrong_final_content = content.replace("FINAL, PROXY\n", "") + "\nFINAL, PROXY\n"
+        wrong_final_file = os.path.join(TEST_TMP_DIR, "wrong_final.fixture")
+        with open(wrong_final_file, "w", encoding="utf-8") as f:
+            f.write(wrong_final_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_wrong_final = verify_private_lcf.verify_private_lcf(wrong_final_file)
+        self.assertFalse(res_wrong_final, "verify_private_lcf must fail when FINAL is misplaced in [Remote Rule]!")
+        out_wrong_final = buf.getvalue()
+        self.assertIn("[ERR_FINAL_WRONG_SECTION]", out_wrong_final)
+        self.assertIn("[ERR_FINAL_MISSING]", out_wrong_final)
+
+        # 10. Fault injection: Duplicate FINAL in [Rule] section
+        dup_final_content = content.replace("FINAL, PROXY", "FINAL, PROXY\nFINAL, DIRECT")
+        dup_final_file = os.path.join(TEST_TMP_DIR, "dup_final.fixture")
+        with open(dup_final_file, "w", encoding="utf-8") as f:
+            f.write(dup_final_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_dup_final = verify_private_lcf.verify_private_lcf(dup_final_file)
+        self.assertFalse(res_dup_final, "verify_private_lcf must fail when multiple FINAL rules exist!")
+        self.assertIn("[ERR_FINAL_DUPLICATE]", buf.getvalue())
+
+        # 11. Fault injection: Rule positioned after FINAL in [Rule] section
+        after_final_content = content.replace("FINAL, PROXY", "FINAL, PROXY\nDOMAIN,after-final.example.com,DIRECT")
+        after_final_file = os.path.join(TEST_TMP_DIR, "after_final.fixture")
+        with open(after_final_file, "w", encoding="utf-8") as f:
+            f.write(after_final_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_after_final = verify_private_lcf.verify_private_lcf(after_final_file)
+        self.assertFalse(res_after_final, "verify_private_lcf must fail when a rule appears after FINAL in [Rule]!")
+        self.assertIn("[ERR_FINAL_NOT_LAST]", buf.getvalue())
+
+        # 12. Unexpected ruleset filename sanitization: name must not leak into output
+        unexpected_content = content.replace(
+            "[Remote Rule]\n",
+            "[Remote Rule]\nhttps://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/SecretRuleset_User123.lsr, policy=PROXY, tag=Secret, enabled=true\n"
+        )
+        unexpected_file = os.path.join(TEST_TMP_DIR, "unexpected.fixture")
+        with open(unexpected_file, "w", encoding="utf-8") as f:
+            f.write(unexpected_content)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_unexpected = verify_private_lcf.verify_private_lcf(unexpected_file)
+        self.assertFalse(res_unexpected, "verify_private_lcf must fail when unexpected rulesets exist!")
+        out_unexp = buf.getvalue()
+        self.assertIn("[ERR_UNEXPECTED_RULESET]", out_unexp)
+        self.assertNotIn("SecretRuleset_User123", out_unexp, "Non-standard ruleset name must NOT be leaked")
 
     @classmethod
     def tearDownClass(cls):
