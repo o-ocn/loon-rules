@@ -396,6 +396,21 @@ def verify_private_lcf(lcf_path: str, allow_unverified_plugins: bool = False) ->
     else:
         print("  [PASS] FINAL rule: Present and positioned at end of [Rule] section")
 
+    # 8b. Check [Mitm] ca-p12 Base64 Validity (if present)
+    import base64
+    try:
+        with open(lcf_path, "r", encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped.startswith("ca-p12 ="):
+                    p12_str = stripped.split("ca-p12 =", 1)[1].strip()
+                    try:
+                        base64.b64decode(p12_str, validate=True)
+                    except Exception:
+                        errors.append("[ERR_INVALID_P12_BASE64] Invalid or corrupted PKCS#12 base64 certificate string in [Mitm]")
+    except Exception:
+        pass
+
     # 9. Plugin Rule Verification Status
     print("\n--- Plugin Injected Rules Status ---")
     if active_plugin_count > 0:
