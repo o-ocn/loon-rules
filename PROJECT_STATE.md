@@ -20,7 +20,7 @@
 ## 当前状态
 
 * **当前分支**：`feature/expand-rulesets-v2`（对应 GitHub PR #2，待合并至 `main`）。
-* **最新提交**：`66da96f`（已成功推送到远程分支 `origin/feature/expand-rulesets-v2`）。
+* **最新提交**：`9ad3552`（已成功推送到远程分支 `origin/feature/expand-rulesets-v2`）。
 * **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条 IPv4/IPv6 规则），彻底闭环抖音事故 IP（`119.147.195.212` 属于 `119.144.0.0/14`）及中国电信 IPv6（`240e:97c:2f:1::1` 属于 `240e::/20`）漏入 FINAL 的安全漏洞。
