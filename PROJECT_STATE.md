@@ -20,7 +20,7 @@
 ## 当前状态
 
 * **当前分支**：`feature/expand-rulesets-v2`（对应 GitHub PR #2，待合并至 `main`）。
-* **本地已提交 HEAD**：`10492a2`（已全面响应并修复 `fcf35a1` 审核提出的 5 大阻断项）。
+* **本地已提交 HEAD**：`cec4dd4`（已全面响应并修复 `fcf35a1` 审核提出的 5 大阻断项，含 manifest 跨平台 LF 哈希一致性保障）。
 * **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
@@ -123,13 +123,13 @@
 ---
 
 ## 最近一次修改
-
-* `scripts/build.py`：移除 `tempfile.mkdtemp`，改用 `.dist_staging`；在 `manifest.json` 中增加 `diagnostic_artifacts` 哈希记录；在目录切换后调用 `icacls` 重置 Windows 权限继承。
+ 
+* `scripts/build.py` & `scripts/verify_mirrors.py`：对诊断脚本文件引入跨平台换行符归一化（`\r\n` -> `\n`）计算哈希，消除 Windows/Linux 平台差异导致的哈希校验分歧；移除 `tempfile.mkdtemp`，改用 `.dist_staging`，并在目录切换后调用 `icacls` 重置 Windows 权限继承。
 * `scripts/verify_mirrors.py`：升级发布前与发布后校验，增加诊断产物 SHA256 强对比及远端 manifest 逐条元数据比对。
 * `scripts/test_rules.py`：将 `test_41` 严格限定于公开夹具；在 `test_40` 中新增诊断产物篡改、清单元数据篡改及包签名篡改 3 类故障注入测试。
 * `scripts/verify_private_lcf.py`：新增独立私人配置验收工具，提供严格参数检查与脱敏顺序判定。
 * `.github/workflows/sync-and-build.yml`：优化双重门禁注释与步骤命名，准确表述发布前拦截与发布后告警职责。
-* `dist/diagnostics/manifest.json`：重新构建生成，包含诊断产物确切哈希与新包签名。
+* `dist/diagnostics/manifest.json`：重新构建生成，包含归一化后的诊断 JS 文件 SHA256（`fb01790c41d8`）与新包签名（`5d76a6200a78`）。
 * `PROJECT_STATE.md`：更新最新实测数据与状态记录。
 
 ---
