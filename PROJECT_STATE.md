@@ -147,12 +147,16 @@
 * `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `1688.com`（阿里巴巴 1688 批发 API/网关）、`blank_1688.com`（1688 App 内部 WebView 容器重置页面）及 `doupay.com`（抖音支付火山引擎 DCDN 网关），彻底阻断电商与支付关键流量落入 FINAL；并在 `China-Direct.list` 中补充字节跳动共享基础设施（`snssdk.com`, `bytedance.com`, `byteimg.com`, `ibytedtos.com`）与未来 TikTok 隔离的边界防护注释；
 * `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.1688.com`, `*.doupay.com`, `*.idlefish.com` 阿里极速 DNS（223.5.5.5）分流解析，并添加共享底层架构注释；
 * `RULE_DESIGN.md`：建立《跨国孪生业务与共享基础设施隔离准则》，明确出海孪生业务（抖音/TikTok、微信/WeChat）的独占域名与共享域名划分红线，以及 GeoIP 与 DNS 分流联动的双重保险准则；
-* `shared_domains.yml` + `scripts/check_conflicts.py`：建立跨国孪生业务（字节跳动 Douyin/TikTok、腾讯 WeChat/微信、苹果生态、阿里生态）共享基础设施与防碰撞检测器，自动化检测海外独占域名泄露与跨策略组未授权碰撞；并在 `.github/workflows/sync-and-build.yml` 中集成 `--strict` 检查；
-* `RULE_DESIGN.md`：确立《自定义规则准入与来源追踪规范》，制定“真实日志捕获 -> 三维评估 -> 分流与 DNS 协同 -> 单测防碰撞”四步法，并规范元数据（Target / Source / Reason）注释标准；
+* `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：新增 `*.mzstatic.com = server:223.5.5.5`（Apple App Store 静态多媒体资源 CDN 区域优化），附带清晰架构隔离注释，确保图片就近调度至国内电信/联通边缘节点，解决因境外 DoH 调度至美国西海岸机房引发的直连加载超时；严守红线，绝不对 `*.apple.com` 或 `*.icloud.com` 泛域名进行解析劫持；
+* `shared_domains.yml` + `scripts/check_conflicts.py`：建立跨国孪生业务（字节跳动 Douyin/TikTok、腾讯 WeChat/微信、苹果生态、阿里生态）共享基础设施与防碰撞检测器，自动化检测海外独占域名泄露与跨策略组未授权碰撞；新增 `forbidden_domestic_dns_domains`（`apple.com`, `icloud.com`）红线检测，严防核心系统与身份认证域名被误指至国内 DNS；并在 `.github/workflows/sync-and-build.yml` 中集成 `--strict` 检查；
+* `RULE_DESIGN.md`：
+  - 确立《跨国孪生业务与共享基础设施隔离准则》；
+  - 确立《自定义规则准入与来源追踪规范》，制定“真实日志捕获 -> 三维评估 -> 分流与 DNS 协同 -> 单测防碰撞”四步法，并规范元数据（Target / Source / Reason）注释标准；
+  - 建立《规则层与 DNS 层的两阶段解耦准则 (Two-Stage Resolution & Regional CDN Architecture)》，明确“DIRECT 流量亦需考量 DNS 区域调度”的核心理念，并制定 Apple 生态 5 层（静态 CDN、商店 API、系统安全、核心 iCloud、特种流媒体）精细化分层与安全边界表；
 * `rules/custom/China-Direct.list`：补齐 `1688.com`, `blank_1688.com`, `doupay.com` 的捕获时间与技术原因来源注释；
 * `scripts/verify_mirrors.py` + `.github/workflows/sync-and-build.yml`：
   - 核心改进：引入 `--soft-cdn` 参数及主动调用 jsDelivr Purge API 机制。将 GitHub Raw 作为唯一的强阻断门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning，彻底解决推送后因 CDN 边缘缓存时间差导致的假红叉问题；
-* `scripts/test_rules.py`：新增 `test_43_shared_domain_and_conflict_checker`，涵盖跨生态防泄漏检测与 2 类故障注入（独占域名泄露到直连、独占域名泄露到国内 DNS），单测规模扩充至 43 项全绿；
+* `scripts/test_rules.py`：新增 `test_43_shared_domain_and_conflict_checker`，涵盖跨生态防泄漏检测与 3 类核心故障注入（独占域名泄露到直连、独占域名泄露到国内 DNS、Apple 红线域名违规指派国内 DNS），单测规模扩充至 43 项全绿；
 * `dist/diagnostics/manifest.json`：总规则数稳定在 **21,105 条**，构建产物 revision 更新至 `7b2e988e4805`；
 * 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
 
@@ -232,5 +236,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（落实 ChatGPT 审查建议：防撞车体系、来源追踪规范、soft-cdn 门禁与 CI 全链路优化）
-- 本轮工作：1) 建立跨国孪生业务防撞车体系：新增 `shared_domains.yml` 与 `scripts/check_conflicts.py`，覆盖字节跳动（抖音 vs TikTok）、腾讯（微信 vs 国际 WeChat）、苹果生态与阿里生态共享基础设施，在 GitHub Actions 中集成 `--strict` 门禁，并在 `scripts/test_rules.py` 中新增 `test_43` 单测与故障注入；2) 落地规则准入与来源追踪规范：在 `RULE_DESIGN.md` 中确立四步决策法与来源元数据标准，并为 `China-Direct.list` 新增规则补齐捕获时间与技术原因来源注释；3) 彻底消除 CI 假红叉：在 `scripts/verify_mirrors.py` 与 `.github/workflows/sync-and-build.yml` 中引入 `--soft-cdn` 及主动调用 jsDelivr Purge API，将 GitHub Raw 作为唯一的强阻断硬门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning；4) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及脱敏私人配置验收工具 100% 验证通过。
+- 执行者：Gemini / Antigravity（落实 ChatGPT 审查建议：App Store CDN 区域 DNS 优化、两阶段解耦准则与防撞车红线防护）
+- 本轮工作：1) 落地 App Store 静态 CDN 区域 DNS 极速分流：在 `plugins/Loon-China-DNS.lpx` 中新增 `*.mzstatic.com = server:223.5.5.5`，解决因境外 DoH 调度至美西 Apple 节点导致直连加载超时空白的问题；2) 确立 Apple 体系 5 层精细化分层与红线隔离标准：在 `RULE_DESIGN.md` 中建立《规则层与 DNS 层的两阶段解耦准则》，严禁将 `*.apple.com` 与 `*.icloud.com` 泛解析至国内 DNS；3) 升级防撞车检测器：在 `shared_domains.yml` 与 `scripts/check_conflicts.py` 中引入 `forbidden_domestic_dns_domains`（`apple.com`, `icloud.com`）红线检测，并在 `scripts/test_rules.py` 的 `test_43` 中加入故障注入验证；4) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及脱敏私人配置验收工具 100% 验证通过。

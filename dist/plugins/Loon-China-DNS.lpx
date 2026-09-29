@@ -1,13 +1,18 @@
-#!name = 国内大厂 DNS 极速分流
-#!desc = 为国内大厂（字节/阿里/腾讯/B站/京东/天气等）与 .cn 域名提供阿里/腾讯极速 DNS 解析，防止全走海外 DoH 导致 CDN 跨洋调度漂移卡顿
+#!name = 国内大厂与区域 CDN 极速分流
+#!desc = 为国内大厂（字节/阿里/腾讯/B站等）、.cn 域名及 Apple 静态资源 CDN（mzstatic）提供阿里/腾讯极速 DNS 解析，防止全走海外 DoH 导致 CDN 跨洋调度漂移卡顿
 #!author = o-ocn
 #!homepage = https://github.com/o-ocn/loon-rules
 #!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Speedtest.png
-#!date = 2026-09-29
+#!date = 2026-09-30
 
 [Host]
 # 顶级域名
 *.cn = server:223.5.5.5
+
+# Apple 静态资源与 App Store CDN（应用图标、详情页轮播大图、预览截图，确保就近调度至国内边缘节点）
+# [架构隔离说明] 仅针对静态多媒体资产域名 mzstatic.com 进行国内极速解析；
+# 严禁将 *.apple.com、*.icloud.com 等核心系统与身份认证域名泛指给国内 DNS。
+*.mzstatic.com = server:223.5.5.5
 
 # 字节跳动 / 抖音全系（注：bytedance.com / snssdk.com 属国内核心基建，保障国内秒开与就近 CDN；未来若启用海外 TikTok 需保留其海外 CDN 走海外解析）
 *.douyin.com = server:223.5.5.5

@@ -73,6 +73,9 @@ ecosystems:
       - apple.com
       - icloud.com
       - mzstatic.com
+    forbidden_domestic_dns_domains:
+      - apple.com
+      - icloud.com
     domestic_rulesets:
       - Apple-Direct.lsr
       - Apple-Push.lsr

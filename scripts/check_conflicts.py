@@ -118,6 +118,17 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
                         f"[{eco_name}] Overseas-exclusive domain '{o_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"
                     )
 
+    # Check 2b: Verify DNS plugin does not route forbidden infrastructure domains to domestic DNS
+    for eco_name, eco in ecosystems.items():
+        forbidden_dns = eco.get("forbidden_domestic_dns_domains", [])
+        for f_dom in forbidden_dns:
+            for host in dns_hosts:
+                clean_h = host.lstrip("*.")
+                if clean_h == f_dom or clean_h.endswith("." + f_dom):
+                    errors.append(
+                        f"[{eco_name}] Red line violation: Forbidden domain '{f_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"
+                    )
+
     # Check 3: Audit shared infrastructure domains placement across Proxy vs Direct
     for eco_name, eco in ecosystems.items():
         shared = eco.get("shared_infrastructure_domains", [])

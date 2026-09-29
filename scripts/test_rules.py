@@ -1911,6 +1911,18 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertFalse(ok_dns, "check_conflicts must detect illegal DNS routing for overseas domains!")
         self.assertTrue(any("tiktok.com" in e for e in err_dns))
 
+        # 4. Fault injection: Red line violation - *.apple.com injected into DNS plugin
+        tmp_dns_apple = os.path.join(TEST_TMP_DIR, "bad_dns_apple.lpx")
+        with open(os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx"), "r", encoding="utf-8") as f:
+            dns_c_apple = f.read()
+        dns_c_apple += "\n*.apple.com = server:223.5.5.5\n"
+        with open(tmp_dns_apple, "w", encoding="utf-8") as f:
+            f.write(dns_c_apple)
+
+        ok_apple_dns, err_apple_dns, _ = check_conflicts.check_conflicts(dns_path=tmp_dns_apple, strict=True)
+        self.assertFalse(ok_apple_dns, "check_conflicts must detect red line violation for forbidden domestic DNS domains!")
+        self.assertTrue(any("apple.com" in e for e in err_apple_dns))
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)

@@ -119,4 +119,32 @@ AI 协作接手本项目时，只允许在以下范围内工作：
 DOMAIN-SUFFIX,example.com
 ```
 
+---
+
+## 规则层与 DNS 层的两阶段解耦准则 (Two-Stage Resolution & Regional CDN Architecture)
+
+代理分流系统分为两个独立而协同的阶段：
+```
+域名请求 -> [阶段一: DNS 解析] -> 获得 IP -> [阶段二: 规则匹配] -> 发起连接 (DIRECT / PROXY)
+```
+
+### 1. DIRECT 流量亦需考量 DNS 区域调度
+* **误区**：“只要规则命中了 DIRECT，速度就一定会快”。
+* **现实**：如果 DNS 解析阶段给出了不适合当前网络拓扑的 IP，直连反而会发生跨洋绕远。
+  - **真实案例**：App Store 图片与应用静态资源（`apps.mzstatic.com`、`is1-ssl.mzstatic.com`）。
+  - 若使用全局境外 DoH（如 `dns.google`）解析，会被调度至苹果美国西海岸机房（`17.253.83.146`）；直连（DIRECT）跨越太平洋连接美国 IP 会遭受跨境公网拥堵与高丢包，导致 711 KB 图片下载耗时长达 118 秒；
+  - 若由国内极速 DNS（`223.5.5.5`）分流解析，则就近分配国内电信/联通边缘 CDN 节点（`101.28.130.10`、`121.17.254.3`），毫秒级极速秒开。
+
+### 2. Apple 体系的精细化分层与红线隔离
+Apple 生态体系庞大且业务敏感，在分流规则与 DNS 映射中必须严格分层，切忌一刀切：
+
+| 分类 | 典型域名 | 规则层策略 | DNS 层策略 | 设计考量与安全边界 |
+|---|---|---|---|---|
+| **静态 CDN 资产** | `*.mzstatic.com` | `Apple-Direct.lsr` (DIRECT) | 国内极速 DNS (`223.5.5.5`) | 应用图标、截图预览、静态媒体。数据量大、无敏感认证，就近 CDN 秒开 |
+| **商店 API / 元数据** | `apps.apple.com`, `itunes.apple.com` | `Apple-Direct.lsr` (DIRECT) | 默认系统 / DoH 解析 | 承载搜索、跨区账户切换、支付结算，数据量小。不作 DNS 泛绑定以防多区故障 |
+| **系统安全与认证** | `appattest.apple.com`, `ocsp.apple.com` | `Apple-Direct.lsr` (DIRECT) | 默认系统 / DoH 解析 | 硬件验签、证书吊销。严禁篡改 DNS |
+| **核心系统与 iCloud** | `apple.com`, `icloud.com` | `Apple-Direct.lsr` (DIRECT) | **严禁国内 DNS 泛绑定** | 账户安全红线！`check_conflicts.py` 设立硬门禁拦截 |
+| **特种流媒体与测试** | `tv.apple.com`, `testflight.apple.com` | `Apple-Media.lsr`, `TestFlight.lsr` | 对应代理策略 | 区域版权或海外准入，严格走代理出口 |
+
+
 
