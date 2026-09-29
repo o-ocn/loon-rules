@@ -627,7 +627,7 @@ test('12. Entrypoint Watchdog Fires via Simulated Timer Callback and Emits Real 
   assert.strictEqual(scheduledDelay, 56000, 'Full mode watchdog must be scheduled at exactly 56000ms');
 });
 
-test('13. Backup Release Mirror Checks All 19 Rulesets in Full Mode and Reflects Failures in Total State', async () => {
+test('13. Backup Release Mirror Corruption Injection Detection in Full Mode Reflects Failures in Total State', async () => {
   // Test full mode verifying all rulesets from backup mirror
   const fullManifest = Object.assign({}, sampleManifest, {
     rulesets: {
@@ -751,22 +751,22 @@ test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification
 });
 
 test('16. Backup Rulesets Incomplete Verification Due to Deadline Triggers Warning Not Green', async () => {
-  // Build a manifest with 19 rulesets
-  const rulesets19 = {};
-  for (let i = 1; i <= 19; i++) {
-    rulesets19[`Ruleset-${i}.lsr`] = {
+  // Build a manifest with 20 rulesets
+  const rulesets20 = {};
+  for (let i = 1; i <= 20; i++) {
+    rulesets20[`Ruleset-${i}.lsr`] = {
       total_rules: 2,
       revision: sampleRevision,
       sha256: sampleSha256
     };
   }
-  const manifest19 = Object.assign({}, sampleManifest, { rulesets: rulesets19 });
+  const manifest20 = Object.assign({}, sampleManifest, { rulesets: rulesets20 });
 
   const mockClient = createMockHttpClient([
     {
       matches: (url) => url.includes('manifest.json'),
       status: 200,
-      data: JSON.stringify(manifest19)
+      data: JSON.stringify(manifest20)
     },
     {
       matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL),

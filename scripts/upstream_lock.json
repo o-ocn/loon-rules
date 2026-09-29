@@ -25,8 +25,10 @@
   "Discord": {
     "Discord": 29
   },
-  "Gaming": {
-    "Steam": 54,
+  "Steam": {
+    "Steam": 54
+  },
+  "Epic": {
     "Epic": 15
   },
   "GitHub": {
@@ -47,6 +49,8 @@
   "China-Direct": {
     "WeChat": 33,
     "Alibaba": 57,
-    "JingDong": 249
+    "JingDong": 249,
+    "DouYin": 13,
+    "BiliBili": 127
   }
 }

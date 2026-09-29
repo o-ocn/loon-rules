@@ -23,10 +23,13 @@ DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipayobjects.com
 
 # --- Other Mainland Services ---
+# Douyin / ByteDance domestic ecosystem & CDNs
 DOMAIN-SUFFIX,douyin.com
-DOMAIN-SUFFIX,snssdk.com
-DOMAIN-SUFFIX,bilibili.com
-DOMAIN-SUFFIX,bilivideo.com
+DOMAIN-SUFFIX,bytedance.com
+DOMAIN-SUFFIX,byteimg.com
+DOMAIN-SUFFIX,bytedns.net
+DOMAIN-SUFFIX,zijieapi.com
+DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,12306.cn
 DOMAIN-SUFFIX,amap.com
 DOMAIN-SUFFIX,autonavi.com

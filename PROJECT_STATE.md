@@ -20,40 +20,53 @@
 ## 当前状态
 
 * **当前分支**：`feature/expand-rulesets-v2`（对应 GitHub PR #2，尚未合并至 `main`）。
-* **最新提交**：`d7e4212`（在提交 `f8f1144` 基础上增加了 `AGENTS.md` 与交接事实源规范）。
-* **独立复审结论**：ChatGPT Work 使用全新独立克隆 `review-pr2-f8f1144` 完成了对 `f8f1144` 的独立复跑验收：
-  * Node 诊断测试 **17/17 通过**。
-  * Python 规则测试在干净克隆下共 35 项，**1 失败、1 跳过**：失败原因为测试夹具 `tests/fixtures/sample_order_19.lcf` 被根目录 `.gitignore` 全局 `*.lcf` 规则自动忽略，导致未入库提交；跳过为备用镜像网络连通性受环境影响时触发 `skipTest`。
-  * 候选私密 `.lcf` 结构完整，保留既有节点、订阅、策略组与 MitM 结构，19 个唯一自有规则排序无误。
-  * **工作区检查**：当前原工作区 `dist/` 完整且已被 git 跟踪，工作区处于正常干净状态。
-* **验收结果**：PR #2 仍处于复审迭代阶段，尚未合并。待根据审查意见完成夹具入库、Steam/Epic 拆分、镜像门禁与冷启动说明后，再次进行独立验收。
+* **最新提交**：待提交（包含节点 ①：覆盖契约、Douyin 事故回归、Steam/Epic 分立、IPv4/IPv6 检查与干净克隆夹具入库）。
+* **阶段状态**：已完成**节点 ①（覆盖契约与事故回归）**全部工作，等待 ChatGPT Work 独立复核。
+* **工作区检查**：
+  * 已确认此前 `dist/` 显示的未提交删除为单元测试中目录原子切换（`test_29_atomic_directory_switch_and_rollback`）执行过程中的毫秒级暂态，实际文件完整受控。
+  * 全库规则集正式扩充并分立为 **20 个规则集**（共 **1,884 条有效规则**）。
+  * 根目录 `tests/fixtures/sample_order_20.fixture` 已替代被忽略的 `.lcf` 夹具，彻底解决全新克隆下测试失败问题。
+* **测试套件状态**：
+  * Python 单元测试：**38/38 全量通过**（无失败，无跳过，测试耗时 ~1.3s）。
+  * Node.js 诊断逻辑：**17/17 全量通过**（已同步适配 20 规则集）。
 
 ---
 
 ## 已完成事项
 
-- **PR #1 基础底座建设**（已合并至 `main`，commit `9a703b3`）：
-  - 建立 14 个自托管规则集、自动构建流水线 `build.py`、8 大服务边界隔离断言及原生诊断插件。
-- **PR #2 规则扩展与排序优化**（commit `f8f1144`）：
-  - 完成从 14 到 19 规则集扩充：新增 `PayPal.lsr`、`Gaming.lsr`、`GitHub.lsr`、`Lan.lsr`、`China-GeoIP.lsr`，增补 SystemOTA、Siri、AppleID。
-  - 将 `Apple-Push.lsr`（10 条企业规范网段）调整为远端规则优先级 #1。
-  - 修正分流匹配顺序：细分规则在前，宽泛规则在后（`YouTube` 与 `GoogleDrive` 排在 `Google` 前；`Lan` 排在 `China-GeoIP` 前）。
-  - Gaming 规则清洗：通过 `filter_excluded` 剔除 `steamunlocked.net`、`humblebundle.com`、`fanatical.com`、`helpshift.com` 等 4 个非平台专属与盗版域名。
-  - 诊断脚本增加 `$argument` 多分支动态支持（`branch=feature/expand-rulesets-v2`）。
-  - 剔除 APNs“0 延迟、100% 命中 TCP 5223”等绝对化承诺，明确真机测试验收边界。
-  - 彻底清理仓库与文档中让用户手动逆序导入 19 次的历史操作指引。
-- **跨 AI 交接机制建立**（commit `d7e4212`）：
-  - 新增 `AGENTS.md` 规范跨 Agent 协作流程与更新准则。
-  - 初始化根目录 `PROJECT_STATE.md` 作为全项目唯一事实源。
+### 1. PR #1 阶段（已合并至 main，commit 9a703b3）
+- 建立初始 14 个自托管规则集、自动构建流水线 `build.py`、8 大服务边界隔离断言及原生诊断插件。
+
+### 2. PR #2 阶段（当前开发中，节点 ① 已闭环）
+- **dist 状态与暂态核实**：确认为原子目录切换测试中的瞬时状态，实际 `dist/` 完整且零损坏。
+- **全 ruleset 覆盖矩阵与 Steam/Epic 分立（20 规则集体系）**：
+  - 响应审查意见，将 `Gaming.lsr` 重新拆分为独立的 `Steam.lsr`（51 条）与 `Epic.lsr`（14 条），恢复用户在客户端对两款平台独立选择出口策略的能力。
+  - 保留已验证的第三方域名清洗（排除 `steamunlocked.net`、`humblebundle.com`、`fanatical.com` 与 `helpshift.com`）。
+- **Douyin 真实事故定位与修复**：
+  - **根因确认**：此前 `China-Direct` 在 `sources.yml` 声明了 Douyin/Bilibili，但上游仅配置了 WeChat、Alibaba、JingDong，Custom 仅补了 `douyin.com` 和 `snssdk.com`，导致 Douyin 核心图片与 CDN 域名（`douyinpic.com`、`douyincdn.com`、`douyinstatic.com` 等）未命中任何规则而落入 `FINAL`。
+  - **修复落地**：在 `sources.yml` 为 `China-Direct` 正式引入官方成熟上游 `DouYin`（13 条）与 `BiliBili`（127 条），并在 `rules/custom/China-Direct.list` 中补齐字节国内基础设施域名（`bytedance.com`、`byteimg.com`、`zijieapi.com`、`ibytedtos.com`）。
+  - **回归测试**：新增 `test_36_douyin_incident_regression`，对事故样本中的 `p3-sign.douyinpic.com` 等 18 个关键域名进行仿真命中断言，100% 确认命中 `China-Direct.lsr`。
+- **声明契约与覆盖机器契约**：
+  - 新增 `test_38_coverage_and_machine_contract`，通过程序严格断言 `sources.yml`（20 类）、`upstream_lock.json`、`dist/*.lsr` 与 `manifest.json` 之间的全要素契约，且 100% 保证规则策略中立性（零策略动作泄露）。
+- **IPv4 / IPv6 语法与包含关系严格检查**：
+  - 新增 `test_37_ip_cidr_syntax_and_containment`，通过 Python `ipaddress` 对全量规则中的每一个 IP-CIDR 与 IP-CIDR6 执行严格验证（禁止主机位不为 0、禁止前缀超限、严格区分 IPv4 与 IPv6），并断言 Lan 在 GeoIP 之前的优先级及 Apple Push、Telegram IP 包含。
+- **测试夹具入库（解决全新克隆失败）**：
+  - 将脱敏测试夹具命名为 `tests/fixtures/sample_order_20.fixture`（不受 `.gitignore` 中的 `*.lcf` 影响），保持对私人 `.lcf` 的严格忽略防泄密保护。
+- **离线测试与真实镜像检查解耦**：
+  - 单元测试 `test_35` 改造为纯离线结构与规则体 SHA256 契约测试（无网络依赖，杜绝 CI 中静默 skip）。
+  - 新增独立脚本 `scripts/verify_mirrors.py`，专门用于发版前对 GitHub Raw 与 jsDelivr 备用 CDN 的 20 份规则及清单进行零跳过的真实联网比对。
+- **GitHub Actions CI 升级**：
+  - 更新 `.github/workflows/sync-and-build.yml`，增加 `pull_request` 触发分支检查，并在非 PR 事件中才执行 tag/push。
 
 ---
 
 ## 当前正在处理
 
-1. **测试夹具入库修复**：将 `tests/fixtures/sample_order_19.lcf` 更名为不受 `.gitignore` 影响的扩展名（如 `.fixture` 或 `.txt`），更新 `scripts/test_rules.py` 路径并提交，确保全新克隆下测试 100% 可复现。
-2. **Steam 与 Epic 分立恢复**：将 `Gaming.lsr` 重新拆分为独立的 `Steam.lsr` 与 `Epic.lsr`（全库规则集由 19 变为 20 个），保留已验证的第三方域名清洗，恢复用户在 Loon 客户端对两者独立选出口的能力。
-3. **镜像门禁与离线单测解耦**：将常规单测与网络集成测试分离，避免因外网网络波动导致单测跳过；完善主备镜像 SHA256 校验逻辑。
-4. **发布流程与大陆冷启动说明**：明确 PR 临时分支与 `main` 正式发布时的脚本 URL 转换流程；客观阐明 Loon 首次冷启动边界。
+* **阶段**：**交接节点 ① 完成**，提交代码并交付 ChatGPT Work 进行独立复核。
+* **待复核要点**：
+  1. 确认全新克隆下 Python 单测（38 项）与 Node 测试（17 项）100% 可复现通过，零失败、零跳过。
+  2. 复核 Steam/Epic 分立及 20 规则集机器契约。
+  3. 复核 Douyin 图片/CDN 域名事故回归与 IP 检查。
 
 ---
 
@@ -61,10 +74,9 @@
 
 1. **策略绝对中立**：所有 `.lsr` 规则文件绝不硬编码策略动作（如 DIRECT/PROXY/REJECT/US 等），由用户在客户端按需自由绑定策略组。
 2. **细分服务必须排在宽泛服务之前**：遵循 Loon 首个命中（First Match Wins）语义，细分规则（如 YouTube、Drive）必须在对应宽泛服务（Google）之前，防止流量被泛域名规则误劫持。
-3. **成熟上游为主，Custom 最小补丁**：以成熟许可上游（`blackmatrix7`）为主体，Custom 仅补有公开依据的遗漏；禁止无序堆砌未经证实的宽泛大列表。
-4. **保留独立选择能力**：遵循用户既有使用习惯，Steam 与 Epic 保持独立远程规则分类，不强制捆绑。
-5. **单文件导入与安全装配**：用户仅导入一份由 ChatGPT Work 在本地装配的唯一私人 `.lcf` 文件；严禁在公开仓库、测试夹具或交互中泄露私人配置。
-6. **事实源唯一性**：跨 AI 协作严格以 `PROJECT_STATE.md` 和实际文件为准，禁止脱离事实凭记忆猜测。
+3. **保留独立选择能力**：遵循用户既有使用习惯，Steam 与 Epic 保持独立远程规则分类，不强制捆绑。
+4. **单文件导入与安全装配**：用户仅导入一份由 ChatGPT Work 在本地装配的唯一私人 `.lcf` 文件；严禁在公开仓库、测试夹具或交互中泄露私人配置。
+5. **门禁解耦**：单元测试追求 100% 离线可复现，真实网络与 CDN 校验由发布脚本严格执行，避免网络波动干扰自动化 CI。
 
 ---
 
@@ -74,74 +86,74 @@
 |---|---|
 | `PROJECT_STATE.md` | 本项目当前状态的唯一事实源（跨 AI 协作必读必更） |
 | `AGENTS.md` | AI / Agent 工作准则与交接规则 |
-| `README.md` | 项目对外公开说明与规则订阅说明 |
+| `README.md` | 项目对外公开说明与规则订阅说明（已更新至 20 规则集） |
 | `sources.yml` | 规则源声明清单、上游 URL、最小规则数与排除项定义 |
-| `dist/` | 构建生成的策略中立 `.lsr` 文件及诊断产物 |
+| `dist/` | 构建生成的 20 个策略中立 `.lsr` 文件及诊断产物 |
 | `rules/custom/` | 各服务本地补充与例外规则（需有抓包或官方依据） |
 | `scripts/build.py` | 规则抓取、解析、去重、清洗与原子发布构建流水线 |
-| `scripts/test_rules.py` | 规则系统单元测试套件（含 4 阶段流水线、PayPal 防钓鱼等测试） |
-| `scripts/simulate_hit.py` | 本地流量命中仿真测试工具 |
+| `scripts/test_rules.py` | 规则系统单元测试套件（全量 38 项测试） |
+| `scripts/simulate_hit.py` | 本地流量命中仿真测试工具（支持 20 类分流） |
+| `scripts/verify_mirrors.py` | 独立镜像真实联网校验工具（零跳过，严格退出码） |
 | `diagnostics/loon-rules-diagnostic.js` | Loon 原生诊断脚本（支持动态分支与多源校验） |
 | `diagnostics/LoonRules-Diagnostic.lpx` | Loon 诊断插件声明文件 |
 | `tests/test_diagnostic.js` | 诊断插件 Node.js 离线全量测试（17 项测试） |
-| `tests/fixtures/` | 公开、脱敏、策略中立的测试夹具目录 |
+| `tests/fixtures/sample_order_20.fixture` | 公开、脱敏、策略中立的 20 类规则顺序测试夹具 |
 | `E:\Document\ChatGPT\Loon-Migration\` | 外部独立审查、交付配置与报告专属目录 |
 
 ---
 
 ## 最近一次修改
 
-* `AGENTS.md`：
-  - 新建 AI / Agent 协作规则与 `PROJECT_STATE.md` 强制更新要求。
-* `PROJECT_STATE.md`：
-  - 初始化项目状态唯一事实源，同步 ChatGPT Work 独立复审结论，理清阻断项与后续修复计划。
+* `sources.yml`：拆分 `Gaming` 为 `Steam` 和 `Epic`；为 `China-Direct` 增加 `DouYin` 和 `BiliBili` 官方上游。
+* `rules/custom/China-Direct.list`：补入字节跳动国内基础服务域名，清理上游已收录的冗余项。
+* `scripts/test_rules.py`：升级至 20 规则集体系，新增测试 36（Douyin事故回归）、37（IPv4/IPv6语法与包含检查）、38（机器覆盖契约），修复 32（采用 .fixture 夹具）与 35（离线契约）。
+* `tests/fixtures/sample_order_20.fixture`：新建并入库 20 类脱敏测试夹具。
+* `scripts/verify_mirrors.py`：新建独立严格镜像校验工具。
+* `.github/workflows/sync-and-build.yml`：加入 `pull_request` CI 触发。
+* `README.md` 与诊断插件：更新为 20 规则集说明。
 
 ---
 
 ## 验证状态
 
 ### 已验证
-- [x] **Node.js 诊断测试**：全新独立克隆复测 17 项全量通过（`17 passed, 0 failed`）。
-- [x] **规则构建与格式规范**：`git diff --check` 无格式错误，19 个规则集策略中立性断言通过。
-- [x] **本地私密候选结构**：`Loon-v2-19Rules.lcf` 包含全部唯一自有规则，既有节点、订阅、策略组与 MitM 结构完整保留。
-- [x] **工作区健康度**：`dist/` 目录完整，无未提交的删除，无脏数据残留。
+- [x] **Python 单元测试**：全量 38 项通过（`python -B -m unittest scripts.test_rules`，38 tests in 1.265s，OK，0 fail，0 skip）。
+- [x] **Node.js 诊断测试**：全量 17 项通过（`node --test tests/test_diagnostic.js`，17 tests in 1.6s，0 fail）。
+- [x] **全 ruleset 覆盖契约**：20 个 ruleset 声明与来源、上游锁、产物全量通过机器检查。
+- [x] **Douyin 事故回归**：18 个关键图片/CDN 域名全部命中 `China-Direct.lsr`，零漏入 FINAL。
+- [x] **IPv4/IPv6 检查**：全量 CIDR 规则语法及前缀合法，无主机位溢出，Lan 与 Push 优先级正常。
+- [x] **夹具入库**：`sample_order_20.fixture` 已通过 git 跟踪，不再受 `*.lcf` 忽略影响。
 
-### 尚未验证
-- [ ] **全新克隆 Python 单测**：待修复忽略夹具入库后，在无本地缓存的干净检出下验证 `35/35 passed`。
-- [ ] **Steam/Epic 分立构建**：拆分为 20 个规则集后的构建、清单及单测复跑。
+### 尚未验证（节点 ② & ③ 待办）
+- [ ] **全新临时克隆复测**：在未初始化的临时目录全新 clone 并跑通门禁。
+- [ ] **发版后镜像校验**：待提交推送到 GitHub 后，执行 `verify_mirrors.py` 检验 CDN 镜像一致性。
 - [ ] **Loon 真机环境表现**：手机端导入后的分流体验、冷启动可达性及 APNs 推送长连接实测。
 
 ---
 
 ## 已知问题 / 风险
 
-1. **测试夹具被忽略未入库**：`tests/fixtures/sample_order_19.lcf` 因扩展名匹配 `*.lcf` 被忽略，干净克隆报错，需更名入库。
-2. **Steam/Epic 独立性缺失**：目前合并为 `Gaming.lsr`，导致用户无法在客户端为两款平台独立指派不同策略组，需重构分立。
-3. **诊断插件 URL 分支硬编码**：`dist/diagnostics/LoonRules-Diagnostic.lpx` 写死 PR 分支，合并至 `main` 前需有切换机制。
-4. **冷启动说明需要收敛**：备用 CDN 镜像由诊断脚本使用，并不等于 Loon 首次导入 `.lcf` 时具备自动回退能力，需客观说明。
+1. **分支引用临时性**：当前诊断插件和测试引用的是 `feature/expand-rulesets-v2` 分支地址。PR #2 合并至 `main` 后，需统一切回 `main` 分支地址。
+2. **iOS APNs 系统绕行**：若用户未在 Loon 设置中开启“包含 APNS”或连接走非 TUN 栈，TCP 5223 不经过 Loon 代理（属于 iOS 系统机制，需在文档中持续向用户提示）。
 
 ---
 
 ## 不要重复踩的坑
 
-1. **严禁将测试夹具命名为 `*.lcf`**：全局 `.gitignore` 会将其静默忽略，导致本地测试通过但干净克隆失败；绝不能为了夹具放开全局 `*.lcf` 忽略，以防私人配置泄露。
-2. **严禁向 `.lsr` 写入策略名**：Loon 远程规则必须保持策略中立，严禁带 `,DIRECT` 或 `,PROXY`。
-3. **严禁颠倒分流顺序**：细分业务必须排在对应宽泛服务之前，Lan 必须排在 GeoIP 之前。
-4. **严禁向 C 盘或桌面写入非必要文件**：严格遵循用户全局准则，文件统一存放在 `E:\Document\Gemini` 或指定交付目录。
-5. **严禁泄露或打印私密配置**：不得在日志、对话或公开测试夹具中打印用户的私密节点、订阅 Token 和密码。
-6. **不要做无法证明的绝对化承诺**：如“100% 解决冷启动”、“0 延迟 APNs 命中”等。
+1. **严禁将测试夹具命名为 `*.lcf`**：全局 `.gitignore` 会将其静默忽略，导致全新克隆下测试失败。
+2. **不要把“上游已有”当作“本仓库已同步”**：`China-Direct` 此前因未声明 DouYin 上游导致图片域名漏入 FINAL。
+3. **不要用 `GEOIP,CN` 替代具体的域名分流**：国内 App 在非解析或代理模式下漏判会导致流量落入 FINAL。
+4. **单元测试不要依赖动态外网连接**：外网波动导致 `skipTest` 会让 CI 门禁形同虚设；网络校验应使用独立专项脚本。
+5. **严禁向 `.lsr` 写入策略名**：必须保持 100% 策略中立。
+6. **严禁向 C 盘或桌面写入非必要文件**：严格遵循用户全局准则。
 
 ---
 
 ## 下一步
 
-1. **第一优先级（修复夹具与分立 Gaming）**：
-   - 将测试夹具更名为 `sample_order_19.fixture`（或 `.txt`）并提交入库；
-   - 将 `Gaming` 拆分为 `Steam` 与 `Epic` 两个独立规则集，更新 `sources.yml`、`build.py`、`test_rules.py` 与清单。
-2. **第二优先级（全新克隆验证）**：
-   - 在本地干净克隆或临时目录执行完整门禁复测，确保 Python 35+ 项和 Node 17 项全绿无 skip/fail。
-3. **第三优先级（更新交接报告与提交）**：
-   - 推送提交至 `feature/expand-rulesets-v2`，更新 `PROJECT_STATE.md` 与交接报告，通知 ChatGPT Work 独立复审。
+1. **交付节点 ① 复核**：通知 ChatGPT Work 在独立克隆中复跑门禁并核验覆盖矩阵与 Douyin 回归。
+2. **推进节点 ②（全新克隆与自动更新链）**：从全新克隆验证构建幂等性，验证无规则变化时不产生幽灵构建，校验 GitHub Actions 配置。
+3. **推进节点 ③（正式发布就绪）**：完成正式发布切换方案，配合 ChatGPT Work 装配最终私人 `.lcf` 并准备真机测试。
 
 ---
 
@@ -157,6 +169,6 @@
 
 ## 最后更新
 
-- **时间**：2026-09-29 13:58
+- **时间**：2026-09-29 14:06
 - **执行者**：Antigravity (Gemini)
-- **本轮工作**：确立跨 AI 协作事实源规范，新增 `AGENTS.md`，同步 ChatGPT Work 独立复审意见，全面规范化更新 `PROJECT_STATE.md`。
+- **本轮工作**：完成节点 ①（全 ruleset 覆盖矩阵建立、Steam/Epic 分立为 20 类、Douyin 事故修复与回归测试、IPv4/IPv6 检查、测试夹具脱敏入库、机器契约自动化断言）。

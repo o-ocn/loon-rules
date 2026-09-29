@@ -15,6 +15,9 @@ import unittest
 import tempfile
 import shutil
 import json
+import hashlib
+import ipaddress
+import yaml
 from unittest.mock import patch, MagicMock
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -59,7 +62,8 @@ EXPECTED_RULESETS = {
     "China-GeoIP.lsr",
     "Lan.lsr",
     "PayPal.lsr",
-    "Gaming.lsr",
+    "Steam.lsr",
+    "Epic.lsr",
     "GitHub.lsr"
 }
 
@@ -67,7 +71,7 @@ class TestLoonRulesSuite(unittest.TestCase):
 
     def setUp(self):
         self.lsr_files = [f for f in os.listdir(DIST_DIR) if f.endswith(".lsr")]
-        self.assertTrue(len(self.lsr_files) >= 19, f"Expected at least 19 .lsr files, found {len(self.lsr_files)}")
+        self.assertTrue(len(self.lsr_files) >= 20, f"Expected at least 20 .lsr files, found {len(self.lsr_files)}")
         self.assertEqual(EXPECTED_RULESETS.issubset(set(self.lsr_files)), True, f"Missing rulesets: {EXPECTED_RULESETS - set(self.lsr_files)}")
 
     def test_01_syntax_and_encoding(self):
@@ -397,7 +401,7 @@ rulesets:
             m = json.load(f)
 
         self.assertEqual(m.get("schema_version"), "1.0")
-        self.assertTrue(len(m.get("rulesets", {})) >= 19)
+        self.assertTrue(len(m.get("rulesets", {})) >= 20)
         for rname in EXPECTED_RULESETS:
             self.assertIn(rname, m["rulesets"])
             self.assertGreater(m["rulesets"][rname]["total_rules"], 0)
@@ -634,7 +638,7 @@ rulesets:
         self.assertEqual(matches_push[0]["ruleset"], "Apple-Push.lsr")
 
     def test_22_full_pipeline_evaluation_order_simulation(self):
-        """Verify simulated top-to-bottom rule evaluation across all 19 services."""
+        """Verify simulated top-to-bottom rule evaluation across all 20 services."""
         rules_by_file = simulate_hit.load_dist_rules()
         test_cases = [
             ("push.apple.com", "Apple-Push.lsr"),
@@ -648,13 +652,17 @@ rulesets:
             ("twitter.com", "Twitter.lsr"),
             ("discord.com", "Discord.lsr"),
             ("paypal.com", "PayPal.lsr"),
-            ("steampowered.com", "Gaming.lsr"),
+            ("steampowered.com", "Steam.lsr"),
+            ("epicgames.com", "Epic.lsr"),
             ("github.com", "GitHub.lsr"),
             ("testflight.apple.com", "TestFlight.lsr"),
             ("tv.apple.com", "Apple-Media.lsr"),
             ("deepseek.com", "AI-China-Direct.lsr"),
             ("icloud.com", "Apple-Direct.lsr"),
             ("weixin.com", "China-Direct.lsr"),
+            ("douyin.com", "China-Direct.lsr"),
+            ("p3-sign.douyinpic.com", "China-Direct.lsr"),
+            ("bilibili.com", "China-Direct.lsr"),
         ]
         for domain, expected_ruleset in test_cases:
             matches = simulate_hit.match_domain(domain, rules_by_file)
@@ -984,20 +992,20 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
         self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
 
-        # Verify total rules across all 19 .lsr files is exactly 1742
+        # Verify total rules across all 20 .lsr files is exactly 1884
         total_rules = 0
         for fname in self.lsr_files:
             total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
-        self.assertEqual(total_rules, 1742, f"Expected 1742 rules, got {total_rules}")
+        self.assertEqual(total_rules, 1884, f"Expected 1884 rules, got {total_rules}")
 
-    def test_32_public_19_order_fixture_and_four_stage_pipeline(self):
-        """Verify complete 4-stage pipeline against public 19-class order fixture."""
-        fixture_path = os.path.join(BASE_DIR, "tests", "fixtures", "sample_order_19.lcf")
-        self.assertTrue(os.path.isfile(fixture_path), "sample_order_19.lcf fixture missing!")
+    def test_32_public_20_order_fixture_and_four_stage_pipeline(self):
+        """Verify complete 4-stage pipeline against public 20-class order fixture."""
+        fixture_path = os.path.join(BASE_DIR, "tests", "fixtures", "sample_order_20.fixture")
+        self.assertTrue(os.path.isfile(fixture_path), "sample_order_20.fixture missing or ignored by git!")
 
         pipeline = simulate_hit.load_lcf_pipeline(fixture_path)
         self.assertIsNotNone(pipeline)
-        self.assertEqual(len(pipeline["remote_order"]), 19, "Expected 19 rulesets in remote_order")
+        self.assertEqual(len(pipeline["remote_order"]), 20, "Expected 20 rulesets in remote_order")
 
         rules_by_file = simulate_hit.load_dist_rules(pipeline["remote_order"])
         local_rules = pipeline["local_rules"]
@@ -1014,19 +1022,21 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertEqual(m_s2[0]["stage"], "Stage 2 (Plugin [Rule])")
 
         # Stage 3: Specific before broad evaluations
-        # YouTube matches before Google
         m_yt = simulate_hit.match_target("www.youtube.com", rules_by_file, local_rules=local_rules)
         self.assertEqual(m_yt[0]["ruleset"], "YouTube.lsr")
 
-        # GoogleDrive matches before Google
         m_gd = simulate_hit.match_target("drive.google.com", rules_by_file, local_rules=local_rules)
         self.assertEqual(m_gd[0]["ruleset"], "GoogleDrive.lsr")
 
-        # Broad Google
         m_g = simulate_hit.match_target("google.com", rules_by_file, local_rules=local_rules)
         self.assertEqual(m_g[0]["ruleset"], "Google.lsr")
 
-        # Lan matches before China-GeoIP
+        m_steam = simulate_hit.match_target("steampowered.com", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_steam[0]["ruleset"], "Steam.lsr")
+
+        m_epic = simulate_hit.match_target("epicgames.com", rules_by_file, local_rules=local_rules)
+        self.assertEqual(m_epic[0]["ruleset"], "Epic.lsr")
+
         m_lan = simulate_hit.match_target("192.168.1.1", rules_by_file, local_rules=local_rules)
         self.assertEqual(m_lan[0]["ruleset"], "Lan.lsr")
 
@@ -1035,7 +1045,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertEqual(len(m_unmatched), 0, "Unmatched target must have 0 stage 1-3 hits to trigger FINAL")
 
     def test_33_paypal_curation_regression(self):
-        """Verify PayPal official operational domains are present and scam/phishing domains are excluded."""
+        """Verify PayPal curated operational domains are present and scam/phishing domains are excluded."""
         paypal_path = os.path.join(DIST_DIR, "PayPal.lsr")
         with open(paypal_path, "r", encoding="utf-8") as f:
             pp_content = f.read()
@@ -1055,44 +1065,146 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         for p in phishing_domains:
             self.assertNotIn(p, pp_content, f"Phishing/typosquatting domain '{p}' leaked into PayPal.lsr!")
 
-    def test_34_gaming_purged_domains_regression(self):
-        """Verify Gaming platform domains are present and non-platform/piracy domains are excluded."""
-        gaming_path = os.path.join(DIST_DIR, "Gaming.lsr")
-        with open(gaming_path, "r", encoding="utf-8") as f:
-            gaming_content = f.read()
+    def test_34_steam_and_epic_purged_domains_regression(self):
+        """Verify Steam and Epic platform domains are present and non-platform/piracy domains are excluded."""
+        steam_path = os.path.join(DIST_DIR, "Steam.lsr")
+        with open(steam_path, "r", encoding="utf-8") as f:
+            steam_content = f.read()
+        self.assertIn("steampowered.com", steam_content)
+        self.assertIn("steamcommunity.com", steam_content)
+        self.assertIn("steamgames.com", steam_content)
+        for p in ["steamunlocked.net", "humblebundle.com", "fanatical.com"]:
+            self.assertNotIn(p, steam_content, f"Non-platform domain '{p}' leaked into Steam.lsr!")
 
-        official_gaming = [
-            "steampowered.com", "steamcommunity.com", "steamgames.com",
-            "epicgames.com", "unrealengine.com"
+        epic_path = os.path.join(DIST_DIR, "Epic.lsr")
+        with open(epic_path, "r", encoding="utf-8") as f:
+            epic_content = f.read()
+        self.assertIn("epicgames.com", epic_content)
+        self.assertIn("unrealengine.com", epic_content)
+        self.assertNotIn("helpshift.com", epic_content, "Shared customer support SDK 'helpshift.com' leaked into Epic.lsr!")
+
+    def test_35_manifest_offline_integrity_and_mirror_contract(self):
+        """Verify manifest.json contains all 20 rulesets with valid SHA256 hashes offline."""
+        manifest_path = os.path.join(DIST_DIR, "diagnostics", "manifest.json")
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            man = json.load(f)
+
+        rulesets = man.get("rulesets", {})
+        self.assertEqual(len(rulesets), 20, f"Expected 20 rulesets in manifest, found {len(rulesets)}")
+
+        for rname, meta in rulesets.items():
+            lsr_path = os.path.join(DIST_DIR, rname)
+            self.assertTrue(os.path.isfile(lsr_path), f"Ruleset file '{rname}' in manifest missing on disk!")
+            with open(lsr_path, "r", encoding="utf-8") as f:
+                lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+            rule_body = "\n".join(lines)
+            computed_hash = hashlib.sha256(rule_body.encode("utf-8")).hexdigest()
+            self.assertEqual(meta["sha256"], computed_hash, f"SHA256 mismatch for ruleset '{rname}'!")
+            self.assertGreater(meta["total_rules"], 0)
+
+    def test_36_douyin_incident_regression(self):
+        """Verify Douyin image, CDN, video, and API domains match China-Direct and do NOT fall into FINAL."""
+        rules_by_file = simulate_hit.load_dist_rules()
+
+        douyin_incident_domains = [
+            "p3-sign.douyinpic.com",
+            "p6-sign.douyinpic.com",
+            "p9-sign.douyinpic.com",
+            "v26-web.douyinvod.com",
+            "sf3-cdn-tos.douyinstatic.com",
+            "lf3-static.bytednsdoc.com",
+            "v5-dy-o-abtest.zjcdn.com",
+            "douyincdn.com",
+            "douyinpic.com",
+            "douyin.com",
+            "snssdk.com",
+            "bytedance.com",
+            "byteimg.com",
+            "bytedns.net",
+            "zijieapi.com",
+            "ibytedtos.com",
+            "bilibili.com",
+            "bilivideo.com"
         ]
-        for g in official_gaming:
-            self.assertIn(g, gaming_content, f"Official gaming domain '{g}' missing from Gaming.lsr!")
 
-        purged_gaming = [
-            "steamunlocked.net", "humblebundle.com", "fanatical.com", "helpshift.com"
-        ]
-        for p in purged_gaming:
-            self.assertNotIn(p, gaming_content, f"Non-platform domain '{p}' leaked into Gaming.lsr!")
+        for domain in douyin_incident_domains:
+            matches = simulate_hit.match_domain(domain, rules_by_file)
+            self.assertTrue(len(matches) >= 1, f"Douyin domain '{domain}' did not match any rule and fell into FINAL!")
+            self.assertEqual(matches[0]["ruleset"], "China-Direct.lsr",
+                             f"Douyin domain '{domain}' matched '{matches[0]['ruleset']}' instead of 'China-Direct.lsr'")
 
-    def test_35_jsdelivr_backup_mirror_download_verification(self):
-        """Verify jsDelivr backup mirror is accessible and serves byte-identical manifest."""
-        import json, urllib.request, ssl
-        mirror_url = "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@feature/expand-rulesets-v2/dist/diagnostics/manifest.json"
-        local_manifest_path = os.path.join(DIST_DIR, "diagnostics", "manifest.json")
-        with open(local_manifest_path, "r", encoding="utf-8") as f:
-            local_man = json.load(f)
+    def test_37_ip_cidr_syntax_and_containment(self):
+        """Verify all IP-CIDR and IP-CIDR6 rules in all rulesets have strictly valid syntax and masks."""
+        for fname in self.lsr_files:
+            fpath = os.path.join(DIST_DIR, fname)
+            with open(fpath, "r", encoding="utf-8") as f:
+                for line_idx, line in enumerate(f, 1):
+                    clean = line.strip()
+                    if not clean or clean.startswith("#"):
+                        continue
+                    parts = clean.split(",")
+                    rtype = parts[0].strip()
+                    if rtype in ("IP-CIDR", "IP-CIDR6"):
+                        cidr = parts[1].strip()
+                        # Strict validation: no host bits allowed, valid subnet notation
+                        try:
+                            net = ipaddress.ip_network(cidr, strict=True)
+                        except ValueError as e:
+                            self.fail(f"Invalid {rtype} rule '{clean}' in {fname}:{line_idx}: {e}")
 
-        ctx = ssl.create_default_context()
-        try:
-            req = urllib.request.Request(mirror_url, headers={"User-Agent": "Mozilla/5.0 LoonTest/2.0"})
-            with urllib.request.urlopen(req, context=ctx, timeout=8) as resp:
-                self.assertEqual(resp.status, 200, f"jsDelivr returned HTTP {resp.status}")
-                remote_bytes = resp.read()
-                remote_man = json.loads(remote_bytes.decode("utf-8"))
-                self.assertEqual(len(remote_man.get("rulesets", {})), 19,
-                                 "Backup mirror does not contain all 19 rulesets!")
-        except urllib.error.URLError as e:
-            self.skipTest(f"Live network test skipped due to connectivity: {e}")
+                        if rtype == "IP-CIDR":
+                            self.assertEqual(net.version, 4, f"IP-CIDR rule '{clean}' in {fname} is not IPv4!")
+                            self.assertTrue(0 <= net.prefixlen <= 32)
+                        elif rtype == "IP-CIDR6":
+                            self.assertEqual(net.version, 6, f"IP-CIDR6 rule '{clean}' in {fname} is not IPv6!")
+                            self.assertTrue(0 <= net.prefixlen <= 128)
+
+        # Verify containment priority: Lan matches before China-GeoIP
+        rules_by_file = simulate_hit.load_dist_rules()
+        m_lan = simulate_hit.match_target("10.1.2.3", rules_by_file)
+        self.assertEqual(m_lan[0]["ruleset"], "Lan.lsr")
+        m_cgnat = simulate_hit.match_target("100.64.1.1", rules_by_file)
+        self.assertEqual(m_cgnat[0]["ruleset"], "Lan.lsr")
+
+        # Verify Apple Push containment
+        m_push = simulate_hit.match_target("17.249.0.5", rules_by_file)
+        self.assertEqual(m_push[0]["ruleset"], "Apple-Push.lsr")
+
+        # Verify Telegram containment
+        m_tg = simulate_hit.match_target("91.108.4.1", rules_by_file)
+        self.assertEqual(m_tg[0]["ruleset"], "Telegram.lsr")
+
+    def test_38_coverage_and_machine_contract(self):
+        """Verify strict machine contract across sources.yml, upstream_lock.json, and dist/*.lsr."""
+        sources_path = os.path.join(BASE_DIR, "sources.yml")
+        with open(sources_path, "r", encoding="utf-8") as f:
+            sources_data = yaml.safe_load(f)
+
+        rulesets = sources_data.get("rulesets", {})
+        self.assertEqual(len(rulesets), 20, f"Expected 20 rulesets declared in sources.yml, found {len(rulesets)}")
+
+        with open(build.UPSTREAM_LOCK_FILE, "r", encoding="utf-8") as f:
+            lock_data = json.load(f)
+
+        # Verify every ruleset has valid .lsr output and strict strategy neutrality
+        forbidden_policy_tokens = [",PROXY", ",DIRECT", ",REJECT", ",US", ",HK", ",JP", ",Final", ",All"]
+        for rname, rconf in rulesets.items():
+            lsr_file = f"{rname}.lsr"
+            lsr_path = os.path.join(DIST_DIR, lsr_file)
+            self.assertTrue(os.path.isfile(lsr_path), f"Missing .lsr file for ruleset '{rname}'")
+
+            with open(lsr_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                for token in forbidden_policy_tokens:
+                    self.assertNotIn(token, content, f"Policy token '{token}' leaked into {lsr_file}!")
+
+            # Verify upstreams in sources meet min_rules and exist in lock_data
+            for src in rconf.get("sources", []):
+                sname = src["name"]
+                self.assertIn(rname, lock_data, f"Ruleset '{rname}' missing in upstream_lock.json")
+                self.assertIn(sname, lock_data[rname], f"Upstream '{sname}' for ruleset '{rname}' missing in upstream_lock.json")
+                self.assertGreaterEqual(lock_data[rname][sname], src.get("min_rules", 1),
+                                       f"Upstream '{rname}:{sname}' rule count below min_rules threshold!")
 
     @classmethod
     def tearDownClass(cls):

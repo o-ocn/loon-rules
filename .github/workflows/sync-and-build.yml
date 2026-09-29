@@ -3,6 +3,8 @@ name: Sync Upstream and Build Loon Rules
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   schedule:
     # Run every Sunday at 00:00 UTC (08:00 Beijing Time)
     - cron: '0 0 * * 0'
@@ -46,13 +48,14 @@ jobs:
 
       - name: Run Integrity and Anti-Collision Tests
         run: |
-          python scripts/test_rules.py
+          python -B -m unittest scripts.test_rules
 
       - name: Run Diagnostic Plugin Fixture Tests
         run: |
           node --test tests/test_diagnostic.js
 
       - name: Commit and Push if Changed
+        if: github.event_name != 'pull_request'
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"

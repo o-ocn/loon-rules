@@ -1,0 +1,37 @@
+# Public Strategy-Neutral 20-Class Order Fixture for Test Pipeline
+# Contains ZERO private credentials, tokens, or subscription endpoints.
+
+[General]
+ipv6 = true
+skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8
+
+[Rule]
+# Stage 1: Local overrides
+DOMAIN,local-override.example.com,DIRECT
+IP-CIDR,192.168.100.1/32,DIRECT
+
+[Remote Rule]
+# Stage 3: Remote Rules (Strict 20-Class Order: Specific/Narrow BEFORE Broad/Parent)
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr, policy=Apple Push, tag=Apple-Push, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr, policy=PROXIES, tag=AI-Overseas, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr, policy=PROXIES, tag=YouTube, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GoogleDrive.lsr, policy=PROXIES, tag=GoogleDrive, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr, policy=PROXIES, tag=Google, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/OneDrive.lsr, policy=PROXIES, tag=OneDrive, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Telegram.lsr, policy=PROXIES, tag=Telegram, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr, policy=PROXIES, tag=Twitter, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr, policy=PROXIES, tag=Discord, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/PayPal.lsr, policy=PROXIES, tag=PayPal, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Steam.lsr, policy=PROXIES, tag=Steam, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Epic.lsr, policy=PROXIES, tag=Epic, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GitHub.lsr, policy=PROXIES, tag=GitHub, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/TestFlight.lsr, policy=PROXIES, tag=TestFlight, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr, policy=PROXIES, tag=Apple-Media, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr, policy=DIRECT, tag=AI-China-Direct, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr, policy=DIRECT, tag=Apple-Direct, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr, policy=DIRECT, tag=China-Direct, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Lan.lsr, policy=DIRECT, tag=Lan, enabled=true
+https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-GeoIP.lsr, policy=DIRECT, tag=China-GeoIP, enabled=true
+
+# Stage 4: FINAL fallback
+FINAL, PROXY

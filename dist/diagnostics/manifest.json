@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T20:19:17.878365+00:00",
-  "content_revision": "a987c2aac784",
-  "package_sha256": "a987c2aac7846760f566181fb1cf5d5cd0d26ee6bac9afe12de78e3a89622489",
+  "build_timestamp": "2026-09-29T06:00:24.696165+00:00",
+  "content_revision": "ff7d88133840",
+  "package_sha256": "ff7d88133840d36305aafe7a9561110b6d4c1c8c28fde357f6f489c382abdde2",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -67,11 +67,17 @@
       "sha256": "90af227e8713dc156c7cddcef9b7f4be4ed5458ffef395d5d1072480e86fd3c9",
       "description": "PayPal payment services (curated operational domains only)"
     },
-    "Gaming.lsr": {
-      "total_rules": 65,
-      "revision": "06b2809abf75",
-      "sha256": "06b2809abf759c898d09756382672d04b2ed94b96bf35d968455d5ccbfc22a28",
-      "description": "Gaming platforms (Steam and Epic Games, third-party storefronts/phishing purged)"
+    "Steam.lsr": {
+      "total_rules": 51,
+      "revision": "3c791ebe3a87",
+      "sha256": "3c791ebe3a871cf25ee744deee8a6a6e2e7d41a06413f2e9b35944b0c6f8a5d4",
+      "description": "Steam gaming platform (third-party piracy and stores purged)"
+    },
+    "Epic.lsr": {
+      "total_rules": 14,
+      "revision": "d00f7e358e4e",
+      "sha256": "d00f7e358e4e5294fb99cf2ed3600a2846c73315910e7a3817944e6aca83b2a7",
+      "description": "Epic Games store and Unreal Engine platform"
     },
     "GitHub.lsr": {
       "total_rules": 31,
@@ -104,9 +110,9 @@
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {
-      "total_rules": 359,
-      "revision": "3f598c94a81a",
-      "sha256": "3f598c94a81acf1d35bb80171e0bb0c3a44308ea0d0a2ea1d0c9b684ad45c1bb",
+      "total_rules": 501,
+      "revision": "20e9cc7ff681",
+      "sha256": "20e9cc7ff681e81f8281af84165f808a49015558b87ee3c430efd305ef2656db",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     },
     "Lan.lsr": {

@@ -1,8 +1,8 @@
-# NAME: Gaming
-# DESCRIPTION: Gaming platforms (Steam and Epic Games, third-party storefronts/phishing purged)
+# NAME: Steam
+# DESCRIPTION: Steam gaming platform (third-party piracy and stores purged)
 # AUTHOR: o-ocn
-# REVISION: 06b2809abf75
-# TOTAL: 65
+# REVISION: 3c791ebe3a87
+# TOTAL: 51
 # ==============================================================================
 DOMAIN-SUFFIX,cdn-ali.content.steamchina.com
 DOMAIN-SUFFIX,cdn-qc.content.steamchina.com
@@ -55,17 +55,3 @@ DOMAIN-SUFFIX,wmsjsteam.com
 DOMAIN-KEYWORD,steambroadcast
 DOMAIN-KEYWORD,steamstore
 DOMAIN-KEYWORD,steamuserimages
-DOMAIN-SUFFIX,battlebreakers.com
-DOMAIN-SUFFIX,eac-cdn.com
-DOMAIN-SUFFIX,easy.ac
-DOMAIN-SUFFIX,easyanticheat.net
-DOMAIN-SUFFIX,epicgames.com
-DOMAIN-SUFFIX,epicgames.dev
-DOMAIN-SUFFIX,fortnite.com
-DOMAIN-SUFFIX,paragon.com
-DOMAIN-SUFFIX,playparagon.com
-DOMAIN-SUFFIX,roborecall.com
-DOMAIN-SUFFIX,shadowcomplex.com
-DOMAIN-SUFFIX,spyjinx.com
-DOMAIN-SUFFIX,unrealengine.com
-DOMAIN-SUFFIX,unrealtournament.com

@@ -181,8 +181,8 @@ rulesets:
     custom_first: true
     local_custom: "rules/custom/PayPal.list"
 
-  Gaming:
-    description: "Gaming platforms (Steam and Epic Games, third-party storefronts/phishing purged)"
+  Steam:
+    description: "Steam gaming platform (third-party piracy and stores purged)"
     custom_first: true
     max_shrink_ratio: 0.15
     sources:
@@ -194,13 +194,20 @@ rulesets:
           - "DOMAIN-SUFFIX,steamunlocked.net"
           - "DOMAIN-SUFFIX,humblebundle.com"
           - "DOMAIN-SUFFIX,fanatical.com"
+    local_custom: "rules/custom/Steam.list"
+
+  Epic:
+    description: "Epic Games store and Unreal Engine platform"
+    custom_first: true
+    max_shrink_ratio: 0.15
+    sources:
       - name: "Epic"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Epic/Epic.list"
         min_rules: 5
         filter_excluded:
           # Shared third-party customer support SDK (prevents hijacking other apps)
           - "DOMAIN-SUFFIX,helpshift.com"
-    local_custom: "rules/custom/Gaming.list"
+    local_custom: "rules/custom/Epic.list"
 
   GitHub:
     description: "GitHub development platform and services"
@@ -276,6 +283,12 @@ rulesets:
       - name: "JingDong"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/JingDong/JingDong.list"
         min_rules: 30
+      - name: "DouYin"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/DouYin/DouYin.list"
+        min_rules: 10
+      - name: "BiliBili"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BiliBili/BiliBili.list"
+        min_rules: 20
     local_custom: "rules/custom/China-Direct.list"
 
   # ======================================================================

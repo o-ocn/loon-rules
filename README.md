@@ -33,24 +33,30 @@
 
 ---
 
-## 规则订阅清单 (共 14 个独立服务分类)
+## 规则订阅清单 (共 20 个独立服务分类)
 
 | 规则成品 (`dist/`) | 涵盖核心服务说明 | 订阅链接 (GitHub Raw) |
 | :--- | :--- | :--- |
+| **`Apple-Push.lsr`** | APNs 官方最小推送通道（默认建议保持关闭，权威 10 条网段） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr) |
 | **`AI-Overseas.lsr`** | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse from Meta | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-Overseas.lsr) |
-| **`AI-China-Direct.lsr`** | DeepSeek 等中国大陆 AI 服务 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr) |
-| **`GoogleDrive.lsr`** | Google Drive 云端硬盘专属服务（独立保护大流量） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GoogleDrive.lsr) |
-| **`OneDrive.lsr`** | Microsoft OneDrive 与 SharePoint 服务 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/OneDrive.lsr) |
+| **`YouTube.lsr`** | YouTube 视频流媒体、图片与 CDN（排在 Google 前） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr) |
+| **`GoogleDrive.lsr`** | Google Drive 云端硬盘专属服务（独立保护大流量，排在 Google 前） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GoogleDrive.lsr) |
 | **`Google.lsr`** | 普通 Google 服务、搜索与基础设施（含共享 `www.googleapis.com`） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr) |
-| **`YouTube.lsr`** | YouTube 视频流媒体、图片与 CDN | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/YouTube.lsr) |
+| **`OneDrive.lsr`** | Microsoft OneDrive 与 SharePoint 服务 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/OneDrive.lsr) |
 | **`Telegram.lsr`** | Telegram 官方 IP 段与核心域名通信 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Telegram.lsr) |
 | **`Twitter.lsr`** | Twitter / X 平台主干（不含 Grok） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Twitter.lsr) |
 | **`Discord.lsr`** | Discord 语音与即时通讯 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Discord.lsr) |
-| **`Apple-Direct.lsr`** | iCloud, CloudKit, App Store, Apple ID, HomeKit, 音乐, 系统更新 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr) |
-| **`Apple-Media.lsr`** | Apple TV+, Apple News, Fitness+ 锁区媒体 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr) |
+| **`PayPal.lsr`** | PayPal 官方支付运营域名（精选官方与备案域名，剔除钓鱼仿冒） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/PayPal.lsr) |
+| **`Steam.lsr`** | Steam 游戏平台（剔除第三方盗版与非平台分销站） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Steam.lsr) |
+| **`Epic.lsr`** | Epic Games 商店与虚幻引擎（剔除第三方客服 SDK） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Epic.lsr) |
+| **`GitHub.lsr`** | GitHub 开发平台、API 与代码托管 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/GitHub.lsr) |
 | **`TestFlight.lsr`** | Apple TestFlight 内测分发平台 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/TestFlight.lsr) |
-| **`Apple-Push.lsr`** | APNs 官方最小推送通道（默认建议保持关闭） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Push.lsr) |
-| **`China-Direct.lsr`** | 微信、淘宝、京东、闲鱼、抖音、B站、局域网私网段 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr) |
+| **`Apple-Media.lsr`** | Apple TV+, Apple News, Fitness+ 锁区媒体 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Media.lsr) |
+| **`AI-China-Direct.lsr`** | DeepSeek、Kimi、通义千问、豆包等国内 10 家大模型 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/AI-China-Direct.lsr) |
+| **`Apple-Direct.lsr`** | iCloud, CloudKit, App Store, Apple ID, HomeKit, 音乐, SystemOTA | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Apple-Direct.lsr) |
+| **`China-Direct.lsr`** | 微信、淘宝、京东、闲鱼、抖音/字节国内生态、B站等高频应用 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-Direct.lsr) |
+| **`Lan.lsr`** | RFC 1918/6598/6890/2544/4291/4193 局域网与保留网段直连旁路 | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Lan.lsr) |
+| **`China-GeoIP.lsr`** | 中国大陆 IP 最终兜底保护（排在 Lan 之后） | [Raw 链接](https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/China-GeoIP.lsr) |
 
 *(备用 CDN 镜像列表详见 [`docs/migration_and_rollback.md`](docs/migration_and_rollback.md))*
 
