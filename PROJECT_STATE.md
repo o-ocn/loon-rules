@@ -86,8 +86,12 @@
 
 ## 当前正在处理
 
-* **阶段**：PR #2 已正式合并至 `main`（合并提交 `2bcf05e`）；诊断插件开发分支引用已修正（commit `54951e0`）；GitHub Raw 主源 19/19 已同步至 `fd6919cad455`；jsDelivr CDN 边缘缓存传播中。
-* **下一步工作**：等待 jsDelivr CDN 完成传播后复验备用源；ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`（修正 YouTube/Lan 顺序并保留用户私人设置）；用户导入正式配置进行 Loon 真机实测。
+* **阶段**：里程碑版本 `82382a0` 已正式推送到 GitHub `main` 分支。
+  - 三层体系架构（规则路由层 / DNS 调度层 / 冲突检测层）闭环定型；
+  - 实地核查确认 `[Host]` 模块中 `*.mzstatic.com` 处于最顶层且无任何宽泛 `apple.com` 规则遮蔽；
+  - 全量 43 项 Python 规则测试、19 项 Node 诊断测试与 CI 门禁已通过；
+  - 系统正式进入 1~2 周静默稳定观察期，冻结规则边界扩张。
+* **当前任务**：用户在手机 Loon 端刷新插件并验证 App Store 图片加载；持续观察日常主力业务稳定性。
 
 ---
 
@@ -113,6 +117,17 @@
 18. **Loon 脚本 `$httpClient` 探测不经过 TUN 分流机制**：Loon 脚本内 `$httpClient` 发起的网络探测属于内部请求，不匹配 `[Remote Rule]` 域名规则；未显式指定 `node` 时直接回落至全局默认出口/`FINAL`（当前首选为香港 IEPL 专线）。因此 OpenAI 与 Claude 探针失败系因香港出口受阻，绝不代表用户在 `AI-Overseas`（`All` 挂载美国 VMISS VPS）下的真机实际连通性。已在 `loon-rules-diagnostic.js` 中引入 `resolveTargetNode` 嗅探用户活跃策略组动态绑定，解决假死锁与误报。
 19. **跨国孪生业务与共享基础设施隔离准则**：针对抖音与 TikTok、微信与 WeChat 等跨国孪生产品，`bytedance.com`, `byteimg.com`, `ibytedtos.com`, `snssdk.com` 属于国内高频底层基础设施，现阶段为保障国内业务秒开与低能耗保留在直连与国内 DNS 分流；明确立项红线：未来若引入 TikTok 规则集，严禁将共享基础设施域名直接全量搬入代理（会导致国内业务瘫痪），必须保持 TikTok 独占域名在顶层代理、共享基础设施留直连的精细隔离架构。
 20. **国内 CDN Anycast 漂移与 GeoIP 局限性防线**：实测确认国内大厂（阿里 1688、抖音支付等）在境外 DoH 解析下会调度至香港 Anycast IP（如 `155.102.4.44`），彻底绕过 `GEOIP,CN` 跌落 `FINAL`。因此绝不能盲目迷信 GeoIP 兜底，必须采用“明确域名规则（China-Direct）+ 国内 DNS 极速分流（Loon-China-DNS 223.5.5.5）”双保险闭环。
+21. **三层体系架构定型（规则路由层 / DNS 调度层 / 冲突防护层）**：
+    - **规则层（Routing）**：决定请求去向（DIRECT 还是 PROXY）；
+    - **DNS 层（Resolution）**：决定 DIRECT 流量就近调度至哪个优质 CDN 边缘节点，解决因境外 DoH 调度至跨洋远端 IP 导致的“直连反向减速”；
+    - **冲突检测层（Safety Boundary）**：通过 `shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 自动化守住红线，杜绝任何海外独占域名泄露至国内规则，以及严禁将 `apple.com` / `icloud.com` 泛解析至国内 DNS。
+22. **Apple 体系演化收敛与 Host 优先级无遮蔽保障**：
+    - 实地核查确认 `[Host]` 模块中 `*.mzstatic.com = server:223.5.5.5` 无任何前置更宽泛的 `*.apple.com` 覆盖，且 `mzstatic.com` 为独立二级域名，匹配无任何歧义；
+    - App Store 业务中，静态大容量媒体由 `mzstatic.com` 区域优化，而 `apps.apple.com` / `itunes.apple.com` 作为商店元数据与交易接口维持默认解析，保障多区账户与认证平稳；
+    - Apple 规则集与 DNS 优化全面收敛，不再盲目追加边角域名。
+23. **进入 1~2 周静默稳定观察期与三步排查 SOP**：
+    - 冻结规则扩张，依托 GitHub Actions 每周日自动同步上游并校验镜像；
+    - 确立未来排查 SOP：第一步看规则（DIRECT / PROXY） -> 第二步看 DNS（解析所得 IP） -> 第三步看 CDN（就近国内 / 跨洋 Anycast）。
 
 ---
 
@@ -217,9 +232,9 @@
 
 ## 下一步
 
-1. 等待 jsDelivr CDN 边缘缓存完全传播后，复验备用源 19/19 规则及诊断产物（revision `fd6919cad455`）。
-2. ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`，修正 YouTube/Lan 顺序，切到 `main` 引用并验证结构与私人设置保留。
-3. 用户导入这一份正式配置后进行 Loon 真机实测。
+1. **客户端刷新与验证**：用户在手机 Loon 客户端更新 `Loon-China-DNS.lpx` 插件，彻底上滑退出 App Store 后重新打开，验证图片/截图秒开体验。
+2. **进入 1~2 周静默稳定观察期**：冻结规则边界扩张，重点关注 App Store、HomeKit 摄像头推流、iCloud 协同、Telegram APNs 锁屏即时推送及国内主流 App，确认系统长期稳定性。
+3. **日常全自动巡航**：后续日常维护完全依赖 GitHub Actions 每周日定时自动同步上游规则、执行 `--strict` 防撞车检测并发布；若遇偶发速度异常，严格执行“规则层 -> DNS 层 -> CDN 调度”三步排查 SOP，坚决杜绝无依据盲目加规则。
 
 ---
 
