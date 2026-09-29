@@ -39,6 +39,8 @@ DOMAIN-SUFFIX,gg.apple.com
 DOMAIN-SUFFIX,gnip.apple.com
 # Apple certificate revocation checks (OCSP v2 responder, fixes falling to Final)
 DOMAIN-SUFFIX,ocsp2.apple.com
+# Apple NTP time synchronization service (fixes UDP 123 dropping on proxy)
+DOMAIN-SUFFIX,time.apple.com
 
 # --- Apple China Local CDN Cache ---
 # Target: Official Apple China CDN IPv4 subnet
