@@ -215,19 +215,42 @@ def verify_local_pre_release(dist_dir=DIST_DIR, manifest_path=MANIFEST_PATH, exi
     print(f"[PASS] Pre-release integrity verified: {len(rulesets)} rulesets, diagnostic artifacts, and package signature valid.")
     return True
 
+def purge_jsdelivr_artifacts(branch, items, opener=None):
+    """
+    Sends explicit purge requests to jsDelivr Purge API for specified artifacts.
+    """
+    op = opener or urllib.request.urlopen
+    purged = 0
+    for item in items:
+        # Standardize item relative path
+        rel_item = item.replace("\\", "/").lstrip("/")
+        if not rel_item.startswith("dist/"):
+            rel_item = f"dist/{rel_item}"
+        p_url = f"https://purge.jsdelivr.net/gh/o-ocn/loon-rules@{branch}/{rel_item}"
+        try:
+            req = urllib.request.Request(p_url, headers={"User-Agent": "Mozilla/5.0 LoonPurge/2.0"})
+            with op(req, timeout=5) as resp:
+                if getattr(resp, "status", 200) in (200, 204):
+                    purged += 1
+        except Exception:
+            pass
+    return purged
+
 def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
                    mirrors=None, exit_on_failure=True, urlopen_fn=None,
-                   max_retries=3, retry_delay_sec=6.0):
+                   max_retries=3, retry_delay_sec=6.0, soft_cdn=False):
     """
     Post-Release Live Mirror Verification:
     Validates accessibility, byte-integrity, and SHA256 matching
     across GitHub Raw and jsDelivr CDN mirrors for rulesets AND diagnostic artifacts.
     Includes finite retries for CDN propagation delay with explicit timeout / desync reporting.
+    When soft_cdn=True, CDN propagation desync emits a warning instead of failing the release
+    provided GitHub Raw passes 100%.
     """
     if branch is None:
         branch = get_current_git_branch()
 
-    print(f"[*] Starting Live Mirror Verification on branch '{branch}'...")
+    print(f"[*] Starting Live Mirror Verification on branch '{branch}' (soft_cdn={soft_cdn})...")
 
     if not os.path.isfile(manifest_path):
         print(f"[FAIL] Local manifest not found: {manifest_path}")
@@ -296,6 +319,12 @@ def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
         print(f"\n--- Checking Mirror: {m_name} ({base_url}) ---")
         m_errors = []
         mirror_success = False
+        is_cdn = "jsdelivr" in base_url.lower()
+
+        # If checking jsDelivr live mirror and not a mock unit test, trigger a proactive purge
+        if is_cdn and urlopen_fn is None:
+            purge_items = list(rulesets.keys()) + DIAGNOSTIC_FILES
+            purge_jsdelivr_artifacts(branch, purge_items, opener=opener)
 
         for attempt in range(max_retries):
             m_errors = []
@@ -453,17 +482,23 @@ def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
                     break
 
         if not mirror_success:
-            all_passed = False
             mirror_reports[m_name] = {"passed": False, "errors": m_errors}
-            print(f"  [TIMEOUT/FAIL] {m_name} encountered {len(m_errors)} error(s) after {max_retries} attempt(s):")
-            for err in m_errors[:5]:
-                print(f"    - {err}")
-            if len(m_errors) > 5:
-                print(f"    - ... and {len(m_errors) - 5} more error(s)")
+            if is_cdn and soft_cdn:
+                print(f"  [WARN/SOFT_GATE] {m_name} edge propagation in progress ({len(m_errors)} desync items after {max_retries} attempts).")
+                print("  [WARN/SOFT_GATE] Treated as non-fatal warning per soft_cdn policy (GitHub Raw is primary source of truth).")
+                for err in m_errors[:5]:
+                    print(f"    - {err}")
+            else:
+                all_passed = False
+                print(f"  [TIMEOUT/FAIL] {m_name} encountered {len(m_errors)} error(s) after {max_retries} attempt(s):")
+                for err in m_errors[:5]:
+                    print(f"    - {err}")
+                if len(m_errors) > 5:
+                    print(f"    - ... and {len(m_errors) - 5} more error(s)")
 
     print("\n" + "=" * 60)
     if all_passed:
-        print("[SUCCESS] All mirrors verified completely with zero errors.")
+        print("[SUCCESS] All mirrors verified completely with zero fatal errors.")
         return True
     else:
         print("[FAILURE] Mirror verification failed on one or more mirrors.")
@@ -483,13 +518,16 @@ def main():
                         help="Maximum retry attempts for remote CDN verification.")
     parser.add_argument("--retry-delay", dest="retry_delay", type=float, default=6.0,
                         help="Seconds to wait between CDN retry attempts.")
+    parser.add_argument("--soft-cdn", dest="soft_cdn", action="store_true",
+                        help="Treat secondary CDN propagation latency as non-fatal warning if primary mirror passes.")
     args = parser.parse_args()
 
     if args.pre_release:
         verify_local_pre_release(exit_on_failure=True)
     else:
         verify_mirrors(branch=args.branch, exit_on_failure=True,
-                       max_retries=args.retries, retry_delay_sec=args.retry_delay)
+                       max_retries=args.retries, retry_delay_sec=args.retry_delay,
+                       soft_cdn=args.soft_cdn)
 
 if __name__ == "__main__":
     main()

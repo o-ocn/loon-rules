@@ -1875,6 +1875,42 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/Google.lsr", "YouTube.lsr")[0])
         self.assertFalse(verify_private_lcf.validate_ruleset_url("https://raw.githubusercontent.com/o-ocn/loon-rules/dev/dist/YouTube.lsr", "YouTube.lsr")[0])
 
+    def test_43_shared_domain_and_conflict_checker(self):
+        """Verify cross-border shared infrastructure checker, leak detection, and collision prevention."""
+        import check_conflicts
+
+        # 1. Clean real repository spec passes cleanly
+        ok, errors, warnings = check_conflicts.check_conflicts(strict=True)
+        self.assertTrue(ok, f"check_conflicts failed on repository: {errors}")
+        self.assertEqual(len(errors), 0)
+
+        # 2. Fault injection: Overseas exclusive domain leak into domestic ruleset
+        tmp_dist = os.path.join(TEST_TMP_DIR, "dist_leak_test")
+        os.makedirs(tmp_dist, exist_ok=True)
+        for fn in os.listdir(DIST_DIR):
+            if fn.endswith(".lsr"):
+                shutil.copyfile(os.path.join(DIST_DIR, fn), os.path.join(tmp_dist, fn))
+
+        # Inject overseas exclusive domain tiktok.com into China-Direct.lsr
+        with open(os.path.join(tmp_dist, "China-Direct.lsr"), "a", encoding="utf-8") as f:
+            f.write("DOMAIN-SUFFIX,tiktok.com\n")
+
+        ok_leak, err_leak, _ = check_conflicts.check_conflicts(dist_dir=tmp_dist, strict=True)
+        self.assertFalse(ok_leak, "check_conflicts must detect overseas exclusive domain leak!")
+        self.assertTrue(any("tiktok.com" in e for e in err_leak))
+
+        # 3. Fault injection: Overseas exclusive domain injected into DNS plugin
+        tmp_dns = os.path.join(TEST_TMP_DIR, "bad_dns.lpx")
+        with open(os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx"), "r", encoding="utf-8") as f:
+            dns_c = f.read()
+        dns_c += "\n*.tiktok.com = server:223.5.5.5\n"
+        with open(tmp_dns, "w", encoding="utf-8") as f:
+            f.write(dns_c)
+
+        ok_dns, err_dns, _ = check_conflicts.check_conflicts(dns_path=tmp_dns, strict=True)
+        self.assertFalse(ok_dns, "check_conflicts must detect illegal DNS routing for overseas domains!")
+        self.assertTrue(any("tiktok.com" in e for e in err_dns))
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)

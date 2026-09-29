@@ -147,12 +147,12 @@
 * `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `1688.com`（阿里巴巴 1688 批发 API/网关）、`blank_1688.com`（1688 App 内部 WebView 容器重置页面）及 `doupay.com`（抖音支付火山引擎 DCDN 网关），彻底阻断电商与支付关键流量落入 FINAL；并在 `China-Direct.list` 中补充字节跳动共享基础设施（`snssdk.com`, `bytedance.com`, `byteimg.com`, `ibytedtos.com`）与未来 TikTok 隔离的边界防护注释；
 * `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.1688.com`, `*.doupay.com`, `*.idlefish.com` 阿里极速 DNS（223.5.5.5）分流解析，并添加共享底层架构注释；
 * `RULE_DESIGN.md`：建立《跨国孪生业务与共享基础设施隔离准则》，明确出海孪生业务（抖音/TikTok、微信/WeChat）的独占域名与共享域名划分红线，以及 GeoIP 与 DNS 分流联动的双重保险准则；
-* `diagnostics/loon-rules-diagnostic.js` + `dist/diagnostics/loon-rules-diagnostic.js`：
-  - 核心突破：引入 `resolveTargetNode` 动态策略组嗅探能力，当执行 Generic 脚本时，检测用户配置中的策略组（如 `AI-Overseas`、`All`、`US`），自动将海外 AI 探针绑定至对应策略组发出，彻底消除因脚本默认落入香港 FINAL 导致 OpenAI/Claude/Grok 误报“双向不可达”的假故障，同时严格保持规则策略中立；
-  - 探针端点优化：将 `github` 连通性测试端点从受 GitHub API 匿名 IP 频次限制（HTTP 403 限流）的 `api.github.com/zen` 切换为高可用静态端点 `github.com/robots.txt`，消除假红标误报；
-* `tests/test_diagnostic.js`：新增 Subtest 19 覆盖策略组嗅探与动态绑定逻辑，19/19 项 Node.js 离线单测全绿；
+* `shared_domains.yml` + `scripts/check_conflicts.py`：建立跨国孪生业务（字节跳动 Douyin/TikTok、腾讯 WeChat/微信、苹果生态、阿里生态）共享基础设施与防碰撞检测器，自动化检测海外独占域名泄露与跨策略组未授权碰撞；并在 `.github/workflows/sync-and-build.yml` 中集成 `--strict` 检查；
+* `scripts/verify_mirrors.py` + `.github/workflows/sync-and-build.yml`：
+  - 核心改进：引入 `--soft-cdn` 参数及主动调用 jsDelivr Purge API 机制。将 GitHub Raw 作为唯一的强阻断门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning，彻底解决推送后因 CDN 边缘缓存时间差导致的假红叉问题；
+* `scripts/test_rules.py`：新增 `test_43_shared_domain_and_conflict_checker`，涵盖跨生态防泄漏检测与 2 类故障注入（独占域名泄露到直连、独占域名泄露到国内 DNS），单测规模扩充至 43 项全绿；
 * `dist/diagnostics/manifest.json`：总规则数稳定在 **21,105 条**，构建产物 revision 更新至 `7b2e988e4805`；
-* `scripts/test_rules.py`：全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
+* 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
 
 ---
 
@@ -230,5 +230,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（规则收敛、DNS 闭环与跨国孪生业务隔离准则落地）
-- 本轮工作：1) 新增 5 条高频业务直连规则：`appattest.apple.com`（Apple 设备完整性/防欺诈认证）、`wps.apple.com`（Apple Wi-Fi Positioning System 室内/基站辅助定位）、`1688.com`（阿里巴巴 1688 批发 API）、`blank_1688.com`（1688 容器重置）及 `doupay.com`（抖音支付网关），彻底杜绝电商、支付与系统定位流量落入 FINAL，全库规则扩充至 21,105 条；2) 揭示 `air.1688.com` 与 `doupay.com` 漏入 Final 的根本原因：境外 DoH 触发 CDN 调度漂移解析至香港 Anycast 节点（`155.102.4.44` / `139.177.246.206` 为 HK IP，无法命中 CN GeoIP），已通过 `Loon-China-DNS.lpx` 阿里 DNS 分流与 `China-Direct.lsr` 域名规则双重闭环锁定直连；3) 解决规则诊断探针误报：在 `loon-rules-diagnostic.js` 中引入 `resolveTargetNode` 动态策略组探测，在不侵犯规则中立性的前提下让海外 AI 探针动态绑定用户活动代理组（如 `All`），消除落入香港节点导致的误报，并将 GitHub 探针升级为高可用静态端点（`github.com/robots.txt`）免除 403 API 限流；4) 落实 ChatGPT 独立审查建议：在 `RULE_DESIGN.md` 中确立《跨国孪生业务与共享基础设施隔离准则》，在 `China-Direct.list` 与 `Loon-China-DNS.lpx` 明确标记字节/腾讯共享基础设施范围；新增 `*.idlefish.com` 阿里 DNS 极速分流；5) 编写 Node.js Subtest 19 覆盖动态策略组路由；全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及本地脱敏私人配置验收工具 100% 验证通过。
+- 执行者：Gemini / Antigravity（落实 ChatGPT 审查建议：跨生态冲突检测器、soft-cdn 门禁与 CI 全链路优化）
+- 本轮工作：1) 建立跨国孪生业务防撞车体系：新增 `shared_domains.yml` 与 `scripts/check_conflicts.py`，覆盖字节跳动（抖音 vs TikTok）、腾讯（微信 vs 国际 WeChat）、苹果生态与阿里生态共享基础设施，在 GitHub Actions 中集成 `--strict` 门禁，并在 `scripts/test_rules.py` 中新增 `test_43` 单测与故障注入；2) 彻底消除 CI 假红叉：在 `scripts/verify_mirrors.py` 与 `.github/workflows/sync-and-build.yml` 中引入 `--soft-cdn` 及主动调用 jsDelivr Purge API，将 GitHub Raw 作为唯一的强阻断硬门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning；3) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及脱敏私人配置验收工具 100% 验证通过。

@@ -50,6 +50,10 @@ jobs:
         run: |
           python -B -m unittest scripts.test_rules
 
+      - name: Run Cross-Border Shared Infrastructure and Collision Check
+        run: |
+          python scripts/check_conflicts.py --strict
+
       - name: Run Diagnostic Plugin Fixture Tests
         run: |
           node --test tests/test_diagnostic.js
@@ -78,11 +82,10 @@ jobs:
 
       - name: Post-Release Mirrors and CDN Health Alert Gate
         # Health check & alert gate: Runs after push to verify edge propagation and CDN mirror consistency.
-        # NOTE: If remote CDN or edge replication fails, this step exits with code 1 and flags the job red
-        # to alert maintainers. Per CI/CD architectural reality, it does NOT perform destructive git force-push
-        # rollbacks on public branches.
+        # Uses --soft-cdn: GitHub Raw is the primary hard gate; jsDelivr CDN propagation latency emits
+        # an advisory warning rather than failing the release.
         if: github.event_name != 'pull_request'
         run: |
           # Grace period for GitHub Raw edge cache replication
           sleep 10
-          python scripts/verify_mirrors.py --branch ${{ github.ref_name }}
+          python scripts/verify_mirrors.py --branch ${{ github.ref_name }} --soft-cdn
