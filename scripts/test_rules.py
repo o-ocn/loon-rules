@@ -1500,6 +1500,65 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         res_clean = verify_mirrors.verify_mirrors(exit_on_failure=False, urlopen_fn=mock_clean_pass)
         self.assertTrue(res_clean, "verify_mirrors must return True when all mirrors serve matching files!")
 
+        # 9. Fault injection: Remote manifest missing diagnostic_artifacts
+        missing_diag_dict = json.loads(valid_manifest_bytes.decode("utf-8"))
+        missing_diag_dict.pop("diagnostic_artifacts", None)
+        missing_diag_bytes = json.dumps(missing_diag_dict).encode("utf-8")
+
+        def mock_missing_diag(req, **kwargs):
+            url = req.full_url if hasattr(req, "full_url") else str(req)
+            if "manifest.json" in url:
+                return MockResponse(missing_diag_bytes, status=200)
+            fname = url.split("/")[-1]
+            local_path = os.path.join(DIST_DIR, fname)
+            if os.path.isfile(local_path):
+                with open(local_path, "rb") as fh:
+                    return MockResponse(fh.read(), status=200)
+            return MockResponse("", status=404)
+
+        res_missing_diag = verify_mirrors.verify_mirrors(exit_on_failure=False, urlopen_fn=mock_missing_diag)
+        self.assertFalse(res_missing_diag, "verify_mirrors must fail when remote manifest lacks diagnostic_artifacts!")
+
+        # 10. Fault injection: Remote manifest missing package_sha256
+        missing_pkg_dict = json.loads(valid_manifest_bytes.decode("utf-8"))
+        missing_pkg_dict.pop("package_sha256", None)
+        missing_pkg_bytes = json.dumps(missing_pkg_dict).encode("utf-8")
+
+        def mock_missing_pkg(req, **kwargs):
+            url = req.full_url if hasattr(req, "full_url") else str(req)
+            if "manifest.json" in url:
+                return MockResponse(missing_pkg_bytes, status=200)
+            fname = url.split("/")[-1]
+            local_path = os.path.join(DIST_DIR, fname)
+            if os.path.isfile(local_path):
+                with open(local_path, "rb") as fh:
+                    return MockResponse(fh.read(), status=200)
+            return MockResponse("", status=404)
+
+        res_missing_pkg = verify_mirrors.verify_mirrors(exit_on_failure=False, urlopen_fn=mock_missing_pkg)
+        self.assertFalse(res_missing_pkg, "verify_mirrors must fail when remote manifest lacks package_sha256!")
+
+        # 11. Fault injection: Local manifest pre-release with missing diagnostic_artifacts
+        tmp_man_dir = os.path.join(TEST_TMP_DIR, "diag_test")
+        os.makedirs(os.path.join(tmp_man_dir, "diagnostics"), exist_ok=True)
+        bad_local_man_path = os.path.join(tmp_man_dir, "diagnostics", "manifest.json")
+        with open(bad_local_man_path, "w", encoding="utf-8") as f:
+            f.write(missing_diag_bytes.decode("utf-8"))
+        res_local_missing_diag = verify_mirrors.verify_local_pre_release(
+            dist_dir=DIST_DIR, manifest_path=bad_local_man_path, exit_on_failure=False
+        )
+        self.assertFalse(res_local_missing_diag, "verify_local_pre_release must fail when manifest lacks diagnostic_artifacts!")
+
+        # 12. Fault injection: Local manifest pre-release with zeroed package_sha256
+        zero_pkg_dict = json.loads(valid_manifest_bytes.decode("utf-8"))
+        zero_pkg_dict["package_sha256"] = "0" * 64
+        with open(bad_local_man_path, "w", encoding="utf-8") as f:
+            f.write(json.dumps(zero_pkg_dict))
+        res_local_zero_pkg = verify_mirrors.verify_local_pre_release(
+            dist_dir=DIST_DIR, manifest_path=bad_local_man_path, exit_on_failure=False
+        )
+        self.assertFalse(res_local_zero_pkg, "verify_local_pre_release must fail when package_sha256 is zeroed/invalid!")
+
     def test_41_public_fixture_precedence_and_references(self):
         """Verify public 19-ruleset fixture structure, all 19 ruleset references, and 4-stage first-hit order."""
         fixture_path = os.path.join(BASE_DIR, "tests", "fixtures", "sample_order_19.fixture")
@@ -1547,6 +1606,59 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             self.assertTrue(len(matches) > 0, f"Target '{target}' had no match in sample_order_19.fixture")
             self.assertEqual(matches[0]["ruleset"], expected_set,
                              f"Target '{target}' hit {matches[0]['ruleset']}, expected {expected_set}")
+
+    def test_42_verify_private_lcf_acceptance(self):
+        """Regression tests for scripts/verify_private_lcf.py: preemption detection, plugin status, and sanitization."""
+        import verify_private_lcf
+        import io
+        from contextlib import redirect_stdout
+
+        fixture_path = os.path.join(BASE_DIR, "tests", "fixtures", "sample_order_19.fixture")
+        self.assertTrue(os.path.isfile(fixture_path))
+
+        # 1. Clean public fixture passes completely
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            ok = verify_private_lcf.verify_private_lcf(fixture_path)
+        self.assertTrue(ok, f"sample_order_19.fixture should pass verify_private_lcf! Output:\n{buf.getvalue()}")
+
+        # 2. Local rule preemption: inject DOMAIN,drive.google.com,DIRECT
+        with open(fixture_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        preempt_content = content.replace("[Rule]\n", "[Rule]\nDOMAIN,drive.google.com,DIRECT\n")
+        preempt_file = os.path.join(TEST_TMP_DIR, "preempt.fixture")
+        with open(preempt_file, "w", encoding="utf-8") as f:
+            f.write(preempt_content)
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_preempt = verify_private_lcf.verify_private_lcf(preempt_file)
+        self.assertFalse(res_preempt, "Local rule preemption must cause verify_private_lcf to fail!")
+        self.assertIn("[ERR_LOCAL_PREEMPTION]", buf.getvalue())
+        self.assertIn("drive.google.com", buf.getvalue())
+
+        # 3. Missing file sanitization: no file path leaked, standardized error code
+        nonexistent = os.path.join(TEST_TMP_DIR, "very_secret_user_path_nonexistent.lcf")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_missing = verify_private_lcf.verify_private_lcf(nonexistent)
+        self.assertFalse(res_missing)
+        out = buf.getvalue()
+        self.assertIn("[ERR_FILE_NOT_FOUND]", out)
+        self.assertNotIn("very_secret_user_path", out)
+
+        # 4. Active plugin detection: must be UNVERIFIED and cannot grant full pass
+        plugin_content = content + "\n[Plugin]\nhttps://example.com/rule_injector.plugin, tag=injector\n"
+        plugin_file = os.path.join(TEST_TMP_DIR, "plugin.fixture")
+        with open(plugin_file, "w", encoding="utf-8") as f:
+            f.write(plugin_content)
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            res_plugin = verify_private_lcf.verify_private_lcf(plugin_file)
+        self.assertFalse(res_plugin, "verify_private_lcf must not grant full pass when plugins are active!")
+        self.assertIn("Plugin Injected Rules: UNVERIFIED", buf.getvalue())
+        self.assertIn("UNVERIFIED_PLUGINS", buf.getvalue())
 
     @classmethod
     def tearDownClass(cls):

@@ -548,6 +548,20 @@ def recover_interrupted_dist(dist_dir: str = DIST_DIR) -> bool:
         shutil.rmtree(dist_old, ignore_errors=True)
         return False
 
+def compute_package_sha256(ruleset_metadata: dict, diagnostic_metadata: dict) -> str:
+    """
+    Computes a deterministic SHA256 package signature across sorted rulesets
+    and diagnostic artifacts metadata.
+    """
+    pkg_h = hashlib.sha256()
+    for rname in sorted(ruleset_metadata.keys()):
+        m = ruleset_metadata[rname]
+        pkg_h.update(f"{rname}:{m['sha256']}:{m['revision']}:{m['total_rules']}\n".encode("utf-8"))
+    for dname in sorted(diagnostic_metadata.keys()):
+        dm = diagnostic_metadata[dname]
+        pkg_h.update(f"{dname}:{dm['sha256']}:{dm['size']}\n".encode("utf-8"))
+    return pkg_h.hexdigest()
+
 def switch_dist_directory(dist_new: str, dist_dir: str = DIST_DIR) -> None:
     """
     Two-stage staged directory switch with in-flight rollback protection and crash recovery.
@@ -577,11 +591,6 @@ def switch_dist_directory(dist_new: str, dist_dir: str = DIST_DIR) -> None:
         os.rename(dist_new, dist_dir)
         if os.path.exists(dist_old):
             shutil.rmtree(dist_old, ignore_errors=True)
-        if os.name == "nt":
-            try:
-                subprocess.run(["icacls", dist_dir, "/reset", "/T"], capture_output=True, check=False)
-            except Exception:
-                pass
         print(f"[STAGED SWITCH] Successfully replaced entire dist/ directory with crash-recovery protection.")
     except Exception as e:
         # In-flight rollback: restore .dist_old -> dist_dir
@@ -815,6 +824,10 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
     if os.path.exists(staging_dir):
         shutil.rmtree(staging_dir, ignore_errors=True)
     os.makedirs(staging_dir, exist_ok=True)
+    if os.name == "nt":
+        res = subprocess.run(["icacls", staging_dir, "/reset"], capture_output=True, text=True)
+        if res.returncode != 0:
+            raise RuntimeError(f"Failed to reset ACL on staging directory '{staging_dir}': {res.stderr.strip()}")
     staging_diag_dir = os.path.join(staging_dir, "diagnostics")
     os.makedirs(staging_diag_dir, exist_ok=True)
 
@@ -896,14 +909,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 }
 
         # Compute deterministic package signature across all sorted rulesets AND diagnostic artifacts
-        pkg_h = hashlib.sha256()
-        for rname in sorted(ruleset_metadata.keys()):
-            m = ruleset_metadata[rname]
-            pkg_h.update(f"{rname}:{m['sha256']}:{m['revision']}:{m['total_rules']}\n".encode("utf-8"))
-        for dname in sorted(diag_metadata.keys()):
-            dm = diag_metadata[dname]
-            pkg_h.update(f"{dname}:{dm['sha256']}:{dm['size']}\n".encode("utf-8"))
-        package_sha256 = pkg_h.hexdigest()
+        package_sha256 = compute_package_sha256(ruleset_metadata, diag_metadata)
         content_rev = package_sha256[:12]
 
         existing_manifest_content_rev = None

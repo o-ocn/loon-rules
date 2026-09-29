@@ -111,6 +111,10 @@ def load_lcf_pipeline(lcf_path):
     local_rules = []
     remote_rulesets = []
     final_policy = "DIRECT"
+    has_final = False
+    final_line = None
+    final_is_last = True
+    active_plugins = []
 
     if not os.path.isfile(lcf_path):
         return None
@@ -130,30 +134,41 @@ def load_lcf_pipeline(lcf_path):
             if re.search(r'\benabled?\s*=\s*false\b', clean_lower):
                 continue
 
-            if current_section == "Rule":
+            if current_section in ("Rule", "Remote Rule"):
                 p = parse_rule_line(clean, line_idx)
                 if p:
                     if p["type"] == "FINAL":
+                        has_final = True
+                        final_line = line_idx
                         final_policy = p["value"] or "DIRECT"
-                    else:
+                    elif current_section == "Rule":
+                        if has_final:
+                            final_is_last = False
                         local_rules.append({
                             "type": p["type"],
                             "value": p["value"],
                             "raw": f"{p['type']},{p['value']}",
                             "line": line_idx
                         })
-            elif current_section == "Remote Rule":
+            if current_section == "Remote Rule":
                 # e.g.: https://raw.githubusercontent.com/.../dist/AI-Overseas.lsr, policy=..., tag=AI-Overseas
                 m = re.search(r'([a-zA-Z0-9_\-]+\.lsr)', clean)
                 if m:
                     rname = m.group(1)
                     if rname not in remote_rulesets:
                         remote_rulesets.append(rname)
+            elif current_section == "Plugin":
+                active_plugins.append(clean)
 
     return {
         "local_rules": local_rules,
         "remote_order": remote_rulesets or DEFAULT_REMOTE_RULE_ORDER,
-        "final_policy": final_policy
+        "final_policy": final_policy,
+        "has_final": has_final,
+        "final_line": final_line,
+        "final_is_last": final_is_last,
+        "active_plugins": active_plugins,
+        "active_plugin_count": len(active_plugins)
     }
 
 def match_target(target, rules_by_file, local_rules=None, plugin_rules=None):
