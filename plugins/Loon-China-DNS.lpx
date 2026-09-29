@@ -9,7 +9,7 @@
 # 顶级域名
 *.cn = server:223.5.5.5
 
-# 字节跳动 / 抖音全系
+# 字节跳动 / 抖音全系（注：bytedance.com / snssdk.com 属国内核心基建，保障国内秒开与就近 CDN；未来若启用海外 TikTok 需保留其海外 CDN 走海外解析）
 *.douyin.com = server:223.5.5.5
 *.douyincdn.com = server:223.5.5.5
 *.zijieapi.com = server:223.5.5.5

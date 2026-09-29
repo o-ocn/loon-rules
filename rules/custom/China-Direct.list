@@ -26,6 +26,9 @@ DOMAIN-SUFFIX,blank_1688.com
 
 # --- Other Mainland Services ---
 # Douyin / ByteDance domestic ecosystem & CDNs
+# [共享基础设施防护说明] bytedance.com / byteimg.com / ibytedtos.com 为国内抖音及飞书等共用底层。
+# 现阶段为保障国内业务秒开保留在直连；未来若引入 TikTok 规则集，严禁将此类共享域名直接移入代理，
+# 须保持 TikTok 独占域名（如 tiktok.com, byteoversea.com 等）在顶层代理，共享域名留在直连或做精准子域分流。
 DOMAIN-SUFFIX,douyin.com
 DOMAIN-SUFFIX,bytedance.com
 DOMAIN-SUFFIX,byteimg.com

@@ -110,7 +110,9 @@
 15. **Apple 证书在线验签（OCSP v2）归入直连保护**：现代 iOS/macOS 大量采用 `ocsp2.apple.com` 响应证书吊销状态，缺失此域名会导致系统应用启动慢并回落至 FINAL 代理；必须将其纳入 `Apple-Direct.lsr` 进行直连加速。
 16. **DNS 插件加载优先序准则**：`Loon-China-DNS.lpx`（国内 DNS 分流）必须排在 `Prevent_DNS_Leaks.lpx`（DNS 防泄漏）之前。确保国内大厂白名单与 `*.cn` 优先由阿里 DNS（223.5.5.5）就近解析，其余未匹配外网流量再交由防泄漏插件和全局 DoH 安全解析，杜绝解析降级或死锁。
 17. **规则与策略彻底解耦与用户策略主权准则**：分流规则（`.lsr`）必须 100% 策略中立；私人配置文件（`.lcf`）中用户的策略组指派（如 `AI-Overseas` 绑定 `policy=All`）归属用户完全掌控，AI 严禁擅自修改策略绑定，绝不可私自将用户的策略改写（如禁止将 `All` 改为 `US`）。此设计规范已在 `RULE_DESIGN.md` 与 `AGENTS.md` 中强制约束。
-18. **Loon 脚本 `$httpClient` 探测不经过 TUN 分流机制**：Loon 脚本内 `$httpClient` 发起的网络探测属于内部请求，不匹配 `[Remote Rule]` 域名规则；未显式指定 `node` 时直接回落至全局默认出口/`FINAL`（当前首选为香港 IEPL 专线）。因此 OpenAI 与 Claude 探针失败系因香港出口受阻，绝不代表用户在 `AI-Overseas`（`All` 挂载美国 VMISS VPS）下的真机实际连通性。
+18. **Loon 脚本 `$httpClient` 探测不经过 TUN 分流机制**：Loon 脚本内 `$httpClient` 发起的网络探测属于内部请求，不匹配 `[Remote Rule]` 域名规则；未显式指定 `node` 时直接回落至全局默认出口/`FINAL`（当前首选为香港 IEPL 专线）。因此 OpenAI 与 Claude 探针失败系因香港出口受阻，绝不代表用户在 `AI-Overseas`（`All` 挂载美国 VMISS VPS）下的真机实际连通性。已在 `loon-rules-diagnostic.js` 中引入 `resolveTargetNode` 嗅探用户活跃策略组动态绑定，解决假死锁与误报。
+19. **跨国孪生业务与共享基础设施隔离准则**：针对抖音与 TikTok、微信与 WeChat 等跨国孪生产品，`bytedance.com`, `byteimg.com`, `ibytedtos.com`, `snssdk.com` 属于国内高频底层基础设施，现阶段为保障国内业务秒开与低能耗保留在直连与国内 DNS 分流；明确立项红线：未来若引入 TikTok 规则集，严禁将共享基础设施域名直接全量搬入代理（会导致国内业务瘫痪），必须保持 TikTok 独占域名在顶层代理、共享基础设施留直连的精细隔离架构。
+20. **国内 CDN Anycast 漂移与 GeoIP 局限性防线**：实测确认国内大厂（阿里 1688、抖音支付等）在境外 DoH 解析下会调度至香港 Anycast IP（如 `155.102.4.44`），彻底绕过 `GEOIP,CN` 跌落 `FINAL`。因此绝不能盲目迷信 GeoIP 兜底，必须采用“明确域名规则（China-Direct）+ 国内 DNS 极速分流（Loon-China-DNS 223.5.5.5）”双保险闭环。
 
 ---
 
@@ -142,14 +144,15 @@
 ## 最近一次修改
 
 * `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `appattest.apple.com`（Apple DeviceCheck / App Attest 设备硬件认证）及 `wps.apple.com`（Apple Wi-Fi Positioning System 室内/基站辅助定位服务，防止定位请求绕经海外代理引发定位漂移与延迟），`Apple-Direct.lsr` 条数提升至 159 条；
-* `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `1688.com`（阿里巴巴 1688 批发 API/网关）、`blank_1688.com`（1688 App 内部 WebView 容器重置页面）及 `doupay.com`（抖音支付火山引擎 DCDN 网关），彻底阻断电商与支付关键流量落入 FINAL；
-* `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.1688.com` 与 `*.doupay.com` 阿里极速 DNS（223.5.5.5）分流解析；
+* `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `1688.com`（阿里巴巴 1688 批发 API/网关）、`blank_1688.com`（1688 App 内部 WebView 容器重置页面）及 `doupay.com`（抖音支付火山引擎 DCDN 网关），彻底阻断电商与支付关键流量落入 FINAL；并在 `China-Direct.list` 中补充字节跳动共享基础设施（`snssdk.com`, `bytedance.com`, `byteimg.com`, `ibytedtos.com`）与未来 TikTok 隔离的边界防护注释；
+* `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.1688.com`, `*.doupay.com`, `*.idlefish.com` 阿里极速 DNS（223.5.5.5）分流解析，并添加共享底层架构注释；
+* `RULE_DESIGN.md`：建立《跨国孪生业务与共享基础设施隔离准则》，明确出海孪生业务（抖音/TikTok、微信/WeChat）的独占域名与共享域名划分红线，以及 GeoIP 与 DNS 分流联动的双重保险准则；
 * `diagnostics/loon-rules-diagnostic.js` + `dist/diagnostics/loon-rules-diagnostic.js`：
   - 核心突破：引入 `resolveTargetNode` 动态策略组嗅探能力，当执行 Generic 脚本时，检测用户配置中的策略组（如 `AI-Overseas`、`All`、`US`），自动将海外 AI 探针绑定至对应策略组发出，彻底消除因脚本默认落入香港 FINAL 导致 OpenAI/Claude/Grok 误报“双向不可达”的假故障，同时严格保持规则策略中立；
   - 探针端点优化：将 `github` 连通性测试端点从受 GitHub API 匿名 IP 频次限制（HTTP 403 限流）的 `api.github.com/zen` 切换为高可用静态端点 `github.com/robots.txt`，消除假红标误报；
 * `tests/test_diagnostic.js`：新增 Subtest 19 覆盖策略组嗅探与动态绑定逻辑，19/19 项 Node.js 离线单测全绿；
-* `dist/diagnostics/manifest.json`：总规则数更新为 **21,105 条**，构建产物 revision 更新至 `7b2e988e4805`；
-* `scripts/test_rules.py`：更新 `test_31` 全量规则断言为 21,105，全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
+* `dist/diagnostics/manifest.json`：总规则数稳定在 **21,105 条**，构建产物 revision 更新至 `7b2e988e4805`；
+* `scripts/test_rules.py`：全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
 
 ---
 
@@ -227,5 +230,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（规则收敛与探针智能化升级）
-- 本轮工作：1) 新增 5 条高频业务直连规则：`appattest.apple.com`（Apple 设备完整性/防欺诈认证）、`wps.apple.com`（Apple Wi-Fi Positioning System 室内/基站辅助定位）、`1688.com`（阿里巴巴 1688 批发 API）、`blank_1688.com`（1688 容器重置）及 `doupay.com`（抖音支付网关），彻底杜绝电商、支付与系统定位流量落入 FINAL，全库规则扩充至 21,105 条；2) 揭示 `air.1688.com` 与 `doupay.com` 漏入 Final 的根本原因：境外 DoH 触发 CDN 调度漂移解析至香港 Anycast 节点（`155.102.4.44` / `139.177.246.206` 为 HK IP，无法命中 CN GeoIP），已通过 `Loon-China-DNS.lpx` 阿里 DNS 分流与 `China-Direct.lsr` 域名规则双重闭环锁定直连；3) 解决规则诊断探针误报：在 `loon-rules-diagnostic.js` 中引入 `resolveTargetNode` 动态策略组探测，在不侵犯规则中立性的前提下让海外 AI 探针动态绑定用户活动代理组（如 `All`），消除落入香港节点导致的误报，并将 GitHub 探针升级为高可用静态端点（`github.com/robots.txt`）免除 403 API 限流；4) 编写 Node.js Subtest 19 覆盖动态策略组路由；全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及本地脱敏私人配置验收工具 100% 验证通过。
+- 执行者：Gemini / Antigravity（规则收敛、DNS 闭环与跨国孪生业务隔离准则落地）
+- 本轮工作：1) 新增 5 条高频业务直连规则：`appattest.apple.com`（Apple 设备完整性/防欺诈认证）、`wps.apple.com`（Apple Wi-Fi Positioning System 室内/基站辅助定位）、`1688.com`（阿里巴巴 1688 批发 API）、`blank_1688.com`（1688 容器重置）及 `doupay.com`（抖音支付网关），彻底杜绝电商、支付与系统定位流量落入 FINAL，全库规则扩充至 21,105 条；2) 揭示 `air.1688.com` 与 `doupay.com` 漏入 Final 的根本原因：境外 DoH 触发 CDN 调度漂移解析至香港 Anycast 节点（`155.102.4.44` / `139.177.246.206` 为 HK IP，无法命中 CN GeoIP），已通过 `Loon-China-DNS.lpx` 阿里 DNS 分流与 `China-Direct.lsr` 域名规则双重闭环锁定直连；3) 解决规则诊断探针误报：在 `loon-rules-diagnostic.js` 中引入 `resolveTargetNode` 动态策略组探测，在不侵犯规则中立性的前提下让海外 AI 探针动态绑定用户活动代理组（如 `All`），消除落入香港节点导致的误报，并将 GitHub 探针升级为高可用静态端点（`github.com/robots.txt`）免除 403 API 限流；4) 落实 ChatGPT 独立审查建议：在 `RULE_DESIGN.md` 中确立《跨国孪生业务与共享基础设施隔离准则》，在 `China-Direct.list` 与 `Loon-China-DNS.lpx` 明确标记字节/腾讯共享基础设施范围；新增 `*.idlefish.com` 阿里 DNS 极速分流；5) 编写 Node.js Subtest 19 覆盖动态策略组路由；全量 42 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及本地脱敏私人配置验收工具 100% 验证通过。

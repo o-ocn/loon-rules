@@ -64,3 +64,31 @@ AI 协作接手本项目时，只允许在以下范围内工作：
 2. **`$httpClient` 不经过 TUN 规则分流的底层限制**：
    - Loon 脚本引擎中 `$httpClient` 发起的网络请求，属于 Loon 内部发起的 HTTP 探测，**不会自动走 TUN 层的 `[Remote Rule]` 分流规则**。
    - 若请求未显式指定 `node` 参数，Loon 会直接回落至默认代理（`FINAL`）或本地网络；因此脚本内部探测海外服务的结果，反映的是默认代理通达性，不代表用户在指定策略组（如 `All` 挂载 VPS）下的实际应用通达性。
+
+---
+
+## 跨国孪生业务与共享基础设施隔离准则 (Cross-Border Shared Infrastructure Guidelines)
+
+国内互联网企业出海（如字节跳动 TikTok/抖音、腾讯 WeChat/微信、阿里 AliExpress/淘宝）常共享部分底层域名、统一 CDN 或认证网关。在规则维护与 DNS 分流中，必须严格遵循以下原则：
+
+### 1. 业务独占域名与共享基础设施域名严格区分
+* **抖音独占域名**：`douyin.com`, `douyincdn.com`, `amemv.com`, `iesdouyin.com`, `doupay.com` 等必须 100% 纳入国内直连与国内极速 DNS（`223.5.5.5`）。
+* **TikTok 独占域名**：`tiktok.com`, `tiktokv.com`, `tiktokcdn.com`, `byteoversea.com`, `ibyteimg.com` 等属于海外业务，严禁进入 `China-Direct.lsr` 或 `Loon-China-DNS.lpx`。
+* **共享基础设施域名**：`bytedance.com`, `byteimg.com`, `ibytedtos.com`, `snssdk.com`。
+  - **当前基准**：当前 19 规则集体系主要保障国内高频 App 秒开与低功耗，故此类共享域名纳入国内直连及国内 DNS 解析。
+  - **未来演进红线**：若未来用户需要引入 TikTok 独立规则集，**绝不能将此类共享域名整段迁移至海外代理**（否则会导致国内抖音刷不出视频、评论加载失败或飞书卡死）；必须保持 TikTok 规则集置于顶层（Tier 1）且仅包含 TikTok 独占域名，共享基础设施保留在直连或由精准子域名规则隔离。
+
+### 2. 腾讯生态：微信与 WeChat 分离原则
+* **微信国内核心与服务号**：`weixin.qq.com`, `weixin.com`, `qpic.cn` 属于纯国内直连，走国内极速 DNS（`119.29.29.29`）。
+* **WeChat 海外业务域名**：`wechat.com` 部分国际端点若涉及海外用户体系，如有分流代理需求应独立设立精准规则，严禁将整个 `qq.com` 或 `tencent.com` 放行给代理。
+
+### 3. GeoIP 不是万能兜底，必须与域名分流+DNS 极速解析联动
+* **CDN Geo-DNS 调度漂移陷阱**：
+  当客户端使用海外 DoH（如 `dns.google`）解析国内具有全球 Anycast / CDN 架构的域名（如 `air.1688.com` 或 `api.doupay.com`）时，权威 DNS 会感知为境外请求，从而返回境外（如香港 Anycast `155.102.4.44` 或 `139.177.246.206`）IP。
+* **GeoIP 无法拦截海外 Anycast IP**：
+  `China-GeoIP.lsr` 仅对中国大陆境内 IP（`GEOIP,CN`）生效；一旦国内业务被调度至香港等境外 IP，流量将直接绕过 GeoIP 跌落进 `FINAL` 代理。
+* **双重保险铁律**：
+  国内关键业务必须同时具备：
+  1. **明确的域名规则**（如 `rules/custom/China-Direct.list` 中收录 `1688.com`, `doupay.com`）；
+  2. **国内极速 DNS 分流**（在 `plugins/Loon-China-DNS.lpx` 中绑定 `server:223.5.5.5`，确保权威 DNS 始终返回国内边缘节点 IP）。
+
