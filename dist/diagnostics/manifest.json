@@ -1,35 +1,35 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-09-28T16:37:30.095678+00:00",
-  "content_revision": "0b8b8e0be129",
-  "package_sha256": "0b8b8e0be129d84c60d11f320e65caf9fd01e0f93afafdc40f3ec3177bf62756",
+  "build_timestamp": "2026-09-29T09:41:59.235680+00:00",
+  "content_revision": "5d76a6200a78",
+  "package_sha256": "5d76a6200a782db40da57f00b8b626e2fe1d533b60d4678164e07c3616dfe377",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
   "rulesets": {
+    "Apple-Push.lsr": {
+      "total_rules": 10,
+      "revision": "2517937b2d51",
+      "sha256": "2517937b2d513300eae4df39626d82ca664e9778560cc1b61dab3b6e508c6d4c",
+      "description": "Apple Push Notification service (APNs) minimal authoritative rules"
+    },
     "AI-Overseas.lsr": {
       "total_rules": 38,
       "revision": "a1f362bd587f",
       "sha256": "a1f362bd587fb71280babce6e24a2ba6fa84607af35f04a0cea7c60b666622bb",
       "description": "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     },
-    "AI-China-Direct.lsr": {
-      "total_rules": 2,
-      "revision": "50fbb9d56b4c",
-      "sha256": "50fbb9d56b4c6e9be8795818514a2b1a6d5162f343cf55107128c35d12ad4649",
-      "description": "Mainland China AI services (DeepSeek, etc.)"
+    "YouTube.lsr": {
+      "total_rules": 190,
+      "revision": "7d49dae2f850",
+      "sha256": "7d49dae2f850bf036f80fcf1dac2d22ae510806b2b69f212f691e3f1761cc0c3",
+      "description": "YouTube streaming and media services (evaluated before broad Google)"
     },
     "GoogleDrive.lsr": {
       "total_rules": 8,
       "revision": "6ba3b3e451a4",
       "sha256": "6ba3b3e451a4cd2bc6e2329c39011ee31c83b410325a6067833ce231b91f96ff",
-      "description": "Google Drive storage services"
-    },
-    "OneDrive.lsr": {
-      "total_rules": 17,
-      "revision": "dbffa4201442",
-      "sha256": "dbffa42014420d551c15bf49d4d172922fbf3b61213a13121d58bd915387139f",
-      "description": "Microsoft OneDrive services"
+      "description": "Google Drive storage services (evaluated before broad Google)"
     },
     "Google.lsr": {
       "total_rules": 690,
@@ -37,11 +37,11 @@
       "sha256": "c95b8615252d1d1f48a2eedd71c961aa98ca8b3bc0252ed14c02699fb9a7f089",
       "description": "General Google services and infrastructure"
     },
-    "YouTube.lsr": {
-      "total_rules": 190,
-      "revision": "7d49dae2f850",
-      "sha256": "7d49dae2f850bf036f80fcf1dac2d22ae510806b2b69f212f691e3f1761cc0c3",
-      "description": "YouTube streaming and media services"
+    "OneDrive.lsr": {
+      "total_rules": 17,
+      "revision": "dbffa4201442",
+      "sha256": "dbffa42014420d551c15bf49d4d172922fbf3b61213a13121d58bd915387139f",
+      "description": "Microsoft OneDrive services"
     },
     "Telegram.lsr": {
       "total_rules": 48,
@@ -61,17 +61,23 @@
       "sha256": "10f8ab448c7626f11d4bb29cc35015346401c5bf6668cb38b03cdef63b41e3fe",
       "description": "Discord voice and chat platform"
     },
-    "Apple-Direct.lsr": {
-      "total_rules": 80,
-      "revision": "d158568c126a",
-      "sha256": "d158568c126a90a73b76288d75adc49b1cfd248752e3d138fd03c27e0faa1bb5",
-      "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music)"
+    "PayPal.lsr": {
+      "total_rules": 19,
+      "revision": "90af227e8713",
+      "sha256": "90af227e8713dc156c7cddcef9b7f4be4ed5458ffef395d5d1072480e86fd3c9",
+      "description": "PayPal payment services (curated operational domains only)"
     },
-    "Apple-Media.lsr": {
-      "total_rules": 18,
-      "revision": "02ad01eebd77",
-      "sha256": "02ad01eebd77731bb1fd1d42c3bb956cc2a52f1ff0a6fcbc21bb2ed85e14ddda",
-      "description": "Apple media services (Apple TV+, Apple News, Fitness+)"
+    "Gaming.lsr": {
+      "total_rules": 65,
+      "revision": "06b2809abf75",
+      "sha256": "06b2809abf759c898d09756382672d04b2ed94b96bf35d968455d5ccbfc22a28",
+      "description": "Gaming platforms (Steam and Epic Games, third-party piracy and stores purged)"
+    },
+    "GitHub.lsr": {
+      "total_rules": 31,
+      "revision": "3b18ad5912d7",
+      "sha256": "3b18ad5912d7a0bc4f5caea8ca42849935ccfe05fb5505576066899d63609709",
+      "description": "GitHub development platform and services"
     },
     "TestFlight.lsr": {
       "total_rules": 3,
@@ -79,17 +85,51 @@
       "sha256": "a352eaefa38ef0234d41c53712fec7c2513104aae462b71b0c3d1b9ee5f238b9",
       "description": "Apple TestFlight beta testing platform"
     },
-    "Apple-Push.lsr": {
-      "total_rules": 10,
-      "revision": "2517937b2d51",
-      "sha256": "2517937b2d513300eae4df39626d82ca664e9778560cc1b61dab3b6e508c6d4c",
-      "description": "Apple Push Notification service (APNs) minimal authoritative rules"
+    "Apple-Media.lsr": {
+      "total_rules": 18,
+      "revision": "02ad01eebd77",
+      "sha256": "02ad01eebd77731bb1fd1d42c3bb956cc2a52f1ff0a6fcbc21bb2ed85e14ddda",
+      "description": "Apple media services (Apple TV+, Apple News, Fitness+)"
+    },
+    "AI-China-Direct.lsr": {
+      "total_rules": 19,
+      "revision": "eaec94aa7fb8",
+      "sha256": "eaec94aa7fb80f2d6fa4b9d3a88e5ceb38665bb5040212fbd09a5cd9bd35ca7e",
+      "description": "Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)"
+    },
+    "Apple-Direct.lsr": {
+      "total_rules": 155,
+      "revision": "cff12abe2740",
+      "sha256": "cff12abe2740f66a292a85284f295c8201147ac20c40f36ec98fce58bd1c978e",
+      "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {
-      "total_rules": 366,
-      "revision": "933339d9d218",
-      "sha256": "933339d9d218f7403acaa0d51c9a6dfd9e748b54477589964539c51f293d4696",
-      "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili, LAN)"
+      "total_rules": 501,
+      "revision": "20e9cc7ff681",
+      "sha256": "20e9cc7ff681e81f8281af84165f808a49015558b87ee3c430efd305ef2656db",
+      "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
+    },
+    "Lan.lsr": {
+      "total_rules": 9,
+      "revision": "4de015f034d3",
+      "sha256": "4de015f034d3c502b28e11149c2650a5eeedc12dfffd4be0c9f03f65f77453b7",
+      "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
+    },
+    "China-GeoIP.lsr": {
+      "total_rules": 19209,
+      "revision": "f8e3f65e0774",
+      "sha256": "f8e3f65e0774ebb4e36b0794f3e56b5deef5a1ba3bca1a6d7359b01991d8f5ae",
+      "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
+    }
+  },
+  "diagnostic_artifacts": {
+    "LoonRules-Diagnostic.lpx": {
+      "size": 1187,
+      "sha256": "3b0ed4a52ba6e7aaf3d55bd3e20803373f77b2032be106b748bfc3a3ce349bc5"
+    },
+    "loon-rules-diagnostic.js": {
+      "size": 46719,
+      "sha256": "fb01790c41d8b9e96e9e0a0006cff7375f59655803989f90228a917764726abe"
     }
   },
   "upstream_sync_status": "synced",
@@ -244,7 +284,7 @@
     },
     {
       "id": "muse",
-      "name": "Muse from Meta",
+      "name": "Muse from Meta (网站探针)",
       "category": "AI-Overseas",
       "url": "https://muse.ai/",
       "expected_status": [
@@ -253,7 +293,7 @@
         302
       ],
       "quick": false,
-      "note": "精准 Muse 服务，不含 Meta 全家桶"
+      "note": "网站探针，仅探测 muse.ai 网站主页，不代表 App 实际功能，不含 Meta 全家桶"
     },
     {
       "id": "testflight",
@@ -267,11 +307,11 @@
         404
       ],
       "quick": false,
-      "note": "TestFlight 独立分流"
+      "note": "TestFlight 独立分流端点响应 (401/403/404表示端点有响应，应用下载功能需真机实测)"
     },
     {
       "id": "apns_safe",
-      "name": "Apple APNs (HTTPS安全测试)",
+      "name": "Apple APNs (HTTPS 443探针)",
       "category": "Apple-Push",
       "url": "https://courier.push.apple.com/",
       "expected_status": [
@@ -282,7 +322,33 @@
         502
       ],
       "quick": false,
-      "note": "仅测试 TCP 443 备用通道可达性。系统 TCP 5223 及锁屏推送必须真机实测"
+      "note": "仅测试 TCP 443 备用通道响应。系统 TCP 5223 与锁屏推送需真机实测"
+    },
+    {
+      "id": "paypal",
+      "name": "PayPal",
+      "category": "PayPal",
+      "url": "https://www.paypal.com/",
+      "expected_status": [
+        200,
+        301,
+        302
+      ],
+      "quick": true,
+      "note": "PayPal payment services"
+    },
+    {
+      "id": "gaming",
+      "name": "Gaming (Steam / Epic)",
+      "category": "Gaming",
+      "url": "https://store.steampowered.com/",
+      "expected_status": [
+        200,
+        301,
+        302
+      ],
+      "quick": true,
+      "note": "Gaming 游戏平台 (Steam 与 Epic Games 策略中立分流)"
     }
   ],
   "physical_verification_items": [

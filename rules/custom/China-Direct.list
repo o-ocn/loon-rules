@@ -23,10 +23,13 @@ DOMAIN-SUFFIX,alipay.com
 DOMAIN-SUFFIX,alipayobjects.com
 
 # --- Other Mainland Services ---
+# Douyin / ByteDance domestic ecosystem & CDNs
 DOMAIN-SUFFIX,douyin.com
-DOMAIN-SUFFIX,snssdk.com
-DOMAIN-SUFFIX,bilibili.com
-DOMAIN-SUFFIX,bilivideo.com
+DOMAIN-SUFFIX,bytedance.com
+DOMAIN-SUFFIX,byteimg.com
+DOMAIN-SUFFIX,bytedns.net
+DOMAIN-SUFFIX,zijieapi.com
+DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,12306.cn
 DOMAIN-SUFFIX,amap.com
 DOMAIN-SUFFIX,autonavi.com
@@ -38,11 +41,4 @@ DOMAIN-SUFFIX,xiaohongshu.com
 DOMAIN-SUFFIX,meituan.com
 DOMAIN-SUFFIX,dianping.com
 
-# --- LAN & Direct IP ranges ---
-IP-CIDR,192.168.0.0/16,no-resolve
-IP-CIDR,10.0.0.0/8,no-resolve
-IP-CIDR,172.16.0.0/12,no-resolve
-IP-CIDR,127.0.0.0/8,no-resolve
-IP-CIDR,100.64.0.0/10,no-resolve
-IP-CIDR,224.0.0.0/4,no-resolve
-IP-CIDR,255.255.255.255/32,no-resolve
+# --- LAN & Direct IP ranges removed, now in Lan.list ---

@@ -3,6 +3,8 @@ name: Sync Upstream and Build Loon Rules
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   schedule:
     # Run every Sunday at 00:00 UTC (08:00 Beijing Time)
     - cron: '0 0 * * 0'
@@ -46,13 +48,21 @@ jobs:
 
       - name: Run Integrity and Anti-Collision Tests
         run: |
-          python scripts/test_rules.py
+          python -B -m unittest scripts.test_rules
 
       - name: Run Diagnostic Plugin Fixture Tests
         run: |
           node --test tests/test_diagnostic.js
 
+      - name: Pre-Release Local Integrity Gate (Fail-Stop Release Barrier)
+        # Strict local barrier: stops pipeline BEFORE git commit or push if any rule,
+        # hash, policy token, or diagnostic artifact check fails.
+        # Remote repository, main branch, and CDN mirrors remain 100% untouched on failure.
+        run: |
+          python scripts/verify_mirrors.py --pre-release
+
       - name: Commit and Push if Changed
+        if: github.event_name != 'pull_request'
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -65,3 +75,14 @@ jobs:
             git tag "release-$(date -u +"%Y%m%d-%H%M%S")"
             git push origin HEAD --tags
           fi
+
+      - name: Post-Release Mirrors and CDN Health Alert Gate
+        # Health check & alert gate: Runs after push to verify edge propagation and CDN mirror consistency.
+        # NOTE: If remote CDN or edge replication fails, this step exits with code 1 and flags the job red
+        # to alert maintainers. Per CI/CD architectural reality, it does NOT perform destructive git force-push
+        # rollbacks on public branches.
+        if: github.event_name != 'pull_request'
+        run: |
+          # Grace period for GitHub Raw edge cache replication
+          sleep 10
+          python scripts/verify_mirrors.py --branch ${{ github.ref_name }}

@@ -4,17 +4,17 @@
     "Claude": 3,
     "Gemini": 13
   },
+  "YouTube": {
+    "YouTube": 190
+  },
   "GoogleDrive": {
     "GoogleDrive": 8
-  },
-  "OneDrive": {
-    "OneDrive": 16
   },
   "Google": {
     "Google": 698
   },
-  "YouTube": {
-    "YouTube": 190
+  "OneDrive": {
+    "OneDrive": 16
   },
   "Telegram": {
     "Telegram": 40
@@ -25,20 +25,33 @@
   "Discord": {
     "Discord": 29
   },
-  "Apple-Direct": {
-    "AppleMusic": 10,
-    "iCloud": 61
+  "Gaming": {
+    "Steam": 54,
+    "Epic": 15
+  },
+  "GitHub": {
+    "GitHub": 31
+  },
+  "TestFlight": {
+    "TestFlight": 3
   },
   "Apple-Media": {
     "AppleTV": 9,
     "AppleNews": 2
   },
-  "TestFlight": {
-    "TestFlight": 3
+  "Apple-Direct": {
+    "AppleMusic": 10,
+    "iCloud": 61,
+    "SystemOTA": 78
   },
   "China-Direct": {
     "WeChat": 33,
     "Alibaba": 57,
-    "JingDong": 249
+    "JingDong": 249,
+    "DouYin": 13,
+    "BiliBili": 127
+  },
+  "China-GeoIP": {
+    "ChinaIPs": 19223
   }
 }

@@ -1,91 +1,10 @@
-# NAME: Apple-Direct
-# DESCRIPTION: Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)
-# AUTHOR: o-ocn
-# REVISION: cff12abe2740
-# TOTAL: 155
-# ==============================================================================
-DOMAIN-SUFFIX,apps.apple.com
-DOMAIN-SUFFIX,itunes.apple.com
-DOMAIN-SUFFIX,mzstatic.com
-DOMAIN,identity.apple.com
-DOMAIN-SUFFIX,appleid.apple.com
-DOMAIN-SUFFIX,appleid.cdn-apple.com
-DOMAIN,guzzoni.apple.com
-DOMAIN,gsa.apple.com
-DOMAIN,idmsa.apple.com
-DOMAIN-SUFFIX,audio-ssl.itunes.apple.com
-DOMAIN-SUFFIX,apple-dns.net
-DOMAIN,konut-cdn.apple.com
-DOMAIN-SUFFIX,swcdn.apple.com
-DOMAIN-SUFFIX,updates-http.cdn-apple.com
-DOMAIN-SUFFIX,gg.apple.com
-DOMAIN-SUFFIX,gnip.apple.com
-IP-CIDR,17.248.128.0/17,no-resolve
-DOMAIN-SUFFIX,applemusic.com
-DOMAIN-SUFFIX,blobstore.apple.com
-DOMAIN-SUFFIX,music.apple.com
-USER-AGENT,Music*
-DOMAIN-SUFFIX,apple-cloudkit.com
-DOMAIN-SUFFIX,apple-icloud.cn
-DOMAIN-SUFFIX,apple-livephotoskit.com
-DOMAIN-SUFFIX,appleicloud.cn
-DOMAIN-SUFFIX,applemx-icloud.com
-DOMAIN-SUFFIX,apzones.com
-DOMAIN-SUFFIX,cdn-apple.com
-DOMAIN-SUFFIX,gc.apple.com
-DOMAIN-SUFFIX,icloud-apple.cn
-DOMAIN-SUFFIX,icloud-content.com
-DOMAIN-SUFFIX,icloud-content.com.cn
-DOMAIN-SUFFIX,icloud-isupport.com
-DOMAIN-SUFFIX,icloud-sandbox.com
-DOMAIN-SUFFIX,icloud.apple.com
-DOMAIN-SUFFIX,icloud.ch
-DOMAIN-SUFFIX,icloud.cn
-DOMAIN-SUFFIX,icloud.com
-DOMAIN-SUFFIX,icloud.com.cn
-DOMAIN-SUFFIX,icloud.de
-DOMAIN-SUFFIX,icloud.ee
-DOMAIN-SUFFIX,icloud.fi
-DOMAIN-SUFFIX,icloud.fr
-DOMAIN-SUFFIX,icloud.hu
-DOMAIN-SUFFIX,icloud.ie
-DOMAIN-SUFFIX,icloud.is
-DOMAIN-SUFFIX,icloud.jp
-DOMAIN-SUFFIX,icloud.lv
-DOMAIN-SUFFIX,icloud.net.cn
-DOMAIN-SUFFIX,icloud.om
-DOMAIN-SUFFIX,icloud.org
-DOMAIN-SUFFIX,icloud.pt
-DOMAIN-SUFFIX,icloud.ro
-DOMAIN-SUFFIX,icloud.se
-DOMAIN-SUFFIX,icloud.si
-DOMAIN-SUFFIX,icloud.sk
-DOMAIN-SUFFIX,icloud.vn
-DOMAIN-SUFFIX,icloudads.net
-DOMAIN-SUFFIX,icloudapple.cn
-DOMAIN-SUFFIX,icloudbox.net
-DOMAIN-SUFFIX,icloudbrowser.net
-DOMAIN-SUFFIX,icloude.com
-DOMAIN-SUFFIX,icloudhome.com
-DOMAIN-SUFFIX,icloudmail.net
-DOMAIN-SUFFIX,icloudmusic.net
-DOMAIN-SUFFIX,icloudnet.net
-DOMAIN-SUFFIX,icloudo.com
-DOMAIN-SUFFIX,icloudo.de
-DOMAIN-SUFFIX,icloudo.net
-DOMAIN-SUFFIX,icloudos.de
-DOMAIN-SUFFIX,icloudos.net
-DOMAIN-SUFFIX,icloudpay.net
-DOMAIN-SUFFIX,icloudsecure.net
-DOMAIN-SUFFIX,icloudsetup.com
-DOMAIN-SUFFIX,ios-icloud.com
-DOMAIN-SUFFIX,iwork.apple.com
-DOMAIN-SUFFIX,me.com
-DOMAIN-SUFFIX,myicloud.net
-DOMAIN-SUFFIX,mylcloud.net
-DOMAIN-SUFFIX,www-cdn.icloud.com.akadns.net
-DOMAIN-SUFFIX,wwwicloud.com
-DOMAIN-KEYWORD,icloud.com.akadns.net
+# NAME: SystemOTA
+# AUTHOR: blackmatrix7
+# REPO: https://github.com/blackmatrix7/ios_rule_script
+# UPDATED: 2025-06-06 09:15:11
+# DOMAIN: 65
+# DOMAIN-SUFFIX: 13
+# TOTAL: 78
 DOMAIN,appldnld-cdn.apple.com.akadns.net
 DOMAIN,appldnld-cdn.origin-apple.com.akadns.net
 DOMAIN,appldnld.apple.com.mwcname.com
@@ -98,6 +17,7 @@ DOMAIN,gdmf.g.aaplimg.com
 DOMAIN,gg-cdn.apple.com.akadns.net
 DOMAIN,gg-cdn.origin-apple.com.akadns.net
 DOMAIN,gg-lb.apple.com.akadns.net
+DOMAIN,gg.apple.com
 DOMAIN,gg.apple.com.akadns.net
 DOMAIN,gg.apple.com.mwcname.com
 DOMAIN,gg.g.aaplimg.com
@@ -115,6 +35,7 @@ DOMAIN,iphonesubmissions.g.aaplimg.com
 DOMAIN,mesu-lb.apple.com.akadns.net
 DOMAIN,mesu.apple.com.akadns.net
 DOMAIN,mesu.apple.com.mwcname.com
+DOMAIN,ns.itunes.apple.com
 DOMAIN,ocsp-cdn.apple.com.akadns.net
 DOMAIN,ocsp-cdn.origin-apple.com.akadns.net
 DOMAIN,ocsp.apple.com.akadns.net
@@ -129,6 +50,7 @@ DOMAIN,radarsubmissions.apple.com.akadns.net
 DOMAIN,radarsubmissions.apple.com.mwcname.com
 DOMAIN,radarsubmissions.g.aaplimg.com
 DOMAIN,skl.apple.com
+DOMAIN,swcdn.apple.com
 DOMAIN,swdist.apple.com
 DOMAIN,swdownload.apple.com
 DOMAIN,swpost.apple.com
@@ -139,6 +61,8 @@ DOMAIN,swscan.apple.com
 DOMAIN,swscan.apple.com.akadns.net
 DOMAIN,swscan.apple.com.mwcname.com
 DOMAIN,swscan.g.aaplimg.com
+DOMAIN,updates-http.cdn-apple.com
+DOMAIN,updates.cdn-apple.com
 DOMAIN,xp-cdn.apple.com.akadns.net
 DOMAIN,xp-cdn.origin-apple.com.akadns.net
 DOMAIN,xp-lb.apple.com.akadns.net

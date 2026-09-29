@@ -627,7 +627,7 @@ test('12. Entrypoint Watchdog Fires via Simulated Timer Callback and Emits Real 
   assert.strictEqual(scheduledDelay, 56000, 'Full mode watchdog must be scheduled at exactly 56000ms');
 });
 
-test('13. Backup Release Mirror Checks All 14 Rulesets in Full Mode and Reflects Failures in Total State', async () => {
+test('13. Backup Release Mirror Corruption Injection Detection in Full Mode Reflects Failures in Total State', async () => {
   // Test full mode verifying all rulesets from backup mirror
   const fullManifest = Object.assign({}, sampleManifest, {
     rulesets: {
@@ -694,7 +694,7 @@ test('14. HTTP 404 Reports Resource Missing or Not Yet Published and Skips Rules
   assert.strictEqual(diag.repoOk, false);
   assert.match(diag.report, /HTTP 404 \(资源不存在或尚未发布\)/);
   assert.match(diag.report, /规则正文校验: 未执行 \(主备清单均不可用\)/);
-  assert.doesNotMatch(diag.report, /14\/14 LSR 本地元数据校验匹配/);
+  assert.doesNotMatch(diag.report, /\d+\/\d+ LSR 本地元数据校验匹配/);
 });
 
 test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification', async () => {
@@ -751,22 +751,22 @@ test('15. Primary OK But Backup Mirror Down Emits Warning and Flags Notification
 });
 
 test('16. Backup Rulesets Incomplete Verification Due to Deadline Triggers Warning Not Green', async () => {
-  // Build a manifest with 14 rulesets
-  const rulesets14 = {};
-  for (let i = 1; i <= 14; i++) {
-    rulesets14[`Ruleset-${i}.lsr`] = {
+  // Build a manifest with 19 rulesets
+  const rulesets19 = {};
+  for (let i = 1; i <= 19; i++) {
+    rulesets19[`Ruleset-${i}.lsr`] = {
       total_rules: 2,
       revision: sampleRevision,
       sha256: sampleSha256
     };
   }
-  const manifest14 = Object.assign({}, sampleManifest, { rulesets: rulesets14 });
+  const manifest19 = Object.assign({}, sampleManifest, { rulesets: rulesets19 });
 
   const mockClient = createMockHttpClient([
     {
       matches: (url) => url.includes('manifest.json'),
       status: 200,
-      data: JSON.stringify(manifest14)
+      data: JSON.stringify(manifest19)
     },
     {
       matches: (url) => url.startsWith(diagnostic.PRIMARY_BASE_URL),
@@ -894,6 +894,106 @@ test('17. Service Probing Incomplete Due to Deadline Triggers Warning and Never 
   assert.doesNotMatch(postedNotif.title, /连通性正常/);
   assert.doesNotMatch(postedNotif.title, /直连/);
   assert.match(postedNotif.subtitle, /服务探测未完成 \(\d+\/8\)/);
+});
+
+test('18. Caution Services (APNs, Muse, 401/403) Explicitly Displayed in Final Copyable Report and Conclusion', async () => {
+  const cautionManifest = {
+    schema_version: '1.0',
+    build_timestamp: '2026-09-29T12:00:00Z',
+    content_revision: 'abc123456789',
+    package_sha256: 'abc123456789abcdef123456789abcdef123456789abcdef123456789abcdef12',
+    release_commit: 'abc1234',
+    rulesets: {
+      'AI-Overseas.lsr': {
+        total_rules: 2,
+        revision: sampleRevision,
+        sha256: sampleSha256,
+        description: 'Overseas AI services'
+      }
+    },
+    services: [
+      {
+        id: 'chatgpt',
+        name: 'ChatGPT',
+        category: 'AI-Overseas',
+        url: 'https://chatgpt.com/favicon.ico',
+        expected_status: [200],
+        quick: true
+      },
+      {
+        id: 'apns_safe',
+        name: 'Apple APNs',
+        category: 'Apple-Push',
+        url: 'https://courier.push.apple.com/',
+        expected_status: [200, 403, 404, 502],
+        quick: true
+      },
+      {
+        id: 'testflight',
+        name: 'Apple TestFlight',
+        category: 'TestFlight',
+        url: 'https://testflight.apple.com/v1/session',
+        expected_status: [200, 401, 403],
+        quick: true
+      },
+      {
+        id: 'muse',
+        name: 'Muse from Meta',
+        category: 'AI-Overseas',
+        url: 'https://muse.ai/',
+        expected_status: [200, 301, 302],
+        quick: true
+      }
+    ]
+  };
+
+  const mockClient = createMockHttpClient([
+    {
+      matches: (url) => url === diagnostic.PRIMARY_MANIFEST_URL || url === diagnostic.BACKUP_MANIFEST_URL,
+      status: 200,
+      data: JSON.stringify(cautionManifest)
+    },
+    {
+      matches: (url) => url.includes('.lsr'),
+      status: 200,
+      data: sampleLsrContent
+    },
+    {
+      matches: (url) => url.includes('courier.push.apple.com'),
+      status: 403,
+      data: 'Forbidden'
+    },
+    {
+      matches: (url) => url.includes('testflight.apple.com'),
+      status: 401,
+      data: 'Unauthorized'
+    },
+    {
+      matches: (url) => url.includes('muse.ai'),
+      status: 200,
+      data: 'OK'
+    },
+    {
+      matches: (url) => url.includes('chatgpt.com'),
+      status: 200,
+      data: 'OK'
+    }
+  ]);
+
+  const diag = await diagnostic.runDiagnostic({ httpClient: mockClient, mode: 'quick' });
+
+  // 1. Report must explicitly include the caution services section
+  assert.match(diag.report, /- 端点有响应但应用功能待真机验证 \(共 3 项\):/);
+  assert.match(diag.report, /\* Apple APNs: HTTP 403响应,应用功能未验证; 443探测响应,TCP5223与推送待实测/);
+  assert.match(diag.report, /\* Apple TestFlight: HTTP 401响应,应用功能未验证/);
+  assert.match(diag.report, /\* Muse from Meta: 网站探针,不代表App功能/);
+
+  // 2. Conclusion must NOT blindly say "连通性均正常" without caution qualification
+  assert.match(diag.report, /提示: 其中 3 项仅为端点探测响应，应用功能与推送待真机实测。/);
+
+  // 3. Line count assertion: concise daily copy (<= 25 lines)
+  const lineCount = diag.report.split('\n').filter(l => l.trim()).length;
+  assert.ok(lineCount <= 25, `Report exceeded 25 lines: got ${lineCount}`);
 });
 
 

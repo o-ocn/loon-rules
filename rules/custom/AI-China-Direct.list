@@ -1,15 +1,44 @@
 # ==============================================================================
 # Rule Name: AI-China-Direct (Custom)
-# Description: Mainland China AI services (DeepSeek, etc.)
+# Description: Mainland China AI services (DeepSeek, Kimi, Zhipu, Doubao, MiniMax, etc.)
 # Scope: Domestic Chinese AI portals, APIs, and CDN endpoints
 # ==============================================================================
 
 # --- DeepSeek ---
-# Target: DeepSeek web portal, chat, developer platform, and API endpoints
-# Evidence: Official DeepSeek developer documentation & mobile app network capture, 2026-09-28
-# Reason: Direct routing to prevent proxy latency, avoid overseas cloud IP blocks, and protect domestic performance
 DOMAIN-SUFFIX,deepseek.com
 DOMAIN-SUFFIX,deepseeksvc.com
-DOMAIN,api.deepseek.com
-DOMAIN,chat.deepseek.com
-DOMAIN,platform.deepseek.com
+
+# --- Moonshot AI / Kimi ---
+DOMAIN-SUFFIX,kimi.ai
+DOMAIN-SUFFIX,moonshot.cn
+DOMAIN-SUFFIX,kimichat.com
+
+# --- Zhipu AI / ChatGLM ---
+DOMAIN-SUFFIX,zhipuai.cn
+DOMAIN-SUFFIX,chatglm.cn
+DOMAIN-SUFFIX,bigmodel.cn
+
+# --- ByteDance Doubao / Coze CN ---
+DOMAIN-SUFFIX,doubao.com
+DOMAIN-SUFFIX,coze.cn
+
+# --- MiniMax / Hailuo AI ---
+DOMAIN-SUFFIX,minimaxi.com
+DOMAIN-SUFFIX,hailuoai.com
+DOMAIN-SUFFIX,hailuoai.video
+
+# --- Baichuan AI ---
+DOMAIN-SUFFIX,baichuan-ai.com
+
+# --- 01.AI (Lingyi Wanwu) ---
+DOMAIN-SUFFIX,01.ai
+DOMAIN-SUFFIX,lingyiwanwu.com
+
+# --- Stepfun (YueWen) ---
+DOMAIN-SUFFIX,stepfun.com
+
+# --- SenseTime SenseNova ---
+DOMAIN-SUFFIX,sensenova.cn
+
+# --- iFlytek Spark ---
+DOMAIN-SUFFIX,sparkchain.cn

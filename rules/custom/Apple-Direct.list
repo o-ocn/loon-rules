@@ -18,6 +18,11 @@ DOMAIN-SUFFIX,mzstatic.com
 DOMAIN,identity.apple.com
 DOMAIN-SUFFIX,appleid.apple.com
 DOMAIN-SUFFIX,appleid.cdn-apple.com
+# Siri backend (blackmatrix7 Siri.list)
+DOMAIN,guzzoni.apple.com
+# Apple ID authentication (blackmatrix7 AppleID.list, not covered by existing appleid.apple.com suffix)
+DOMAIN,gsa.apple.com
+DOMAIN,idmsa.apple.com
 
 # --- Apple Music CDN Edge ---
 DOMAIN-SUFFIX,audio-ssl.itunes.apple.com
@@ -30,7 +35,6 @@ DOMAIN-SUFFIX,apple-dns.net
 DOMAIN,konut-cdn.apple.com
 DOMAIN-SUFFIX,swcdn.apple.com
 DOMAIN-SUFFIX,updates-http.cdn-apple.com
-DOMAIN-SUFFIX,mesu.apple.com
 DOMAIN-SUFFIX,gg.apple.com
 DOMAIN-SUFFIX,gnip.apple.com
 

@@ -8,11 +8,21 @@
 (function () {
   'use strict';
 
-  // Config constants
-  const PRIMARY_BASE_URL = 'https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist';
-  const BACKUP_BASE_URL = 'https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist';
-  const PRIMARY_MANIFEST_URL = PRIMARY_BASE_URL + '/diagnostics/manifest.json';
-  const BACKUP_MANIFEST_URL = BACKUP_BASE_URL + '/diagnostics/manifest.json';
+  // Config constants & base URLs (dynamic branch/ref support)
+  let CURRENT_BRANCH = 'main';
+  let PRIMARY_BASE_URL = 'https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist';
+  let BACKUP_BASE_URL = 'https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist';
+  let PRIMARY_MANIFEST_URL = PRIMARY_BASE_URL + '/diagnostics/manifest.json';
+  let BACKUP_MANIFEST_URL = BACKUP_BASE_URL + '/diagnostics/manifest.json';
+
+  function setBranch(branch) {
+    if (!branch || typeof branch !== 'string') return;
+    CURRENT_BRANCH = branch.trim();
+    PRIMARY_BASE_URL = `https://raw.githubusercontent.com/o-ocn/loon-rules/${CURRENT_BRANCH}/dist`;
+    BACKUP_BASE_URL = `https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@${CURRENT_BRANCH}/dist`;
+    PRIMARY_MANIFEST_URL = PRIMARY_BASE_URL + '/diagnostics/manifest.json';
+    BACKUP_MANIFEST_URL = BACKUP_BASE_URL + '/diagnostics/manifest.json';
+  }
 
   // Timeouts in milliseconds (Loon official unit for $httpClient is milliseconds)
   const PROBE_TIMEOUT_MS = 5000;
@@ -22,16 +32,20 @@
   // Parse arguments
   function parseArgs() {
     let mode = 'quick';
+    let branch = 'main';
     if (typeof $argument === 'string') {
       const parts = $argument.split('&');
       for (const p of parts) {
         const [k, v] = p.split('=');
         if (k && k.trim() === 'mode' && v) {
           mode = v.trim().toLowerCase();
+        } else if (k && k.trim() === 'branch' && v) {
+          branch = v.trim();
         }
       }
     }
-    return { mode };
+    setBranch(branch);
+    return { mode, branch };
   }
 
   // Pure JavaScript SHA-256 implementation (FIPS 180-4 compliant)
@@ -395,9 +409,10 @@
       }
     }
 
-    // Check rule body separator
+    // Check rule body separator (normalize CRLF to LF)
+    const normalizedContent = content.replace(/\r\n/g, '\n');
     const sep = '# ==============================================================================\n';
-    const parts = content.split(sep);
+    const parts = normalizedContent.split(sep);
     if (parts.length < 2) {
       return {
         ruleset: rulesetName,
@@ -496,13 +511,30 @@
     const routeReachable = routeRes.ok && expected.includes(routeRes.status);
     const directReachable = directRes.ok && expected.includes(directRes.status);
 
+    let isCaution = false;
+    const cautionNotes = [];
+    if ([401, 403, 404, 502].includes(routeRes.status)) {
+      isCaution = true;
+      cautionNotes.push(`HTTP ${routeRes.status}响应,应用功能未验证`);
+    }
+    if (service.id === 'apns_safe') {
+      isCaution = true;
+      cautionNotes.push('443探测响应,TCP5223与推送待实测');
+    } else if (service.id === 'muse') {
+      isCaution = true;
+      cautionNotes.push('网站探针,不代表App功能');
+    }
+
+    const statusNote = cautionNotes.length > 0 ? ` [${cautionNotes.join('; ')}]` : '';
+    const cautionNote = cautionNotes.join('; ');
+
     let verdict = '';
     let symbol = '✔';
 
     if (routeReachable && directReachable) {
-      verdict = `当前路由可达(${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)`;
+      verdict = `当前路由可达 (脚本默认路径: ${routeRes.duration}ms) | DIRECT可达(${directRes.duration}ms) (双向均可达)${statusNote}`;
     } else if (routeReachable && !directReachable) {
-      verdict = `当前路由可达(${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)`;
+      verdict = `当前路由可达 (脚本默认路径: ${routeRes.duration}ms) | DIRECT不可达 (仅当前路由可达, DIRECT不可达)${statusNote}`;
     } else if (!routeReachable && directReachable) {
       symbol = '✘';
       const errName = routeRes.status ? `HTTP ${routeRes.status}` : classifyError(routeRes.error);
@@ -523,6 +555,9 @@
       directReachable,
       routeDuration: routeRes.duration,
       directDuration: directRes.duration,
+      status: routeRes.status,
+      isCaution,
+      cautionNote,
       verdict
     };
   }
@@ -843,10 +878,14 @@
       timedOut = true;
     }
 
+    const cautionServices = [];
     for (let i = 0; i < sResults.length; i++) {
       const res = sResults[i];
       if (!res) continue;
       totalTested++;
+      if (res.isCaution && (res.routeReachable || res.directReachable)) {
+        cautionServices.push(res);
+      }
       if (res.routeReachable && res.directReachable) {
         countBothPass++;
       } else if (res.routeReachable && !res.directReachable) {
@@ -871,9 +910,21 @@
       } else {
         reportLines.push(`[✓] 服务连通性: 全部 ${totalTested} 项服务当前路由与 DIRECT 均可达 (双向均可达)`);
       }
+      if (cautionServices.length > 0) {
+        reportLines.push(`- 端点有响应但应用功能待真机验证 (共 ${cautionServices.length} 项):`);
+        for (const cs of cautionServices) {
+          reportLines.push(`  * ${cs.name}: ${cs.cautionNote}`);
+        }
+      }
     } else if (abnormalServices.length === 0 && serviceIncomplete) {
       reportLines.push(`[!] 服务连通性: 未完成 (已探测 ${totalTested}/${serviceList.length} 项服务，当前路由均可达；部分项因时限跳过)`);
       reportLines.push(`- 连通性分布: 其中 ${countProxyOnly} 项仅当前路由可达, DIRECT不可达, ${countBothPass} 项双向均可达`);
+      if (cautionServices.length > 0) {
+        reportLines.push(`- 端点有响应但应用功能待真机验证 (共 ${cautionServices.length} 项):`);
+        for (const cs of cautionServices) {
+          reportLines.push(`  * ${cs.name}: ${cs.cautionNote}`);
+        }
+      }
     } else {
       reportLines.push(`[!] 服务连通性: 探测 ${totalTested} 项服务中发现 ${abnormalServices.length} 项异常 (仅当前路由可达: ${countProxyOnly}, 双向均可达: ${countBothPass})`);
       for (const res of abnormalServices) {
@@ -881,6 +932,12 @@
           reportLines.push(`  ✘ ${res.name}: 仅 DIRECT 可达 | 当前路由不可达 (建议检查该服务命中规则、策略组或出口节点)`);
         } else {
           reportLines.push(`  ⚠ ${res.name}: 当前路由与 DIRECT 均不可达 (可能网络中断、端点不可达或服务宕机)`);
+        }
+      }
+      if (cautionServices.length > 0) {
+        reportLines.push(`- 端点有响应但应用功能待真机验证 (共 ${cautionServices.length} 项):`);
+        for (const cs of cautionServices) {
+          reportLines.push(`  * ${cs.name}: ${cs.cautionNote}`);
         }
       }
       if (serviceIncomplete) {
@@ -910,9 +967,15 @@
     } else if (sourcesStatus.isDegraded) {
       reportLines.push(`⚠️ 诊断结论: 已检测核心服务连通性均正常，但发布源处于降级状态 (${sourcesStatus.sourceNote})；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
     } else if (countProxyOnly > 0) {
-      reportLines.push(`✔ 诊断结论: 已检测核心服务连通性均正常 (${countProxyOnly} 项仅当前路由可达/DIRECT不可达, ${countBothPass} 项双向均可达)；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
+      const tipNote = cautionServices.length > 0
+        ? `提示: 其中 ${cautionServices.length} 项仅为端点探测响应，应用功能与推送待真机实测。`
+        : `提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。`;
+      reportLines.push(`✔ 诊断结论: 已检测核心服务连通性均正常 (${countProxyOnly} 项仅当前路由可达/DIRECT不可达, ${countBothPass} 项双向均可达)；${tipNote} (耗时: ${durationTotal}s)`);
     } else {
-      reportLines.push(`✔ 诊断结论: 已检测核心服务连通性均正常 (双向均可达)；提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。 (耗时: ${durationTotal}s)`);
+      const tipNote = cautionServices.length > 0
+        ? `提示: 其中 ${cautionServices.length} 项仅为端点探测响应，应用功能与推送待真机实测。`
+        : `提示: 若服务可达但特定 App 仍异常，可能存在未收录的遗漏域名。`;
+      reportLines.push(`✔ 诊断结论: 已检测核心服务连通性均正常 (双向均可达)；${tipNote} (耗时: ${durationTotal}s)`);
     }
 
     if (timedOut) {
@@ -1043,10 +1106,11 @@
       mapConcurrent,
       currentProgress,
       initLoonEntrypoint,
-      PRIMARY_BASE_URL,
-      BACKUP_BASE_URL,
-      PRIMARY_MANIFEST_URL,
-      BACKUP_MANIFEST_URL,
+      setBranch,
+      get PRIMARY_BASE_URL() { return PRIMARY_BASE_URL; },
+      get BACKUP_BASE_URL() { return BACKUP_BASE_URL; },
+      get PRIMARY_MANIFEST_URL() { return PRIMARY_MANIFEST_URL; },
+      get BACKUP_MANIFEST_URL() { return BACKUP_MANIFEST_URL; },
       PROBE_TIMEOUT_MS,
       CONCURRENCY_LIMIT
     };

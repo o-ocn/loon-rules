@@ -1,0 +1,20 @@
+# ==============================================================================
+# Rule Name: Lan
+# Description: Local Area Network, private address space, and reserved subnets
+# Standards & RFC References:
+#   - RFC 1918: Address Allocation for Private Internets (10/8, 172.16/12, 192.168/16)
+#   - RFC 6598: IANA-Reserved IPv4 Prefix for Shared Address Space / CGNAT (100.64/10)
+#   - RFC 6890 / RFC 5736: IETF Protocol Assignments (192.0.0.0/24)
+#   - RFC 2544 / RFC 6890: Benchmarking Methodology / Fake-IP reservation (198.18.0.0/15)
+#   - RFC 4291: IP Version 6 Addressing Architecture (::1/128 Loopback, fe80::/10 Link-Local)
+#   - RFC 4193: Unique Local IPv6 Unicast Addresses (fc00::/7)
+# ==============================================================================
+IP-CIDR,10.0.0.0/8,no-resolve
+IP-CIDR,100.64.0.0/10,no-resolve
+IP-CIDR,172.16.0.0/12,no-resolve
+IP-CIDR,192.0.0.0/24,no-resolve
+IP-CIDR,192.168.0.0/16,no-resolve
+IP-CIDR,198.18.0.0/15,no-resolve
+IP-CIDR6,::1/128,no-resolve
+IP-CIDR6,fc00::/7,no-resolve
+IP-CIDR6,fe80::/10,no-resolve

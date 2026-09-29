@@ -37,7 +37,8 @@ SUPPORTED_TYPES = {
     "IP-CIDR6",
     "USER-AGENT",
     "IP-ASN",
-    "URL-REGEX"
+    "URL-REGEX",
+    "GEOIP"
 }
 
 # Explicitly verified and whitelisted parent-subdomain service delegations.
@@ -547,6 +548,20 @@ def recover_interrupted_dist(dist_dir: str = DIST_DIR) -> bool:
         shutil.rmtree(dist_old, ignore_errors=True)
         return False
 
+def compute_package_sha256(ruleset_metadata: dict, diagnostic_metadata: dict) -> str:
+    """
+    Computes a deterministic SHA256 package signature across sorted rulesets
+    and diagnostic artifacts metadata.
+    """
+    pkg_h = hashlib.sha256()
+    for rname in sorted(ruleset_metadata.keys()):
+        m = ruleset_metadata[rname]
+        pkg_h.update(f"{rname}:{m['sha256']}:{m['revision']}:{m['total_rules']}\n".encode("utf-8"))
+    for dname in sorted(diagnostic_metadata.keys()):
+        dm = diagnostic_metadata[dname]
+        pkg_h.update(f"{dname}:{dm['sha256']}:{dm['size']}\n".encode("utf-8"))
+    return pkg_h.hexdigest()
+
 def switch_dist_directory(dist_new: str, dist_dir: str = DIST_DIR) -> None:
     """
     Two-stage staged directory switch with in-flight rollback protection and crash recovery.
@@ -637,64 +652,64 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                             collected_rules.append(cleaned)
                             custom_rules_for_set.add(cleaned)
 
-            # 2. Ingest upstream sources strictly
-            upstream_sources = rcfg.get("sources", [])
-            if upstream_sources:
-                new_lock_data[name] = {}
-            for src in upstream_sources:
-                sname = src.get("name")
-                surl = src.get("url")
-                min_r = src.get("min_rules", 2)
-                excluded = set(src.get("filter_excluded", []))
-                print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
-                raw_text, used_cache = fetch_upstream_strict(surl, min_rules=min_r, allow_offline_cache=offline_mode)
-                if used_cache:
-                    any_offline_cache_used = True
+        # 2. Ingest upstream sources strictly
+        upstream_sources = rcfg.get("sources", [])
+        if upstream_sources:
+            new_lock_data[name] = {}
+        for src in upstream_sources:
+            sname = src.get("name")
+            surl = src.get("url")
+            min_r = src.get("min_rules", 2)
+            excluded = set(src.get("filter_excluded", []))
+            print(f"  [+] Ingesting upstream: {sname} (min_rules={min_r}, url={surl})")
+            raw_text, used_cache = fetch_upstream_strict(surl, min_rules=min_r, allow_offline_cache=offline_mode)
+            if used_cache:
+                any_offline_cache_used = True
 
-                # Count valid non-comment rule lines in upstream source
-                valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
-                src_count = len(valid_src_lines)
-                new_lock_data[name][sname] = src_count
+            # Count valid non-comment rule lines in upstream source
+            valid_src_lines = [l.strip() for l in raw_text.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+            src_count = len(valid_src_lines)
+            new_lock_data[name][sname] = src_count
 
-                # Per-upstream shrinkage protection against previous valid lock baseline
-                prev_src_count = lock_data.get(name, {}).get(sname)
-                src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
-                if prev_src_count is not None and prev_src_count > 0:
-                    if src_count < prev_src_count:
-                        drop = prev_src_count - src_count
-                        shrink_ratio = drop / float(prev_src_count)
-                        if shrink_ratio > src_max_shrink:
-                            raise RuntimeError(
-                                f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
-                                f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
-                                f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
-                            )
-                else:
-                    if not allow_new_baseline:
+            # Per-upstream shrinkage protection against previous valid lock baseline
+            prev_src_count = lock_data.get(name, {}).get(sname)
+            src_max_shrink = float(src.get("max_shrink_ratio", rcfg.get("max_shrink_ratio", default_max_shrink)))
+            if prev_src_count is not None and prev_src_count > 0:
+                if src_count < prev_src_count:
+                    drop = prev_src_count - src_count
+                    shrink_ratio = drop / float(prev_src_count)
+                    if shrink_ratio > src_max_shrink:
                         raise RuntimeError(
-                            f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
-                            f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
-                            f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
+                            f"CRITICAL: Upstream source '{sname}' in ruleset '{name}' shrank abnormally by "
+                            f"{shrink_ratio:.1%} ({prev_src_count} -> {src_count} rules, dropped {drop} rules), "
+                            f"exceeding allowed threshold of {src_max_shrink:.1%}. Build halted to protect dist."
                         )
-                    print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
+            else:
+                if not allow_new_baseline:
+                    raise RuntimeError(
+                        f"CRITICAL: Missing baseline lock record for upstream '{sname}' in ruleset '{name}'! "
+                        f"In daily build mode, unbaselined upstreams are forbidden to prevent silent shrinkage bypass. "
+                        f"Please run build with '--init-baseline' (or set allow_new_baseline=True) to establish baseline for new upstreams."
+                    )
+                print(f"  [BASELINE] Explicitly established initial valid count for new upstream '{sname}' in '{name}': {src_count} rules.")
 
-                for line in raw_text.splitlines():
-                    cleaned = clean_rule_line(line)
-                    if cleaned:
-                        if cleaned.startswith("INVALID_SYNTAX:"):
-                            raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
-                        if cleaned in excluded:
-                            continue
-                        if cleaned in custom_rules_for_set:
-                            upstream_overlaps.append({
-                                "ruleset": name,
-                                "custom_file": custom_file_rel,
-                                "rule": cleaned,
-                                "upstream": sname
-                            })
-                        if cleaned not in seen:
-                            seen.add(cleaned)
-                            collected_rules.append(cleaned)
+            for line in raw_text.splitlines():
+                cleaned = clean_rule_line(line)
+                if cleaned:
+                    if cleaned.startswith("INVALID_SYNTAX:"):
+                        raise SyntaxError(f"Syntax error in upstream {sname} ({surl}): {cleaned}")
+                    if cleaned in excluded:
+                        continue
+                    if cleaned in custom_rules_for_set:
+                        upstream_overlaps.append({
+                            "ruleset": name,
+                            "custom_file": custom_file_rel,
+                            "rule": cleaned,
+                            "upstream": sname
+                        })
+                    if cleaned not in seen:
+                        seen.add(cleaned)
+                        collected_rules.append(cleaned)
 
         # Intra-ruleset deduplication and parent domain pruning
         pruned_rules = prune_intra_set_redundancies(collected_rules)
@@ -804,7 +819,15 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 )
 
     # 6. Atomic write to temporary staging directory on E: drive first
-    staging_dir = tempfile.mkdtemp(prefix="loon_dist_staging_", dir=BASE_DIR)
+    # Avoid tempfile.mkdtemp on Windows NTFS as it sets a restricted DACL that blocks inheritance
+    staging_dir = os.path.join(BASE_DIR, ".dist_staging")
+    if os.path.exists(staging_dir):
+        shutil.rmtree(staging_dir, ignore_errors=True)
+    os.makedirs(staging_dir, exist_ok=True)
+    if os.name == "nt":
+        res = subprocess.run(["icacls", staging_dir, "/reset"], capture_output=True, text=True)
+        if res.returncode != 0:
+            raise RuntimeError(f"Failed to reset ACL on staging directory '{staging_dir}': {res.stderr.strip()}")
     staging_diag_dir = os.path.join(staging_dir, "diagnostics")
     os.makedirs(staging_diag_dir, exist_ok=True)
 
@@ -875,12 +898,18 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
 
         has_manifest = os.path.isfile(manifest_dst)
 
-        # Compute deterministic package signature across all sorted rulesets
-        pkg_h = hashlib.sha256()
-        for rname in sorted(ruleset_metadata.keys()):
-            m = ruleset_metadata[rname]
-            pkg_h.update(f"{rname}:{m['sha256']}:{m['revision']}:{m['total_rules']}\n".encode("utf-8"))
-        package_sha256 = pkg_h.hexdigest()
+        diag_metadata = {}
+        for d_name, d_src_path in [("LoonRules-Diagnostic.lpx", lpx_src), ("loon-rules-diagnostic.js", js_src)]:
+            if os.path.isfile(d_src_path):
+                with open(d_src_path, "rb") as df:
+                    d_bytes = df.read().replace(b"\r\n", b"\n")
+                diag_metadata[d_name] = {
+                    "size": len(d_bytes),
+                    "sha256": hashlib.sha256(d_bytes).hexdigest()
+                }
+
+        # Compute deterministic package signature across all sorted rulesets AND diagnostic artifacts
+        package_sha256 = compute_package_sha256(ruleset_metadata, diag_metadata)
         content_rev = package_sha256[:12]
 
         existing_manifest_content_rev = None
@@ -939,6 +968,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
                 "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
                 "rulesets": ruleset_metadata,
+                "diagnostic_artifacts": diag_metadata,
                 "upstream_sync_status": "offline_cached (离线缓存构建，非实时同步)" if any_offline_cache_used else "synced",
                 "services": services_cfg.get("services", []),
                 "physical_verification_items": services_cfg.get("physical_verification_items", [
