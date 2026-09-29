@@ -19,8 +19,8 @@
 
 ## 当前状态
 
-* **当前分支**：`feature/expand-rulesets-v2`（对应 GitHub PR #2，待合并至 `main`）。
-* **当前 HEAD**：`214880a`，已推送到 `origin/feature/expand-rulesets-v2`；`main` 仍为 `9a703b3`（14 个规则集）。
+* **当前分支**：`main`（PR #2 已正式合并至 `main`，合并提交 `2bcf05e`）。
+* **当前 HEAD**：`2bcf05e`，正式发布包含全量 **19 个规则集**（共 **21,092 条有效规则**）。
 * **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,092 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
@@ -81,8 +81,8 @@
 
 ## 当前正在处理
 
-* **阶段**：Gemini 已完成 URL 隐私缺口修复，并在 `test_42` 中扩充 6 项故障注入测试；42/42 Python 测试、18/18 Node.js 测试、预发布门禁与分支双源镜像校验全部稳定通过。
-* **下一步工作**：定向隐私修复已获 ChatGPT Work 独立复核；Gemini 核对 PR 说明、合并 PR #2 并验证 `main` 主备发布源；随后 ChatGPT Work 基于最新手机导出装配唯一私人 `.lcf`，再由用户进行 Loon 真机实测。
+* **阶段**：PR #2 已正式合并至 `main`（合并提交 `2bcf05e`）；正在执行 `main` 分支主备发布源（GitHub Raw 与 Fastly jsDelivr）只读核验。
+* **下一步工作**：完成 `main` 主备发布源只读核验；ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`（修正 YouTube/Lan 顺序并保留用户私人设置）；用户导入正式配置进行 Loon 真机实测。
 
 ---
 
@@ -166,7 +166,7 @@
 1. **私人配置验收器 URL 隐私缺口已封闭**：已通过 `test_42` 18 项故障注入及单测严格覆盖，所有携带 token、认证信息、片段、异常端口或未经验证子域名的 URL 均被 100% 拦截且零信息泄漏。原有零引用、错误主机、错段 FINAL 假通过亦全部保持修复。
 2. **当前手机配置顺序待修**：YouTube 在 Google 之后、Lan 在 China-GeoIP 之后；由 ChatGPT Work 在装配最终单文件时修正。
 3. **插件边界**：当前配置有 36 个启用插件，静态工具只标记其规则注入为未验证，不能声称插件已通过，也不应默认要求用户为全部插件抓包。
-4. **正式发布未完成**：当前手机配置的 19 条自有远程规则与诊断插件仍引用开发分支；远端 `main` 仍只有 14 个规则集。PR #2 合并且 `main` 主备发布源校验通过后，才能装配正式主分支 `.lcf`。
+4. **正式发布状态**：PR #2 已合并至 `main`（合并提交 `2bcf05e`），19 个规则集及诊断插件已在 `main` 就绪。待主备源只读核验后，由 ChatGPT Work 装配唯一正式 `.lcf`。
 5. **真机边界**：诊断探针无法代替 APNs TCP 5223、Telegram 蜂窝锁屏推送、HomeKit、Apple Watch、CloudKit 或 19,209 条 CIDR 在 Loon 真机的加载测试。
 
 ---
@@ -191,9 +191,9 @@
 
 ## 下一步
 
-1. Gemini 核对 PR #2 描述中的早期规则数量，确认必需 CI 通过后合并到 `main`，并校验正式 GitHub Raw 与 Fastly 主备源 19/19 规则、manifest 和诊断产物。
-2. ChatGPT Work 基于最新手机导出装配唯一私人 `.lcf`，修正 YouTube/Lan 顺序，切到 `main` 引用并验证结构与私人设置保留。
-3. 用户导入这一份配置后进行 Loon 真机验收。
+1. 执行 `main` 分支主备发布源（GitHub Raw 与 Fastly）19/19 规则、manifest 和诊断产物只读核验。
+2. ChatGPT Work 基于最新手机导出装配唯一正式私人 `.lcf`，修正 YouTube/Lan 顺序，切到 `main` 引用并验证结构与私人设置保留。
+3. 用户导入这一份正式配置后进行 Loon 真机实测。
 
 ---
 
@@ -203,7 +203,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 18+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **交付与复核路径**：`E:\Document\ChatGPT\Loon-Migration`
-* **版本控制**：Git（GitHub 远程仓库 `o-ocn/loon-rules`，PR #2）
+* **版本控制**：Git（GitHub 远程仓库 `o-ocn/loon-rules`，PR #2 已合并）
 
 ---
 
@@ -212,3 +212,7 @@
 - 时间：2026-09-29
 - 执行者：Gemini / Antigravity；ChatGPT Work 独立复核
 - 本轮工作：`214880a` 已修复 URL 隐私缺口，Gemini 报告 Python 42/42；ChatGPT Work 公开夹具 12 组独立故障注入、Node 18/18、本地预发布及 GitHub CI 均通过。最新手机配置只读检查确认 19 条自有规则、1 条诊断插件、0 条 KeLee 远程规则及两处顺序待修；`main` 尚为 14 条规则集，待合并发布后装配唯一私人 `.lcf`。
+
+- 时间：2026-09-29
+- 执行者：Gemini / Antigravity
+- 本轮工作：PR #2 已正式合并至 `main` 分支（合并提交 `2bcf05e`）；`main` 分支正式包含全量 19 个自托管规则集、诊断插件及验收器；推送到 `origin main` 并执行主备发布源只读核验。
