@@ -889,7 +889,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
         for d_name, d_src_path in [("LoonRules-Diagnostic.lpx", lpx_src), ("loon-rules-diagnostic.js", js_src)]:
             if os.path.isfile(d_src_path):
                 with open(d_src_path, "rb") as df:
-                    d_bytes = df.read()
+                    d_bytes = df.read().replace(b"\r\n", b"\n")
                 diag_metadata[d_name] = {
                     "size": len(d_bytes),
                     "sha256": hashlib.sha256(d_bytes).hexdigest()

@@ -132,7 +132,7 @@ def verify_local_pre_release(dist_dir=DIST_DIR, manifest_path=MANIFEST_PATH, exi
             errors.append(f"Diagnostic artifact too small ({size} bytes): {d_fname}")
             continue
         with open(fpath, "rb") as df:
-            computed_d_sha = hashlib.sha256(df.read()).hexdigest()
+            computed_d_sha = hashlib.sha256(df.read().replace(b"\r\n", b"\n")).hexdigest()
         if d_fname in diag_meta:
             expected_d_sha = diag_meta[d_fname].get("sha256", "")
             if computed_d_sha != expected_d_sha:
@@ -141,7 +141,7 @@ def verify_local_pre_release(dist_dir=DIST_DIR, manifest_path=MANIFEST_PATH, exi
         src_fpath = os.path.join(BASE_DIR, "diagnostics", d_fname)
         if os.path.isfile(src_fpath):
             with open(src_fpath, "rb") as sf:
-                src_sha = hashlib.sha256(sf.read()).hexdigest()
+                src_sha = hashlib.sha256(sf.read().replace(b"\r\n", b"\n")).hexdigest()
             if computed_d_sha != src_sha:
                 errors.append(f"Diagnostic artifact {d_fname} does not match source file in diagnostics/ (SHA mismatch)")
 
@@ -293,7 +293,7 @@ def verify_mirrors(branch=None, manifest_path=MANIFEST_PATH,
                                 with open(local_diag_fpath, "rb") as ldf:
                                     exp_sha = hashlib.sha256(ldf.read()).hexdigest()
                         if exp_sha:
-                            actual_sha = hashlib.sha256(d_bytes).hexdigest()
+                            actual_sha = hashlib.sha256(d_bytes.replace(b"\r\n", b"\n")).hexdigest()
                             if actual_sha != exp_sha:
                                 m_errors.append(f"{diag_rel}: SHA256 mismatch (expected {exp_sha[:12]}, got {actual_sha[:12]})")
                         diag_fetched = True
