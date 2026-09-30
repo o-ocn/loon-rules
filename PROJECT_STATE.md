@@ -1,7 +1,6 @@
 # PROJECT STATE: Loon Rules 原生分流规则系统
 
-> 📌 **唯一事实源声明**：本文档是 `loon-rules` 仓库跨 AI / Agent 协作与工程维护的当前状态**唯一事实源（Single Source of Truth）**。  
-> 任何 AI / Agent 接手项目前必须先读取本文件；完成实质性工作后，必须按规范更新本文件。
+> 📌 **唯一详细事实源**：本文档记录当前项目技术运行状态与工程基线；完整交接协作流程与 Agent 行为规范请严格参阅 [`AGENTS.md`](AGENTS.md)。
 
 ---
 
@@ -12,7 +11,7 @@
 2. **平替外部不受控规则**：全量替代旧版 15 个外部远端分流规则，消除规则混杂、上游滞后、钓鱼域名及劫持风险。
 3. **一致性检查与质量保障**：建立“声明契约、来源配置、构建产物、测试套件、自动化更新”全链路一致性，防止上游更新滞后或规则误伤。
 4. **单文件交付与安全隐私**：用户最终只导入一份由 ChatGPT Work 在本地安全装配的唯一私人 `.lcf`；严格保护私人凭证、订阅、节点与密钥，杜绝泄露至公开仓库。
-5. **AI-Project-Hub 规范纳管**：本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管。本项目根目录 `PROJECT_STATE.md` 是唯一详细技术事实源，Hub 仅作全局索引；严格执行自动交接收尾（验证结果 → 更新 PROJECT_STATE.md → commit/push），杜绝形式主义独立报告与双事实源冗余。
+5. **AI-Project-Hub 规范纳管**：本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管，具体交接规范与协作协议统一由 [`AGENTS.md`](AGENTS.md) 维护。
 
 ---
 
@@ -88,7 +87,7 @@
 10. **用户策略主权原则**：分流规则（`.lsr`）必须 100% 策略中立；私人配置文件（`.lcf`）中用户的策略组指派归属用户主权，AI 严禁擅自改写策略绑定。
 11. **跨国孪生业务与共享基础设施隔离**：抖音与 TikTok、微信与 WeChat 的共享底层域名保留在直连，独占域名严格走代理。
 12. **三步排查 SOP**：遇分流或速度异常时，严格执行：**第 1 步看规则（DIRECT / PROXY） -> 第 2 步看 DNS（解析所得 IP 是国内还是跨洋） -> 第 3 步看 CDN（就近国内节点还是 Anycast 漂移）**。坚决杜绝无依据盲目加规则。
-13. **AI-Project-Hub 纳管与单一事实源定位**：确立本项目为独立 GitHub 仓库（类型 A），本项目自身的 `PROJECT_STATE.md` 为唯一详细事实源，`AI-Project-Hub` 仅做索引寻址；每完成一段有实质性变化的工作，在结束前自动执行交接收尾流程（验证结果 → 更新 PROJECT_STATE.md → commit/push）；项目元数据变动时同步更新 Hub 的 `PROJECT_INDEX.md`。
+13. **AI-Project-Hub 纳管与单一事实源定位**：确立本项目为独立 GitHub 仓库（类型 A），本项目自身的 `PROJECT_STATE.md` 为唯一详细事实源，`AI-Project-Hub` 仅做索引寻址；完整交接协作规范与行为约束统一由 [`AGENTS.md`](AGENTS.md) 维护。
 
 ---
 
@@ -141,4 +140,4 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 18+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-01（全面对接 AI-Project-Hub 交接规范：在 AGENTS.md、PROJECT_STATE.md、README.md 中确立独立仓库唯一事实源地位与自动化交接收尾流程，保持 Hub 单向轻量索引，全套测试 100% 通过）。
+* **最后更新**：2026-10-01（完成规则与流程轻量瘦身：交接流程与 Agent 行为规范完全收敛至 AGENTS.md 完整维护，README 与 PROJECT_STATE 仅保留单句指针，全套测试 100% 通过）。
