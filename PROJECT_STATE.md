@@ -17,7 +17,20 @@
 
 ## 二、当前状态与基线定型
 
-* **当前分支**：`main`（PR #1 与 PR #2 全部合并完成，合并提交 `2bcf05e`，当前版本基线 `82382a0`）。
+* **当前分支与提交基线**：`main`（当前 HEAD 提交为 `d91da37`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **GitHub Actions 自动化 CI/CD 与发布机制**：
+  * 流水线定义：`.github/workflows/sync-and-build.yml`；
+  * 触发机制：`push` to `main`、`pull_request` to `main`、每周日 00:00 UTC（北京时间 08:00）Cron 定时自动同步上游构建、以及 `workflow_dispatch` 手动触发；
+  * 5 门严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
+    1. 构建规则与诊断插件：`python scripts/build.py`
+    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（43/43 单元测试全部通过）
+    3. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
+    4. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
+    5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN 镜像 100% 保持未被触碰）；
+  * 自动化提交与发布后 CDN 探测：
+    - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
+    - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
+  * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
 * **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,112 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,209 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
@@ -57,7 +70,21 @@
 
 ---
 
-## 四、验证状态与自动化门禁基线
+## 四、已尝试但已放弃的方案（严禁后续 AI 重复折腾）
+
+1. **放弃方案 1：纯 GeoIP 兜底分流（GeoIP-only 方案）**
+   * *背景与尝试*：曾设想仅依靠 `GEOIP,CN` 作为国内流量的兜底直连防线。
+   * *失败/放弃原因*：面对国内具有多国 CDN / 全球 Anycast 架构的大厂业务（如 `1688.com`、`doupay.com`），若客户端启用了海外 DoH（如 `dns.google`），解析返回的境外 IP（如香港 Anycast 节点）将直接绕过 `GEOIP,CN` 跌落进 `FINAL` 代理；必须采取“域名规则（`China-Direct.lsr`）+ 国内极速 DNS（`223.5.5.5`）分流 + 物理 CIDR / GeoIP”双重保险闭环，彻底否决并放弃纯 GeoIP 方案。
+2. **放弃方案 2：Apple 全域泛化分流与泛解析（Apple 全域泛化方案）**
+   * *背景与尝试*：曾探讨将 `apple.com` 或 `17.0.0.0/8` 全部送入海外代理，或在 DNS 插件中将 `apple.com` / `icloud.com` 泛解析至国内 DNS。
+   * *失败/放弃原因*：全量代理 Apple 会严重拖慢国内 App Store 应用下载、导致国内 Apple CDN 缓存失效并消耗大量代理流量；而在 DNS 层将 `apple.com`/`icloud.com` 泛解析至国内 DNS 则触犯账户安全红线并引发跨区认证异常。现已彻底放弃全域泛化，确立精细化分层治理（`Apple-Direct.lsr` 直连基础服务、国内极速 DNS 仅就近解析静态 CDN `*.mzstatic.com`、严禁对 `apple.com`/`icloud.com` 泛解析、独立保留 `Apple-Push` 最小化通道与 `Apple-Media` 流媒体）。
+3. **放弃方案 3：TikTok / 微信共享域粗暴分流（共享基础设施粗暴一刀切）**
+   * *背景与尝试*：曾考虑将跨国出海孪生业务的底层域名一刀切代理以彻底隔离国内外流量。
+   * *失败/放弃原因*：字节跳动出海业务（TikTok）与国内抖音共享底层域名与图床（如 `bytedance.com`, `byteimg.com`, `ibytedtos.com`, `snssdk.com`）；腾讯出海 WeChat 与国内微信共享底层通信基础设施。粗暴一刀切全盘走代理会导致国内抖音刷不出视频、评论卡死或国内微信关键功能受损。现已确立：独占业务域名精准走代理，共享底层基础设施严格保留直连与国内 DNS，严禁粗暴一刀切。
+
+---
+
+## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
 - **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **43/43 全部通过**（包含 URL 隐私白名单、主备源自校验、FINAL 段落严格拦截、12 类清单故障注入及 3 类跨生态防碰撞注入）；
@@ -73,7 +100,7 @@
 
 ---
 
-## 五、关键架构决策
+## 六、关键架构决策
 
 1. **策略绝对中立**：所有 `.lsr` 规则绝不硬编码策略动作（如 DIRECT/PROXY/US 等），由用户在 Loon 客户端自由绑定策略组。
 2. **细分服务必须排在宽泛服务之前**：遵循 Loon 首个命中（First Match Wins）语义，细分规则（如 YouTube、Drive）必须在宽泛规则（Google）之前，防止泛域名误劫持。
@@ -91,7 +118,7 @@
 
 ---
 
-## 六、当前观察期与待办事项
+## 七、当前观察期与待办事项
 
 ### 1. 1~2 周静默稳定观察期
 - **观察对象**：
@@ -108,14 +135,22 @@
 
 ---
 
-## 七、已知风险与边界
+## 八、已知风险、真机边界与未验证项 (UNVERIFIED)
 
-1. **真机环境边界**：诊断探针与离线单测无法完全代替真实真机上的 APNs TCP 5223 绕行、HomeKit 硬件推流或 Apple Watch 独立蜂窝测试。
-2. **插件未验证标记**：当前用户环境存在多个第三方插件，验收工具只标记其规则注入状态为 `UNVERIFIED`，不给出虚假全通，亦不强制要求全部抓包。
+1. **真机环境边界（必须真机验证，不可凭单测断言）**：
+   - 诊断探针与离线单测无法完全代替真实真机上的 APNs TCP 5223 绕行、HomeKit 硬件推流或 Apple Watch 独立蜂窝测试。
+2. **插件未验证标记 (UNVERIFIED)**：
+   - 当前用户环境存在多个第三方插件，验收工具只标记其规则注入状态为 `UNVERIFIED`，不给出虚假全通，亦不强制要求全部抓包。
+3. **系统全局推送共用通道风险（全或无）**：
+   - 代理 APNs 意味着整台 iPhone 的所有应用推送（含微信）握手连接均会走所选代理节点；若节点不稳定或断流可能引发通知延迟。
+4. **蜂窝网络 IPv6 绕过风险**：
+   - 在中国大陆运营商 5G/4G 双栈网络下，若未妥善分流 IPv6，系统底层长连接可能逃逸至物理网卡直连国内。
+5. **节点长连接保活心跳（Keep-Alive）**：
+   - 部分机场对空闲 TCP 设置超时断开，可能导致 APNs 5223 长连接频繁重建引起通知延迟。
 
 ---
 
-## 八、不要重复踩的坑
+## 九、不要重复踩的坑
 
 1. **严禁将测试夹具命名为 `*.lcf`**：全局 `.gitignore` 会将其静默忽略，导致全新克隆下测试失败。
 2. **不要把“上游已有”当作“本仓库已同步”**：必须在 `sources.yml` 明确声明并经构建流水线集成。
@@ -134,10 +169,11 @@
 
 ---
 
-## 九、环境与更新记录
+## 十、环境与更新记录
 
 * **开发操作系统**：Windows 11
-* **运行环境**：PowerShell, Python 3.12+, Node.js 18+
+* **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-01（完成规则与流程轻量瘦身：交接流程与 Agent 行为规范完全收敛至 AGENTS.md 完整维护，README 与 PROJECT_STATE 仅保留单句指针，全套测试 100% 通过）。
+* **最后更新**：2026-10-01（完成正式 Intake 收尾：修正分支基线为当前最新 HEAD `d91da37`；补全 GitHub Actions CI/CD 流水线发布机制与 Run #49 success 事实；系统补齐已放弃方案包括 GeoIP-only、Apple 全域泛化与 TikTok/微信共享域粗暴分流；完整保留私人 .lcf 装配待办、真机验证事项及 UNVERIFIED 状态）。
+
