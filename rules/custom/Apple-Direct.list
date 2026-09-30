@@ -45,6 +45,18 @@ DOMAIN-SUFFIX,time.apple.com
 DOMAIN-SUFFIX,appattest.apple.com
 # Apple Wi-Fi Positioning System (CoreLocation indoor/Wi-Fi location lookup)
 DOMAIN,wps.apple.com
+# Target: Apple Location Services (CoreLocation / configuration-carry.ls.apple.com)
+# Source: Loon log trace 2026-09-30 | Reason: Location services configuration carrier check falling to FINAL
+DOMAIN-SUFFIX,ls.apple.com
+# Target: Apple WeatherKit API (Beijing weather query)
+# Source: Loon log trace 2026-09-30 | Reason: WeatherKit API falling to FINAL, connects to China Kingsoft CDN cache
+DOMAIN,weatherkit.apple.com
+# Target: Apple iPhone activation & diagnostics check
+# Source: Loon log trace 2026-09-30 | Reason: iphone-ld.apple.com falling to FINAL
+DOMAIN,iphone-ld.apple.com
+# Target: Apple StoreKit & IAP sandbox testing environment
+# Source: Loon log trace 2026-09-30 | Reason: amp-api.sandbox.apple.com falling to FINAL
+DOMAIN-SUFFIX,sandbox.apple.com
 
 # --- Apple China Local CDN Cache ---
 # Target: Official Apple China CDN IPv4 subnet

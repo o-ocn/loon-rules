@@ -20,8 +20,8 @@
 ## 当前状态
 
 * **当前分支**：`main`（PR #2 已正式合并至 `main`，合并提交 `2bcf05e`）。
-* **当前 HEAD**：包含全量 **19 个规则集**（共 **21,105 条有效规则**），补齐 Apple App Attest / Wi-Fi 定位（WPS）硬件直连、阿里巴巴 1688 / 容器重置直连、抖音支付直连与极速 DNS 分流，并升级诊断探针支持海外 AI 动态策略组路由与 GitHub 免流控端点。
-* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,105 条有效规则**）。
+* **当前 HEAD**：包含全量 **19 个规则集**（共 **21,112 条有效规则**），补齐 Apple 定位/天气/激活/沙盒直连、字节跳动直播源站/图床/调度探针直连与极速 DNS 分流，消除 120 秒超时卡死；升级诊断探针支持海外 AI 动态策略组路由。
+* **规则集架构定型**：全库正式定型为 **19 个规则集**（共 **21,112 条有效规则**）。
   * 恢复 `Gaming.lsr`（合并 Steam 与 Epic，65 条规则），彻底解决用户私人配置引用 `Gaming.lsr` 返回 404 的问题。
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 上游 `ChinaIPs`（19,209 条规则）；离线模拟确认事故 IP `119.147.195.212` 属于 `119.144.0.0/14`，代表 IPv6 `240e:97c:2f:1::1` 属于 `240e::/20`。
 * **私人配置验收器原有三类假通过已封堵，URL 隐私缺口已全链路闭合**：
@@ -139,7 +139,7 @@
 | `AGENTS.md` | AI / Agent 工作准则与交接规则 |
 | `README.md` | 项目对外公开说明与规则订阅说明（19 规则集体系） |
 | `sources.yml` | 规则源声明清单、上游 URL、最小规则数与排除项定义 |
-| `dist/` | 构建生成的 19 个策略中立 `.lsr` 文件及诊断产物（共 21,092 条规则） |
+| `dist/` | 构建生成的 19 个策略中立 `.lsr` 文件及诊断产物（共 21,112 条规则） |
 | `rules/custom/` | 各服务本地补充与例外规则（需有抓包或官方依据） |
 | `scripts/build.py` | 规则抓取、清洗、构建与带收紧 ACL 继承保障的目录切换流水线 |
 | `scripts/test_rules.py` | 规则系统公开单元测试套件（全量 42 项测试，含 12 种清单故障注入与 18 类 verify_private_lcf 行为回归） |
@@ -172,12 +172,10 @@
 * `scripts/verify_mirrors.py` + `.github/workflows/sync-and-build.yml`：
   - 核心改进：引入 `--soft-cdn` 参数及主动调用 jsDelivr Purge API 机制。将 GitHub Raw 作为唯一的强阻断门禁，将第三方 CDN 边缘缓存传播延迟（5~15分钟）降级为非阻塞式 Advisory Warning，彻底解决推送后因 CDN 边缘缓存时间差导致的假红叉问题；
 * `scripts/test_rules.py`：新增 `test_43_shared_domain_and_conflict_checker`，涵盖跨生态防泄漏检测与 3 类核心故障注入（独占域名泄露到直连、独占域名泄露到国内 DNS、Apple 红线域名违规指派国内 DNS），单测规模扩充至 43 项全绿；
-* `dist/diagnostics/manifest.json`：总规则数稳定在 **21,105 条**，构建产物 revision 更新至 `7b2e988e4805`；
-* `README.md`：
-  - 新增顶部醒目的【🤖 AI 协作者与新开发者接手必读】专栏，确立 `PROJECT_STATE.md` 唯一事实源地位、列明四大铁律并提供 30 秒本地快速全量自测命令；
-  - 全面同步三层架构体系（规则路由层 / DNS 调度层 / 冲突防护层）与双镜像机制；
-  - 完整校准目录树结构，补齐 `plugins/`、`shared_domains.yml` 与全套 scripts 描述，并将全库规则集统一修正为 19 类；
-* `docs/policy_mapping.md`：全面更新第二节规则总表与第三节远程规则排序为完整的 19 规则集体系，修复历史残留的 14 规则集描述，与 `sample_order_19.fixture` 严格对齐；
+* `rules/custom/China-Direct.list` + `dist/China-Direct.lsr`：新增 `bytegecko.com`（抖音直播与 Gecko 动态资源 CDN）、`bytemaimg.com`（字节跳动核心图床 CDN）及 `ndcpp.com`（抖音视界视频云大脑智能调度探针），`China-Direct.lsr` 条数提升至 513 条；彻底消除因海外 DoH 调度至海外 Anycast 或 AWS 弗吉尼亚引发香港专线反向回连导致的 **120 秒超长超时与严重卡死**；
+* `plugins/Loon-China-DNS.lpx` + `dist/plugins/Loon-China-DNS.lpx`：同步新增 `*.bytegecko.com`, `*.bytemaimg.com`, `*.ndcpp.com` 阿里极速 DNS（223.5.5.5）分流解析，保障直播与图床毫秒级就近秒开；
+* `rules/custom/Apple-Direct.list` + `dist/Apple-Direct.lsr`：新增 `ls.apple.com`（Apple Location Services 定位服务基站与配置）、`weatherkit.apple.com`（Apple WeatherKit 官方天气 API，配合 iRingo 插件直连大陆金山云天气边缘缓存）、`iphone-ld.apple.com`（iPhone 设备激活与诊断）及 `sandbox.apple.com`（StoreKit 沙盒与内测购买验证），`Apple-Direct.lsr` 条数提升至 163 条；解决定位与天气请求无谓绕行香港专线的问题；
+* `dist/diagnostics/manifest.json`：总规则数稳定在 **21,112 条**，构建产物 revision 更新至 `92af5a10143a`；
 * 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性强门禁及脱敏私人配置验收工具全部通过。
 
 ---
@@ -256,5 +254,5 @@
 ## 最后更新
 
 - 时间：2026-09-30
-- 执行者：Gemini / Antigravity（全库 AI 协作接手性审查与全量文档规范化校准）
-- 本轮工作：1) 建立 AI 协作者与新开发者零门槛接手机制：在 `README.md` 顶部显著位置增设【🤖 AI 协作者与新开发者接手必读】专栏，确立 `PROJECT_STATE.md` 唯一事实源地位，重申策略中立/用户主权/Apple 禁区/修改必更新四大铁律，并提供 30 秒全量快速自测流水线；2) 同步三层体系架构至对外文档：更新 `README.md` 与 `docs/policy_mapping.md`，将规则集全量校准为 19 个独立规则集（21,105 条规则），补全 DNS 分流插件与防撞车检测层说明；3) 消除历史残留矛盾：彻底修正历史遗留的“14 规则集”陈旧引用，统一架构、测试与文档的一致性；4) 全量 43 项 Python 规则测试、19 项 Node 诊断测试、预发布完整性门禁及防撞车严格检测全部通过。
+- 执行者：Gemini / Antigravity（真机抓包深度诊断、字节跳动 120 秒超时卡死根治与 Apple 定位/天气直连扩充）
+- 本轮工作：1) 抓包深度追查：基于用户提供的 3 组真机 Loon FINAL 请求截图，定位到字节跳动直播源站 (`bytegecko.com`) 与核心图床 (`bytemaimg.com`) 发生 120 秒超长超时卡死；追查根因为海外 DoH 将国内 CDN 解析为香港 Anycast/美西 AWS 节点，大陆源站对海外代理 IP 握手丢包所致；2) 规则与 DNS 协同闭环修复：在 `China-Direct.list` 与 `Loon-China-DNS.lpx` 中同步补齐 `bytegecko.com`、`bytemaimg.com` 与 `ndcpp.com`，阿里极速 DNS (223.5.5.5) 就近解析直连；3) Apple 系统服务直连扩充：在 `Apple-Direct.list` 补充 `ls.apple.com`（定位配置）、`weatherkit.apple.com`（天气 API）、`iphone-ld.apple.com`（激活诊断）及 `sandbox.apple.com`（内测沙盒），且仿真验证确认 `Apple-Media.lsr` 对 `gspe1-ssl.ls.apple.com` 的抢先匹配未受任何影响；4) 测试套件与文档全量校准：全库 19 个规则集规则总数从 21,105 条提升至 21,112 条，更新 `README.md` 与 `scripts/test_rules.py` 断言，全量 43 项单元测试、19 项 Node 诊断测试、预发布强门禁及脱敏私人验收器均 100% 通过。

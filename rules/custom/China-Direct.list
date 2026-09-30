@@ -39,6 +39,12 @@ DOMAIN-SUFFIX,zijieapi.com
 DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,bytetos.com
 DOMAIN-SUFFIX,ecombdapi.com
+# Source: Loon log trace 2026-09-30 | Reason: Douyin developer image CDN, overseas DoH returned HK Anycast (155.102.54.131) causing 120s timeout in FINAL
+DOMAIN-SUFFIX,bytemaimg.com
+# Source: Loon log trace 2026-09-30 | Reason: Douyin live webcast source CDN, overseas DoH returned HK Anycast (163.181.60.203) causing 121s timeout in FINAL
+DOMAIN-SUFFIX,bytegecko.com
+# Source: Loon log trace 2026-09-30 | Reason: Douyin Vision (抖音视界) Video Cloud Brain HTTP probe, overseas DoH returned AWS US East (98.96.213.145)
+DOMAIN-SUFFIX,ndcpp.com
 # Source: Loon log trace 2026-09-29 | Reason: Douyin payment checkout gateway, returned HK CDN (139.177.246.206) bypassing GeoIP
 DOMAIN-SUFFIX,doupay.com
 DOMAIN-SUFFIX,qishui.com

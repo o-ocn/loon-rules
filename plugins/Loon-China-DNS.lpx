@@ -27,6 +27,9 @@
 *.iesdouyin.com = server:223.5.5.5
 *.snssdk.com = server:223.5.5.5
 *.toutiao.com = server:223.5.5.5
+*.bytemaimg.com = server:223.5.5.5
+*.bytegecko.com = server:223.5.5.5
+*.ndcpp.com = server:223.5.5.5
 
 # 哔哩哔哩 (B站视频与图片)
 *.bilibili.com = server:223.5.5.5
