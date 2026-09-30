@@ -85,7 +85,7 @@
 ```text
 https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist/diagnostics/LoonRules-Diagnostic.lpx
 ```
-*(在未来 PR 合并并由 ChatGPT Work 于本地装配生成最终唯一 .lcf 时，将配置该远程插件规范；语法遵循 Loon 3.5.1+ Generic Script v2 规范，待 PR 合并后在真机客户端首次导入点击确认)*
+*(插件遵循 Loon 3.5.1+ Generic Script v2 规范，已正式集成发布于 `main` 分支；导入后即可在客户端直接使用)*
 
 ### 2. 极简日常使用流程
 ```text
