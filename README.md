@@ -6,15 +6,15 @@
 > [!IMPORTANT]
 > ### 🤖 AI 协作者与新开发者接手必读 (AI & Developer Onboarding Guide)
 >
-> 本项目采用根目录 **[`PROJECT_STATE.md`](PROJECT_STATE.md)** 作为当前工程进度与架构决策的**唯一事实源（Single Source of Truth）**。
+> 本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管，并采用根目录 **[`PROJECT_STATE.md`](PROJECT_STATE.md)** 作为当前工程进度的**唯一详细事实源（Single Source of Truth）**，Hub 仅作全局索引。
 > 无论你是 **ChatGPT / Claude / Gemini / Cursor / GitHub Copilot** 还是任何接手本项目的 AI Agent 或开发者：
 > 1. **开始任务前**：必须首先读取 [`PROJECT_STATE.md`](PROJECT_STATE.md)，并根据需要查阅 [`AGENTS.md`](AGENTS.md)（交接规则与强制更新规范）和 [`RULE_DESIGN.md`](RULE_DESIGN.md)（三层架构设计与跨国孪生业务隔离准则）；
 > 2. **最高依据**：以仓库中实际代码、规则文件和自动化测试结果为准，**严禁凭历史记忆猜测进度**；
-> 3. **四大铁律**：
+> 3. **四大铁律与交接收尾**：
 >    - **策略绝对中立**：所有分流规则文件（`.lsr`）严禁包含任何策略组名称或出口动作（DIRECT/PROXY/REJECT/HK/US/All 等）；
 >    - **用户主权解耦**：私密配置（`.lcf`）中用户的策略组指派归属用户主权，严禁擅自改写策略绑定；
 >    - **Apple DNS 绝对红线**：严禁将 `*.apple.com` 或 `*.icloud.com` 泛解析至国内 DNS；
->    - **完成工作必更新**：凡对代码、规则、测试或配置产生实质影响的工作，任务结束前**必须更新 [`PROJECT_STATE.md`](PROJECT_STATE.md)**。
+>    - **自动闭环交接收尾**：凡对代码、规则、测试或配置产生实质影响的工作，任务结束前**必须自动执行交接收尾**（验证结果 → 更新 `PROJECT_STATE.md` → commit/push），无需额外新建独立交接报告。
 > 4. **30 秒本地快速全量自测**：
 >    ```bash
 >    pip install -r requirements.txt
