@@ -153,7 +153,7 @@ class ScoreEngine:
         # =========================================================================
         # 1. 检查 history/decisions.jsonl 阻断记录
         for dec in self.decisions:
-            if dec.get("decision") == "BLOCK":
+            if dec.get("decision") in ("BLOCK", "REJECTED"):
                 dec_rule = dec.get("rule", "")
                 if "," in dec_rule:
                     _, dec_pat = dec_rule.split(",", 1)
@@ -182,7 +182,7 @@ class ScoreEngine:
         # Stage 3: Hard Pass 免检放行门禁 (双重凭证：verified == True 且存在于决策账本)
         # =========================================================================
         for dec in self.decisions:
-            if dec.get("decision") == "AUTO_PASS" and dec.get("verified") is True:
+            if dec.get("decision") in ("AUTO_PASS", "APPROVED") and dec.get("verified") is True:
                 dec_rule = dec.get("rule", "")
                 if "," in dec_rule:
                     _, dec_pat = dec_rule.split(",", 1)

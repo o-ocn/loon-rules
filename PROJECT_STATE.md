@@ -31,12 +31,13 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,158 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,163 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,209 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
-  * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行（工建农中交邮）及全国股份制商业银行（平安、中信、光大、浦发、兴业、民生、广发、华夏等）全量金融域名纳入直连与国内极速 DNS（223.5.5.5）分流调度，彻底阻断国内银行与支付流量因上游 USER-AGENT 规则失效而跌落 FINAL 绕行海外专线引发的风控拦截。
+  * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行（工建农中交邮）及全国股份制商业银行（平安、中信、光大、浦发、兴业、民生、广发、华夏等）全量金融域名纳入直连与国内极速 DNS（223.5.5.5）分流调度，彻底阻断国内银行与支付流量因上游 USER-AGENT 规则失效而跌落 FINAL 绕行海外专线引发的风控拦截；
+  * **Phase 0.5 首批人工核验放行**：一键免密认证基建 (`cmpassport.com`)、联通官方 (`10010.com`)、点评图床 (`dpfile.com`)、百度静态资源 (`bdstatic.com`)、央视媒体图床 (`cctvpic.com`) 5 条高置信规则正式入库。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -66,7 +67,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 163 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA | 100% 策略中立 |
-| **`China-Direct.lsr`** | 559 | 微信、淘宝、京东、抖音/字节生态、B站、1688、拼多多、饿了么、美团、快手、小红书、云音乐、银行金融等高频应用 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 564 | 微信、淘宝、京东、抖音/字节生态、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床等 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,209 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -128,6 +129,15 @@
       - **快手与海外 Kwai 隔离**：仅收录国内快手主干（`kuaishou.com`, `yximgs.com`, `gifshow.com`, `kuaishoupay.com`），绝不收录海外独立品牌 Kwai（`kwai.com`, `kwaicdn.com`）；
       - **美团与海外 Keeta 隔离**：仅收录国内三快基建（`sankuai.com`, `meituan.net`），不波及出海品牌 Keeta（`keeta.com`）；
       - **腾讯公共图床准入**：收录 `gtimg.com` 解决微信表情、QQ音乐、视频封面遗漏，经核实海外微信使用 `novacdn.com`，海外游戏使用 `levelinfinite.com`，当前验证未发现需要排除的海外业务共享场景。
+16. **Phase 0.5 首次人工审核规则入库与边界收敛决策**：
+    - *批准放行项 (5 条)*：
+      - `cmpassport.com`：全国统一移动认证/三大运营商手机号一键免密认证底层接口，覆盖微信/淘宝/京东/美团/银行 App 登录通道，防止直连缺失引发 120s 超时回退短信；
+      - `dpfile.com`：大众点评核心商户与探店点评图床 CDN，解决探店瀑布流白块卡顿；
+      - `10010.com`：中国联通官方业务与手厅接口，保障账单与流量接口直连；
+      - `bdstatic.com`：百度全系产品前端通用静态加速集群，补全百度生态；
+      - `cctvpic.com`：央视网与央视频移动端图床 CDN，解决封面与流媒体静态图加载缓慢。
+    - *阻断暂缓项 (1 条)*：
+      - `cctv.com`：判定为 `REJECTED` 暂缓入库，因泛域名包含复杂涉外宣传与国际合作边缘业务，严格遵循“宁缺毋滥、精准收敛至专用图床/流媒体 CDN”原则。
 
 ---
 
@@ -202,3 +212,9 @@
     - 实现智能变动感知：仅在 `audit/shadow_report.*` 或 `state/upstream_state.json` 发生真实数据变化时才提交，杜绝空提交；
     - 绝不修改生产规则，`build.py`、`sources.yml`、`dist/*.lsr` 100% 保持零改动，用户端订阅不受任何影响；
     - 当前进入 2~4 周影子观察期（Shadow Audit Only），不进行生产接管，不引入 VPS，不接入 Telegram。
+  * **Phase 0.5 首批人工审核补丁正式合入 (First Human-Approved Patch Ingestion)**：
+    - 依据影子审计报告与人工交叉核验，批准入库 5 项高置信规则至 `rules/custom/China-Direct.list`：`cmpassport.com`（统一免密认证SDK）、`dpfile.com`（大众点评商户图床）、`10010.com`（中国联通官网业务）、`bdstatic.com`（百度静态集群）、`cctvpic.com`（央视频媒体图床）；
+    - 严格阻断 `cctv.com` 泛域名直连，作为 `REJECTED` 记录入账；
+    - 决策追溯链同步更新至 `history/decisions.jsonl`（5 APPROVED + 1 REJECTED），扩展 `scripts/score_engine.py` 支持 APPROVED/REJECTED 语义对齐；
+    - 经 `build.py` 编译更新 `dist/China-Direct.lsr`（559 -> 564 条，精准增加 5 条，其余 18 个规则集 100% 零漂移）；
+    - 离线 4 门质量门禁全部通过（`test_rules` 43/43 PASS, `test_diagnostic.js` 19/19 PASS, `check_conflicts --strict` PASS, `test_score_engine` 4/4 PASS, `verify_mirrors --pre-release` PASS）。
