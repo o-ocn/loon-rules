@@ -69,3 +69,8 @@
 *.163.com = server:223.5.5.5
 *.126.net = server:223.5.5.5
 *.baidu.com = server:223.5.5.5
+
+# 金融与银行服务 (招商银行手机银行与掌上生活信用卡图床 CDN)
+*.cmbchina.com = server:223.5.5.5
+*.cmbimg.com = server:223.5.5.5
+

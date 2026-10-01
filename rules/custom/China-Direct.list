@@ -62,4 +62,10 @@ DOMAIN-SUFFIX,xiaohongshu.com
 DOMAIN-SUFFIX,meituan.com
 DOMAIN-SUFFIX,dianping.com
 
+# --- Domestic Banking & Financial Services ---
+# Target: China Merchants Bank (招商银行 / 掌上生活 App)
+# Source: Loon log trace 2026-10-01 | Reason: Credit card image CDN & mobile banking falling to FINAL (HK proxy)
+DOMAIN-SUFFIX,cmbchina.com
+DOMAIN-SUFFIX,cmbimg.com
+
 # --- LAN & Direct IP ranges removed, now in Lan.list ---

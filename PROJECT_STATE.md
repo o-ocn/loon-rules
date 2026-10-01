@@ -31,11 +31,12 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,112 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,114 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,209 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
-  * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行。
+  * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
+  * 招商银行 (`cmbchina.com`, `cmbimg.com`) 信用卡/掌上生活图床与金融网关纳入直连与国内极速 DNS（223.5.5.5）调度，阻断国内金融流量绕行香港 IEPL 专线。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -64,7 +65,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 163 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA | 100% 策略中立 |
-| **`China-Direct.lsr`** | 513 | 微信、淘宝、京东、抖音/字节生态、B站、1688 等高频应用 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 515 | 微信、淘宝、京东、抖音/字节生态、B站、1688、招商银行等高频应用 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,209 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -175,5 +176,5 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-01（完成正式 Intake 收尾：修正分支基线为当前最新 HEAD `d91da37`；补全 GitHub Actions CI/CD 流水线发布机制与 Run #49 success 事实；系统补齐已放弃方案包括 GeoIP-only、Apple 全域泛化与 TikTok/微信共享域粗暴分流；完整保留私人 .lcf 装配待办、真机验证事项及 UNVERIFIED 状态）。
+* **最后更新**：2026-10-01（根据真机抓包日志修复招商银行掌上生活图床跌落 FINAL 缺陷：在 China-Direct 与 Loon-China-DNS 补充 cmbchina.com / cmbimg.com，消除金融与图片流量误走香港 IEPL 专线；全库规则数校准为 21,114 条；全量 43 项 Python 测试、19 项 Node 诊断测试与镜像预发布门禁 100% 通过）。
 
