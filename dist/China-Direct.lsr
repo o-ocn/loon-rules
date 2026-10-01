@@ -1,11 +1,12 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)
 # AUTHOR: o-ocn
-# REVISION: 92aa61b5ca6a
-# TOTAL: 542
+# REVISION: 317c55e51f5b
+# TOTAL: 559
 # ==============================================================================
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
+DOMAIN-SUFFIX,gtimg.com
 DOMAIN-SUFFIX,taobao.com
 DOMAIN-SUFFIX,tmall.com
 DOMAIN-SUFFIX,alibaba.com
@@ -42,8 +43,24 @@ DOMAIN-SUFFIX,bdimg.com
 DOMAIN-SUFFIX,zhihu.com
 DOMAIN-SUFFIX,zhimg.com
 DOMAIN-SUFFIX,xiaohongshu.com
+DOMAIN-SUFFIX,xhscdn.com
+DOMAIN-SUFFIX,xhscdn.net
 DOMAIN-SUFFIX,meituan.com
+DOMAIN-SUFFIX,meituan.net
 DOMAIN-SUFFIX,dianping.com
+DOMAIN-SUFFIX,sankuai.com
+DOMAIN-SUFFIX,pinduoduo.com
+DOMAIN-SUFFIX,yangkeduo.com
+DOMAIN-SUFFIX,pddpic.com
+DOMAIN-SUFFIX,ele.me
+DOMAIN-SUFFIX,elemecdn.com
+DOMAIN-SUFFIX,kuaishou.com
+DOMAIN-SUFFIX,yximgs.com
+DOMAIN-SUFFIX,gifshow.com
+DOMAIN-SUFFIX,kuaishoupay.com
+DOMAIN-SUFFIX,music.163.com
+DOMAIN-SUFFIX,music.126.net
+DOMAIN-SUFFIX,baidupcs.com
 DOMAIN-SUFFIX,cmbchina.com
 DOMAIN-SUFFIX,cmbimg.com
 DOMAIN-SUFFIX,unionpay.com

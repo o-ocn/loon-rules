@@ -9,6 +9,8 @@
 # --- Tencent Services ---
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
+# Tencent Public Image & Static CDN (当前验证未发现需要排除的海外业务共享场景)
+DOMAIN-SUFFIX,gtimg.com
 
 # --- Alibaba / Taobao / Xianyu (Flea Market) ---
 DOMAIN-SUFFIX,taobao.com
@@ -59,8 +61,34 @@ DOMAIN-SUFFIX,bdimg.com
 DOMAIN-SUFFIX,zhihu.com
 DOMAIN-SUFFIX,zhimg.com
 DOMAIN-SUFFIX,xiaohongshu.com
+DOMAIN-SUFFIX,xhscdn.com
+DOMAIN-SUFFIX,xhscdn.net
 DOMAIN-SUFFIX,meituan.com
+DOMAIN-SUFFIX,meituan.net
 DOMAIN-SUFFIX,dianping.com
+DOMAIN-SUFFIX,sankuai.com
+
+# Pinduoduo (拼多多主站、微信移动商品详情与商品图床 CDN)
+DOMAIN-SUFFIX,pinduoduo.com
+DOMAIN-SUFFIX,yangkeduo.com
+DOMAIN-SUFFIX,pddpic.com
+
+# Eleme (饿了么主站 API 与店铺菜品图床 CDN)
+DOMAIN-SUFFIX,ele.me
+DOMAIN-SUFFIX,elemecdn.com
+
+# Kuaishou (快手国内主站、短视频图床、基础 API 网关与支付)
+DOMAIN-SUFFIX,kuaishou.com
+DOMAIN-SUFFIX,yximgs.com
+DOMAIN-SUFFIX,gifshow.com
+DOMAIN-SUFFIX,kuaishoupay.com
+
+# NetEase Cloud Music (网易云音乐专属核心 API 与音频流 CDN，排除 netease.com 避免海外游戏冲突)
+DOMAIN-SUFFIX,music.163.com
+DOMAIN-SUFFIX,music.126.net
+
+# Baidu Personal Cloud Storage (百度网盘大文件传输，独立于海外 TeraBox，不扩大到百度智能云)
+DOMAIN-SUFFIX,baidupcs.com
 
 # --- Domestic Banking & Financial Services ---
 # Target: China Merchants Bank (招商银行 / 掌上生活 App)

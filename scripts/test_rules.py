@@ -999,11 +999,11 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
         self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
 
-        # Verify total rules across all 19 .lsr files is exactly 21141
+        # Verify total rules across all 19 .lsr files is exactly 21158
         total_rules = 0
         for fname in self.lsr_files:
             total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
-        self.assertEqual(total_rules, 21141, f"Expected 21141 rules, got {total_rules}")
+        self.assertEqual(total_rules, 21158, f"Expected 21158 rules, got {total_rules}")
 
     def test_32_public_19_order_fixture_and_four_stage_pipeline(self):
         """Verify complete 4-stage pipeline against public 19-class order fixture."""

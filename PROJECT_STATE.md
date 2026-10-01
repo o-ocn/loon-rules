@@ -31,7 +31,7 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,141 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,158 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,209 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -65,7 +65,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 163 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA | 100% 策略中立 |
-| **`China-Direct.lsr`** | 542 | 微信、淘宝、京东、抖音/字节生态、B站、1688、国内六大行及股份制商业银行、银联云闪付等金融高频应用 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 559 | 微信、淘宝、京东、抖音/字节生态、B站、1688、拼多多、饿了么、美团、快手、小红书、云音乐、银行金融等高频应用 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,209 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -116,6 +116,17 @@
 11. **跨国孪生业务与共享基础设施隔离**：抖音与 TikTok、微信与 WeChat 的共享底层域名保留在直连，独占域名严格走代理。
 12. **三步排查 SOP**：遇分流或速度异常时，严格执行：**第 1 步看规则（DIRECT / PROXY） -> 第 2 步看 DNS（解析所得 IP 是国内还是跨洋） -> 第 3 步看 CDN（就近国内节点还是 Anycast 漂移）**。坚决杜绝无依据盲目加规则。
 13. **AI-Project-Hub 纳管与单一事实源定位**：确立本项目为独立 GitHub 仓库（类型 A），本项目自身的 `PROJECT_STATE.md` 为唯一详细事实源，`AI-Project-Hub` 仅做索引寻址；完整交接协作规范与行为约束统一由 [`AGENTS.md`](AGENTS.md) 维护。
+14. **商业银行与金融机构分流决策与边界划分**：
+    - *为什么添加*：揭示了开源上游依赖已过时的 `USER-AGENT` 规则导致银行请求在现代 iOS（强制 HTTPS + SSL Pinning）下无法读取明文 User-Agent，且后续 `China-GeoIP` 带 `no-resolve` 触发 0ms 穿透至 `FINAL` 走海外专线的重大结构性隐患。因此在 `China-Direct.list` 与 `Loon-China-DNS.lpx` 中显式收录工农中建交邮六大行、股份制银行、招行及银联云闪付的核心域名并绑定国内解析。
+    - *为什么排除*：严格排除历史客服跳转域名（如 `8008205555.com/.cn`，非 App 运行时依赖）、关联保险公司（`cignacmb.com`，非核心银行存贷业务）；特别是**严禁收录境外离岸银行**（如香港持牌机构 `cmbwinglungbank.com` 招商永隆银行，其机房位于香港，强行直连会破坏离岸金融与境外分流边界）。
+15. **常用国民级应用高危图床/网关收录与海外业务隔离决策**：
+    - *为什么添加*：实测证实拼多多（`pddpic.com` 调度至伦敦）、美团（`meituan.net` 调度至丹佛）、小红书（`xhscdn.com` 调度至洛杉矶 Akamai）、快手（`yximgs.com` 调度至美西）在海外 DoH 下会被调度至跨洋 Anycast 节点；由于返回非大陆 IP 无法命中 GeoIP，直接掉入 `FINAL` 走海外代理专线造成商品图与短视频严重卡顿。因此必须“规则直连 + 国内极速 DNS（223.5.5.5）分流”双重绑定实现就近秒开。
+    - *精准收缩与排除原则*：
+      - **网易系精准收缩**：坚决排除 `netease.com`（实测出海游戏 `global.netease.com` 部署在 GCP 日本机房，直连会污染海外游戏加速），收缩至云音乐专属域名 `music.163.com` 与 `music.126.net`；
+      - **百度网盘与企业云隔离**：仅收录百度个人网盘 `baidupcs.com`（保护大流量不爆刷代理流量，海外 TeraBox 独立），坚决排除百度智能云 `bcebos.com`（实测包含新加坡 `sin.bcebos.com`、香港等海外公有云节点）；
+      - **快手与海外 Kwai 隔离**：仅收录国内快手主干（`kuaishou.com`, `yximgs.com`, `gifshow.com`, `kuaishoupay.com`），绝不收录海外独立品牌 Kwai（`kwai.com`, `kwaicdn.com`）；
+      - **美团与海外 Keeta 隔离**：仅收录国内三快基建（`sankuai.com`, `meituan.net`），不波及出海品牌 Keeta（`keeta.com`）；
+      - **腾讯公共图床准入**：收录 `gtimg.com` 解决微信表情、QQ音乐、视频封面遗漏，经核实海外微信使用 `novacdn.com`，海外游戏使用 `levelinfinite.com`，当前验证未发现需要排除的海外业务共享场景。
 
 ---
 
@@ -167,6 +178,8 @@
 12. **Loon 原生配置中 FINAL 必须严格且仅有一条位于 [Rule] 段末尾**：严禁将 FINAL 置于 [Remote Rule] 或其他段落，也严禁在 FINAL 后继续声明规则。
 13. **发布 URL 必须严格拒绝 query、userinfo、fragment 和非预期端口**：防止用户或插件误将包含 token 或账号信息的私有订阅地址带入远程规则，且 jsDelivr 备用源必须精确到已验收的主机（`fastly.jsdelivr.net`），禁止使用通配子域名。
 14. **切忌盲目追求 BrowserLeaks 纯净而全局只开境外 DoH 并禁用系统 DNS**：该极端配置会导致所有国内主流 App 的 CDN 域名向境外 DNS 查询，直连发生跨洋拉取引发断崖式卡顿；必须在客户端采用 `[Host]` 国内 DNS（223.5.5.5）分流实现就近秒开。
+15. **不要把香港或境外中资商业银行（如招商永隆银行 `cmbwinglungbank.com`）混入国内直连**：其核心机房与业务在香港本地，强行国内直连会导致离岸金融与代理策略混乱。
+16. **严禁将公有云通用对象存储（如百度云 `bcebos.com`）或跨国游戏集团泛域名（如网易 `netease.com`）粗暴放入国内直连**：它们往往包含新加坡、日本 GCP 等跨国出海节点，必须精准限定在消费级 App 的专属子域（如 `baidupcs.com`、`music.163.com`）。
 
 ---
 
@@ -176,5 +189,5 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-01（根据真机抓包与上游深度审查，系统性排查并修复国内商业银行与银联移动端域名遗漏缺陷：揭示上游 ruleset 依赖已失效的 USER-AGENT 规则导致 HTTPS/SNI 阶段穿透至 FINAL 的结构性漏洞；在 China-Direct 与 Loon-China-DNS 补充覆盖工农中建交邮六大国有行、全国股份制银行、招行及银联云闪付等 27 条核心域名与 DNS 映射；全库规则数校准为 21,141 条；全量 43 项 Python 测试、19 项 Node 诊断测试与镜像预发布门禁 100% 通过）。
+* **最后更新**：2026-10-01（根据现网 DoH 跨境调度实测与上游审计，系统性补充中国大陆高频常用应用（拼多多、美团、饿了么、快手、小红书、网易云音乐、百度网盘、腾讯图床等）核心生产域名与 DNS 极速分流映射；精准收缩网易至云音乐专属域名，严格排除 netease.com 与 bcebos.com 避免海外业务污染；全库规则数校准为 21,158 条；全量 43 项 Python 测试、19 项 Node 诊断测试与镜像预发布门禁 100% 通过）。
 

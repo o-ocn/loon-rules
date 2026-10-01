@@ -40,9 +40,11 @@
 *.taobao.com = server:223.5.5.5
 *.alicdn.com = server:223.5.5.5
 *.alipay.com = server:223.5.5.5
+*.alipayobjects.com = server:223.5.5.5
 *.idlefish.com = server:223.5.5.5
 *.tmall.com = server:223.5.5.5
 *.amap.com = server:223.5.5.5
+*.autonavi.com = server:223.5.5.5
 *.1688.com = server:223.5.5.5
 
 # 腾讯 / 微信 / 视频
@@ -50,25 +52,38 @@
 *.tencent.com = server:119.29.29.29
 *.weixin.com = server:119.29.29.29
 *.qpic.cn = server:119.29.29.29
+*.gtimg.com = server:119.29.29.29
 
 # 国内视听 / 天气 (彩云天气、和风天气、华数TV)
 *.caiyunapp.com = server:223.5.5.5
 *.qweather.com = server:223.5.5.5
 *.wasu.tv = server:223.5.5.5
 
-# 京东 / 拼多多 / 快手 / 小红书 / 美团 / 网易 / 百度
+# 京东 / 拼多多 / 饿了么 / 快手 / 小红书 / 美团 / 网易云音乐 / 百度
 *.jd.com = server:223.5.5.5
 *.360buyimg.com = server:223.5.5.5
 *.pinduoduo.com = server:223.5.5.5
 *.yangkeduo.com = server:223.5.5.5
+*.pddpic.com = server:223.5.5.5
+*.ele.me = server:223.5.5.5
+*.elemecdn.com = server:223.5.5.5
 *.kuaishou.com = server:223.5.5.5
 *.yximgs.com = server:223.5.5.5
+*.gifshow.com = server:223.5.5.5
+*.kuaishoupay.com = server:223.5.5.5
 *.xiaohongshu.com = server:223.5.5.5
+*.xhscdn.com = server:223.5.5.5
+*.xhscdn.net = server:223.5.5.5
 *.meituan.com = server:223.5.5.5
+*.meituan.net = server:223.5.5.5
 *.dianping.com = server:223.5.5.5
-*.163.com = server:223.5.5.5
-*.126.net = server:223.5.5.5
+*.sankuai.com = server:223.5.5.5
+music.163.com = server:223.5.5.5
+*.music.163.com = server:223.5.5.5
+music.126.net = server:223.5.5.5
+*.music.126.net = server:223.5.5.5
 *.baidu.com = server:223.5.5.5
+*.baidupcs.com = server:223.5.5.5
 
 # 金融与银行服务 (招行、银联/云闪付、建行、农行、交行、邮储、平安、中信、光大)
 *.cmbchina.com = server:223.5.5.5
