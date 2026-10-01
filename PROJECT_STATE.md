@@ -17,7 +17,7 @@
 
 ## 二、当前状态与基线定型
 
-* **当前分支与提交基线**：`main`（当前 HEAD 提交为 `d91da37`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **当前分支与提交基线**：`main`（当前 HEAD 提交为 `301ee14`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
   * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、43+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
@@ -157,7 +157,8 @@
 ### 2. 待办事项
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
 - [ ] **唯一私人配置装配**：由 ChatGPT Work 基于最新手机导出配置在本地完成最终规则顺序对齐并装配为唯一正式 `.lcf` 文件供用户导入；
-- [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管。
+- [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管；
+- [ ] **测试套件总条数断言解耦优化**：将 `test_rules.py` 中硬编码的 `total_rules == 21163` 改为动态读取 `dist/diagnostics/manifest.json` 或设置最低预期基线（`total_rules >= minimum_expected`），避免后续合入补丁时反复修改单测固定数值。
 
 ---
 
