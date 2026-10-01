@@ -160,6 +160,7 @@ loon-rules/
 │       ├── loon-rules-diagnostic.js
 │       └── manifest.json          # 规则版本、SHA256 校验值、包签名与服务清单
 ├── docs/                          # 详细运维与对照报告
+│   ├── app-audit-matrix.md        # 中国大陆常用 App 与生态分流审计矩阵 (分流/DNS/排除边界)
 │   ├── lcf_audit_report.md        # 原始配置脱敏与 Apple 规则清理对照报告
 │   ├── policy_mapping.md          # 19 规则集策略映射与 [Remote Rule] 配置总表
 │   ├── plugin_compatibility.md    # 外部插件兼容性与互操作指南
