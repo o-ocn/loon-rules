@@ -31,14 +31,15 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,165 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,166 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,209 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
   * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行（工建农中交邮）及全国股份制商业银行（平安、中信、光大、浦发、兴业、民生、广发、华夏等）全量金融域名纳入直连与国内极速 DNS（223.5.5.5）分流调度，彻底阻断国内银行与支付流量因上游 USER-AGENT 规则失效而跌落 FINAL 绕行海外专线引发的风控拦截；
   * **Phase 0.5 首批人工核验放行**：一键免密认证基建 (`cmpassport.com`)、联通官方 (`10010.com`)、点评图床 (`dpfile.com`)、百度静态资源 (`bdstatic.com`)、央视媒体图床 (`cctvpic.com`) 5 条高置信规则正式入库；
-  * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计。
+  * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计；
+  * **Phase 0.5 第三批真机抓包精准补丁**：中国大陆百科服务 (`baike.com`) 纳入直连，修复 `m.baike.com` 绕行香港代理访问国内电信节点 (119.147.195.212) 问题。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -68,7 +69,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 164 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 565 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床等 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 566 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床等 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,209 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -148,6 +149,13 @@
       - `qrstuvwxyzab.com`：疑似七牛云电信 IPv6 编码动态 PCDN 反向映射节点（北京空山信息）。虽单次抓包指向国内电信 IP（119.147.195.212），但考虑到 PCDN 泛域名可能存在多租户混用、动态借道以及海外边缘节点污染风险，按用户指示**暂缓入库**，作为隔离观察对象；
     - *无需优化项*：
       - `m.hotmail.com`：微软 Hotmail/Outlook EAS 移动邮件后台同步，按当前体系自然由 `FINAL` 走海外代理专线，属于符合预期的正常分流，无需干预。
+
+18. **Phase 0.5 第三批真机抓包与分流优化决策 (国内百科服务直连补漏)**：
+    - *批准放行项*：
+      - `baike.com`：中国大陆移动/桌面百科服务，真机日志确认请求落入国内电信 IP（119.147.195.212）。因底层 `China-GeoIP` 的 IP-CIDR 规则均带有 `no-resolve`，域名请求不会主动触发 DNS 反查而直接跌入 `FINAL`；批准合入 `rules/custom/China-Direct.list`（`DOMAIN-SUFFIX,baike.com`），修复代理折返跑；
+    - *正常分流无需干预项*：
+      - `m.hotmail.com`：微软 Hotmail/Outlook EAS 移动邮件后台同步，按当前体系自然由 `FINAL` 走海外代理专线，属于符合预期的正常分流，无需干预。
+
 
 ---
 
@@ -239,4 +247,12 @@
     - 重构 `scripts/test_rules.py`（`test_31`）总条数硬编码断言，改为动态比对 `manifest.json` 规则集条数之和并守卫安全底线（`>= 21158`），彻底消除后续加规则维护负担；
     - 全套 5 门质量门禁 100% 绿色通过（`test_rules` 43/43 PASS, `test_diagnostic.js` 19/19 PASS, `check_conflicts --strict` PASS, `test_score_engine` 4/4 PASS, `verify_mirrors --pre-release` PASS）；
     - 重新运行 `scripts/audit_pipeline.py`，更新 `audit/shadow_report.json` 与 `shadow_report.md`（生产已覆盖规则提升至 354 条）。
+  * **Phase 0.5 第三批真机抓包精准补丁合入 (Third Human-Approved Patch Ingestion - baike.com)**：
+    - 依据真机 Loon 抓包日志与人工交叉核验，批准入库 `baike.com` 至 `rules/custom/China-Direct.list`（`DOMAIN-SUFFIX,baike.com`）；
+    - 明确核心放行依据：1. `baike.com` 为中国大陆基础服务；2. 真实请求解析至国内电信 IP（119.147.195.212）；3. 因底层 `China-GeoIP` 的 IP-CIDR 规则带有 `no-resolve`，域名请求未命中域名规则时直接滑落至末尾 `FINAL` 走香港代理引发折返跑；4. 规则库先前未收录；
+    - 决策追溯链同步更新至 `history/decisions.jsonl`（`human_approved` 追溯放行）；
+    - 经 `build.py` 重新编译更新 `dist/China-Direct.lsr`（565 -> 566 条），有效规则总数提升至 **21,166 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `1db0abd85c00`）；
+    - 全套 5 门质量门禁 100% 绿色通过（`test_rules` 43/43 PASS, `test_diagnostic.js` 19/19 PASS, `check_conflicts --strict` PASS, `test_score_engine` 4/4 PASS, `verify_mirrors --pre-release` PASS）；
+    - 重新运行 `scripts/audit_pipeline.py`，更新 `audit/shadow_report.json` 与 `shadow_report.md`（生产已覆盖规则从 354 提升至 355 条，候选池 REVIEW 项由 411 减为 410）。
+
 

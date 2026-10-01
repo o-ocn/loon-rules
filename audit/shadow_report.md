@@ -12,7 +12,7 @@ This phase does not modify:
 
 AUTO_PASS means simulated production eligibility only.
 
-> ⏱ **生成时间**: `2026-10-01T15:33:21.456310+00:00`  
+> ⏱ **生成时间**: `2026-10-01T16:25:47.545569+00:00`  
 > 🛡 **运行模式**: 只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状  
 
 ---
@@ -22,10 +22,10 @@ AUTO_PASS means simulated production eligibility only.
 | 指标项 | 规则数量 | 占比 | 说明 |
 | :--- | :---: | :---: | :--- |
 | **上游去重聚合总量** | **111461** | 100% | 多源清洗规范化后的全局规则集 |
-| **生产已有覆盖 (In Prod)** | **354** | - | 当前 `China-Direct.lsr` 已稳定纳管的规则 |
-| **新增候选差集 (Delta)** | **111107** | 100% | 上游存在但未纳入当前生产的域名/网段 |
+| **生产已有覆盖 (In Prod)** | **355** | - | 当前 `China-Direct.lsr` 已稳定纳管的规则 |
+| **新增候选差集 (Delta)** | **111106** | 100% | 上游存在但未纳入当前生产的域名/网段 |
 | ├─ **拟自动放行 (`AUTO_PASS`)** | **39** | 0.0% | 模拟生产放行（高置信度/双重凭证/大陆核心App） |
-| ├─ **拟隔离待审 (`REVIEW`)** | **411** | 0.4% | 拟入隔离池（需 AI 会审或观察中候选） |
+| ├─ **拟隔离待审 (`REVIEW`)** | **410** | 0.4% | 拟入隔离池（需 AI 会审或观察中候选） |
 | └─ **拟彻底阻断 (`BLOCK`)** | **110657** | 99.6% | 彻底剔除（海外代理碰撞/低分/禁止类型如 IP-CIDR） |
 
 > 🎯 **自动决策覆盖率**: **`99.63%`**  
@@ -55,7 +55,7 @@ AUTO_PASS means simulated production eligibility only.
 | `DOMAIN-SUFFIX,21cn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,360.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 
-*(其余 396 条详见 shadow_report.json)*
+*(其余 395 条详见 shadow_report.json)*
 
 ---
 

@@ -52,6 +52,8 @@ DOMAIN-SUFFIX,doupay.com
 # Target: ByteDance / Douyin dynamic edge CDN acceleration (抖音自建边缘分发与流媒体)
 # Source: Loon log trace 2026-10-01 | Reason: *.dy.zzcdnx.com falling to FINAL causing extra latency via proxy
 DOMAIN-SUFFIX,zzcdnx.com
+# Source: Loon log trace 2026-10-01 | Reason: m.baike.com falling to FINAL causing unnecessary proxy routing to domestic IP (119.147.195.212)
+DOMAIN-SUFFIX,baike.com
 DOMAIN-SUFFIX,qishui.com
 DOMAIN-SUFFIX,wasu.tv
 DOMAIN-SUFFIX,caiyunapp.com
