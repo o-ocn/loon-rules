@@ -1,0 +1,59 @@
+{
+  "description": "Fixed regression test cases for Phase 0 score engine and audit pipeline",
+  "version": "1.0",
+  "cases": [
+    {
+      "id": "case_hard_pass_verified",
+      "rule": "DOMAIN-SUFFIX,music.163.com",
+      "type": "DOMAIN-SUFFIX",
+      "domain": "music.163.com",
+      "sources": ["blackmatrix7_china", "loyalsoldier_direct"],
+      "expected_decision": "AUTO_PASS",
+      "expected_reason_contains": "Hard Pass",
+      "description": "已在 decisions.jsonl 验证放行且 verified=true"
+    },
+    {
+      "id": "case_hard_block_decision_history",
+      "rule": "DOMAIN-SUFFIX,netease.com",
+      "type": "DOMAIN-SUFFIX",
+      "domain": "netease.com",
+      "sources": ["blackmatrix7_china"],
+      "expected_decision": "BLOCK",
+      "expected_reason_contains": "decision_history",
+      "description": "已在 decisions.jsonl 明确阻断 (出海游戏风险)"
+    },
+    {
+      "id": "case_hard_block_overseas_shared_domains",
+      "rule": "DOMAIN-SUFFIX,google.com",
+      "type": "DOMAIN-SUFFIX",
+      "domain": "google.com",
+      "sources": ["untrusted_upstream"],
+      "expected_decision": "BLOCK",
+      "expected_reason_contains": "Hard Block",
+      "description": "海外代理核心资产，命中一票否决"
+    },
+    {
+      "id": "case_forbidden_type_ip_cidr",
+      "rule": "IP-CIDR,114.114.114.114/32",
+      "type": "IP-CIDR",
+      "domain": "114.114.114.114/32",
+      "sources": ["blackmatrix7_china"],
+      "expected_decision": "BLOCK",
+      "expected_reason_contains": "forbidden_type",
+      "description": "第一阶段禁止自动接入 IP-CIDR"
+    },
+    {
+      "id": "case_review_unknown_domain",
+      "rule": "DOMAIN,api-unverified-edge-test.com",
+      "type": "DOMAIN",
+      "domain": "api-unverified-edge-test.com",
+      "sources": ["blackmatrix7_china"],
+      "dns_info": {
+        "is_china_ip": true
+      },
+      "expected_decision": "REVIEW",
+      "expected_reason_contains": "Quarantine",
+      "description": "单上游未知 .com 域名，解析国内但未在矩阵备案，进入隔离观察池"
+    }
+  ]
+}

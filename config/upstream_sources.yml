@@ -1,0 +1,27 @@
+# 独立上游数据源定义（静态配置）
+version: 1.0
+
+providers:
+  blackmatrix7_china:
+    name: "blackmatrix7-China"
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/China/China.list"
+    credibility_weight: 1.0
+    tier: "primary"
+    description: "主流国内通用规则，覆盖全量高频App与系统服务"
+    expected_min_rules: 50
+
+  loyalsoldier_direct:
+    name: "Loyalsoldier-Direct"
+    url: "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt"
+    credibility_weight: 1.0
+    tier: "primary"
+    description: "轻量高质量白名单源，侧重高频域名与主流CDN"
+    expected_min_rules: 1000
+
+  acl4ssr_china:
+    name: "ACL4SSR-ChinaDomain"
+    url: "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list"
+    credibility_weight: 0.8
+    tier: "secondary"
+    description: "辅助参考源，规则量大，需严格评分过滤"
+    expected_min_rules: 500

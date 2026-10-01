@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-10-01T09:52:49.807160+00:00",
+  "sources": {
+    "blackmatrix7_china": {
+      "name": "blackmatrix7-China",
+      "url": "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/China/China.list",
+      "last_synced_at": "2026-10-01T09:52:49.807160+00:00",
+      "content_hash": "f47b46695d6c4cb6d4c0a878ae00bb4842dd7f60c180ac1023e476bab1426f31",
+      "rule_count": 63,
+      "used_cache": false,
+      "status": "synced_shadow"
+    },
+    "loyalsoldier_direct": {
+      "name": "Loyalsoldier-Direct",
+      "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
+      "last_synced_at": "2026-10-01T09:52:49.807160+00:00",
+      "content_hash": "e1664a48aa5ffc62bd4941787db59446335cc933d3c39ff083e4000ae9c5993b",
+      "rule_count": 111303,
+      "used_cache": false,
+      "status": "synced_shadow"
+    },
+    "acl4ssr_china": {
+      "name": "ACL4SSR-ChinaDomain",
+      "url": "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list",
+      "last_synced_at": "2026-10-01T09:52:49.807160+00:00",
+      "content_hash": "362edd1f605742b360eaf138f151d7eea96cc17f20ef12da73acbfb80c350e08",
+      "rule_count": 635,
+      "used_cache": false,
+      "status": "synced_shadow"
+    }
+  }
+}

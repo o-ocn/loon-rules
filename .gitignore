@@ -17,3 +17,7 @@ loon_dist_staging_*
 logs/
 *.sanitized.json
 *.sanitized.txt
+
+# Upstream cache
+.upstream_cache/
+scripts/.upstream_cache/

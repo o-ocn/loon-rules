@@ -1,0 +1,37 @@
+# 全局风控与置信度策略配置
+version: 1.0
+
+# 1. 允许自动入库的规则类型（第一阶段严格禁止自动加入 IP-CIDR 与 USER-AGENT）
+allowed_auto_types:
+  - DOMAIN-SUFFIX
+  - DOMAIN
+
+# 2. 置信度评分门槛 (confidence_score: 0-100)
+confidence_thresholds:
+  domain_suffix: 85       # 泛域名影响面大，门槛极严
+  domain: 75              # 单点精确域名门槛
+  quarantine_floor: 50    # 50~门槛分之间进入隔离观察池；<50 分直接丢弃
+
+# 3. 维度权重分布
+scoring_weights:
+  upstream_consensus:
+    multi_source_match: 35      # 2个及以上高可信上游共同收录
+    single_primary: 25          # 单一 primary 上游
+    single_secondary: 15        # 单一 secondary 上游
+  zero_conflict_safety_bonus: 20 # 经严格跨境排查零冲突与零海外代理重叠
+  matrix_verified_bonus: 30     # 命中已真机验证的大陆核心资产 (docs/app-audit-matrix.md)
+  dns_domestic_bonus: 15        # 解析为中国大陆运营商 BGP/CDN IP
+  overseas_risk_penalty: -1000  # 命中海外代理冲突（一票否决）
+
+# 4. 隔离池生命周期管理 (隔离池是审计资产，保留180天)
+quarantine_lifecycle:
+  archive_after_days: 180
+
+# 5. Telegram 极低频通知策略（全年目标 5~20 次，作为引导目标而非死硬截断）
+notification_policy:
+  enabled: true
+  target_annual_frequency: "5-20"
+  min_alert_interval_days: 7    # 普通合并提醒至少间隔 7 天
+  immediate_alert_triggers:     # 仅以下极高危场景立即推送：
+    - "DNS_OVERSEAS_MISMATCH"   # 标为直连但解析到海外 CDN (Cloudflare/Akamai/Fastly)
+    - "CRITICAL_APP_SUFFIX"     # 涉及知名国民级 App 且影响整树子域的未知 DOMAIN-SUFFIX

@@ -146,7 +146,8 @@
 
 ### 2. 待办事项
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
-- [ ] **唯一私人配置装配**：由 ChatGPT Work 基于最新手机导出配置在本地完成最终规则顺序对齐并装配为唯一正式 `.lcf` 文件供用户导入。
+- [ ] **唯一私人配置装配**：由 ChatGPT Work 基于最新手机导出配置在本地完成最终规则顺序对齐并装配为唯一正式 `.lcf` 文件供用户导入；
+- [ ] **Phase 0 旁路影子数据观察与低频告警集成**：持续评估 `audit/shadow_report.md` 中的 417 条 REVIEW 候选规则，校准上游多源加权模型，为进入 Phase 1（重构 build.py 与接入正式 quarantine）奠定实测数据基线。
 
 ---
 
@@ -183,6 +184,8 @@
 14. **切忌盲目追求 BrowserLeaks 纯净而全局只开境外 DoH 并禁用系统 DNS**：该极端配置会导致所有国内主流 App 的 CDN 域名向境外 DNS 查询，直连发生跨洋拉取引发断崖式卡顿；必须在客户端采用 `[Host]` 国内 DNS（223.5.5.5）分流实现就近秒开。
 15. **不要把香港或境外中资商业银行（如招商永隆银行 `cmbwinglungbank.com`）混入国内直连**：其核心机房与业务在香港本地，强行国内直连会导致离岸金融与代理策略混乱。
 16. **严禁将公有云通用对象存储（如百度云 `bcebos.com`）或跨国游戏集团泛域名（如网易 `netease.com`）粗暴放入国内直连**：它们往往包含新加坡、日本 GCP 等跨国出海节点，必须精准限定在消费级 App 的专属子域（如 `baidupcs.com`、`music.163.com`）。
+17. **Hard Pass 严禁凭大厂企业名称单方免检放行**：必须满足 `verified: true` 且在 `history/decisions.jsonl` 中存在显式审计放行凭证，未经验证的全新大厂泛域名必须走评分或隔离待审；
+18. **第一阶段禁止自动放行任何 IP-CIDR/IP-CIDR6 规则入直连**：上游爬取的 IP-CIDR 统一由 Type Filter 拦截，仅允许人工在 `rules/custom/` 中按需维护，防止跨国 Anycast/海外云公网 IP 逃逸。
 
 ---
 
@@ -192,5 +195,16 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-01（根据现网 DoH 跨境调度实测与上游审计，系统性补充中国大陆高频常用应用（拼多多、美团、饿了么、快手、小红书、网易云音乐、百度网盘、腾讯图床等）核心生产域名与 DNS 极速分流映射；建立 docs/app-audit-matrix.md 作为长期分流策略事实底册；全库规则数校准为 21,158 条；全量 43 项 Python 测试、19 项 Node 诊断测试与镜像预发布门禁 100% 通过）。
-
+* **最后更新**：2026-10-01
+  * **Phase 0 旁路影子审计体系正式建立**：
+    - 新增全局风控配置 `config/risk_policy.yml` 与独立静态上游数据库 `config/upstream_sources.yml`；
+    - 新增永久审计决策历史账本 `history/decisions.jsonl`（包含 `scope`, `recheck_interval_days`, `validation_source`）；
+    - 新增动态同步状态账本 `state/upstream_state.json` 与固定回归测试夹具 `tests/fixtures/audit_cases.json`；
+    - 开发置信度与三态分流引擎 `scripts/score_engine.py` 及回归单测 `scripts/test_score_engine.py`（4/4 单测全部 PASS，成功守卫 Hard Pass、Hard Block 及类型过滤边界）；
+    - 开发并执行 Phase 0 旁路影子流水线 `scripts/audit_pipeline.py`，产出 `audit/shadow_report.json` 与 `audit/shadow_report.md`；
+  * **旁路运行客观事实验证**：
+    - 聚合上游（blackmatrix7 + Loyalsoldier + ACL4SSR）去重规则总量：111,461 条；
+    - 生产已有覆盖覆盖数：348 条；
+    - 新增候选差集：111,113 条（拟放行 34 条，拟隔离待审 417 条，拟彻底阻断 110,662 条）；
+    - **自动化运维率 (Automation Rate)** 达到 **99.62%**；
+    - 生产 `dist/` 产物与 `build.py` **100% 保持零改动**，全量 43 项 Python 规则测试、19 项 Node.js 诊断测试与冲突检测全部绿灯通过。
