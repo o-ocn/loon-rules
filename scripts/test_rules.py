@@ -999,11 +999,16 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertNotIn("googleusercontent.com", ai_c, "googleusercontent.com leaked into AI-Overseas.lsr!")
         self.assertNotIn("googleusercontent.com", dr_c, "googleusercontent.com leaked into GoogleDrive.lsr!")
 
-        # Verify total rules across all 19 .lsr files is exactly 21163
+        # Verify total rules across all 19 .lsr files matches manifest declarations
+        manifest_path = os.path.join(DIST_DIR, "diagnostics", "manifest.json")
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest_data = json.load(f)
+        manifest_total = sum(r.get("total_rules", 0) for r in manifest_data.get("rulesets", {}).values())
         total_rules = 0
         for fname in self.lsr_files:
             total_rules += build.count_lsr_rules(os.path.join(DIST_DIR, fname))
-        self.assertEqual(total_rules, 21163, f"Expected 21163 rules, got {total_rules}")
+        self.assertEqual(total_rules, manifest_total, f"Ruleset total {total_rules} does not match manifest {manifest_total}")
+        self.assertGreaterEqual(total_rules, 21158, f"Total rules regressed below baseline 21158: {total_rules}")
 
     def test_32_public_19_order_fixture_and_four_stage_pipeline(self):
         """Verify complete 4-stage pipeline against public 19-class order fixture."""

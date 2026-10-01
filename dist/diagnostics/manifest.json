@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-01T10:49:26.024078+00:00",
-  "content_revision": "e130f688f603",
-  "package_sha256": "e130f688f6037399a43d28c958aff9dbe23e79b28413cb93df416ad197963055",
+  "build_timestamp": "2026-10-01T15:28:34.224780+00:00",
+  "content_revision": "4e97ba880e24",
+  "package_sha256": "4e97ba880e24dc1119799179431656ae1e8568c6110d8023f0b2dadc3e59b7a7",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -98,15 +98,15 @@
       "description": "Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)"
     },
     "Apple-Direct.lsr": {
-      "total_rules": 163,
-      "revision": "ef4d0332dcca",
-      "sha256": "ef4d0332dcca8ead34334398636ffa99ed79342f703ca0c8ace2d7f57710af5a",
+      "total_rules": 164,
+      "revision": "21560d445ce5",
+      "sha256": "21560d445ce55f833f4f4d4428acb4bcfafd63a3323178d713756abbda8b61dc",
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {
-      "total_rules": 564,
-      "revision": "149b51562188",
-      "sha256": "149b51562188312bc30ed00a869e33d88b549f4456c066beec851198bc1ab431",
+      "total_rules": 565,
+      "revision": "231f76a2884c",
+      "sha256": "231f76a2884c7a7d891445c1cfb4b53154624e6b3cfb7257e68263006435d32f",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     },
     "Lan.lsr": {

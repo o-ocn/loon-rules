@@ -37,6 +37,9 @@ DOMAIN-SUFFIX,swcdn.apple.com
 DOMAIN-SUFFIX,updates-http.cdn-apple.com
 DOMAIN-SUFFIX,gg.apple.com
 DOMAIN-SUFFIX,gnip.apple.com
+# Target: Apple Software update catalog for additional OS components (ADOS)
+# Source: Loon log trace 2026-10-01 | Reason: gdmf-ados.apple.com falling to FINAL causing high latency / timeout (ADOS update catalog)
+DOMAIN,gdmf-ados.apple.com
 # Apple certificate revocation checks (OCSP v2 responder, fixes falling to Final)
 DOMAIN-SUFFIX,ocsp2.apple.com
 # Apple NTP time synchronization service (fixes UDP 123 dropping on proxy)
