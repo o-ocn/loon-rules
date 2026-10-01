@@ -11,13 +11,13 @@
 2. **平替外部不受控规则**：全量替代旧版 15 个外部远端分流规则，消除规则混杂、上游滞后、钓鱼域名及劫持风险。
 3. **一致性检查与质量保障**：建立“声明契约、来源配置、构建产物、测试套件、自动化更新”全链路一致性，防止上游更新滞后或规则误伤。
 4. **单文件交付与安全隐私**：用户最终只导入一份由 ChatGPT Work 在本地安全装配的唯一私人 `.lcf`；严格保护私人凭证、订阅、节点与密钥，杜绝泄露至公开仓库。
-5. **AI-Project-Hub 规范纳管**：本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管，具体交接规范与协作协议统一由 [`AGENTS.md`](AGENTS.md) 维护。
+5. **AI-Project-Hub 规范纳管**：本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管，具体交接规范与协作协议统一由 [`AGENTS.md`](AGENTS.md) 维护，自动发现与同步入口由 [`AI_HUB_SYNC.md`](AI_HUB_SYNC.md) 提供。
 
 ---
 
 ## 二、当前状态与基线定型
 
-* **当前分支与提交基线**：`main`（与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **当前分支与提交基线**：`main`（当前 HEAD 提交为 `06e55aa`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
   * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、43+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
