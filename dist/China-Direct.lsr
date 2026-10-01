@@ -1,8 +1,8 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)
 # AUTHOR: o-ocn
-# REVISION: 0b5fc242ec8d
-# TOTAL: 515
+# REVISION: 92aa61b5ca6a
+# TOTAL: 542
 # ==============================================================================
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
@@ -46,6 +46,33 @@ DOMAIN-SUFFIX,meituan.com
 DOMAIN-SUFFIX,dianping.com
 DOMAIN-SUFFIX,cmbchina.com
 DOMAIN-SUFFIX,cmbimg.com
+DOMAIN-SUFFIX,unionpay.com
+DOMAIN-SUFFIX,unionpaysecure.com
+DOMAIN-SUFFIX,95516.com
+DOMAIN-SUFFIX,icbc.com.cn
+DOMAIN-SUFFIX,icbc.cn
+DOMAIN-SUFFIX,ccb.com
+DOMAIN-SUFFIX,ccb.cn
+DOMAIN-SUFFIX,ccb.com.cn
+DOMAIN-SUFFIX,abchina.com
+DOMAIN-SUFFIX,abchina.com.cn
+DOMAIN-SUFFIX,abchina.cn
+DOMAIN-SUFFIX,boc.cn
+DOMAIN-SUFFIX,bankcomm.com
+DOMAIN-SUFFIX,bankcomm.com.cn
+DOMAIN-SUFFIX,bankcomm.cn
+DOMAIN-SUFFIX,psbc.com
+DOMAIN-SUFFIX,psbc.com.cn
+DOMAIN-SUFFIX,pingan.com
+DOMAIN-SUFFIX,pingan.com.cn
+DOMAIN-SUFFIX,citicbank.com
+DOMAIN-SUFFIX,ecitic.com
+DOMAIN-SUFFIX,cebbank.com
+DOMAIN-SUFFIX,spdb.com.cn
+DOMAIN-SUFFIX,cib.com.cn
+DOMAIN-SUFFIX,cmbc.com.cn
+DOMAIN-SUFFIX,cgbchina.com.cn
+DOMAIN-SUFFIX,hxb.com.cn
 DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
 DOMAIN,slife.xy-asia.com
 DOMAIN-SUFFIX,iot-tencent.com

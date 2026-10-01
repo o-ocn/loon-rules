@@ -70,7 +70,19 @@
 *.126.net = server:223.5.5.5
 *.baidu.com = server:223.5.5.5
 
-# 金融与银行服务 (招商银行手机银行与掌上生活信用卡图床 CDN)
+# 金融与银行服务 (招行、银联/云闪付、建行、农行、交行、邮储、平安、中信、光大)
 *.cmbchina.com = server:223.5.5.5
 *.cmbimg.com = server:223.5.5.5
+*.unionpay.com = server:223.5.5.5
+*.unionpaysecure.com = server:223.5.5.5
+*.95516.com = server:223.5.5.5
+*.ccb.com = server:223.5.5.5
+*.abchina.com = server:223.5.5.5
+*.bankcomm.com = server:223.5.5.5
+*.psbc.com = server:223.5.5.5
+*.pingan.com = server:223.5.5.5
+*.citicbank.com = server:223.5.5.5
+*.ecitic.com = server:223.5.5.5
+*.cebbank.com = server:223.5.5.5
+
 

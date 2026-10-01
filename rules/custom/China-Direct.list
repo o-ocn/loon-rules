@@ -68,4 +68,52 @@ DOMAIN-SUFFIX,dianping.com
 DOMAIN-SUFFIX,cmbchina.com
 DOMAIN-SUFFIX,cmbimg.com
 
+# Target: China UnionPay & CloudPay (中国银联 / 云闪付)
+# Source: Audit 2026-10-01 | Reason: UnionPay gateway CNAME to Wangsu CDN resolves to US (157.185.x.x) under overseas DoH
+DOMAIN-SUFFIX,unionpay.com
+DOMAIN-SUFFIX,unionpaysecure.com
+DOMAIN-SUFFIX,95516.com
+
+# Target: Major State-Owned Commercial Banks (国有商业银行)
+# ICBC (中国工商银行)
+DOMAIN-SUFFIX,icbc.com.cn
+DOMAIN-SUFFIX,icbc.cn
+# CCB (中国建设银行)
+DOMAIN-SUFFIX,ccb.com
+DOMAIN-SUFFIX,ccb.cn
+DOMAIN-SUFFIX,ccb.com.cn
+# ABC (中国农业银行)
+DOMAIN-SUFFIX,abchina.com
+DOMAIN-SUFFIX,abchina.com.cn
+DOMAIN-SUFFIX,abchina.cn
+# BOC (中国银行)
+DOMAIN-SUFFIX,boc.cn
+# BOCOM (交通银行)
+DOMAIN-SUFFIX,bankcomm.com
+DOMAIN-SUFFIX,bankcomm.com.cn
+DOMAIN-SUFFIX,bankcomm.cn
+# PSBC (中国邮政储蓄银行)
+DOMAIN-SUFFIX,psbc.com
+DOMAIN-SUFFIX,psbc.com.cn
+
+# Target: Major Joint-Stock Commercial Banks (全国股份制商业银行)
+# Ping An Bank (平安银行 / 壹钱包)
+DOMAIN-SUFFIX,pingan.com
+DOMAIN-SUFFIX,pingan.com.cn
+# CITIC Bank (中信银行 / 动卡空间信用卡)
+DOMAIN-SUFFIX,citicbank.com
+DOMAIN-SUFFIX,ecitic.com
+# CEB (中国光大银行 / 阳光惠生活信用卡)
+DOMAIN-SUFFIX,cebbank.com
+# SPDB (浦发银行 / 浦大喜奔信用卡)
+DOMAIN-SUFFIX,spdb.com.cn
+# CIB (兴业银行 / 好兴动信用卡)
+DOMAIN-SUFFIX,cib.com.cn
+# CMBC (中国民生银行 / 全民生活信用卡)
+DOMAIN-SUFFIX,cmbc.com.cn
+# CGB (广发银行 / 发现精彩信用卡)
+DOMAIN-SUFFIX,cgbchina.com.cn
+# HXB (华夏银行)
+DOMAIN-SUFFIX,hxb.com.cn
+
 # --- LAN & Direct IP ranges removed, now in Lan.list ---
