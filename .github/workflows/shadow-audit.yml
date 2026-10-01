@@ -1,0 +1,59 @@
+name: Shadow Audit Scheduled Run
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC (10:00 AM Beijing Time)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shadow-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Execute Shadow Audit Pipeline
+        run: |
+          python scripts/audit_pipeline.py
+
+      - name: Verify Audit Reports Generated
+        run: |
+          if [ ! -f audit/shadow_report.md ] || [ ! -f audit/shadow_report.json ]; then
+            echo "CRITICAL: Shadow audit report files were not generated!"
+            exit 1
+          fi
+          echo "Audit report files verified successfully."
+
+      - name: Run Score Engine Regression Tests
+        run: |
+          python -B -m unittest scripts.test_score_engine
+
+      - name: Commit and Push if Substantive Changes Detected
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add audit/ state/
+          if git diff --staged --quiet; then
+            echo "No shadow audit changes detected."
+            echo "Skip commit."
+          else
+            echo "Substantive shadow audit changes detected. Committing..."
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            git commit -m "chore(audit): update shadow audit report and upstream state [$TIMESTAMP] [skip ci]"
+            git push origin main
+          fi

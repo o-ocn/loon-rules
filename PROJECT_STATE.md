@@ -19,8 +19,8 @@
 
 * **当前分支与提交基线**：`main`（当前 HEAD 提交为 `d91da37`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
-  * 流水线定义：`.github/workflows/sync-and-build.yml`；
-  * 触发机制：`push` to `main`、`pull_request` to `main`、每周日 00:00 UTC（北京时间 08:00）Cron 定时自动同步上游构建、以及 `workflow_dispatch` 手动触发；
+  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、43+19项门禁与 CDN 镜像校验发布）；
+  * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
   * 5 门严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
     1. 构建规则与诊断插件：`python scripts/build.py`
     2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（43/43 单元测试全部通过）
@@ -147,7 +147,7 @@
 ### 2. 待办事项
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
 - [ ] **唯一私人配置装配**：由 ChatGPT Work 基于最新手机导出配置在本地完成最终规则顺序对齐并装配为唯一正式 `.lcf` 文件供用户导入；
-- [ ] **Phase 0 旁路影子数据观察与低频告警集成**：持续评估 `audit/shadow_report.md` 中的 417 条 REVIEW 候选规则，校准上游多源加权模型，为进入 Phase 1（重构 build.py 与接入正式 quarantine）奠定实测数据基线。
+- [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管。
 
 ---
 
@@ -185,7 +185,8 @@
 15. **不要把香港或境外中资商业银行（如招商永隆银行 `cmbwinglungbank.com`）混入国内直连**：其核心机房与业务在香港本地，强行国内直连会导致离岸金融与代理策略混乱。
 16. **严禁将公有云通用对象存储（如百度云 `bcebos.com`）或跨国游戏集团泛域名（如网易 `netease.com`）粗暴放入国内直连**：它们往往包含新加坡、日本 GCP 等跨国出海节点，必须精准限定在消费级 App 的专属子域（如 `baidupcs.com`、`music.163.com`）。
 17. **Hard Pass 严禁凭大厂企业名称单方免检放行**：必须满足 `verified: true` 且在 `history/decisions.jsonl` 中存在显式审计放行凭证，未经验证的全新大厂泛域名必须走评分或隔离待审；
-18. **第一阶段禁止自动放行任何 IP-CIDR/IP-CIDR6 规则入直连**：上游爬取的 IP-CIDR 统一由 Type Filter 拦截，仅允许人工在 `rules/custom/` 中按需维护，防止跨国 Anycast/海外云公网 IP 逃逸。
+18. **第一阶段禁止自动放行任何 IP-CIDR/IP-CIDR6 规则入直连**：上游爬取的 IP-CIDR 统一由 Type Filter 拦截，仅允许人工在 `rules/custom/` 中按需维护，防止跨国 Anycast/海外云公网 IP 逃逸；
+19. **影子审计每日巡检必须严格消除 Git 空提交**：在上游内容或评分 KPI 未变动时，严禁因时间戳刷新而产生无意义提交。
 
 ---
 
@@ -196,15 +197,8 @@
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
 * **最后更新**：2026-10-01
-  * **Phase 0 旁路影子审计体系正式建立**：
-    - 新增全局风控配置 `config/risk_policy.yml` 与独立静态上游数据库 `config/upstream_sources.yml`；
-    - 新增永久审计决策历史账本 `history/decisions.jsonl`（包含 `scope`, `recheck_interval_days`, `validation_source`）；
-    - 新增动态同步状态账本 `state/upstream_state.json` 与固定回归测试夹具 `tests/fixtures/audit_cases.json`；
-    - 开发置信度与三态分流引擎 `scripts/score_engine.py` 及回归单测 `scripts/test_score_engine.py`（4/4 单测全部 PASS，成功守卫 Hard Pass、Hard Block 及类型过滤边界）；
-    - 开发并执行 Phase 0 旁路影子流水线 `scripts/audit_pipeline.py`，产出 `audit/shadow_report.json` 与 `audit/shadow_report.md`；
-  * **旁路运行客观事实验证**：
-    - 聚合上游（blackmatrix7 + Loyalsoldier + ACL4SSR）去重规则总量：111,461 条；
-    - 生产已有覆盖覆盖数：348 条；
-    - 新增候选差集：111,113 条（拟放行 34 条，拟隔离待审 417 条，拟彻底阻断 110,662 条）；
-    - **自动化运维率 (Automation Rate)** 达到 **99.62%**；
-    - 生产 `dist/` 产物与 `build.py` **100% 保持零改动**，全量 43 项 Python 规则测试、19 项 Node.js 诊断测试与冲突检测全部绿灯通过。
+  * **Phase 0.5 旁路影子巡检正式接入 GitHub Actions**：
+    - 新增 `.github/workflows/shadow-audit.yml`，设置每日 02:00 UTC（北京时间 10:00）自动运行，保留 `workflow_dispatch`；
+    - 实现智能变动感知：仅在 `audit/shadow_report.*` 或 `state/upstream_state.json` 发生真实数据变化时才提交，杜绝空提交；
+    - 绝不修改生产规则，`build.py`、`sources.yml`、`dist/*.lsr` 100% 保持零改动，用户端订阅不受任何影响；
+    - 当前进入 2~4 周影子观察期（Shadow Audit Only），不进行生产接管，不引入 VPS，不接入 Telegram。

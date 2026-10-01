@@ -167,7 +167,18 @@ def run_shadow_audit():
     aggregated = {}  # (rule_type, pattern) -> set of source_ids
     sync_states = {}
 
+    existing_state_full = {}
+    existing_sources_state = {}
+    if os.path.isfile(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                existing_state_full = json.load(f)
+                existing_sources_state = existing_state_full.get("sources", {})
+        except Exception:
+            pass
+
     now_iso = datetime.now(timezone.utc).isoformat()
+    upstream_has_changed = False
 
     # 1. 多源抓取与规整 (fetch & normalize)
     for p_id, p_meta in providers.items():
@@ -186,10 +197,18 @@ def run_shadow_audit():
                     valid_rules += 1
                     aggregated.setdefault(parsed, set()).add(p_id)
 
+            old_info = existing_sources_state.get(p_id, {})
+            old_hash = old_info.get("content_hash")
+            if old_hash and old_hash == c_hash:
+                synced_at = old_info.get("last_synced_at", now_iso)
+            else:
+                synced_at = now_iso
+                upstream_has_changed = True
+
             sync_states[p_id] = {
                 "name": name,
                 "url": url,
-                "last_synced_at": now_iso,
+                "last_synced_at": synced_at,
                 "content_hash": c_hash,
                 "rule_count": valid_rules,
                 "used_cache": used_cache,
@@ -204,13 +223,15 @@ def run_shadow_audit():
                 "last_synced_at": now_iso,
                 "status": f"failed: {e}"
             }
+            upstream_has_changed = True
 
-    # 保存动态同步状态至 state/upstream_state.json
+    # 保存动态同步状态至 state/upstream_state.json (若无变化保留先前时间戳)
     os.makedirs(STATE_DIR, exist_ok=True)
+    state_last_updated = now_iso if upstream_has_changed else existing_state_full.get("last_updated", now_iso)
     with open(state_file, "w", encoding="utf-8") as f:
-        json.dump({"version": "1.0", "last_updated": now_iso, "sources": sync_states}, f, indent=2, ensure_ascii=False)
+        json.dump({"version": "1.0", "last_updated": state_last_updated, "sources": sync_states}, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    print(f"\n[+] 已更新上游同步状态 -> {state_file}")
+    print(f"\n[+] 上游同步状态核对完毕 (变动: {upstream_has_changed}) -> {state_file}")
 
     # 2. 读取现有生产规则并提取增量差集
     prod_rules = load_existing_production_rules()
@@ -276,18 +297,34 @@ def run_shadow_audit():
     report_json_path = os.path.join(AUDIT_DIR, "shadow_report.json")
     report_md_path = os.path.join(AUDIT_DIR, "shadow_report.md")
 
+    existing_report_kpi = None
+    existing_generated_at = now_iso
+    if os.path.isfile(report_json_path):
+        try:
+            with open(report_json_path, "r", encoding="utf-8") as f:
+                old_rep = json.load(f)
+                existing_report_kpi = old_rep.get("kpi")
+                existing_generated_at = old_rep.get("generated_at", now_iso)
+        except Exception:
+            pass
+
+    current_kpi = {
+        "total_aggregated_upstream": len(aggregated),
+        "production_covered_count": len(covered_in_prod),
+        "new_candidate_count": total_new,
+        "simulated_auto_pass_count": len(simulated_auto_pass),
+        "simulated_review_count": len(simulated_review),
+        "simulated_block_count": len(simulated_block),
+        "auto_decision_coverage_pct": round(automation_rate, 2)
+    }
+
+    # 若上游未变动且核心 KPI 结果一致，保留先前时间戳，消除 Git 无实质变动提交
+    report_generated_at = now_iso if (upstream_has_changed or existing_report_kpi != current_kpi) else existing_generated_at
+
     report_data = {
         "audit_version": "1.0",
-        "generated_at": now_iso,
-        "kpi": {
-            "total_aggregated_upstream": len(aggregated),
-            "production_covered_count": len(covered_in_prod),
-            "new_candidate_count": total_new,
-            "simulated_auto_pass_count": len(simulated_auto_pass),
-            "simulated_review_count": len(simulated_review),
-            "simulated_block_count": len(simulated_block),
-            "auto_decision_coverage_pct": round(automation_rate, 2)
-        },
+        "generated_at": report_generated_at,
+        "kpi": current_kpi,
         "simulated_auto_pass": simulated_auto_pass,
         "simulated_review": simulated_review,
         "simulated_block": simulated_block
@@ -308,7 +345,7 @@ def run_shadow_audit():
         f.write("- build.py\n")
         f.write("- production rule output\n\n")
         f.write("AUTO_PASS means simulated production eligibility only.\n\n")
-        f.write(f"> ⏱ **生成时间**: `{now_iso}`  \n")
+        f.write(f"> ⏱ **生成时间**: `{report_generated_at}`  \n")
         f.write("> 🛡 **运行模式**: 只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状  \n\n")
         f.write("---\n\n")
         f.write("## 一、核心 KPI 与自动决策覆盖率\n\n")
