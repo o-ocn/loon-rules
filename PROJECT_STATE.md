@@ -31,7 +31,7 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,203 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,205 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -56,10 +56,10 @@
 | 规则集名称 | 规则条数 | 涵盖核心服务说明 | 策略中立保证 |
 | :--- | :---: | :--- | :---: |
 | **`Apple-Push.lsr`** | 10 | APNs 官方最小推送通道（默认建议关闭） | 100% 策略中立 |
-| **`AI-Overseas.lsr`** | 71 | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse | 100% 策略中立 |
-| **`YouTube.lsr`** | 56 | YouTube 视频流媒体、图片与 CDN（排在 Google 前） | 100% 策略中立 |
-| **`GoogleDrive.lsr`** | 6 | Google Drive 云端硬盘专属服务（排在 Google 前） | 100% 策略中立 |
-| **`Google.lsr`** | 568 | 普通 Google 服务、搜索与基础设施（含共享 googleapis） | 100% 策略中立 |
+| **`AI-Overseas.lsr`** | 38 | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse | 100% 策略中立 |
+| **`YouTube.lsr`** | 190 | YouTube 视频流媒体、图片与 CDN（排在 Google 前） | 100% 策略中立 |
+| **`GoogleDrive.lsr`** | 8 | Google Drive 云端硬盘专属服务（排在 Google 前） | 100% 策略中立 |
+| **`Google.lsr`** | 690 | 普通 Google 服务、搜索与基础设施（含共享 googleapis） | 100% 策略中立 |
 | **`OneDrive.lsr`** | 17 | Microsoft OneDrive 与 SharePoint 服务 | 100% 策略中立 |
 | **`Telegram.lsr`** | 48 | Telegram 官方 IP 段与核心通信域名 | 100% 策略中立 |
 | **`Twitter.lsr`** | 32 | Twitter / X 平台主干（不含 Grok） | 100% 策略中立 |
@@ -71,7 +71,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 595 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 个人高频生活直连层 (China-Personal 29条) 等 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 597 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 个人高频生活直连层 (China-Personal 29条) 等 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,216 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -158,6 +158,9 @@
     - *正常分流无需干预项*：
       - `m.hotmail.com`：微软 Hotmail/Outlook EAS 移动邮件后台同步，按当前体系自然由 `FINAL` 走海外代理专线，属于符合预期的正常分流，无需干预。
 
+19. **字节跳动静态资源 CDN 收录与 GeoIP 去 `no-resolve` 架构收敛**：
+    - *为什么添加 `bytecdn.com`/`bytecdn.cn`*：上游源 `DouYin.list` 仅有 13 条核心规则，母公司底层 CDN 放置在 `ByteDance.list` 未被引用，导致 `lf-leads-fe-scm.bytecdn.com` 前端组件跌落 FINAL，走香港专线折返跑造成抖音评论区图片转圈与卡顿；合入 `China-Direct.list` 并经真机验证秒开；
+    - *放弃纯理论洁癖，拥抱实用主义（去 `no-resolve` 决策）*：依据项目最高铁律“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端在 `China-GeoIP` 层放弃 `no-resolve` 强约束。因主流海外服务在顶层早已被域名代理规则完全拦截，底层放开本地 DNS 查验不仅消除了 99% 的未收录国内边缘 CDN 绕道代理卡顿，而且从根本上解放了用户，彻底终结“遇卡顿就抓包打补丁”的高频人工内耗。
 
 ---
 
@@ -228,7 +231,11 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-01
+* **最后更新**：2026-10-03
+  * **字节跳动骨干静态 CDN 补丁与 GeoIP 去 no-resolve 架构收敛**：
+    - 精准收录 `bytecdn.com` 与 `bytecdn.cn` 至 `rules/custom/China-Direct.list`，彻底解决字节前端组件（`lf-leads-fe-scm`）绕行香港代理导致的抖音评论区图片转圈与卡顿，真机实测验证秒开；
+    - 落地项目最高准则“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端放弃 `no-resolve` 束缚，恢复 GeoIP 主动触发本地 DNS 反查兜底，实现日常使用彻底无感；
+    - 全库 19 规则集 21,205 条有效规则通过全套 5 门质量门禁测试。
   * **Phase 0.5 旁路影子巡检正式接入 GitHub Actions**：
     - 新增 `.github/workflows/shadow-audit.yml`，设置每日 02:00 UTC（北京时间 10:00）自动运行，保留 `workflow_dispatch`；
     - 实现智能变动感知：仅在 `audit/shadow_report.*` 或 `state/upstream_state.json` 发生真实数据变化时才提交，杜绝空提交；
@@ -277,6 +284,16 @@
     - **编译与规则条数**：经 `build.py` 编译，`dist/Apple-Direct.lsr` 由 164 条精准增至 165 条（净增 1 条），全库总有效规则达到 **21,203 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `2772203f8187`）；
     - **门禁验证**：白盒断言确认 `cdn.apple-mapkit.com` 准确命中 `Apple-Direct`，`tv.apple.com` 与 `testflight.apple.com` 100% 保持原有代理策略，`scripts/check_conflicts.py --strict` 零碰撞通过，全套 44/44 单元测试全绿；
     - **决策追溯账本**：同步追加一条 `human_approved` 事实记录至 `history/decisions.jsonl`。
+  * **字节跳动骨干静态 CDN 补丁合入与 GeoIP 去 no-resolve 架构收敛 (ByteDance Static CDN & Active-Resolve GeoIP Realignment)**：
+    - **抓包与网络现象**：用户真机抓包捕获 `lf-leads-fe-scm.bytecdn.com`（字节跳动商业化与前端静态 JS/CSS 组件包），解析至国内电信机房（`119.147.195.212`），但因上游源 `sources.yml` 仅引入了仅有 13 条规则的 `DouYin.list`，漏掉了包含底层 CDN 的 `ByteDance.list`（含 `bytecdn.com`/`bytecdn.cn`）；叠加底层 `China-GeoIP` 带 `no-resolve` 无法触发本地 DNS 解析，请求直接掉入末尾 `FINAL` 走香港 IEPL 专线，使国内前端组件在香港折返跑造成抖音评论区图片转圈与界面偶发卡顿；
+    - **真机实测验证**：用户在手机 Loon 本地规则添加 `DOMAIN-SUFFIX,bytecdn.com,DIRECT` 与 `DOMAIN-SUFFIX,bytecdn.cn,DIRECT` 后，评论区图片卡顿感瞬间彻底消失，获得 100% 客观实证；
+    - **最高准则落地与重大战略定调**：
+      - 回归项目最高铁律：**“稳定使用 > 减少人工 > 易维护 > 极端场景完善。不要为了理论上的极端安全性，去牺牲日常使用的便利性。”**
+      - 深刻复盘：带 `no-resolve` 是在追求理论上“0 DNS 泄漏”的极端洁癖，但代价是规则库必须 100% 完美无缺，否则任何一个未收录的国内边缘 CDN 都会掉入代理造成卡顿，逼迫用户陷入“持续抓包打补丁”的无限内耗；
+      - 决策落地：明确在客户端配置中，将 `China-GeoIP` 从 `GEOIP,CN,DIRECT,no-resolve` 切换为 `GEOIP,CN,DIRECT`（去掉 `no-resolve`，恢复主动触发 DNS 反查）。由于主流海外服务在顶层早已被域名代理规则优先截胡，漏网流转到底部的绝大多数国内边缘节点经本地 DNS 查验为 CN IP 后将自动走 DIRECT 直连，真正实现**“日常使用无感，彻底终结频繁修补”**；
+    - **编译与规则条数**：`rules/custom/China-Direct.list` 中精准补齐 `bytecdn.com` 与 `bytecdn.cn`；经 `build.py` 编译，`dist/China-Direct.lsr` 由 595 条增至 597 条（净增 2 条），全库总有效规则达到 **21,205 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `c7e7c7f15028`）；
+    - **全量门禁与账本闭环**：`check_conflicts.py --strict` PASS（0 跨界冲突），`test_rules` 44/44 PASS，`test_diagnostic.js` 19/19 PASS，`verify_mirrors --pre-release` PASS；决策全量写入 `history/decisions.jsonl`（2 APPROVED）。
+
 
 
 

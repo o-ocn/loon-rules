@@ -41,6 +41,9 @@ DOMAIN-SUFFIX,zijieapi.com
 DOMAIN-SUFFIX,ibytedtos.com
 DOMAIN-SUFFIX,bytetos.com
 DOMAIN-SUFFIX,ecombdapi.com
+# Source: Loon log trace 2026-10-03 | Reason: Douyin / ByteDance domestic frontend static CDN (lf-leads-fe-scm), CNAME to bytedns3.com domestic IP (119.147.195.212) falling to FINAL causing card/comment lag
+DOMAIN-SUFFIX,bytecdn.com
+DOMAIN-SUFFIX,bytecdn.cn
 # Source: Loon log trace 2026-09-30 | Reason: Douyin developer image CDN, overseas DoH returned HK Anycast (155.102.54.131) causing 120s timeout in FINAL
 DOMAIN-SUFFIX,bytemaimg.com
 # Source: Loon log trace 2026-09-30 | Reason: Douyin live webcast source CDN, overseas DoH returned HK Anycast (163.181.60.203) causing 121s timeout in FINAL
