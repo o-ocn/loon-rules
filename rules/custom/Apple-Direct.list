@@ -61,6 +61,12 @@ DOMAIN,iphone-ld.apple.com
 # Source: Loon log trace 2026-09-30 | Reason: amp-api.sandbox.apple.com falling to FINAL
 DOMAIN-SUFFIX,sandbox.apple.com
 
+# --- Apple Maps & MapKit Ecosystem ---
+# Target: Apple MapKit tiles and vector graphics CDN (MapKit JS / Find My / HomeKit geolocation)
+# Evidence: Loon log trace 2026-10-02 (cdn.apple-mapkit.com resolved to mainland CDN 119.147.195.212 but fell to FINAL)
+# Reason: Domestic CDN acceleration for map tiles and POI rendering; completely distinct from apple.com media
+DOMAIN-SUFFIX,apple-mapkit.com
+
 # --- Apple China Local CDN Cache ---
 # Target: Official Apple China CDN IPv4 subnet
 # Evidence: Apple official documentation on China CDN cache IPs, 2026-09-28

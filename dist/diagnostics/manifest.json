@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-02T04:43:54.696957+00:00",
-  "content_revision": "d696a55df4df",
-  "package_sha256": "d696a55df4df199071d727ff8b92fd23d6a7e6545e600968fbd6fb65acc034aa",
+  "build_timestamp": "2026-10-02T05:16:00.947657+00:00",
+  "content_revision": "2772203f8187",
+  "package_sha256": "2772203f81874df578af2eb5798f017c8bd982cca28b7f4fedb1c128bc10440a",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -98,9 +98,9 @@
       "description": "Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)"
     },
     "Apple-Direct.lsr": {
-      "total_rules": 164,
-      "revision": "21560d445ce5",
-      "sha256": "21560d445ce55f833f4f4d4428acb4bcfafd63a3323178d713756abbda8b61dc",
+      "total_rules": 165,
+      "revision": "52d776c7d138",
+      "sha256": "52d776c7d138a3f318c552f005574ee14722dfd7bfa07f39fb894393c03a2a5d",
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {

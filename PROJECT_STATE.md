@@ -31,11 +31,12 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,202 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,203 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
+  * Apple MapKit 地图矢量瓦片与 POI 图床 (`apple-mapkit.com`) 纳入 `Apple-Direct` 直连，修复国内电信 CDN 节点 (`119.147.195.212`) 跌入 FINAL 产生折返跑延迟，严格保持 `apple.com` 泛域名不添加并保持 `Apple-Media` 与 `TestFlight` 策略隔离；
   * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行（工建农中交邮）及全国股份制商业银行（平安、中信、光大、浦发、兴业、民生、广发、华夏等）全量金融域名纳入直连与国内极速 DNS（223.5.5.5）分流调度，彻底阻断国内银行与支付流量因上游 USER-AGENT 规则失效而跌落 FINAL 绕行海外专线引发的风控拦截；
   * **Phase 0.5 首批人工核验放行**：一键免密认证基建 (`cmpassport.com`)、联通官方 (`10010.com`)、点评图床 (`dpfile.com`)、百度静态资源 (`bdstatic.com`)、央视媒体图床 (`cctvpic.com`) 5 条高置信规则正式入库；
   * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计；
@@ -69,7 +70,7 @@
 | **`TestFlight.lsr`** | 3 | Apple TestFlight 内测分发平台 | 100% 策略中立 |
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
-| **`Apple-Direct.lsr`** | 164 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS) | 100% 策略中立 |
+| **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
 | **`China-Direct.lsr`** | 595 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 个人高频生活直连层 (China-Personal 29条) 等 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,216 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
@@ -270,5 +271,12 @@
     - **编译与规则条数**：`China-Direct.lsr` 从 566 条精准扩充至 595 条（净增 29 条），`China-GeoIP.lsr` 自然同步上游微增 7 条至 19,216 条，规则总数达到 **21,202 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `d696a55df4df`）；
     - **全量测试与严格隔离验证**：新增 `test_44` 单元测试，自动化全套 44/44 测试全绿；经 Python 白盒断言严格确认：29 条新规则 100% 存在于 `China-Direct.lsr`，且 `google` / `openai` / `telegram` / `github` 核心海外关键字在 `China-Direct.lsr` 中完全缺席（Zero Collision），出海双生产品排除验证 100% 达成；
     - **账本事实闭环**：29 条规则的准入依据、技术证据及低风险评估事实全量追加录入 `history/decisions.jsonl`。
+  * **Apple MapKit 精准直连补丁合入 (Apple MapKit Direct Ingestion)**：
+    - **抓包与网络现象**：真机日志捕获 `cdn.apple-mapkit.com` 经国内 DNS 解析至国内电信 CDN 边缘节点 (`119.147.195.212`)，但因 Apple 规则库未收录该独立域名、且 `China-GeoIP` 带 `no-resolve` 无法触发本地 DNS 反查，请求在 0ms 瞬间跌入 `FINAL` 走香港 IEPL 代理，造成大陆节点跨洋折返跑与地图瓦片加载延迟；
+    - **架构决策与安全底线**：严禁无脑加入 `DOMAIN-SUFFIX,apple.com`（防止破坏 `Apple-Media.lsr` 锁区流媒体与 `TestFlight.lsr`）；利用 `apple-mapkit.com` 为独立商业域名的天然隔离优势，仅在 `rules/custom/Apple-Direct.list` 中精准增补一条 `DOMAIN-SUFFIX,apple-mapkit.com`；
+    - **编译与规则条数**：经 `build.py` 编译，`dist/Apple-Direct.lsr` 由 164 条精准增至 165 条（净增 1 条），全库总有效规则达到 **21,203 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `2772203f8187`）；
+    - **门禁验证**：白盒断言确认 `cdn.apple-mapkit.com` 准确命中 `Apple-Direct`，`tv.apple.com` 与 `testflight.apple.com` 100% 保持原有代理策略，`scripts/check_conflicts.py --strict` 零碰撞通过，全套 44/44 单元测试全绿；
+    - **决策追溯账本**：同步追加一条 `human_approved` 事实记录至 `history/decisions.jsonl`。
+
 
 
