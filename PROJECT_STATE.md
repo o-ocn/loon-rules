@@ -31,15 +31,16 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,166 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,202 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
-  * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,209 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
+  * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
   * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行（工建农中交邮）及全国股份制商业银行（平安、中信、光大、浦发、兴业、民生、广发、华夏等）全量金融域名纳入直连与国内极速 DNS（223.5.5.5）分流调度，彻底阻断国内银行与支付流量因上游 USER-AGENT 规则失效而跌落 FINAL 绕行海外专线引发的风控拦截；
   * **Phase 0.5 首批人工核验放行**：一键免密认证基建 (`cmpassport.com`)、联通官方 (`10010.com`)、点评图床 (`dpfile.com`)、百度静态资源 (`bdstatic.com`)、央视媒体图床 (`cctvpic.com`) 5 条高置信规则正式入库；
   * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计；
-  * **Phase 0.5 第三批真机抓包精准补丁**：中国大陆百科服务 (`baike.com`) 纳入直连，修复 `m.baike.com` 绕行香港代理访问国内电信节点 (119.147.195.212) 问题。
+  * **Phase 0.5 第三批真机抓包精准补丁**：中国大陆百科服务 (`baike.com`) 纳入直连，修复 `m.baike.com` 绕行香港代理访问国内电信节点 (119.147.195.212) 问题；
+  * **Phase 1 个人高频生活直连层正式合入 (Personal Layer v3)**：一次性纳管个人 7 大高频场景（出行、物流、电商、生活社区、办公协同、精准政务、医疗问诊与电信营业厅），合入 29 条精选直连规则至 `rules/custom/China-Personal.list`，`China-Direct.lsr` 扩充至 595 条，并同步建立 `docs/China-Personal-Matrix.md` 永久候选资产决策矩阵。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -69,9 +70,9 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 164 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 566 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床等 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 595 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 个人高频生活直连层 (China-Personal 29条) 等 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
-| **`China-GeoIP.lsr`** | 19,209 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
+| **`China-GeoIP.lsr`** | 19,216 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
 ---
 
@@ -92,7 +93,7 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **43/43 全部通过**（包含 URL 隐私白名单、主备源自校验、FINAL 段落严格拦截、12 类清单故障注入及 3 类跨生态防碰撞注入）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **44/44 全部通过**（包含 URL 隐私白名单、主备源自校验、FINAL 段落严格拦截、12 类清单故障注入、3 类跨生态防碰撞注入及新增 Phase 1 个人层与海外核心隔离断言 `test_44`）；
 - **Node.js 诊断插件测试**：`node --test tests/test_diagnostic.js` **19/19 全部通过**（快速/完整模式、看门狗超时保全、4 态路由判定、策略嗅探）；
 - **防撞车与 DNS 禁区检测**：`python scripts/check_conflicts.py --strict` **PASS**（0 未授权跨界碰撞）；
 - **预发布镜像签名自校验**：`python scripts/verify_mirrors.py --pre-release` **PASS**（19 规则集正文、诊断元数据与包 SHA256 签名完全吻合）。
@@ -254,5 +255,20 @@
     - 经 `build.py` 重新编译更新 `dist/China-Direct.lsr`（565 -> 566 条），有效规则总数提升至 **21,166 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `1db0abd85c00`）；
     - 全套 5 门质量门禁 100% 绿色通过（`test_rules` 43/43 PASS, `test_diagnostic.js` 19/19 PASS, `check_conflicts --strict` PASS, `test_score_engine` 4/4 PASS, `verify_mirrors --pre-release` PASS）；
     - 重新运行 `scripts/audit_pipeline.py`，更新 `audit/shadow_report.json` 与 `shadow_report.md`（生产已覆盖规则从 354 提升至 355 条，候选池 REVIEW 项由 411 减为 410）。
+  * **Phase 1 个人高频生活直连层正式合入 (Phase 1 Personal Layer v3 Ingestion)**：
+    - **背景与痛点**：全库虽加载约 21,780 条规则，但底层 `China-GeoIP` 的 19,216 条 IP 规则带有 `,no-resolve`，域名请求未命中域名规则时在 0ms 内直接击穿至 `FINAL` 走代理；大厂规则覆盖较好但中腰部个人高频服务、政务、物流严重裸奔；
+    - **架构决策**：彻底放弃“单个App零星补漏”模式，确立**源码层模块化隔离、客户端单一规则集聚合**体系。在 `rules/custom/China-Personal.list` 中按场景维护，在 `sources.yml` 编译源中并入 `China-Direct`，手机客户端依然只挂载 1 个国内直连集，零增加客户端策略复杂度；
+    - **正式入库 29 条精选规则**：
+      1. 出行：航旅纵横 (`umetrip.com`)、滴滴出行 (`didichuxing.com`)、哈啰 (`hellobike.com`)；
+      2. 物流：顺丰 (`sf-express.com`)、菜鸟 (`cainiao.com`)、通达系 (`zto.com`, `ytoexpress.com`, `yundaex.com`, `sto.cn`)；
+      3. 电商/生活：什么值得买 (`smzdm.com`)、京东到家 (`jddj.com`, `daojia.com`)、豆瓣 (`douban.com`, `doubanio.com`)、NGA (`nga.cn`, `ngabbs.com`)、起点读书 (`qidian.com`)；
+      4. 办公：WPS (`wps.cn`)、钉钉 (`dingtalk.com`)；
+      5. 政务：交管12123 (`122.gov.cn`)、个人所得税 (`chinatax.gov.cn`)、国家医保 (`nhsa.gov.cn`)、国家政务平台 (`gjzwfw.gov.cn`)、移民局12367 (`nia.gov.cn`)、人社部12333 (`12333.gov.cn`)、北京公积金 (`gjj.beijing.gov.cn`)；
+      6. 医疗：微医 (`guahao.com`)、好大夫在线 (`haodf.com`)；
+      7. 运营商：中国电信 (`189.cn`)；
+    - **同步沉淀管理矩阵**：创建 `docs/China-Personal-Matrix.md`，将米家/小米、天翼云、移动云盘、携程、飞猪、高德打车聚合、国内主要航司等纳入 Phase 1.5 观察池，严格将 `trip.com`、`larksuite.com`、`voovmeeting.com` 等出海双生产品排除在直连白名单外；
+    - **编译与规则条数**：`China-Direct.lsr` 从 566 条精准扩充至 595 条（净增 29 条），`China-GeoIP.lsr` 自然同步上游微增 7 条至 19,216 条，规则总数达到 **21,202 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `d696a55df4df`）；
+    - **全量测试与严格隔离验证**：新增 `test_44` 单元测试，自动化全套 44/44 测试全绿；经 Python 白盒断言严格确认：29 条新规则 100% 存在于 `China-Direct.lsr`，且 `google` / `openai` / `telegram` / `github` 核心海外关键字在 `China-Direct.lsr` 中完全缺席（Zero Collision），出海双生产品排除验证 100% 达成；
+    - **账本事实闭环**：29 条规则的准入依据、技术证据及低风险评估事实全量追加录入 `history/decisions.jsonl`。
 
 

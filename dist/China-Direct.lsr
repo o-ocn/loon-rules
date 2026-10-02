@@ -1,8 +1,8 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)
 # AUTHOR: o-ocn
-# REVISION: 2851cfc37340
-# TOTAL: 566
+# REVISION: 9b3e0034cc8a
+# TOTAL: 595
 # ==============================================================================
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
@@ -97,6 +97,35 @@ DOMAIN-SUFFIX,hxb.com.cn
 DOMAIN-SUFFIX,cmpassport.com
 DOMAIN-SUFFIX,10010.com
 DOMAIN-SUFFIX,cctvpic.com
+DOMAIN-SUFFIX,umetrip.com
+DOMAIN-SUFFIX,didichuxing.com
+DOMAIN-SUFFIX,hellobike.com
+DOMAIN-SUFFIX,sf-express.com
+DOMAIN-SUFFIX,cainiao.com
+DOMAIN-SUFFIX,zto.com
+DOMAIN-SUFFIX,ytoexpress.com
+DOMAIN-SUFFIX,yundaex.com
+DOMAIN-SUFFIX,sto.cn
+DOMAIN-SUFFIX,smzdm.com
+DOMAIN-SUFFIX,jddj.com
+DOMAIN-SUFFIX,daojia.com
+DOMAIN-SUFFIX,douban.com
+DOMAIN-SUFFIX,doubanio.com
+DOMAIN-SUFFIX,nga.cn
+DOMAIN-SUFFIX,ngabbs.com
+DOMAIN-SUFFIX,qidian.com
+DOMAIN-SUFFIX,wps.cn
+DOMAIN-SUFFIX,dingtalk.com
+DOMAIN-SUFFIX,122.gov.cn
+DOMAIN-SUFFIX,chinatax.gov.cn
+DOMAIN-SUFFIX,nhsa.gov.cn
+DOMAIN-SUFFIX,gjzwfw.gov.cn
+DOMAIN-SUFFIX,nia.gov.cn
+DOMAIN-SUFFIX,12333.gov.cn
+DOMAIN,gjj.beijing.gov.cn
+DOMAIN-SUFFIX,guahao.com
+DOMAIN-SUFFIX,haodf.com
+DOMAIN-SUFFIX,189.cn
 DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
 DOMAIN,slife.xy-asia.com
 DOMAIN-SUFFIX,iot-tencent.com

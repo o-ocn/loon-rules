@@ -1,0 +1,47 @@
+# ==============================================================================
+# rules/custom/China-Personal.list (Phase 1 Personal Layer v3)
+# 个人高频核心生活与政务服务直连白名单
+# ==============================================================================
+
+# 1. 出行服务 (Travel)
+DOMAIN-SUFFIX,umetrip.com
+DOMAIN-SUFFIX,didichuxing.com
+DOMAIN-SUFFIX,hellobike.com
+
+# 2. 物流与即时配送 (Logistics)
+DOMAIN-SUFFIX,sf-express.com
+DOMAIN-SUFFIX,cainiao.com
+DOMAIN-SUFFIX,zto.com
+DOMAIN-SUFFIX,ytoexpress.com
+DOMAIN-SUFFIX,yundaex.com
+DOMAIN-SUFFIX,sto.cn
+
+# 3. 电商零售与生活社区 (E-commerce & Community)
+DOMAIN-SUFFIX,smzdm.com
+DOMAIN-SUFFIX,jddj.com
+DOMAIN-SUFFIX,daojia.com
+DOMAIN-SUFFIX,douban.com
+DOMAIN-SUFFIX,doubanio.com
+DOMAIN-SUFFIX,nga.cn
+DOMAIN-SUFFIX,ngabbs.com
+DOMAIN-SUFFIX,qidian.com
+
+# 4. 办公与生产力协同 (Productivity)
+DOMAIN-SUFFIX,wps.cn
+DOMAIN-SUFFIX,dingtalk.com
+
+# 5. 精准国家政务民生 (Civic & Government)
+DOMAIN-SUFFIX,122.gov.cn
+DOMAIN-SUFFIX,chinatax.gov.cn
+DOMAIN-SUFFIX,nhsa.gov.cn
+DOMAIN-SUFFIX,gjzwfw.gov.cn
+DOMAIN-SUFFIX,nia.gov.cn
+DOMAIN-SUFFIX,12333.gov.cn
+DOMAIN,gjj.beijing.gov.cn
+
+# 6. 医疗挂号与在线问诊 (Healthcare)
+DOMAIN-SUFFIX,guahao.com
+DOMAIN-SUFFIX,haodf.com
+
+# 7. 电信运营商营业厅 (Telecom)
+DOMAIN-SUFFIX,189.cn

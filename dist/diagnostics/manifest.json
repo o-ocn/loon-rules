@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-01T16:22:13.145682+00:00",
-  "content_revision": "1db0abd85c00",
-  "package_sha256": "1db0abd85c00d0b940492c92de298f46f1fcf449ca28aada98baeda0cc0806bf",
+  "build_timestamp": "2026-10-02T04:43:54.696957+00:00",
+  "content_revision": "d696a55df4df",
+  "package_sha256": "d696a55df4df199071d727ff8b92fd23d6a7e6545e600968fbd6fb65acc034aa",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -104,9 +104,9 @@
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {
-      "total_rules": 566,
-      "revision": "2851cfc37340",
-      "sha256": "2851cfc37340aec452f79d6c782fcbb85c7bab1f75566b9de35837a70e4d0a1d",
+      "total_rules": 595,
+      "revision": "9b3e0034cc8a",
+      "sha256": "9b3e0034cc8aab879788f7d613969ba30fce6f9c0d8933d3c5781b07a0da1ff3",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     },
     "Lan.lsr": {
@@ -116,9 +116,9 @@
       "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
     },
     "China-GeoIP.lsr": {
-      "total_rules": 19209,
-      "revision": "f8e3f65e0774",
-      "sha256": "f8e3f65e0774ebb4e36b0794f3e56b5deef5a1ba3bca1a6d7359b01991d8f5ae",
+      "total_rules": 19216,
+      "revision": "557d079ed75c",
+      "sha256": "557d079ed75c083c611ed5645b62098ac5902b381b133604567648667fe44ef8",
       "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
     }
   },

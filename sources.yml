@@ -282,7 +282,9 @@ rulesets:
       - name: "BiliBili"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BiliBili/BiliBili.list"
         min_rules: 20
-    local_custom: "rules/custom/China-Direct.list"
+    local_custom:
+      - "rules/custom/China-Direct.list"
+      - "rules/custom/China-Personal.list"
 
   # ======================================================================
   # 3. STRUCTURAL CATCH-ALLS (LAN bypass BEFORE GeoIP fallback)

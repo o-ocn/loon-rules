@@ -958,18 +958,20 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         cfg = build.load_sources(SOURCES_FILE)
         all_overlaps = []
         for name, rcfg in cfg.get("rulesets", {}).items():
-            custom_file_rel = rcfg.get("local_custom", "")
-            if not custom_file_rel:
-                continue
-            custom_file = os.path.join(BASE_DIR, custom_file_rel)
-            if not os.path.isfile(custom_file):
-                continue
+            custom_field = rcfg.get("local_custom", "")
+            custom_files_rel = [custom_field] if isinstance(custom_field, str) else (custom_field or [])
             c_rules = set()
-            with open(custom_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    cl = build.clean_rule_line(line)
-                    if cl and not cl.startswith("INVALID_SYNTAX:"):
-                        c_rules.add(cl)
+            for custom_file_rel in custom_files_rel:
+                if not custom_file_rel:
+                    continue
+                custom_file = os.path.join(BASE_DIR, custom_file_rel)
+                if not os.path.isfile(custom_file):
+                    continue
+                with open(custom_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        cl = build.clean_rule_line(line)
+                        if cl and not cl.startswith("INVALID_SYNTAX:"):
+                            c_rules.add(cl)
             for src in rcfg.get("sources", []):
                 surl = src.get("url")
                 cache_path = build.get_upstream_cache_path(surl)
@@ -1927,6 +1929,37 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         ok_apple_dns, err_apple_dns, _ = check_conflicts.check_conflicts(dns_path=tmp_dns_apple, strict=True)
         self.assertFalse(ok_apple_dns, "check_conflicts must detect red line violation for forbidden domestic DNS domains!")
         self.assertTrue(any("apple.com" in e for e in err_apple_dns))
+
+    def test_44_china_personal_layer_and_overseas_isolation(self):
+        """Verify Phase 1 China-Personal layer is ingested into China-Direct.lsr and overseas core assets are strictly isolated."""
+        cd_path = os.path.join(DIST_DIR, "China-Direct.lsr")
+        self.assertTrue(os.path.isfile(cd_path))
+        with open(cd_path, "r", encoding="utf-8") as f:
+            lines = [l.strip() for l in f if l.strip() and not l.startswith(("#", ";"))]
+        cd_domains = set()
+        for l in lines:
+            parts = l.split(",")
+            if len(parts) >= 2:
+                cd_domains.add(parts[1].strip())
+
+        # 1. Verify China-Personal 29 rules are present
+        personal_path = os.path.join(BASE_DIR, "rules", "custom", "China-Personal.list")
+        self.assertTrue(os.path.isfile(personal_path))
+        with open(personal_path, "r", encoding="utf-8") as f:
+            p_rules = [l.strip() for l in f if l.strip() and not l.startswith(("#", ";"))]
+        for pr in p_rules:
+            self.assertIn(pr, lines, f"Missing China-Personal rule in China-Direct.lsr: {pr}")
+
+        # 2. Verify overseas core services are completely absent in China-Direct
+        content = "\n".join(lines).lower()
+        forbidden_keywords = ["google", "openai", "telegram", "github"]
+        for kw in forbidden_keywords:
+            self.assertNotIn(kw, content, f"Violation: '{kw}' leaked into China-Direct.lsr!")
+
+        # 3. Verify specific overseas twin products are excluded
+        excluded_domains = ["trip.com", "larksuite.com", "voovmeeting.com", "jtexpress.com"]
+        for ed in excluded_domains:
+            self.assertNotIn(ed, cd_domains, f"Violation: Excluded overseas twin domain '{ed}' found in China-Direct.lsr!")
 
     @classmethod
     def tearDownClass(cls):

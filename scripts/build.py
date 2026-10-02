@@ -632,25 +632,33 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
     upstream_overlaps = []     # List of overlapping custom rules covered by upstream
 
     for name, rcfg in rulesets.items():
-        custom_file_rel = rcfg.get("local_custom", "")
-        custom_file = os.path.join(BASE_DIR, custom_file_rel) if custom_file_rel else ""
+        custom_field = rcfg.get("local_custom", "")
+        if isinstance(custom_field, str):
+            custom_files_rel = [custom_field] if custom_field else []
+        elif isinstance(custom_field, list):
+            custom_files_rel = custom_field
+        else:
+            custom_files_rel = []
+
         collected_rules = []
         custom_rules_for_set = set()
         seen = set()
 
         # 1. Load custom rules first (highest author priority)
-        if custom_file and os.path.isfile(custom_file):
-            print(f"  [+] Ingesting custom rules: {custom_file_rel}")
-            with open(custom_file, "r", encoding="utf-8") as f:
-                for line_idx, line in enumerate(f, 1):
-                    cleaned = clean_rule_line(line)
-                    if cleaned:
-                        if cleaned.startswith("INVALID_SYNTAX:"):
-                            raise SyntaxError(f"Syntax error in {custom_file}:{line_idx} - {cleaned}")
-                        if cleaned not in seen:
-                            seen.add(cleaned)
-                            collected_rules.append(cleaned)
-                            custom_rules_for_set.add(cleaned)
+        for custom_file_rel in custom_files_rel:
+            custom_file = os.path.join(BASE_DIR, custom_file_rel) if custom_file_rel else ""
+            if custom_file and os.path.isfile(custom_file):
+                print(f"  [+] Ingesting custom rules: {custom_file_rel}")
+                with open(custom_file, "r", encoding="utf-8") as f:
+                    for line_idx, line in enumerate(f, 1):
+                        cleaned = clean_rule_line(line)
+                        if cleaned:
+                            if cleaned.startswith("INVALID_SYNTAX:"):
+                                raise SyntaxError(f"Syntax error in {custom_file}:{line_idx} - {cleaned}")
+                            if cleaned not in seen:
+                                seen.add(cleaned)
+                                collected_rules.append(cleaned)
+                                custom_rules_for_set.add(cleaned)
 
         # 2. Ingest upstream sources strictly
         upstream_sources = rcfg.get("sources", [])
