@@ -31,7 +31,7 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **已核验的规则发布 CI 运行事实**：GitHub Actions Run **#68**（ID `37124392780`，针对规则发布基线 commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`，push 事件）执行完毕，状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/37124392780`；历史旧流水线包括 Run #49 ID `36753242952` 等）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,236 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,237 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -42,7 +42,8 @@
   * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计；
   * **Phase 0.5 第三批真机抓包精准补丁**：中国大陆百科服务 (`baike.com`) 纳入直连，修复 `m.baike.com` 绕行香港代理访问国内电信节点 (119.147.195.212) 问题；
   * **Phase 1 个人高频生活直连层正式合入 (Personal Layer v3)**：一次性纳管个人 7 大高频场景（出行、物流、电商、生活社区、办公协同、精准政务、医疗问诊与电信营业厅），合入 29 条精选直连规则至 `rules/custom/China-Personal.list`，`China-Direct.lsr` 扩充至 595 条，并同步建立 `docs/China-Personal-Matrix.md` 永久候选资产决策矩阵；
-  * **Phase 1.5 联合审定清单合入 (Phase 1.5 T5 Consensus Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的 T5 清单，在 `rules/custom/China-Personal.list` 精准扩充 31 条 `DOMAIN-SUFFIX` 规则（携程/去哪儿/飞猪/同程/飞常准出行链、圆通速递、闲鱼/盒马/淘宝短链电商零售、BOSS直聘/夸克、公安部CTID政务认证、协和医院、翼支付/央行数字基建/邮储/平安金融，以及微博与中国移动6条专项来源子集，记录 139.com 多业务共存风险），`China-Direct.lsr` 扩充至 628 条（净增 31 条）；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 下扩充 20 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）分流映射，全库总有效规则达到 **21,236 条**。
+  * **Phase 1.5 联合审定清单合入 (Phase 1.5 T5 Consensus Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的 T5 清单，在 `rules/custom/China-Personal.list` 精准扩充 31 条 `DOMAIN-SUFFIX` 规则（携程/去哪儿/飞猪/同程/飞常准出行链、圆通速递、闲鱼/盒马/淘宝短链电商零售、BOSS直聘/夸克、公安部CTID政务认证、协和医院、翼支付/央行数字基建/邮储/平安金融，以及微博与中国移动6条专项来源子集，记录 139.com 多业务共存风险），`China-Direct.lsr` 扩充至 628 条（净增 31 条）；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 下扩充 20 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）分流映射，全库总有效规则达到 **21,236 条**；
+  * **vegslb.com 定向配套试行 (Targeted Paired Trial)**：依据 ChatGPT 与 DeepSeek 联合审定第十八节共识（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），在 `rules/custom/China-Personal.list` 补充 `DOMAIN-SUFFIX,vegslb.com` 直连规则，并在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 阿里极速 DNS 配套映射；`China-Direct.lsr` 扩充至 629 条（净增 1 条），全库总有效规则达到 **21,237 条**；决策账本按试行登记（verified 保持 false，效果待验证）。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -72,7 +73,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 628 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 60条，含携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动等) | 100% 策略中立 |
+| **`China-Direct.lsr`** | 629 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 61条，含携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb等) | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,216 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -194,7 +195,8 @@
   7. 完整回退配置的其余第三方插件（Kelee等）离线冻结与真机加载验收；
   8. iPhone 真机日常使用无感体验验证（国内服务与海外代理正常即可，无需批量抓包）；
   9. 微博与中国移动专项源长期生产接入方案评估（当前首批以本地补充层过渡）；
-  10. **根域匹配语义待核验**：核验 Loon `[Host]` 中 `*.域名` 映射是否自动匹配精确根域（如 `*.ctrip.com` 是否自动涵盖 `ctrip.com`），区分顶级域通配与服务域通配，待取得官方依据或真机实测前不机械增补精确根域映射。
+  10. **根域匹配语义待核验**：核验 Loon `[Host]` 中 `*.域名` 映射是否自动匹配精确根域（如 `*.ctrip.com` 是否自动涵盖 `ctrip.com`），区分顶级域通配与服务域通配，待取得官方依据或真机实测前不机械增补精确根域映射；
+  11. **vegslb.com 定向试行真机效果追踪 (1~2天)**：用户更新规则与 DNS 插件后正常使用抖音，反馈“有改善 / 无明显变化 / 变差”；无明显改善不扩大加规则，若退化则单点回退该条增量（不影响 31/20 基线）。
 
 ---
 
@@ -320,3 +322,19 @@
       - `python scripts/verify_mirrors.py --pre-release`：PASS
     - **私人配置与回退锚点交付**：在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`）；两份文件的结构、本地匹配与FINAL检查部分通过（PARTIAL_PASS / UNVERIFIED_PLUGINS，36个启用插件的运行时注入未验证）。两项固定回退资产另经独立取回核对，HTTP 200且SHA256与真实Git对象一致；手机当前加载及实际体验尚未验收；
     - **追溯事实闭环**：31 条规则事实与披露录入 `history/decisions.jsonl`（31 APPROVED）。
+  * **vegslb.com 定向配套试行执行记录 (Targeted Paired Trial - 2026-10-04)**：
+    - **背景与共识来源**：严格依据 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\CHATGPT-EXECUTION-REVIEW-FOR-DEEPSEEK-2026-10-03.md` 第十八节（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），针对真机访问同一目标多次经代理无下行且用户报告偶发卡顿现象，实施最小范围定向配套试行（直连分流 + 国内 DNS 映射）；明确不推断底层未经验证的握手/报文机制；
+    - **规则层修改**：在 `rules/custom/China-Personal.list` 增加 `DOMAIN-SUFFIX,vegslb.com`（注释标注字节/火山相关域名定向试行），保持 100% 策略中立；
+    - **DNS 层修改**：在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 国内极速 DNS 配套映射，不补裸域；
+    - **决策账本记录**：在 `history/decisions.jsonl` 登记人工覆盖 shadow simulated_block 试行记录，`verified` 严格保持 `false`（不触发 Hard Pass 免检），明确标注“批准试行，非效果验证完成”；
+    - **编译与规则条数**：`dist/China-Direct.lsr` 由 628 条增至 629 条（净增 1 条），全库有效规则达到 **21,237 条**，自动更新 `dist/diagnostics/manifest.json`；
+    - **全量门禁验证**：
+      - `python scripts/build.py`：PASS
+      - `python scripts/check_conflicts.py --strict`：PASS（0 跨界冲突与泄漏）
+      - `python -B -m unittest scripts.test_rules`：44/44 PASS
+      - `node --test tests/test_diagnostic.js`：19/19 PASS
+      - `python -B -m unittest scripts.test_score_engine`：4/4 PASS
+      - `python scripts/verify_mirrors.py --pre-release`：PASS
+    - **验证状态与真机边界**：工程发布门禁已通过；手机当前加载及实际使用体验尚未验证（需用户在手机更新规则与 DNS 插件后正常使用 1~2 天反馈是否有改善）；根域 DNS 匹配语义待核验；
+    - **回退方式**：若试行无改善或出现退化，仅撤销本轮两项增量（`vegslb.com` 规则及 DNS 映射）并重新构建发布即可，无需回退整套旧配置，保留此前 31/20 成果。
+

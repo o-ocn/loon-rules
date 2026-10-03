@@ -90,3 +90,6 @@ DOMAIN-SUFFIX,pingan.cn
 DOMAIN-SUFFIX,weibo.cn
 DOMAIN-SUFFIX,weibo.com
 DOMAIN-SUFFIX,weibocdn.com
+
+# ByteDance/Volcengine-related domain; targeted trial, device result unverified (2026-10-04)
+DOMAIN-SUFFIX,vegslb.com
