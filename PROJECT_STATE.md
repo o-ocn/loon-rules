@@ -326,7 +326,7 @@
     - **背景与共识来源**：严格依据 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\CHATGPT-EXECUTION-REVIEW-FOR-DEEPSEEK-2026-10-03.md` 第十八节（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），针对真机访问同一目标多次经代理无下行且用户报告偶发卡顿现象，实施最小范围定向配套试行（直连分流 + 国内 DNS 映射）；明确不推断底层未经验证的握手/报文机制；
     - **规则层修改**：在 `rules/custom/China-Personal.list` 增加 `DOMAIN-SUFFIX,vegslb.com`（注释标注字节/火山相关域名定向试行），保持 100% 策略中立；
     - **DNS 层修改**：在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 国内极速 DNS 配套映射，不补裸域；
-    - **决策账本记录**：在 `history/decisions.jsonl` 登记人工覆盖 shadow simulated_block 试行记录，`verified` 严格保持 `false`（不触发 Hard Pass 免检），明确标注“批准试行，非效果验证完成”；
+    - **决策账本记录**：在 `history/decisions.jsonl` 登记人工覆盖 shadow simulated_block 试行记录，`verified` 严格保持 `false`（不触发 Hard Pass 免检），明确标注“批准试行，非效果验证完成”；两项时间字段校正为显式时区 `2026-10-04T03:50:00+08:00` 与 `2027-04-02T03:50:00+08:00`（相差 180 天）；其余 82 条历史时间准确性尚未逐条核验，本次保留原值；
     - **编译与规则条数**：`dist/China-Direct.lsr` 由 628 条增至 629 条（净增 1 条），全库有效规则达到 **21,237 条**，自动更新 `dist/diagnostics/manifest.json`；
     - **全量门禁验证**：
       - `python scripts/build.py`：PASS
