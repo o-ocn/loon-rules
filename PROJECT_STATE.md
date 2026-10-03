@@ -17,13 +17,13 @@
 
 ## 二、当前状态与基线定型
 
-* **当前分支与提交基线**：`main`（当前 HEAD 提交为 `06e55aa`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **当前分支与提交基线**：`main`（当前基准 HEAD 提交为 `1e498f3`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `06e55aa` / `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
-  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、43+19项门禁与 CDN 镜像校验发布）；
+  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、44+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
   * 5 门严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
     1. 构建规则与诊断插件：`python scripts/build.py`
-    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（43/43 单元测试全部通过）
+    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（44/44 单元测试全部通过）
     3. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
     4. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
     5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN 镜像 100% 保持未被触碰）；
@@ -31,7 +31,7 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,205 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,236 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -41,7 +41,8 @@
   * **Phase 0.5 首批人工核验放行**：一键免密认证基建 (`cmpassport.com`)、联通官方 (`10010.com`)、点评图床 (`dpfile.com`)、百度静态资源 (`bdstatic.com`)、央视媒体图床 (`cctvpic.com`) 5 条高置信规则正式入库；
   * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计；
   * **Phase 0.5 第三批真机抓包精准补丁**：中国大陆百科服务 (`baike.com`) 纳入直连，修复 `m.baike.com` 绕行香港代理访问国内电信节点 (119.147.195.212) 问题；
-  * **Phase 1 个人高频生活直连层正式合入 (Personal Layer v3)**：一次性纳管个人 7 大高频场景（出行、物流、电商、生活社区、办公协同、精准政务、医疗问诊与电信营业厅），合入 29 条精选直连规则至 `rules/custom/China-Personal.list`，`China-Direct.lsr` 扩充至 595 条，并同步建立 `docs/China-Personal-Matrix.md` 永久候选资产决策矩阵。
+  * **Phase 1 个人高频生活直连层正式合入 (Personal Layer v3)**：一次性纳管个人 7 大高频场景（出行、物流、电商、生活社区、办公协同、精准政务、医疗问诊与电信营业厅），合入 29 条精选直连规则至 `rules/custom/China-Personal.list`，`China-Direct.lsr` 扩充至 595 条，并同步建立 `docs/China-Personal-Matrix.md` 永久候选资产决策矩阵；
+  * **Phase 1.5 联合审定清单合入 (Phase 1.5 T5 Consensus Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的 T5 清单，在 `rules/custom/China-Personal.list` 精准扩充 31 条 `DOMAIN-SUFFIX` 规则（携程/去哪儿/飞猪/同程/飞常准出行链、圆通速递、闲鱼/盒马/淘宝短链电商零售、BOSS直聘/夸克、公安部CTID政务认证、协和医院、翼支付/央行数字基建/邮储/平安金融，以及微博与中国移动6条专项来源子集，记录 139.com 多业务共存风险），`China-Direct.lsr` 扩充至 628 条（净增 31 条）；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 下扩充 20 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）分流映射，全库总有效规则达到 **21,236 条**。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -71,7 +72,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 597 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 个人高频生活直连层 (China-Personal 29条) 等 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 628 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 60条，含携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动等) | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,216 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -179,10 +180,20 @@
 
 ### 2. 待办事项
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
-- [ ] **唯一私人配置装配**：由 ChatGPT Work 基于最新手机导出配置在本地完成最终规则顺序对齐并装配为唯一正式 `.lcf` 文件供用户导入；
+- [x] **唯一私人候选与可恢复回退配置装配**：已在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`），两份配置均通过本地脱敏验收工具；
 - [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管；
 - [x] **测试套件总条数断言解耦优化**：已将 `test_rules.py` 中硬编码的固定数字优化为动态比对 `manifest.json` 规则集条数总和并守卫最低基线（`>= 21158`），彻底消除后续加规则频繁改断言的技术债；
-- [ ] **qrstuvwxyzab.com PCDN 隔离池专项核验**：持续收集该域名解析的 IP 归属地与调用 App 特征，验证其是否 100% 局限在中国大陆三大运营商 IPv6/IPv4 段，排查境外 CDN 节点混杂可能性后再行决策。
+- [ ] **qrstuvwxyzab.com PCDN 隔离池专项核验**：持续收集该域名解析的 IP 归属地与调用 App 特征，验证其是否 100% 局限在中国大陆三大运营商 IPv6/IPv4 段，排查境外 CDN 节点混杂可能性后再行决策；
+- [ ] **Phase 1.5 联合审定保留待办（双方一致保留，非分歧项，不阻塞首批交付）**：
+  1. `aliexpress.com` 策略迁移与私人层绑定（显式登记“公开直连 vs 文档称代理”矛盾）；
+  2. `doh-server = dns.google` 单变量对照验证；
+  3. `ctyun.cn` 整域边界核验（天翼云电脑登录、桌面连接、文件传输端点 vs 公有云服务）；
+  4. `ninebot.com`（九号）、IoT四项（小米/Aqara/云鲸/华硕）、`microsoft.com`、`xiaoheihe.cn` 分流边界核验；
+  5. `blank_1688.com`、`jcloudwaftest.com` 真实性确认；
+  6. `维迈通`、`325 LIFE` 服务身份与域名归属核验；
+  7. 完整回退配置的其余第三方插件（Kelee等）离线冻结与真机加载验收；
+  8. iPhone 真机日常使用无感体验验证（国内服务与海外代理正常即可，无需批量抓包）；
+  9. 微博与中国移动专项源长期生产接入方案评估（当前首批以本地补充层过渡）。
 
 ---
 
@@ -293,7 +304,18 @@
       - 决策落地：明确在客户端配置中，将 `China-GeoIP` 从 `GEOIP,CN,DIRECT,no-resolve` 切换为 `GEOIP,CN,DIRECT`（去掉 `no-resolve`，恢复主动触发 DNS 反查）。由于主流海外服务在顶层早已被域名代理规则优先截胡，漏网流转到底部的绝大多数国内边缘节点经本地 DNS 查验为 CN IP 后将自动走 DIRECT 直连，真正实现**“日常使用无感，彻底终结频繁修补”**；
     - **编译与规则条数**：`rules/custom/China-Direct.list` 中精准补齐 `bytecdn.com` 与 `bytecdn.cn`；经 `build.py` 编译，`dist/China-Direct.lsr` 由 595 条增至 597 条（净增 2 条），全库总有效规则达到 **21,205 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `c7e7c7f15028`）；
     - **全量门禁与账本闭环**：`check_conflicts.py --strict` PASS（0 跨界冲突），`test_rules` 44/44 PASS，`test_diagnostic.js` 19/19 PASS，`verify_mirrors --pre-release` PASS；决策全量写入 `history/decisions.jsonl`（2 APPROVED）。
-
-
-
-
+  * **Phase 1.5 联合审定清单合入 (Phase 1.5 T5 Consensus Ingestion)**：
+    - **背景与共识来源**：严格以 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\CHATGPT-REVIEW-FOR-DEEPSEEK-2026-10-03.md` 末尾“ChatGPT 最终确认与 Gemini 执行交接”及 DeepSeek T5 清单为准，双方达成一致，零待决分歧；
+    - **规则层修改**：在 `rules/custom/China-Personal.list` 中合入 31 条 `DOMAIN-SUFFIX` 规则（25 条本地补充候选 + 6 条微博与中国移动专项来源子集，独立注释来源及核验日期 2026-10-03，披露 `139.com` 整域多业务历史共存风险），保持 100% 策略中立；
+    - **DNS 层修改**：在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 下合入 20 条非 `.cn` 域名的阿里极速 DNS（`*.域名 = server:223.5.5.5`）分流映射，其余 11 条 `.cn` 域名由现有 `*.cn` 通配覆盖不重复添加；
+    - **排除边界执行**：严格排除 `pa18.com`、`jk.cn`、`aliexpress.com`、`ctyun.cn`、`ninebot.com`、`mi.com`、`aqara.com`、`narwal.com`、`asus.com`、`microsoft.com`、`xiaoheihe.cn`；`tb.cn` 按淘宝短链归属说明（非贴吧）；
+    - **编译与规则条数**：经 `build.py` 编译，`dist/China-Direct.lsr` 由 597 条增至 628 条（净增 31 条），全库总有效规则达到 **21,236 条**，自动刷新 `dist/diagnostics/manifest.json`（版本签名 `36886f3290aa`）；
+    - **全量门禁检验**：
+      - `python scripts/build.py`：PASS
+      - `python scripts/check_conflicts.py --strict`：PASS（0 跨界冲突与泄漏）
+      - `python -B -m unittest scripts.test_rules`：44/44 PASS
+      - `node --test tests/test_diagnostic.js`：19/19 PASS
+      - `python -B -m unittest scripts.test_score_engine`：4/4 PASS
+      - `python scripts/verify_mirrors.py --pre-release`：PASS
+    - **私人配置与回退锚点交付**：在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`），两份配置均通过本地脱敏验收工具；
+    - **追溯事实闭环**：31 条规则事实与披露录入 `history/decisions.jsonl`（31 APPROVED）。

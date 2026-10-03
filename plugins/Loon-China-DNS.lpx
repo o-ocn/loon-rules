@@ -100,4 +100,24 @@ music.126.net = server:223.5.5.5
 *.ecitic.com = server:223.5.5.5
 *.cebbank.com = server:223.5.5.5
 
-
+# 高频生活、航旅出行与通信服务补充 (Phase 1.5 T5 审定名单)
+*.ctrip.com = server:223.5.5.5
+*.c-ctrip.com = server:223.5.5.5
+*.qunar.com = server:223.5.5.5
+*.qunarzz.com = server:223.5.5.5
+*.fliggy.com = server:223.5.5.5
+*.alitrip.com = server:223.5.5.5
+*.ly.com = server:223.5.5.5
+*.tongcheng.com = server:223.5.5.5
+*.variflight.com = server:223.5.5.5
+*.feeyo.com = server:223.5.5.5
+*.udache.com = server:223.5.5.5
+*.goofish.com = server:223.5.5.5
+*.zhipin.com = server:223.5.5.5
+*.freshippo.com = server:223.5.5.5
+*.hemaos.com = server:223.5.5.5
+*.bjsuperpass.com = server:223.5.5.5
+*.weibo.com = server:223.5.5.5
+*.weibocdn.com = server:223.5.5.5
+*.chinamobile.com = server:223.5.5.5
+*.139.com = server:223.5.5.5

@@ -1,5 +1,5 @@
 # ==============================================================================
-# rules/custom/China-Personal.list (Phase 1 Personal Layer v3)
+# rules/custom/China-Personal.list (Phase 1 & Phase 1.5 Personal Layer)
 # 个人高频核心生活与政务服务直连白名单
 # ==============================================================================
 
@@ -7,6 +7,19 @@
 DOMAIN-SUFFIX,umetrip.com
 DOMAIN-SUFFIX,didichuxing.com
 DOMAIN-SUFFIX,hellobike.com
+# Phase 1.5 T5 航旅出行补充
+DOMAIN-SUFFIX,ctrip.com
+DOMAIN-SUFFIX,c-ctrip.com
+DOMAIN-SUFFIX,qunar.com
+DOMAIN-SUFFIX,qunarzz.com
+DOMAIN-SUFFIX,fliggy.com
+DOMAIN-SUFFIX,alitrip.com
+DOMAIN-SUFFIX,ly.com
+DOMAIN-SUFFIX,tongcheng.com
+DOMAIN-SUFFIX,variflight.com
+DOMAIN-SUFFIX,feeyo.com
+DOMAIN-SUFFIX,udache.com
+DOMAIN-SUFFIX,bjsuperpass.com
 
 # 2. 物流与即时配送 (Logistics)
 DOMAIN-SUFFIX,sf-express.com
@@ -15,6 +28,8 @@ DOMAIN-SUFFIX,zto.com
 DOMAIN-SUFFIX,ytoexpress.com
 DOMAIN-SUFFIX,yundaex.com
 DOMAIN-SUFFIX,sto.cn
+# Phase 1.5 T5 物流快递补充
+DOMAIN-SUFFIX,yto.net.cn
 
 # 3. 电商零售与生活社区 (E-commerce & Community)
 DOMAIN-SUFFIX,smzdm.com
@@ -25,10 +40,19 @@ DOMAIN-SUFFIX,doubanio.com
 DOMAIN-SUFFIX,nga.cn
 DOMAIN-SUFFIX,ngabbs.com
 DOMAIN-SUFFIX,qidian.com
+# Phase 1.5 T5 电商零售补充
+DOMAIN-SUFFIX,goofish.com
+DOMAIN-SUFFIX,freshippo.com
+DOMAIN-SUFFIX,hemaos.com
+# 淘宝/阿里短链服务 (tb.cn)
+DOMAIN-SUFFIX,tb.cn
 
 # 4. 办公与生产力协同 (Productivity)
 DOMAIN-SUFFIX,wps.cn
 DOMAIN-SUFFIX,dingtalk.com
+# Phase 1.5 T5 招聘与搜索服务
+DOMAIN-SUFFIX,zhipin.com
+DOMAIN-SUFFIX,quark.cn
 
 # 5. 精准国家政务民生 (Civic & Government)
 DOMAIN-SUFFIX,122.gov.cn
@@ -38,10 +62,31 @@ DOMAIN-SUFFIX,gjzwfw.gov.cn
 DOMAIN-SUFFIX,nia.gov.cn
 DOMAIN-SUFFIX,12333.gov.cn
 DOMAIN,gjj.beijing.gov.cn
+# Phase 1.5 T5 网络可信身份凭证 (公安部CTID)
+DOMAIN-SUFFIX,ctid.cn
 
 # 6. 医疗挂号与在线问诊 (Healthcare)
 DOMAIN-SUFFIX,guahao.com
 DOMAIN-SUFFIX,haodf.com
+# Phase 1.5 T5 医疗健康补充 (北京协和医院)
+DOMAIN-SUFFIX,pumch.cn
 
 # 7. 电信运营商营业厅 (Telecom)
 DOMAIN-SUFFIX,189.cn
+# 来源：blackmatrix7/ios_rule_script ChinaMobile.list，核验日期 2026-10-03
+DOMAIN-SUFFIX,chinamobile.com
+# 注：139.com 属移动个人云盘/多业务整域，按共识披露多业务共存风险
+DOMAIN-SUFFIX,139.com
+DOMAIN-SUFFIX,10086.cn
+
+# 8. 金融支付与银行服务 (Finance & Payment)
+DOMAIN-SUFFIX,bestpay.com.cn
+DOMAIN-SUFFIX,pbcdci.cn
+DOMAIN-SUFFIX,psbc.cn
+DOMAIN-SUFFIX,pingan.cn
+
+# 9. 社交资讯与媒体 (Social & Media)
+# 来源：blackmatrix7/ios_rule_script Weibo.list，核验日期 2026-10-03
+DOMAIN-SUFFIX,weibo.cn
+DOMAIN-SUFFIX,weibo.com
+DOMAIN-SUFFIX,weibocdn.com

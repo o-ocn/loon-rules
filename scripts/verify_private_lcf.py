@@ -173,22 +173,22 @@ def validate_ruleset_url(url_str: str, expected_rname: str) -> tuple:
 
     # Host 1: GitHub Raw
     if hostname == "raw.githubusercontent.com":
-        pattern = r'^/o-ocn/loon-rules/(main)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
+        pattern = r'^/o-ocn/loon-rules/(main|[0-9a-f]{40})/dist/([a-zA-Z0-9_\-]+\.lsr)$'
         m = re.match(pattern, parsed.path)
         if not m:
             return False, "GitHub Raw URL path or branch unauthorized"
-        branch, rname = m.group(1), m.group(2)
+        ref, rname = m.group(1), m.group(2)
         if rname != expected_rname:
             return False, "URL filename does not match expected ruleset name"
         return True, "Valid GitHub Raw URL"
 
     # Host 2: Verified jsDelivr CDN (only fastly.jsdelivr.net is verified)
     if hostname == "fastly.jsdelivr.net":
-        pattern = r'^/gh/o-ocn/loon-rules@(main)/dist/([a-zA-Z0-9_\-]+\.lsr)$'
+        pattern = r'^/gh/o-ocn/loon-rules@(main|[0-9a-f]{40})/dist/([a-zA-Z0-9_\-]+\.lsr)$'
         m = re.match(pattern, parsed.path)
         if not m:
             return False, "jsDelivr URL path or branch unauthorized"
-        branch, rname = m.group(1), m.group(2)
+        ref, rname = m.group(1), m.group(2)
         if rname != expected_rname:
             return False, "URL filename does not match expected ruleset name"
         return True, "Valid jsDelivr CDN URL"
