@@ -17,7 +17,7 @@
 
 ## 二、当前状态与基线定型
 
-* **当前分支与提交基线**：`main`（当前基准 HEAD 提交为 `1e498f3`，与远程 `origin/main` 零差异同步保持最新；前序治理提交基线为 `06e55aa` / `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **规则发布基线**：commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`（短哈希 `4d64afd`，已推送到 `origin/main` 保持同步；日常旁路审计巡检提交如 `a83668b` 仅暂存影子报告，不改动规则基线；前序治理提交基线为 `1e498f3` / `06e55aa` / `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
   * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、44+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
@@ -26,11 +26,11 @@
     2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（44/44 单元测试全部通过）
     3. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
     4. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
-    5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN 镜像 100% 保持未被触碰）；
+    5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN镜像 100% 保持未被触碰）；
   * 自动化提交与发布后 CDN 探测：
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
-  * **最新远程 CI 运行事实**：GitHub Actions Run **#49**（ID `36753242952`，针对 commit `d91da37`，push 事件）执行完毕，最终状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/36753242952`）。
+  * **已核验的规则发布 CI 运行事实**：GitHub Actions Run **#68**（ID `37124392780`，针对规则发布基线 commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`，push 事件）执行完毕，状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/37124392780`；历史旧流水线包括 Run #49 ID `36753242952` 等）。
 * **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,236 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
@@ -168,7 +168,7 @@
 ## 七、当前观察期与待办事项
 
 ### 1. 1~2 周静默稳定观察期（正式启动・规则库进入冻结观察期）
-- **核心原则**：已全面停止理论扫描与规则盲目扩充，转入依托真机日常网络体验的静默验证阶段；
+- **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
   2. **金融交易与风控防拦截**：招行掌上生活信用卡饭票与活动 (`cmbimg`)、云闪付与银联支付 (`95516`/`unionpay`)、支付宝小程序账单 (`alipayobjects`)；
@@ -180,7 +180,7 @@
 
 ### 2. 待办事项
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
-- [x] **唯一私人候选与可恢复回退配置装配**：已在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`），两份配置均通过本地脱敏验收工具；
+- [x] **唯一私人候选与可恢复回退配置装配**：已在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`）；两份文件的结构、本地匹配与FINAL检查部分通过（PARTIAL_PASS / UNVERIFIED_PLUGINS，36个启用插件的运行时注入未验证）。两项固定回退资产另经独立取回核对，HTTP 200且SHA256与真实Git对象一致；手机当前加载及实际体验尚未验收；
 - [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管；
 - [x] **测试套件总条数断言解耦优化**：已将 `test_rules.py` 中硬编码的固定数字优化为动态比对 `manifest.json` 规则集条数总和并守卫最低基线（`>= 21158`），彻底消除后续加规则频繁改断言的技术债；
 - [ ] **qrstuvwxyzab.com PCDN 隔离池专项核验**：持续收集该域名解析的 IP 归属地与调用 App 特征，验证其是否 100% 局限在中国大陆三大运营商 IPv6/IPv4 段，排查境外 CDN 节点混杂可能性后再行决策；
@@ -193,7 +193,8 @@
   6. `维迈通`、`325 LIFE` 服务身份与域名归属核验；
   7. 完整回退配置的其余第三方插件（Kelee等）离线冻结与真机加载验收；
   8. iPhone 真机日常使用无感体验验证（国内服务与海外代理正常即可，无需批量抓包）；
-  9. 微博与中国移动专项源长期生产接入方案评估（当前首批以本地补充层过渡）。
+  9. 微博与中国移动专项源长期生产接入方案评估（当前首批以本地补充层过渡）；
+  10. **根域匹配语义待核验**：核验 Loon `[Host]` 中 `*.域名` 映射是否自动匹配精确根域（如 `*.ctrip.com` 是否自动涵盖 `ctrip.com`），区分顶级域通配与服务域通配，待取得官方依据或真机实测前不机械增补精确根域映射。
 
 ---
 
@@ -317,5 +318,5 @@
       - `node --test tests/test_diagnostic.js`：19/19 PASS
       - `python -B -m unittest scripts.test_score_engine`：4/4 PASS
       - `python scripts/verify_mirrors.py --pre-release`：PASS
-    - **私人配置与回退锚点交付**：在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`），两份配置均通过本地脱敏验收工具；
+    - **私人配置与回退锚点交付**：在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`）；两份文件的结构、本地匹配与FINAL检查部分通过（PARTIAL_PASS / UNVERIFIED_PLUGINS，36个启用插件的运行时注入未验证）。两项固定回退资产另经独立取回核对，HTTP 200且SHA256与真实Git对象一致；手机当前加载及实际体验尚未验收；
     - **追溯事实闭环**：31 条规则事实与披露录入 `history/decisions.jsonl`（31 APPROVED）。
