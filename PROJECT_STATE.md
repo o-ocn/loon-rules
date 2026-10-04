@@ -17,7 +17,7 @@
 
 ## 二、当前状态与基线定型
 
-* **规则发布基线**：commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`（短哈希 `4d64afd`，已推送到 `origin/main` 保持同步；日常旁路审计巡检提交如 `a83668b` 仅暂存影子报告，不改动规则基线；前序治理提交基线为 `1e498f3` / `06e55aa` / `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **Phase 1.5 规则发布基线**：commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`（短哈希 `4d64afd`，已推送到 `origin/main` 保持同步；日常旁路审计巡检提交如 `a83668b` 仅暂存影子报告，不改动规则基线；前序治理提交基线为 `1e498f3` / `06e55aa` / `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
   * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、44+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
@@ -31,9 +31,9 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **已核验的规则发布 CI 运行事实**：GitHub Actions Run **#68**（ID `37124392780`，针对规则发布基线 commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`，push 事件）执行完毕，状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/37124392780`；历史旧流水线包括 Run #49 ID `36753242952` 等）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,237 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,266 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
-  * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,216 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
+  * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,244 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
   * Apple MapKit 地图矢量瓦片与 POI 图床 (`apple-mapkit.com`) 纳入 `Apple-Direct` 直连，修复国内电信 CDN 节点 (`119.147.195.212`) 跌入 FINAL 产生折返跑延迟，严格保持 `apple.com` 泛域名不添加并保持 `Apple-Media` 与 `TestFlight` 策略隔离；
@@ -44,6 +44,7 @@
   * **Phase 1 个人高频生活直连层正式合入 (Personal Layer v3)**：一次性纳管个人 7 大高频场景（出行、物流、电商、生活社区、办公协同、精准政务、医疗问诊与电信营业厅），合入 29 条精选直连规则至 `rules/custom/China-Personal.list`，`China-Direct.lsr` 扩充至 595 条，并同步建立 `docs/China-Personal-Matrix.md` 永久候选资产决策矩阵；
   * **Phase 1.5 联合审定清单合入 (Phase 1.5 T5 Consensus Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的 T5 清单，在 `rules/custom/China-Personal.list` 精准扩充 31 条 `DOMAIN-SUFFIX` 规则（携程/去哪儿/飞猪/同程/飞常准出行链、圆通速递、闲鱼/盒马/淘宝短链电商零售、BOSS直聘/夸克、公安部CTID政务认证、协和医院、翼支付/央行数字基建/邮储/平安金融，以及微博与中国移动6条专项来源子集，记录 139.com 多业务共存风险），`China-Direct.lsr` 扩充至 628 条（净增 31 条）；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 下扩充 20 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）分流映射，全库总有效规则达到 **21,236 条**；
   * **vegslb.com 定向配套试行 (Targeted Paired Trial)**：依据 ChatGPT 与 DeepSeek 联合审定第十八节共识（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），在 `rules/custom/China-Personal.list` 补充 `DOMAIN-SUFFIX,vegslb.com` 直连规则，并在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 阿里极速 DNS 配套映射；`China-Direct.lsr` 扩充至 629 条（净增 1 条），全库总有效规则达到 **21,237 条**；决策账本按试行登记（verified 保持 false，效果待验证）。
+  * **jspcdn.cn 定向直连补丁**：2026-10-04 所有者明确授权 ChatGPT/Codex 直接执行并推送，针对该域名再次落入 FINAL 且上传517B、下载0B的请求，新增 `DOMAIN-SUFFIX,jspcdn.cn` 至 China-Personal 并编译进 China-Direct；现有 `*.cn` 国内DNS映射已命中，本次不改DNS。China-Personal 62条、China-Direct 630条、全库21,266条。工程检查通过，手机有效加载与体验、国内IP兜底为何未命中仍待验证；未把无下行现象认定为确定握手故障或卡顿唯一原因。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -73,9 +74,9 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 629 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 61条，含携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb等) | 100% 策略中立 |
+| **`China-Direct.lsr`** | 630 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、国内CDN补丁(jspcdn.cn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 62条，含携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb/jspcdn等) | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
-| **`China-GeoIP.lsr`** | 19,216 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
+| **`China-GeoIP.lsr`** | 19,244 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
 ---
 
@@ -197,6 +198,7 @@
   9. 微博与中国移动专项源长期生产接入方案评估（当前首批以本地补充层过渡）；
   10. **根域匹配语义待核验**：核验 Loon `[Host]` 中 `*.域名` 映射是否自动匹配精确根域（如 `*.ctrip.com` 是否自动涵盖 `ctrip.com`），区分顶级域通配与服务域通配，待取得官方依据或真机实测前不机械增补精确根域映射；
   11. **vegslb.com 定向试行真机效果追踪 (1~2天)**：用户更新规则与 DNS 插件后正常使用抖音，反馈“有改善 / 无明显变化 / 变差”；无明显改善不扩大加规则，若退化则单点回退该条增量（不影响 31/20 基线）。
+  12. **jspcdn.cn 直连补丁真机验证**：手机更新一次 China-Direct 并重连后正常使用，简短反馈即可，不要求新抓包或统计频次。已归档配置中 China-Direct/China-GeoIP 均启用并绑定DIRECT，公开GeoIP规则覆盖截图IP；手机有效加载及匹配时地址仍未确认，其他服务显示同一IP不能直接据此改直连。
 
 ---
 
@@ -245,7 +247,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-03
+* **最后更新**：2026-10-04
   * **字节跳动骨干静态 CDN 补丁与 GeoIP 去 no-resolve 架构收敛**：
     - 精准收录 `bytecdn.com` 与 `bytecdn.cn` 至 `rules/custom/China-Direct.list`，彻底解决字节前端组件（`lf-leads-fe-scm`）绕行香港代理导致的抖音评论区图片转圈与卡顿，真机实测验证秒开；
     - 落地项目最高准则“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端放弃 `no-resolve` 束缚，恢复 GeoIP 主动触发本地 DNS 反查兜底，实现日常使用彻底无感；
@@ -338,6 +340,13 @@
     - **验证状态与真机边界**：工程发布门禁已通过；手机当前加载及实际使用体验尚未验证（需用户在手机更新规则与 DNS 插件后正常使用 1~2 天反馈是否有改善）；根域 DNS 匹配语义待核验；
     - **回退方式**：若试行无改善或出现退化，仅撤销本轮两项增量（`vegslb.com` 规则及 DNS 映射）并重新构建发布即可，无需回退整套旧配置，保留此前 31/20 成果。
 
+
+  * **jspcdn.cn 直连补丁执行记录（2026-10-04，ChatGPT/Codex）**：
+    - **原因与授权**：用户提供的最新Loon记录再次显示随机子域走FINAL、上传517B/下载0B，所有者明确要求本轮直接新增并推送。按根域收录，避免维护会变化的随机主机名；不声称已证明TLS/GSLB故障机制。
+    - **实际改动**：China-Personal新增一条 `DOMAIN-SUFFIX,jspcdn.cn`，编译产物630条；全库从任务起点21,265增至21,266，其余18个规则集内容不变，未修改插件或私人配置。任务起点为 `07977b171a717e7f37243976978ebb8c3e6517a8`，可据此恢复本轮改动。
+    - **DNS与业务边界**：保留现有 `*.cn = server:223.5.5.5`；Sentry、RevenueCat、nsloon及全局DoH、QUIC、节点、其他策略本轮不改。
+    - **验证**：现有构建PASS；规则44/44、严格冲突检测PASS、诊断19/19、评分4/4、预发布完整性PASS；manifest内容版本 `e994fdff4578`。账本新增人工授权记录并保持 `verified=false`，未把工程通过等同手机验收。
+    - **交接与下一步**：详细事实只保存在本仓库；Hub仅更新该项目一条摘要和既有事实源指针。手机只更新China-Direct并重连，正常使用反馈；国内IP兜底与截图目标IP语义继续待核验。若退化，只撤本轮jspcdn规则、记录回退决策并重新构建发布，保留此前31/20和vegslb成果。
 
 ---
 

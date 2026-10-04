@@ -93,3 +93,6 @@ DOMAIN-SUFFIX,weibocdn.com
 
 # ByteDance/Volcengine-related domain; targeted trial, device result unverified (2026-10-04)
 DOMAIN-SUFFIX,vegslb.com
+
+# Domestic CDN targeted routing trial; user approved after repeated FINAL records (2026-10-04)
+DOMAIN-SUFFIX,jspcdn.cn

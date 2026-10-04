@@ -3,7 +3,7 @@
 > 📌 **统一入口声明**：本项目采用本文件作为向 `AI-Project-Hub` 提交状态同步与索引更新的**标准入口文件**。  
 > 存放位置：**存放在项目代码工程根目录**。  
 > ⏱ **最近同步单更新日期**：2026-10-04  
-> 🏷 **阶段摘要**：Phase 1.5 发布与 vegslb.com 定向配套试行，处于日常观察与常规维护阶段；详细状态见 [`PROJECT_STATE.md`](PROJECT_STATE.md)。
+> 🏷 **阶段摘要**：Phase 1.5 发布、vegslb.com 配套试行与 jspcdn.cn 定向直连补丁，处于日常观察与常规维护阶段；详细状态见 [`PROJECT_STATE.md`](PROJECT_STATE.md)。
 
 ---
 
@@ -23,7 +23,7 @@
 ## 二、提议 Hub 变更内容 (Proposed Hub Changes)
 - **PROJECT_INDEX.md 拟更新项**：
   - 维护状态：生产稳定（日常观察阶段）
-  - 核心特征/说明更新：已完成 Phase 1.5 联合审定直连规则与极速 DNS 扩充，详细状态与规则基线见项目单一事实源（元数据未发生结构性变更，无需同步改动 Hub 索引）
+  - 核心特征/说明更新：本次按所有者授权记录 jspcdn.cn 定向直连补丁；Hub仅更新既有项目一条摘要和事实源指针，详细原因、验证及待办保留在本仓库 PROJECT_STATE.md
 - **Hub 内项目状态指针 / 档案更新**：
   - 拟同步文件：无；本项目唯一详细事实源为独立仓库根目录 [`PROJECT_STATE.md`](PROJECT_STATE.md)，本次不在Hub新增状态副本。
   - 拟变更摘要：保持地图索引指针与 SSOT 对齐，不将详细技术状态复制进 Hub
@@ -35,7 +35,7 @@
 
 - **项目唯一详细事实源 (SSOT)**：[`PROJECT_STATE.md`](PROJECT_STATE.md)（包含项目目标、当前状态、基线定型、决策账本与未完成项）
 - **协作者行为规范与交接规范**：[`AGENTS.md`](AGENTS.md)
-- **核心实测证据摘要**：本次 Phase 1.5 规则与 DNS 增量及后续文档补正已完成工程检查和远端 CI 核验；候选与回退文件的结构、本地匹配与 FINAL 检查部分通过（`PARTIAL_PASS / UNVERIFIED_PLUGINS`），启用插件的运行时注入未验证。固定回退资产另经独立取回核对；手机当前加载及实际体验尚未验收。详细发布基线、验证记录和待办项唯一由 [`PROJECT_STATE.md`](PROJECT_STATE.md) 维护。
+- **核心实测证据摘要**：本次 jspcdn.cn 单规则补丁已完成构建、规则/冲突/诊断/评分及预发布检查；未新增DNS映射或调整其他策略。手机有效加载、实际体验与国内IP兜底匹配仍待验证。此前私人候选与回退仅为部分通过（`PARTIAL_PASS / UNVERIFIED_PLUGINS`），插件运行时注入未验证。详细过程、历史发布记录、恢复起点和下一步均见 [`PROJECT_STATE.md`](PROJECT_STATE.md)；远端推送及CI结果另以实际收尾核验为准。
 
 ---
 
