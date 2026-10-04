@@ -199,6 +199,7 @@
   10. **根域匹配语义待核验**：核验 Loon `[Host]` 中 `*.域名` 映射是否自动匹配精确根域（如 `*.ctrip.com` 是否自动涵盖 `ctrip.com`），区分顶级域通配与服务域通配，待取得官方依据或真机实测前不机械增补精确根域映射；
   11. **vegslb.com 定向试行真机效果追踪 (1~2天)**：用户更新规则与 DNS 插件后正常使用抖音，反馈“有改善 / 无明显变化 / 变差”；无明显改善不扩大加规则，若退化则单点回退该条增量（不影响 31/20 基线）。
   12. **jspcdn.cn 直连补丁真机验证**：手机更新一次 China-Direct 并重连后正常使用，简短反馈即可，不要求新抓包或统计频次。已归档配置中 China-Direct/China-GeoIP 均启用并绑定DIRECT，公开GeoIP规则覆盖截图IP；手机有效加载及匹配时地址仍未确认，其他服务显示同一IP不能直接据此改直连。
+  13. **兜底与抖音覆盖专项待核验（2026-10-05）**：核对手机已加载的 China-GeoIP 内容、启用与 DIRECT 绑定，以及 IP 模式实际生效情况。本轮公共 HTTPS DNS 对截图 JSPCDN 主机仅返回 IPv6，归档新旧配置均写有 `ip-mode = v4-only` / `ipv6-vif = off`；这是待验证线索，不是已确认回归原因。设计文档要求的 `iesdouyin.com` 当前缺少域名规则；`bytegeckoext.com` / `tlivegslb.com` 属候选缺口，需核验业务边界后决定。现有模拟器不模拟域名解析后的 IP 兜底过程，不能用离线样例通过代替手机验收。
 
 ---
 
@@ -247,7 +248,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-04
+* **最后更新**：2026-10-05
   * **字节跳动骨干静态 CDN 补丁与 GeoIP 去 no-resolve 架构收敛**：
     - 精准收录 `bytecdn.com` 与 `bytecdn.cn` 至 `rules/custom/China-Direct.list`，彻底解决字节前端组件（`lf-leads-fe-scm`）绕行香港代理导致的抖音评论区图片转圈与卡顿，真机实测验证秒开；
     - 落地项目最高准则“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端放弃 `no-resolve` 束缚，恢复 GeoIP 主动触发本地 DNS 反查兜底，实现日常使用彻底无感；
@@ -347,6 +348,14 @@
     - **DNS与业务边界**：保留现有 `*.cn = server:223.5.5.5`；Sentry、RevenueCat、nsloon及全局DoH、QUIC、节点、其他策略本轮不改。
     - **验证**：现有构建PASS；规则44/44、严格冲突检测PASS、诊断19/19、评分4/4、预发布完整性PASS；manifest内容版本 `e994fdff4578`。账本新增人工授权记录并保持 `verified=false`，未把工程通过等同手机验收。
     - **交接与下一步**：详细事实只保存在本仓库；Hub仅更新该项目一条摘要和既有事实源指针。手机只更新China-Direct并重连，正常使用反馈；国内IP兜底与截图目标IP语义继续待核验。若退化，只撤本轮jspcdn规则、记录回退决策并重新构建发布，保留此前31/20和vegslb成果。
+
+
+  * **国内 IP 兜底与抖音覆盖核查（2026-10-05，ChatGPT/Codex）**：
+    - **源码与发布核验**：公开 China-GeoIP 主备源均 HTTP 200、内容一致且与本地一致（SHA256 `f82ff8b59a190bfced6dfa5d56c9a996ba0af2c03194e572b4a96628d6aeb802`），含 `GEOIP,CN`、覆盖截图 IPv4 的 `119.144.0.0/14`；当前公开 China-Direct 已含 jspcdn.cn。排除当前公开规则源缺项或404，不能据此证明手机缓存已加载。
+    - **归档配置与验收边界**：10月3日导出的 fixed 配置及候选配置均启用 China-GeoIP 并绑定 DIRECT；重新运行已有脱敏工具仍为 `PARTIAL_PASS / UNVERIFIED_PLUGINS`。模拟器 `match_target` 将域名与 IP 分开处理、不执行域名 DNS 查询，IP 样例命中不能证明域名请求的运行时兜底有效。
+    - **解析核查事实**：本轮通过阿里及 Google 的 HTTPS DNS 分别查询截图主机，A 均无地址、AAAA 均返回 `240e:978:b33:102::100`，该 IPv6 也被当前 China-GeoIP 覆盖。归档当前/候选/旧自动配置均包含 `ip-mode = v4-only` / `ipv6-vif = off`；本轮结果不是截图时的 DNS 快照，未证明配置字段在手机的实际效果，也不能据此认定唯一根因或新配置回归。
+    - **覆盖核查事实**：生产使用的 blackmatrix7 DouYin.list 现为13条；RULE_DESIGN列为必须覆盖的 iesdouyin.com 当前无域名命中。Loyalsoldier已缓存参考源另列 bytegeckoext.com / tlivegslb.com，而生产域名层未覆盖；候选缺项不等于必然落FINAL或故障。blackmatrix7 ByteDance大清单包含 larksuite.com / larksuitecdn.com 等国际服务，本轮未整包引入。
+    - **处理与下一步**：本轮只记录已确认的调查事实，保留已发布 jspcdn 补丁及既有31/20与vegslb成果；未改规则、DNS、IP模式、插件或私人配置。下一步核对手机实际加载与IP模式，再对明确国内服务做有限覆盖补正；不要求用户反复抓包，不机械删除全部 no-resolve 或按截图相同IP批量改直连。
 
 ---
 
