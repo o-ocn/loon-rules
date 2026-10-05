@@ -31,7 +31,7 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **已核验的规则发布 CI 运行事实**：GitHub Actions Run **#68**（ID `37124392780`，针对规则发布基线 commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`，push 事件）执行完毕，状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/37124392780`；历史旧流水线包括 Run #49 ID `36753242952` 等）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,266 条有效规则**），已全量构建至 `dist/`，主备源（GitHub Raw / jsDelivr CDN）校验通过。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,267 条有效规则**），已全量构建至 `dist/`；本轮本地完整性校验通过，远端发布与手机生效以对应发布验证为准。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,244 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -45,6 +45,7 @@
   * **Phase 1.5 联合审定清单合入 (Phase 1.5 T5 Consensus Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的 T5 清单，在 `rules/custom/China-Personal.list` 精准扩充 31 条 `DOMAIN-SUFFIX` 规则（携程/去哪儿/飞猪/同程/飞常准出行链、圆通速递、闲鱼/盒马/淘宝短链电商零售、BOSS直聘/夸克、公安部CTID政务认证、协和医院、翼支付/央行数字基建/邮储/平安金融，以及微博与中国移动6条专项来源子集，记录 139.com 多业务共存风险），`China-Direct.lsr` 扩充至 628 条（净增 31 条）；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 下扩充 20 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）分流映射，全库总有效规则达到 **21,236 条**；
   * **vegslb.com 定向配套试行 (Targeted Paired Trial)**：依据 ChatGPT 与 DeepSeek 联合审定第十八节共识（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），在 `rules/custom/China-Personal.list` 补充 `DOMAIN-SUFFIX,vegslb.com` 直连规则，并在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 阿里极速 DNS 配套映射；`China-Direct.lsr` 扩充至 629 条（净增 1 条），全库总有效规则达到 **21,237 条**；决策账本按试行登记（verified 保持 false，效果待验证）。
   * **jspcdn.cn 定向直连补丁**：2026-10-04 所有者明确授权 ChatGPT/Codex 直接执行并推送，针对该域名再次落入 FINAL 且上传517B、下载0B的请求，新增 `DOMAIN-SUFFIX,jspcdn.cn` 至 China-Personal 并编译进 China-Direct；现有 `*.cn` 国内DNS映射已命中，本次不改DNS。China-Personal 62条、China-Direct 630条、全库21,266条。工程检查通过，手机有效加载与体验、国内IP兜底为何未命中仍待验证；未把无下行现象认定为确定握手故障或卡顿唯一原因。
+  * **GlobalSign 精确域名出口调整（2026-10-05）**：按所有者要求新增 `DOMAIN,secure.globalsign.com` 至 China-Personal 并编译进 China-Direct；仅调整该主机出口，不扩展 GlobalSign 整域、不改DNS或私人配置。官方资料确认该主机提供证书文件，未找到其代理请求触发本次淘宝验证码的证据；手机加载、证书请求可用性及验证码变化仍待验证，账本保持 `verified=false`。
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -201,6 +202,8 @@
   12. **jspcdn.cn 直连补丁真机验证**：手机更新一次 China-Direct 并重连后正常使用，简短反馈即可，不要求新抓包或统计频次。已归档配置中 China-Direct/China-GeoIP 均启用并绑定DIRECT，公开GeoIP规则覆盖截图IP；手机有效加载及匹配时地址仍未确认，其他服务显示同一IP不能直接据此改直连。
   13. **兜底与抖音覆盖专项待核验（2026-10-05）**：核对手机已加载的 China-GeoIP 内容、启用与 DIRECT 绑定，以及 IP 模式实际生效情况。本轮公共 HTTPS DNS 对截图 JSPCDN 主机仅返回 IPv6，归档新旧配置均写有 `ip-mode = v4-only` / `ipv6-vif = off`；这是待验证线索，不是已确认回归原因。设计文档要求的 `iesdouyin.com` 当前缺少域名规则；`bytegeckoext.com` / `tlivegslb.com` 属候选缺口，需核验业务边界后决定。现有模拟器不模拟域名解析后的 IP 兜底过程，不能用离线样例通过代替手机验收。
 
+  14. **GlobalSign 精确域名调整与淘宝验证观察（2026-10-05）**：仅更新 China-Direct 后正常使用，不要求反复登录、退出账号或抓包。证书请求走代理不等于淘宝业务请求走代理；若验证码持续出现，应核对淘宝业务实际分流和正常风控因素，不盲目追加证书厂商整域直连。若证书访问退化，只撤本次精确域名。
+
 ---
 
 ## 八、已知风险、真机边界与未验证项 (UNVERIFIED)
@@ -356,6 +359,12 @@
     - **解析核查事实**：本轮通过阿里及 Google 的 HTTPS DNS 分别查询截图主机，A 均无地址、AAAA 均返回 `240e:978:b33:102::100`，该 IPv6 也被当前 China-GeoIP 覆盖。归档当前/候选/旧自动配置均包含 `ip-mode = v4-only` / `ipv6-vif = off`；本轮结果不是截图时的 DNS 快照，未证明配置字段在手机的实际效果，也不能据此认定唯一根因或新配置回归。
     - **覆盖核查事实**：生产使用的 blackmatrix7 DouYin.list 现为13条；RULE_DESIGN列为必须覆盖的 iesdouyin.com 当前无域名命中。Loyalsoldier已缓存参考源另列 bytegeckoext.com / tlivegslb.com，而生产域名层未覆盖；候选缺项不等于必然落FINAL或故障。blackmatrix7 ByteDance大清单包含 larksuite.com / larksuitecdn.com 等国际服务，本轮未整包引入。
     - **处理与下一步**：本轮只记录已确认的调查事实，保留已发布 jspcdn 补丁及既有31/20与vegslb成果；未改规则、DNS、IP模式、插件或私人配置。下一步核对手机实际加载与IP模式，再对明确国内服务做有限覆盖补正；不要求用户反复抓包，不机械删除全部 no-resolve 或按截图相同IP批量改直连。
+
+  * **GlobalSign 与淘宝验证码核查、精确域名调整（2026-10-05，ChatGPT/Codex）**：
+    - **原因与授权**：所有者报告正常浏览淘宝时突然弹出滑块验证，查看同期网络记录时只注意到 secure.globalsign.com:80 落 FINAL，并明确要求该主机直连。GlobalSign官方证书资料列出该主机的证书下载链接；荣耀官方支持将VPN、公共网络、多地域登录等列为淘宝验证可能的风控场景，阿里云验证码文档说明会评估IP、设备与行为。上述一般机制不能证明本次验证码由证书流量造成。
+    - **范围与恢复**：只新增一条 `DOMAIN,secure.globalsign.com`；China-Personal 62→63，China-Direct 630→631，全库21,266→21,267；其余18个规则集、插件、DNS、QUIC、私人配置不改。任务恢复起点 `b196154d7b08c3644d76ef778b13dadbe4a409fb`，回退只撤本条并重建。
+    - **证据依据**：[GlobalSign官方证书下载](https://valid.r1.roots.globalsign.com/)；[荣耀官方淘宝验证说明](https://www.honor.com/cn/support/content/zh-cn15834860/)；[阿里云验证码信息采集](https://help.aliyun.com/zh/captcha/captcha2-0/product-overview/captcha-2-0-collection-letter-description)。当前淘宝 taobao.com、alicdn.com、alipay.com 已有国内分流规则，不能用仓库覆盖代替手机实际加载结论。
+    - **验证与下一步**：构建PASS、规则44/44、严格冲突检测PASS、诊断19/19、评分4/4、预发布完整性PASS；精确主机命中与其他GlobalSign主机排除均通过，其余18个规则集内容保持不变，manifest内容版本 `b3eb6329956f`。账本85条解析通过、原84条记录保留，新增记录verified保持false。手机只更新China-Direct并重连后正常用；不把验证码是否消失当作单次因果证明，不要求用户统计或抓包。
 
 ---
 

@@ -96,3 +96,6 @@ DOMAIN-SUFFIX,vegslb.com
 
 # Domestic CDN targeted routing trial; user approved after repeated FINAL records (2026-10-04)
 DOMAIN-SUFFIX,jspcdn.cn
+
+# Owner-approved exact-host certificate download routing; not a verified Taobao CAPTCHA fix (2026-10-05)
+DOMAIN,secure.globalsign.com
