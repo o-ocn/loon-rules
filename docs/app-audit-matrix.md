@@ -17,7 +17,7 @@
 | **美团 / 大众点评** | `meituan.com`<br>`dianping.com`<br>`sankuai.com` | `meituan.net` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | **Keeta (`keeta.com`)**（香港/中东外卖）走海外 | 2026-10 | 补齐母公司核心基建 sankuai 与店铺门头/菜品图床 meituan.net (曾调度至美西) |
 | **饿了么 (Ele.me)** | `ele.me` | `elemecdn.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | 阿里海外本地生活走代理 | 2026-10 | 特殊黑山顶级域 `.me` 易被外部规则误杀，必须显式直连与极速 DNS |
 | **小红书 (RED)** | `xiaohongshu.com` | `xhscdn.com`<br>`xhscdn.net` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | 排除第三方风控 `fengkongcloud.com` | 2026-10 | 实测海外 DoH 将 xhscdn 调度至美国洛杉矶 Akamai 导致大图白块，已补充规则与 DNS 映射 |
-| **抖音 / 字节国内生态** | `douyin.com`<br>`zijieapi.com`<br>`bytedance.com`<br>`bytetos.com`<br>`doupay.com` | `byteimg.com`<br>`bytemaimg.com`<br>`bytegecko.com`<br>`ibytedtos.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | **TikTok (`tiktok.com`, `byteoversea.com`)** 绝不直连 | 2026-10 | 消除直播源站 (bytegecko) 与图床 (bytemaimg) 120s 超时 |
+| **抖音 / 字节国内生态** | `douyin.com`<br>`zijieapi.com`<br>`bytedance.com`<br>`bytetos.com`<br>`doupay.com` | `byteimg.com`<br>`bytemaimg.com`<br>`bytegecko.com`<br>`ibytedtos.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | **TikTok (`tiktok.com`, `byteoversea.com`)** 绝不直连 | 2026-10 | 规则与DNS已收录直播源站 (bytegecko) 与图床 (bytemaimg)，相关效果待观察 |
 | **快手 (Kuaishou)** | `kuaishou.com`<br>`gifshow.com`<br>`kuaishoupay.com` | `yximgs.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | **Kwai (`kwai.com`, `kwaicdn.com`)** 绝不直连 | 2026-10 | 补齐核心 API 网关 gifshow 与支付；实测 yximgs 曾调度至美西 |
 | **哔哩哔哩 (Bilibili)** | `bilibili.com` | `bilivideo.com`<br>`hdslb.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | Bilibili 东南亚与海外版权番剧锁区节点走海外代理 | 2026-10 | 视频流与动态图片 CDN 全量国内就近加速 |
 | **网易云音乐 (NetEase)** | `music.163.com` | `music.126.net` (`p1~p4`) | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | **严禁引入 `netease.com`**（包含海外游戏节点 `global.netease.com`） | 2026-10 | 极窄聚焦方案：不引入 `163.com`/`126.net` 泛域，严格限定音乐 API 与音频流 |
@@ -32,7 +32,7 @@
 | 机构 / 体系 | 核心域名 (`China-Direct`) | DNS 调度优化 (`223.5.5.5`) | 规则状态 | 排除边界 (严禁混入直连) | 审计与验证结论 |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **中国银联 / 云闪付** | `unionpay.com`<br>`unionpaysecure.com`<br>`95516.com` | 显式配置 `223.5.5.5` | ✅ 已完成 | 无 | 实测海外 DoH 曾将 95516 网宿 CDN CNAME 调度至美国丹佛；现已绑定国内解析 |
-| **招商银行 / 掌上生活** | `cmbchina.com`<br>`cmbimg.com` | 显式配置 `223.5.5.5` | ✅ 已完成 | **排除 `cmbwinglungbank.com`** (香港永隆银行)<br>**排除 `cignacmb.com`** (合资保险)<br>**排除 `8008205555.com/.cn`** (历史客服) | 解决掌上生活信用卡饭票/活动图片白块，阻断金融流量误走香港 IEPL |
+| **招商银行 / 掌上生活** | `cmbchina.com`<br>`cmbimg.com` | 显式配置 `223.5.5.5` | ✅ 已完成 | **排除 `cmbwinglungbank.com`** (香港永隆银行)<br>**排除 `cignacmb.com`** (合资保险)<br>**排除 `8008205555.com/.cn`** (历史客服) | 规则与DNS已收录，阻断金融流量误走香港 IEPL，相关效果待观察 |
 | **六大国有商业银行** | 工行 (`icbc.com.cn`, `icbc.cn`)<br>建行 (`ccb.com`, `ccb.cn`, `ccb.com.cn`)<br>农行 (`abchina.com`, `abchina.com.cn`, `abchina.cn`)<br>中行 (`boc.cn`)<br>交行 (`bankcomm.com`, `bankcomm.com.cn`, `bankcomm.cn`)<br>邮储 (`psbc.com`, `psbc.com.cn`) | 所有非 `.cn` 均显式配置 `223.5.5.5`<br>(所有 `.cn` 由全域 DNS 规则覆盖) | ✅ 已完成 | 境外分行及离岸子行按海外代理走 | 消除上游失效 `USER-AGENT` 规则导致在 HTTPS/SSL Pinning 下 0ms 穿透至 FINAL 的隐患 |
 | **全国股份制商业银行** | 平安 (`pingan.com`, `pingan.com.cn`)<br>中信 (`citicbank.com`, `ecitic.com`)<br>光大 (`cebbank.com`)<br>浦发 (`spdb.com.cn`)<br>兴业 (`cib.com.cn`)<br>民生 (`cmbc.com.cn`)<br>广发 (`cgbchina.com.cn`)<br>华夏 (`hxb.com.cn`) | 所有非 `.cn` 均显式配置 `223.5.5.5`<br>(所有 `.cn` 由全域 DNS 规则覆盖) | ✅ 已完成 | 境外离岸投资账户由独立规则管理 | 覆盖动卡空间、阳光惠生活、浦大喜奔、发现精彩等主流信用卡 App |
 

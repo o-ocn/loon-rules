@@ -46,7 +46,7 @@
   * **vegslb.com 定向配套试行 (Targeted Paired Trial)**：依据 ChatGPT 与 DeepSeek 联合审定第十八节共识（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），在 `rules/custom/China-Personal.list` 补充 `DOMAIN-SUFFIX,vegslb.com` 直连规则，并在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 阿里极速 DNS 配套映射；`China-Direct.lsr` 扩充至 629 条（净增 1 条），全库总有效规则达到 **21,237 条**；决策账本按试行登记（verified 保持 false，效果待验证）。
   * **jspcdn.cn 定向直连补丁**：2026-10-04 所有者明确授权 ChatGPT/Codex 直接执行并推送，针对该域名再次落入 FINAL 且上传517B、下载0B的请求，新增 `DOMAIN-SUFFIX,jspcdn.cn` 至 China-Personal 并编译进 China-Direct；现有 `*.cn` 国内DNS映射已命中，本次不改DNS。China-Personal 62条、China-Direct 630条、全库21,266条。工程检查通过，手机有效加载与体验、国内IP兜底为何未命中仍待验证；未把无下行现象认定为确定握手故障或卡顿唯一原因。
   * **GlobalSign 精确域名出口调整（2026-10-05）**：按所有者要求新增 `DOMAIN,secure.globalsign.com` 至 China-Personal 并编译进 China-Direct；仅调整该主机出口，不扩展 GlobalSign 整域、不改DNS或私人配置。官方资料确认该主机提供证书文件，未找到其代理请求触发本次淘宝验证码的证据；手机加载、证书请求可用性及验证码变化仍待验证，账本保持 `verified=false`。
-  * **国内常用服务上游覆盖审计（2026-10-05）**：Alibaba.list全部57条保留，但配套Alibaba_Domain.list未声明接入，其中21/1263项已有域名覆盖。扩展核对22组参考来源后，微信、抖音、京东、B站已接入清单的域名语义均完整；腾讯集团与字节扩展目录未接入，QQ音乐实际引用的y.gtimg.cn、设计要求的iesdouyin.com及部分其他常用服务参考域名仍缺覆盖。来源范围差异不等于手机必走FINAL、App失败率或已确认卡顿/验证码原因；全清单核查及最终范围见待办15/16及本轮核查记录。
+  * **国内常用服务上游覆盖审计（2026-10-05）**：Alibaba.list全部57条保留，但配套Alibaba_Domain.list未声明接入，其中21/1263项已有域名覆盖。扩展核对22组参考来源后，微信、抖音、京东、B站已接入清单的域名语义均完整；腾讯集团与字节扩展目录未接入，QQ音乐实际引用的y.gtimg.cn、设计要求的iesdouyin.com及部分其他常用服务参考域名在审计时发现缺项（本批后续已补齐，手机效果未验收）。来源范围差异不等于手机必走FINAL、App失败率或已确认卡顿/验证码原因；全清单核查及最终范围见待办15/16及本轮核查记录。
   * **2026-10-05 国内常用服务 21 条直连规则 + 9 条配套 DNS 审定方案正式合入 (Domestic Plan 21/9 Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的最终共识清单（08号交接文档），在 `rules/custom/China-Personal.list` 纯本地扩充 21 条直连规则（含携程国内、飞猪、飞常准、淘宝资源及短链、阿里兼容、BOSS直聘图片、什么值得买图片、小黑盒静态CDN、政务平台入口、北京一卡通、网络身份认证、移动139与天翼云盘、中国银行资源/搜索、招行与翼支付CDN等），China-Personal 从 63 条增至 84 条，`China-Direct.lsr` 从 631 条扩充至 652 条（净增 21 条）；严格排除命中既有禁令的 `ndstatic.cdn.bcebos.com` 及百度云主机；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 扩充 9 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）映射（总数达 104 条）；全库有效规则达到 **21,288 条**；决策账本按试行登记（verified 保持 false，复查周期 180 天，效果待验证）。
 
 * **三层架构体系闭环**：
@@ -169,7 +169,7 @@
     - *为什么添加 `bytecdn.com`/`bytecdn.cn`*：上游源 `DouYin.list` 仅有 13 条核心规则，母公司底层 CDN 放置在 `ByteDance.list` 未被引用，导致 `lf-leads-fe-scm.bytecdn.com` 前端组件跌落 FINAL，走香港专线折返跑造成抖音评论区图片转圈与卡顿；合入 `China-Direct.list` 并经真机验证秒开；
     - *放弃纯理论洁癖，拥抱实用主义（去 `no-resolve` 决策）*：依据项目最高铁律“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端在 `China-GeoIP` 层放弃 `no-resolve` 强约束。因主流海外服务在顶层早已被域名代理规则完全拦截，底层放开本地 DNS 查验不仅消除了 99% 的未收录国内边缘 CDN 绕道代理卡顿，而且从根本上解放了用户，彻底终结“遇卡顿就抓包打补丁”的高频人工内耗。
 
-20. **常用资源补齐采用21＋9纯本地批次（2026-10-05，审核共识）**：仅4条参考来源候选的接入收益不足以在本批捆绑新来源及编译器维护面，全部通过现有个人层实现；原来源改造方案保留为按需评估的历史方案，不宣称已完成。既有bcebos整树BLOCK保留，精确主机也不能以备注绕过；人工批准与自动置信度、工程检查与手机效果分别记录。最终范围已审定，尚未实施。
+20. **常用资源补齐采用21＋9纯本地批次（2026-10-05，审核共识）**：仅4条参考来源候选的接入收益不足以在本批捆绑新来源及编译器维护面，全部通过现有个人层实现；原来源改造方案保留为按需评估的历史方案，不宣称已完成。既有bcebos整树BLOCK保留，精确主机也不能以备注绕过；人工批准与自动置信度、工程检查与手机效果分别记录。最终范围已审定（该“尚未实施”系批准时共识状态；后续已由 Gemini 落地实施并发布，详见下文十、环境与更新记录）。
 
 ---
 
@@ -205,11 +205,11 @@
   10. **根域匹配语义待核验**：核验 Loon `[Host]` 中 `*.域名` 映射是否自动匹配精确根域（如 `*.ctrip.com` 是否自动涵盖 `ctrip.com`），区分顶级域通配与服务域通配，待取得官方依据或真机实测前不机械增补精确根域映射；
   11. **vegslb.com 定向试行真机效果追踪 (1~2天)**：用户更新规则与 DNS 插件后正常使用抖音，反馈“有改善 / 无明显变化 / 变差”；无明显改善不扩大加规则，若退化则单点回退该条增量（不影响 31/20 基线）。
   12. **jspcdn.cn 直连补丁真机验证**：手机更新一次 China-Direct 并重连后正常使用，简短反馈即可，不要求新抓包或统计频次。已归档配置中 China-Direct/China-GeoIP 均启用并绑定DIRECT，公开GeoIP规则覆盖截图IP；手机有效加载及匹配时地址仍未确认，其他服务显示同一IP不能直接据此改直连。
-  13. **兜底与抖音覆盖专项待核验（2026-10-05）**：核对手机已加载的 China-GeoIP 内容、启用与 DIRECT 绑定，以及 IP 模式实际生效情况。本轮公共 HTTPS DNS 对截图 JSPCDN 主机仅返回 IPv6，归档新旧配置均写有 `ip-mode = v4-only` / `ipv6-vif = off`；这是待验证线索，不是已确认回归原因。设计文档要求的 `iesdouyin.com` 当前缺少域名规则；`bytegeckoext.com` / `tlivegslb.com` 属候选缺口，需核验业务边界后决定。现有模拟器不模拟域名解析后的 IP 兜底过程，不能用离线样例通过代替手机验收。
+  13. **兜底与抖音覆盖专项待核验（2026-10-05）**：核对手机已加载的 China-GeoIP 内容、启用与 DIRECT 绑定，以及 IP 模式实际生效情况。本轮公共 HTTPS DNS 对截图 JSPCDN 主机仅返回 IPv6，归档新旧配置均写有 `ip-mode = v4-only` / `ipv6-vif = off`；这是待验证线索，不是已确认回归原因。设计文档要求的 `iesdouyin.com` 审计时缺少域名规则（本批后续已补齐，手机效果未验收）；`bytegeckoext.com` / `tlivegslb.com` 属候选缺口，需核验业务边界后决定。现有模拟器不模拟域名解析后的 IP 兜底过程，不能用离线样例通过代替手机验收。
 
   14. **GlobalSign 精确域名调整与淘宝验证观察（2026-10-05）**：仅更新 China-Direct 后正常使用，不要求反复登录、退出账号或抓包。证书请求走代理不等于淘宝业务请求走代理；若验证码持续出现，应核对淘宝业务实际分流和正常风控因素，不盲目追加证书厂商整域直连。若证书访问退化，只撤本次精确域名。
 
-  15. **淘宝 / 阿里配套域名接入缺口补齐方案（2026-10-05）**：tbcdn.cn、taobaocdn.com、mmstat.com已在本批21＋9共识中批准通过个人层补齐，按待办16实施；不宣称配套来源已经接入。部分aliyuncs.com下验证码接口虽有公开文档线索，但尚未纳入本批，不能据此补公有云整域或断言本次滑块原因。配套来源为点域名格式，未来确需接入时再评估转换及业务过滤，不捆绑本批编译器改造；不要求所有者逐域名抓包。
+  15. **淘宝 / 阿里配套域名接入缺口补齐方案（2026-10-05）**：tbcdn.cn、taobaocdn.com、mmstat.com已在本批21＋9共识中批准通过个人层补齐，已按第16项完成实施，手机使用观察待完成；不宣称配套来源已经接入。部分aliyuncs.com下验证码接口虽有公开文档线索，但尚未纳入本批，不能据此补公有云整域或断言本次滑块原因。配套来源为点域名格式，未来确需接入时再评估转换及业务过滤，不捆绑本批编译器改造；不要求所有者逐域名抓包。
 
   16. **常用国内服务资源补齐方案（2026-10-05，Gemini 已完成 21＋9 实施与本地发布前门禁验证，待手机端使用观察）**：已对63项用户清单/类别/别名及26项扩展候选完成桌面核查，不能等同App完整验收。ChatGPT与DeepSeek审定同意21条规则加入China-Personal、9条DNS加入现有插件；不新增来源、不改编译器/YAML解析器/来源锁/评分器。ndstatic.cdn.bcebos.com命中现有整树HARD_BLOCK，本批排除且不改旧禁令。Gemini 已按共识实施落地，China-Personal 扩充至 84 条，China-Direct 扩充至 652 条，Host 映射扩充至 104 条，账本补充 21 条（verified 标为 false），全部 6 门质量门禁（单测 45/45、严格冲突、诊断 19/19、评分 4/4、预发布校验）全部通过；手机端加载与使用体验留待用户更新后正常观察反馈，无需逐 App 抓包。IP兜底、IoT区域与325 LIFE身份保留独立未决。
 
@@ -366,7 +366,7 @@
     - **源码与发布核验**：公开 China-GeoIP 主备源均 HTTP 200、内容一致且与本地一致（SHA256 `f82ff8b59a190bfced6dfa5d56c9a996ba0af2c03194e572b4a96628d6aeb802`），含 `GEOIP,CN`、覆盖截图 IPv4 的 `119.144.0.0/14`；当前公开 China-Direct 已含 jspcdn.cn。排除当前公开规则源缺项或404，不能据此证明手机缓存已加载。
     - **归档配置与验收边界**：10月3日导出的 fixed 配置及候选配置均启用 China-GeoIP 并绑定 DIRECT；重新运行已有脱敏工具仍为 `PARTIAL_PASS / UNVERIFIED_PLUGINS`。模拟器 `match_target` 将域名与 IP 分开处理、不执行域名 DNS 查询，IP 样例命中不能证明域名请求的运行时兜底有效。
     - **解析核查事实**：本轮通过阿里及 Google 的 HTTPS DNS 分别查询截图主机，A 均无地址、AAAA 均返回 `240e:978:b33:102::100`，该 IPv6 也被当前 China-GeoIP 覆盖。归档当前/候选/旧自动配置均包含 `ip-mode = v4-only` / `ipv6-vif = off`；本轮结果不是截图时的 DNS 快照，未证明配置字段在手机的实际效果，也不能据此认定唯一根因或新配置回归。
-    - **覆盖核查事实**：生产使用的 blackmatrix7 DouYin.list 现为13条；RULE_DESIGN列为必须覆盖的 iesdouyin.com 当前无域名命中。Loyalsoldier已缓存参考源另列 bytegeckoext.com / tlivegslb.com，而生产域名层未覆盖；候选缺项不等于必然落FINAL或故障。blackmatrix7 ByteDance大清单包含 larksuite.com / larksuitecdn.com 等国际服务，本轮未整包引入。
+    - **覆盖核查事实**：审计时生产使用的 blackmatrix7 DouYin.list 现为13条；RULE_DESIGN列为必须覆盖的 iesdouyin.com 审计时无域名命中（本批后续已补齐，手机效果未验收）。Loyalsoldier已缓存参考源另列 bytegeckoext.com / tlivegslb.com，而生产域名层未覆盖；候选缺项不等于必然落FINAL或故障。blackmatrix7 ByteDance大清单包含 larksuite.com / larksuitecdn.com 等国际服务，本轮未整包引入。
     - **处理与下一步**：本轮只记录已确认的调查事实，保留已发布 jspcdn 补丁及既有31/20与vegslb成果；未改规则、DNS、IP模式、插件或私人配置。下一步核对手机实际加载与IP模式，再对明确国内服务做有限覆盖补正；不要求用户反复抓包，不机械删除全部 no-resolve 或按截图相同IP批量改直连。
 
   * **GlobalSign 与淘宝验证码核查、精确域名调整（2026-10-05，ChatGPT/Codex）**：
@@ -380,28 +380,25 @@
     - **逐条结果与格式边界**：Alibaba.list 实际为3条DOMAIN-SUFFIX、53条IP-CIDR、1条IP-CIDR6，全部57条在当前产物原样保留；未发现该文件编译丢条。配套1263条均为 `.域名`，按后缀语义与全19个规则集对照，21项已有China-Direct覆盖（20项精确同名、userimg.qunar.com由qunar.com包含），其余1242项无域名规则命中；独立对照与既有模拟器结果一致。现有clean_rule_line对原始1263行均报INVALID_SYNTAX，转换为DOMAIN-SUFFIX后可解析，不能仅追加URL完成接入。
     - **业务证据与因果边界**：[淘宝官方小程序域名管控](https://developer.alibaba.com/docs/doc.htm?articleId=120157&docType=1&treeId=634)列出tbcdn.cn、taobaocdn.com、mmstat.com等资源/请求域名；[阿里云验证码客户端FAQ](https://help.aliyun.com/zh/captcha/captcha2-0/user-guide/captcha-2-0-client-access-faq)列出captcha-open、static-captcha、cloudauth-device等客户端接口，当前部分缺域名覆盖，但没有本次淘宝实际调用证据。Loon[官方匹配说明](https://nsloon.app/docs/Rule/)表示域名未命中后仍可进行DNS/IP匹配，离线无域名命中不等于手机必走FINAL；验证码资源加载失败与触发滑块也不能混为因果。GlobalSign精确域名调整仍不作为已确认验证码修复。
     - **扩展核查与独立验证**：扩展核查基线 `6fb453da9a855a2947fdd5b33014ec1d2bc73c2c`，沿用同一上游提交，对22组目录共46个文件核对字节长度、SHA256和Git blob身份；5856条上游域名规则与19个公开产物逐条比较，并经独立精确/后缀/关键词匹配复核全部一致。微信30、抖音13、京东249、B站115条参考域名规则均获China-Direct覆盖；微信6条没有原样保留的精确域名已被qq.com后缀包含，未发现已声明源的域名编译丢条。
-    - **新确认的覆盖边界**：腾讯与字节集团目录均未在来源配置声明，微信/抖音README允许独立使用，不能把集团扩展未纳管误称为其必需配套遗漏。[QQ音乐官网](https://y.qq.com/)HTTP 200页面实际引用y.gtimg.cn图片；当前gtimg.com不能覆盖gtimg.cn。iesdouyin.com在字节参考目录及RULE_DESIGN中存在，其官网重定向douyin.com；当前无域名覆盖。抖音主要图片/静态/视频域douyinpic/douyincdn/douyinstatic/douyinvod已覆盖，字节补充参考域与网易云音乐、小红书等另有差项，详见待办16。集团目录含海外飞书、国际会议、游戏及云客户域，不能整批直连；目录差异不证明手机FINAL或故障因果。
+    - **新确认的覆盖边界**：腾讯与字节集团目录均未在来源配置声明，微信/抖音README允许独立使用，不能把集团扩展未纳管误称为其必需配套遗漏。[QQ音乐官网](https://y.qq.com/)HTTP 200页面实际引用y.gtimg.cn图片；当前gtimg.com不能覆盖gtimg.cn。iesdouyin.com在字节参考目录及RULE_DESIGN中存在，其官网重定向douyin.com；审计时无域名覆盖（本批后续已补齐，手机效果未验收）。抖音主要图片/静态/视频域douyinpic/douyincdn/douyinstatic/douyinvod已覆盖，字节补充参考域与网易云音乐、小红书等另有差项，详见待办16。集团目录含海外飞书、国际会议、游戏及云客户域，不能整批直连；目录差异不证明手机FINAL或故障因果。
     - **审计资产与处理**：扩展报告与公开证据保存于 `E:\Document\AI-Workspace\loon-rules\2026-10-05-domestic-coverage-audit\01-常用国内服务上游覆盖审计.md`（附逐条CSV、快照与哈希，不将成套材料提交公开仓库）。本轮只更新事实源与同步摘要；此前淘宝核查已纠正表格计数，扩展核查未改规则、DNS、账本、manifest、构建器或私人配置。报告中的tlivegslb.com来源归类只作线索，真实业务边界尚未确认。
     - **下一步与恢复**：按国内资源、图片/音乐接口与验证服务审定有限清单，排除国际业务及公有云整域，单批发布、正常使用反馈，不要求所有者逐App抓包。Hub地图与正式事实源路径未变，无需复制详细状态；本轮文档恢复起点为扩展核查基线，不回退既有功能增量。
 
   * **常用App全清单核查与具体候选方案（2026-10-05，ChatGPT/Codex；生产未改）**：
     - **目标与证据**：将淘宝/腾讯/字节扩展核查扩到所有者原清单的63项（包含银行类别和boss别名）及26项扩展候选；同一上游提交 `5a61490ab88ddaff4e9dbd7740b881d75157a49f` 的54组参考、110文件Git blob身份、6834条域名对照经独立复核。公开页面60次取回记录（54次保存响应正文、6次失败或异常，含HTTP错误），118项资源引用；页面证据不等于App接口或真机体验验收。
     - **新增确认事实**：北京一卡通AppStore开发者网站/隐私使用bmac.com.cn，国家网络身份认证公安部App条目隐私链接cdnrefresh.ctdidcii.cn，均无现有域名覆盖；多个常用服务官网另有窄资源缺项。12306/银行/滴滴/携程等专用目录含其他或国际业务，不能整包直连；旧矩阵存在过时准入状态及过度体验保证，执行时须按真实规则状态修正。
-    - **方案调整与最终验证**：初始22/10加两个有限来源的原型仅为旧方案证据；经两方审核改为21条纯本地规则＋9条DNS，不捆绑来源或编译器改造。ndstatic.cdn.bcebos.com因既有BLOCK/ENTIRE_DOMAIN_TREE及HARD_BLOCK排除，不允许reason备注绕过；其余21条评分处于CONFIDENCE_SCORE，人工共识不是自动放行，实施账本须verified=false。最终候选使用现有剪枝/模拟器预演631→652、无旧规则删除，正例和窄边界/国际反例通过；95＋9条Host无重复。未进行正式build、全量发布门禁或手机验收；完整21/9与证据见待办16。
-    - **处理与恢复**：本轮只将最终共识与待实施状态合并进PROJECT_STATE及AI_HUB_SYNC；92个受保护生产文件SHA256与原核查相同，规则、DNS、来源、账本、manifest、构建器与私人配置未改。Gemini执行本批前重新核对真实基线并设一次恢复起点，发布后仅更新两项资产并正常用；无明显改善不默认撤整批，退化时按相关增量单点恢复，保留31/20及既有补丁。本轮审核收尾的文档恢复起点 `84fa95b16cab38414a96ac817028d0196fad3404`；Hub地图/单一事实源归属不变。
+    - **方案调整与最终验证**：初始22/10加两个有限来源的原型仅为旧方案证据；经两方审核改为21条纯本地规则＋9条DNS，不捆绑来源或编译器改造。ndstatic.cdn.bcebos.com因既有BLOCK/ENTIRE_DOMAIN_TREE及HARD_BLOCK排除，不允许reason备注绕过；其余21条评分处于CONFIDENCE_SCORE，人工共识不是自动放行，实施账本须verified=false。最终候选使用现有剪枝/模拟器预演631→652、无旧规则删除，正例和窄边界/国际反例通过；95＋9条Host无重复。（注：当时未进行正式build、全量发布门禁或手机验收；完整21/9与证据见待办16；后续具体实施与质量门禁见下条“Gemini 执行收尾”记录）。
+    - **处理与恢复**：本轮只将最终共识与待实施状态合并进PROJECT_STATE及AI_HUB_SYNC（为共识达成时的状态快照）；92个受保护生产文件SHA256与原核查相同，规则、DNS、来源、账本、manifest、构建器与私人配置未改。Gemini执行本批前重新核对真实基线并设一次恢复起点，发布后仅更新两项资产并正常用；无明显改善不默认撤整批，退化时按相关增量单点恢复，保留31/20及既有补丁。本轮审核收尾的文档恢复起点 `84fa95b16cab38414a96ac817028d0196fad3404`；Hub地图/单一事实源归属不变。
 
-  * **国内常用服务 21 条直连规则 + 9 条配套 DNS 实施发布（2026-10-05，Gemini 执行收尾）**：
-    - **任务来源与范围**：严格依据 `08-ChatGPT-最终共识与Gemini执行交接.md` 清单执行；纯本地增补 21 条规则至 `rules/custom/China-Personal.list`，9 条 DNS 映射至 `plugins/Loon-China-DNS.lpx` 的 `[Host]`；严格排除 `ndstatic.cdn.bcebos.com` 及百度云整域，不整包引入大厂目录。
-    - **资产变化**：China-Personal 63 → 84 (+21)；China-Direct 631 → 652 (+21)；19 规则集总规则数 21,267 → 21,288 (+21)；Host 映射 95 → 104 (+9)；决策账本 85 → 106 (+21，全部 verified: false，复查周期 180 天)；manifest 内容版本 `7635cc51f7d7`；其余 18 个规则集内容保持不变。
-    - **矩阵与文档校正**：校正 `docs/China-Personal-Matrix.md` 中的过时准入状态，将 `tb.cn` 修正为淘宝官方短链（非贴吧短链），补充 2026-10-05 批次；在 `docs/app-audit-matrix.md` 中全面去绝对化断言（删除“彻底治愈/秒开/彻底闭环/彻底根除”等词汇，增加端到端真机核验边界提示）。
-    - **质量门禁验证**：6 门严格前置质量门禁全部通过：
-      - `python scripts/build.py`：构建成功，0 错误，内容版本 `7635cc51f7d7`；
-      - `python -B -m unittest scripts.test_rules`：45/45 单元测试全部通过（含新增 `test_45_domestic_plan_21_9_boundaries` 正反边界与隔离验证，耗时 180.5s）；
-      - `python scripts/check_conflicts.py --strict`：PASS，零越界与冲突；
-      - `node --test tests/test_diagnostic.js`：19/19 测试全部通过（耗时 1.8s）；
-      - `python -B -m unittest scripts.test_score_engine`：4/4 测试全部通过（耗时 0.02s）；
-      - `python scripts/verify_mirrors.py --pre-release`：PASS，预发布本地完整性与签名校验通过。
-    - **真机边界与恢复**：端到端手机加载及实际运行体验尚未验证（需用户在 Loon 更新远程规则集及 DNS 插件后正常使用 1~2 天反馈）；若出现退化或异常，按增量条目单点回退并重新构建，保留既有 31/20 及前序补丁成果。
+  * **国内常用服务 21 条直连规则 + 9 条配套 DNS 实施发布与收尾（2026-10-05，Gemini 执行收尾）**：
+    - **任务依据与范围**：严格依据 `08-ChatGPT-最终共识与Gemini执行交接.md` 清单执行；纯本地增补 21 条规则至 `rules/custom/China-Personal.list`，9 条 DNS 映射至 `plugins/Loon-China-DNS.lpx` 的 `[Host]`；严格排除 `ndstatic.cdn.bcebos.com` 及百度云整域，不整包引入大厂目录。
+    - **资产与缓存快照**：China-Personal 63 → 84 (+21)；China-Direct 631 → 652 (+21)；19 规则集总规则数 21,267 → 21,288 (+21)；Host 映射 95 → 104 (+9)；决策账本 85 → 106 (+21，全部 verified: false，复查周期 180 天)；manifest 内容版本 `7635cc51f7d7`；其余 18 个规则集内容保持不变。披露已跟踪缓存刷新：`7871aa32a3ea6248.list` 从 19,230 刷新至 19,258 行，来源锁未改，China-GeoIP 发布集合仍为 19,244 条，无需回退缓存。
+    - **提交、CI 与公开资产核验**：发布提交为 `8de8544ecfa3741e4fb12a5a15e0312f238b8c1c`；远端 GitHub Actions 发布 CI Run #78（ID `37328009178`）核验成功（completed / success）；公开主、备产物取回核对通过（SHA256 一致，见 09 号证据）。
+    - **测试守护补强与维护指引收尾（F1/F2/F3）**：
+      - 测试补强（F3）：对 `test_45_domestic_plan_21_9_boundaries` 补充真实匹配模拟（复用 `simulate_hit` 的 `load_dist_rules` 与 `match_target`）与严格负向边界断言（隔离额外子域、未批准同族主机、禁止的共享云反例，并以内存突变规则验证断言灵敏度）；移除对账本 21 条永久 `verified: false` 的锁定，保留 APPROVED 决策与 boolean 类型断言，确保合法未来验证不被误阻；
+      - 文档校正（F2）：消除 `docs/app-audit-matrix.md` 中缺乏真机证据的过度体验断言（改为“规则与DNS已收录，相关效果待观察”）；将 `docs/China-Personal-Matrix.md` 中 9 处常规“抓包”要求降级为维护者低负担标准指引（AI 先核对现有规则与公开资料，确需手机证据才给出单次低负担步骤）；
+      - 汇报校正（F1）：澄清携程/飞猪/航旅/139邮箱等 7 项为 Phase 1.5 既有保留规则而非本批新增。
+    - **真机边界与恢复**：手机端实际加载与日常使用体验仍未验收（保留待日常使用反馈确认）；若出现退化或异常，按增量条目单点回退并重新构建，保留既有 31/20 及前序补丁成果。
 
 ---
 

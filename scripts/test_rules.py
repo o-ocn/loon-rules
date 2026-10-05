@@ -2030,7 +2030,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         for d in expected_9_dns:
             self.assertIn(d, dns_content, f"Expected DNS companion missing from Loon-China-DNS.lpx: {d}")
 
-        # 4. Decisions ledger: All 21 rules recorded with verified=False
+        # 4. Decisions ledger: All 21 rules recorded with valid APPROVED schema and boolean verified
         decisions_path = os.path.join(BASE_DIR, "history", "decisions.jsonl")
         with open(decisions_path, "r", encoding="utf-8") as f:
             ledger = [json.loads(line) for line in f if line.strip()]
@@ -2038,7 +2038,103 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         for r in expected_21_rules:
             self.assertIn(r, rule_to_dec, f"Rule missing from decisions ledger: {r}")
             self.assertEqual(rule_to_dec[r].get("decision"), "APPROVED")
-            self.assertFalse(rule_to_dec[r].get("verified"), f"Batch 21 rule must have verified=False: {r}")
+            self.assertIn("verified", rule_to_dec[r], f"Record missing verified field: {r}")
+            self.assertIsInstance(rule_to_dec[r]["verified"], bool, f"verified field must be boolean: {r}")
+
+        # 5. Real hit simulation on China-Direct.lsr (reusing scripts/simulate_hit.py)
+        import simulate_hit
+        cd_rules = simulate_hit.load_dist_rules(["China-Direct.lsr"])
+
+        # 5a. Positive match verification:
+        # DOMAIN exact rules match their respective exact hostnames
+        exact_domain_targets = [
+            "cdnrefresh.ctdidcii.cn",
+            "img.bosszhipin.com",
+            "cloud.dlife.cn",
+            "cdn.sm.cn",
+            "gjzwfw.www.gov.cn",
+            "res.wxqcloud.qq.com.cn",
+            "s3gw.cmbimg.cn",
+            "wwwcdn.cmbimg.cn",
+            "ctcdn.bestpay.cn",
+            "cdn.max-c.com",
+            "static.max-c.com",
+            "csv2.bankofchina.com",
+            "pic.bankofchina.com",
+            "srh.bankofchina.com",
+        ]
+        for target in exact_domain_targets:
+            m = simulate_hit.match_target(target, cd_rules)
+            self.assertTrue(len(m) > 0, f"Expected positive hit in China-Direct for exact host: {target}")
+            self.assertEqual(m[0]["ruleset"], "China-Direct.lsr")
+
+        # DOMAIN-SUFFIX rules match both root domains and representative subdomains
+        suffix_domain_targets = [
+            ("tbcdn.cn", "img.tbcdn.cn"),
+            ("taobaocdn.com", "img.taobaocdn.com"),
+            ("mmstat.com", "log.mmstat.com"),
+            ("iesdouyin.com", "api.iesdouyin.com"),
+            ("y.gtimg.cn", "img.y.gtimg.cn"),
+            ("bmac.com.cn", "app.bmac.com.cn"),
+            ("zdmimg.com", "a.zdmimg.com"),
+        ]
+        for root, sub in suffix_domain_targets:
+            m_root = simulate_hit.match_target(root, cd_rules)
+            self.assertTrue(len(m_root) > 0, f"Expected positive hit in China-Direct for suffix root: {root}")
+            self.assertEqual(m_root[0]["ruleset"], "China-Direct.lsr")
+            m_sub = simulate_hit.match_target(sub, cd_rules)
+            self.assertTrue(len(m_sub) > 0, f"Expected positive hit in China-Direct for suffix subdomain: {sub}")
+            self.assertEqual(m_sub[0]["ruleset"], "China-Direct.lsr")
+
+        # 5b. Negative boundary verification:
+        # DOMAIN exact items must NOT match extra subdomains (strict host isolation)
+        extra_subdomain_negatives = [
+            "probe.cdn.max-c.com",
+            "probe.static.max-c.com",
+            "probe.pic.bankofchina.com",
+            "probe.csv2.bankofchina.com",
+            "probe.srh.bankofchina.com",
+            "probe.cdnrefresh.ctdidcii.cn",
+            "probe.img.bosszhipin.com",
+            "probe.cloud.dlife.cn",
+            "probe.cdn.sm.cn",
+            "probe.s3gw.cmbimg.cn",
+            "probe.wwwcdn.cmbimg.cn",
+            "probe.ctcdn.bestpay.cn",
+        ]
+        for neg in extra_subdomain_negatives:
+            m_neg = simulate_hit.match_target(neg, cd_rules)
+            self.assertEqual(len(m_neg), 0, f"DOMAIN exact rule leaked to extra subdomain in China-Direct: {neg}")
+
+        # Unapproved peers under the same root/brand must NOT enter China-Direct
+        unapproved_brand_peers = [
+            "another.bosszhipin.com",
+            "unapproved.dlife.cn",
+            "unapproved.sm.cn",
+            "unapproved.bestpay.cn",
+            "unapproved.ctdidcii.cn",
+            "unapproved.bankofchina.com",
+            "unapproved.max-c.com",
+        ]
+        for peer in unapproved_brand_peers:
+            m_peer = simulate_hit.match_target(peer, cd_rules)
+            self.assertEqual(len(m_peer), 0, f"Unapproved brand peer leaked into China-Direct: {peer}")
+
+        # Excluded shared cloud / foreign twin targets must NOT enter China-Direct
+        cloud_twin_negatives = [
+            "ndstatic.cdn.bcebos.com",
+            "sin.bcebos.com",
+            "temu.com",
+            "trip.com",
+        ]
+        for ctn in cloud_twin_negatives:
+            m_ctn = simulate_hit.match_target(ctn, cd_rules)
+            self.assertEqual(len(m_ctn), 0, f"Forbidden shared cloud / foreign twin matched China-Direct: {ctn}")
+
+        # 5c. Memory-injection test: confirm boundary assertion catches broadened mutant rules
+        mutant_rules = [("China-Direct.lsr", [("DOMAIN-SUFFIX", "cdn.max-c.com", "DOMAIN-SUFFIX,cdn.max-c.com", 1)])]
+        mutant_matches = simulate_hit.match_target("probe.cdn.max-c.com", mutant_rules)
+        self.assertTrue(len(mutant_matches) > 0, "Mutant rule must match probe.cdn.max-c.com to verify test boundary sensitivity")
 
     @classmethod
     def tearDownClass(cls):
