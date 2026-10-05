@@ -46,6 +46,8 @@
   * **vegslb.com 定向配套试行 (Targeted Paired Trial)**：依据 ChatGPT 与 DeepSeek 联合审定第十八节共识（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），在 `rules/custom/China-Personal.list` 补充 `DOMAIN-SUFFIX,vegslb.com` 直连规则，并在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 阿里极速 DNS 配套映射；`China-Direct.lsr` 扩充至 629 条（净增 1 条），全库总有效规则达到 **21,237 条**；决策账本按试行登记（verified 保持 false，效果待验证）。
   * **jspcdn.cn 定向直连补丁**：2026-10-04 所有者明确授权 ChatGPT/Codex 直接执行并推送，针对该域名再次落入 FINAL 且上传517B、下载0B的请求，新增 `DOMAIN-SUFFIX,jspcdn.cn` 至 China-Personal 并编译进 China-Direct；现有 `*.cn` 国内DNS映射已命中，本次不改DNS。China-Personal 62条、China-Direct 630条、全库21,266条。工程检查通过，手机有效加载与体验、国内IP兜底为何未命中仍待验证；未把无下行现象认定为确定握手故障或卡顿唯一原因。
   * **GlobalSign 精确域名出口调整（2026-10-05）**：按所有者要求新增 `DOMAIN,secure.globalsign.com` 至 China-Personal 并编译进 China-Direct；仅调整该主机出口，不扩展 GlobalSign 整域、不改DNS或私人配置。官方资料确认该主机提供证书文件，未找到其代理请求触发本次淘宝验证码的证据；手机加载、证书请求可用性及验证码变化仍待验证，账本保持 `verified=false`。
+  * **淘宝 / 阿里上游配套覆盖审计（2026-10-05）**：声明接入的 `Alibaba.list` 57条在产物中全部保留，但上游推荐配套的 `Alibaba_Domain.list` 1263个域名后缀未在来源配置声明；其中21项被现有China-Direct域名规则覆盖，1242项无域名覆盖。该数为阿里集团目录差异，非请求失败数或全部应直连项；淘宝主域已覆盖，本次滑块因果仍未确认。详细边界与后续补齐方向见待办15和本轮核查记录。
+
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
   2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
@@ -75,7 +77,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 630 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、国内CDN补丁(jspcdn.cn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 62条，含携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb/jspcdn等) | 100% 策略中立 |
+| **`China-Direct.lsr`** | 631 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、国内CDN补丁(jspcdn.cn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 63条，含精确证书主机secure.globalsign.com、携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb/jspcdn等) | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,244 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -203,6 +205,8 @@
   13. **兜底与抖音覆盖专项待核验（2026-10-05）**：核对手机已加载的 China-GeoIP 内容、启用与 DIRECT 绑定，以及 IP 模式实际生效情况。本轮公共 HTTPS DNS 对截图 JSPCDN 主机仅返回 IPv6，归档新旧配置均写有 `ip-mode = v4-only` / `ipv6-vif = off`；这是待验证线索，不是已确认回归原因。设计文档要求的 `iesdouyin.com` 当前缺少域名规则；`bytegeckoext.com` / `tlivegslb.com` 属候选缺口，需核验业务边界后决定。现有模拟器不模拟域名解析后的 IP 兜底过程，不能用离线样例通过代替手机验收。
 
   14. **GlobalSign 精确域名调整与淘宝验证观察（2026-10-05）**：仅更新 China-Direct 后正常使用，不要求反复登录、退出账号或抓包。证书请求走代理不等于淘宝业务请求走代理；若验证码持续出现，应核对淘宝业务实际分流和正常风控因素，不盲目追加证书厂商整域直连。若证书访问退化，只撤本次精确域名。
+
+  15. **淘宝 / 阿里配套域名接入缺口补齐方案（2026-10-05）**：按淘宝官方资源目录与阿里云国内客户端验证接口，审定有限补齐清单；现有 `tbcdn.cn`、`taobaocdn.com`、`mmstat.com` 及部分 `aliyuncs.com` 下验证码接口无域名覆盖。`aliyuncs.com` 为公有云整域，上游还收录国际服务，不能整包直连。配套文件为 `.域名` 格式，现有构建器不能直接解析，未来接入须明确转换和业务过滤。先确定国内边界、准备可回退差异再发布，不要求所有者逐域名抓包；手机实际出口与本次滑块触发原因仍待验证。
 
 ---
 
@@ -365,6 +369,12 @@
     - **范围与恢复**：只新增一条 `DOMAIN,secure.globalsign.com`；China-Personal 62→63，China-Direct 630→631，全库21,266→21,267；其余18个规则集、插件、DNS、QUIC、私人配置不改。任务恢复起点 `b196154d7b08c3644d76ef778b13dadbe4a409fb`，回退只撤本条并重建。
     - **证据依据**：[GlobalSign官方证书下载](https://valid.r1.roots.globalsign.com/)；[荣耀官方淘宝验证说明](https://www.honor.com/cn/support/content/zh-cn15834860/)；[阿里云验证码信息采集](https://help.aliyun.com/zh/captcha/captcha2-0/product-overview/captcha-2-0-collection-letter-description)。当前淘宝 taobao.com、alicdn.com、alipay.com 已有国内分流规则，不能用仓库覆盖代替手机实际加载结论。
     - **验证与下一步**：构建PASS、规则44/44、严格冲突检测PASS、诊断19/19、评分4/4、预发布完整性PASS；精确主机命中与其他GlobalSign主机排除均通过，其余18个规则集内容保持不变，manifest内容版本 `b3eb6329956f`。账本85条解析通过、原84条记录保留，新增记录verified保持false。手机只更新China-Direct并重连后正常用；不把验证码是否消失当作单次因果证明，不要求用户统计或抓包。
+
+  * **淘宝 / 阿里上游配套规则差异核查（2026-10-05，ChatGPT/Codex）**：
+    - **快照与接入事实**：项目核查基线 `c33db3312a7f3d2360b485d7bff584d0575e20e4`，与实时远端一致；对应GlobalSign发布CI Run #77（ID `37247045782`）已完成success。上游固定快照 `5a61490ab88ddaff4e9dbd7740b881d75157a49f` 的[Alibaba README](https://github.com/blackmatrix7/ios_rule_script/blob/5a61490ab88ddaff4e9dbd7740b881d75157a49f/rule/Loon/Alibaba/README.md)推荐 Alibaba.list 与 Alibaba_Domain.list 共同使用；sources.yml 仅声明前者，来源锁为57、min_rules为50。
+    - **逐条结果与格式边界**：Alibaba.list 实际为3条DOMAIN-SUFFIX、53条IP-CIDR、1条IP-CIDR6，全部57条在当前产物原样保留；未发现该文件编译丢条。配套1263条均为 `.域名`，按后缀语义与全19个规则集对照，21项已有China-Direct覆盖（20项精确同名、userimg.qunar.com由qunar.com包含），其余1242项无域名规则命中；独立对照与既有模拟器结果一致。现有clean_rule_line对原始1263行均报INVALID_SYNTAX，转换为DOMAIN-SUFFIX后可解析，不能仅追加URL完成接入。
+    - **业务证据与因果边界**：[淘宝官方小程序域名管控](https://developer.alibaba.com/docs/doc.htm?articleId=120157&docType=1&treeId=634)列出tbcdn.cn、taobaocdn.com、mmstat.com等资源/请求域名；[阿里云验证码客户端FAQ](https://help.aliyun.com/zh/captcha/captcha2-0/user-guide/captcha-2-0-client-access-faq)列出captcha-open、static-captcha、cloudauth-device等客户端接口，当前部分缺域名覆盖，但没有本次淘宝实际调用证据。Loon[官方匹配说明](https://nsloon.app/docs/Rule/)表示域名未命中后仍可进行DNS/IP匹配，离线无域名命中不等于手机必走FINAL；验证码资源加载失败与触发滑块也不能混为因果。GlobalSign精确域名调整仍不作为已确认验证码修复。
+    - **处理与下一步**：本轮只更新事实源和同步摘要，并纠正上一轮已发布的China-Direct/Personal表格计数；规则、DNS、账本、manifest、构建器、私人配置未改。按国内资源/验证接口准备有限补齐方案，排除阿里国际业务及公有云整域；正式审定后单批发布、正常使用观察，不要求所有者逐App抓包。Hub地图与正式事实源路径未变，无需复制详细状态。文档恢复起点为上述核查基线。
 
 ---
 
