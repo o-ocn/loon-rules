@@ -31,7 +31,7 @@
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **已核验的规则发布 CI 运行事实**：GitHub Actions Run **#68**（ID `37124392780`，针对规则发布基线 commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`，push 事件）执行完毕，状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/37124392780`；历史旧流水线包括 Run #49 ID `36753242952` 等）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,267 条有效规则**），已全量构建至 `dist/`；本轮本地完整性校验通过，远端发布与手机生效以对应发布验证为准。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,288 条有效规则**），已全量构建至 `dist/`；本轮本地完整性校验通过，远端发布与手机生效以对应发布验证为准。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,244 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -46,7 +46,8 @@
   * **vegslb.com 定向配套试行 (Targeted Paired Trial)**：依据 ChatGPT 与 DeepSeek 联合审定第十八节共识（`CHATGPT-DEEPSEEK-VEGSLB-CONSENSUS-FINAL`），在 `rules/custom/China-Personal.list` 补充 `DOMAIN-SUFFIX,vegslb.com` 直连规则，并在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 增补 `*.vegslb.com = server:223.5.5.5` 阿里极速 DNS 配套映射；`China-Direct.lsr` 扩充至 629 条（净增 1 条），全库总有效规则达到 **21,237 条**；决策账本按试行登记（verified 保持 false，效果待验证）。
   * **jspcdn.cn 定向直连补丁**：2026-10-04 所有者明确授权 ChatGPT/Codex 直接执行并推送，针对该域名再次落入 FINAL 且上传517B、下载0B的请求，新增 `DOMAIN-SUFFIX,jspcdn.cn` 至 China-Personal 并编译进 China-Direct；现有 `*.cn` 国内DNS映射已命中，本次不改DNS。China-Personal 62条、China-Direct 630条、全库21,266条。工程检查通过，手机有效加载与体验、国内IP兜底为何未命中仍待验证；未把无下行现象认定为确定握手故障或卡顿唯一原因。
   * **GlobalSign 精确域名出口调整（2026-10-05）**：按所有者要求新增 `DOMAIN,secure.globalsign.com` 至 China-Personal 并编译进 China-Direct；仅调整该主机出口，不扩展 GlobalSign 整域、不改DNS或私人配置。官方资料确认该主机提供证书文件，未找到其代理请求触发本次淘宝验证码的证据；手机加载、证书请求可用性及验证码变化仍待验证，账本保持 `verified=false`。
-  * **国内常用服务上游覆盖审计（2026-10-05）**：Alibaba.list全部57条保留，但配套Alibaba_Domain.list未声明接入，其中21/1263项已有域名覆盖。扩展核对22组参考来源后，微信、抖音、京东、B站已接入清单的域名语义均完整；腾讯集团与字节扩展目录未接入，QQ音乐实际引用的y.gtimg.cn、设计要求的iesdouyin.com及部分其他常用服务参考域名仍缺覆盖。来源范围差异不等于手机必走FINAL、App失败率或已确认卡顿/验证码原因；全清单核查及最终范围见待办15/16及本轮核查记录；双方已同意21条规则加入现有个人层、9条DNS加入现有插件，实施待Gemini，生产规则未改。
+  * **国内常用服务上游覆盖审计（2026-10-05）**：Alibaba.list全部57条保留，但配套Alibaba_Domain.list未声明接入，其中21/1263项已有域名覆盖。扩展核对22组参考来源后，微信、抖音、京东、B站已接入清单的域名语义均完整；腾讯集团与字节扩展目录未接入，QQ音乐实际引用的y.gtimg.cn、设计要求的iesdouyin.com及部分其他常用服务参考域名仍缺覆盖。来源范围差异不等于手机必走FINAL、App失败率或已确认卡顿/验证码原因；全清单核查及最终范围见待办15/16及本轮核查记录。
+  * **2026-10-05 国内常用服务 21 条直连规则 + 9 条配套 DNS 审定方案正式合入 (Domestic Plan 21/9 Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的最终共识清单（08号交接文档），在 `rules/custom/China-Personal.list` 纯本地扩充 21 条直连规则（含携程国内、飞猪、飞常准、淘宝资源及短链、阿里兼容、BOSS直聘图片、什么值得买图片、小黑盒静态CDN、政务平台入口、北京一卡通、网络身份认证、移动139与天翼云盘、中国银行资源/搜索、招行与翼支付CDN等），China-Personal 从 63 条增至 84 条，`China-Direct.lsr` 从 631 条扩充至 652 条（净增 21 条）；严格排除命中既有禁令的 `ndstatic.cdn.bcebos.com` 及百度云主机；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 扩充 9 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）映射（总数达 104 条）；全库有效规则达到 **21,288 条**；决策账本按试行登记（verified 保持 false，复查周期 180 天，效果待验证）。
 
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
@@ -77,7 +78,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 631 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、国内CDN补丁(jspcdn.cn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层 (China-Personal 63条，含精确证书主机secure.globalsign.com、携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb/jspcdn等) | 100% 策略中立 |
+| **`China-Direct.lsr`** | 652 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、国内CDN补丁(jspcdn.cn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层与 2026-10-05 审定批次 (China-Personal 84条，含精确证书主机secure.globalsign.com、携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb/jspcdn，以及 2026-10-05 补齐的淘宝/阿里资源与兼容域、BOSS直聘图片、ZDM图片、小黑盒静态资源、政务平台、天翼云盘、中国银行资源/搜索、招行与翼支付CDN等) | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,244 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -210,7 +211,7 @@
 
   15. **淘宝 / 阿里配套域名接入缺口补齐方案（2026-10-05）**：tbcdn.cn、taobaocdn.com、mmstat.com已在本批21＋9共识中批准通过个人层补齐，按待办16实施；不宣称配套来源已经接入。部分aliyuncs.com下验证码接口虽有公开文档线索，但尚未纳入本批，不能据此补公有云整域或断言本次滑块原因。配套来源为点域名格式，未来确需接入时再评估转换及业务过滤，不捆绑本批编译器改造；不要求所有者逐域名抓包。
 
-  16. **常用国内服务资源补齐方案（2026-10-05，21＋9共识已达成、待Gemini实施）**：已对63项用户清单/类别/别名及26项扩展候选完成桌面核查，不能等同App完整验收。ChatGPT与DeepSeek同意21条规则全部加入现有China-Personal、9条DNS加入现有插件；不新增来源、不改编译器/YAML解析器/来源锁/评分器。ndstatic.cdn.bcebos.com命中现有整树HARD_BLOCK，本批排除且不改旧禁令。最终离线预览631→652，原631条保留；当前95条Host加9条无重复，精确主机子域及国际/共享云反例未新增放行。正式构建、发布与手机效果未执行/未验收。自包含执行交接：`E:\Document\AI-Workspace\loon-rules\2026-10-05-domestic-source-plan\08-ChatGPT-最终共识与Gemini执行交接.md`；最终预览在同目录candidate-final-21-9，原22/10、18条例外和sources.additions仅为旧方案证据。Gemini按共识实施、维护现有测试和定点修正过时矩阵，verified=false，真实带时区记账、门禁/远端CI/产物验收后发布；无需所有者逐App抓包。IP兜底、IoT区域与325 LIFE身份保留独立未决。
+  16. **常用国内服务资源补齐方案（2026-10-05，Gemini 已完成 21＋9 实施与本地发布前门禁验证，待手机端使用观察）**：已对63项用户清单/类别/别名及26项扩展候选完成桌面核查，不能等同App完整验收。ChatGPT与DeepSeek审定同意21条规则加入China-Personal、9条DNS加入现有插件；不新增来源、不改编译器/YAML解析器/来源锁/评分器。ndstatic.cdn.bcebos.com命中现有整树HARD_BLOCK，本批排除且不改旧禁令。Gemini 已按共识实施落地，China-Personal 扩充至 84 条，China-Direct 扩充至 652 条，Host 映射扩充至 104 条，账本补充 21 条（verified 标为 false），全部 6 门质量门禁（单测 45/45、严格冲突、诊断 19/19、评分 4/4、预发布校验）全部通过；手机端加载与使用体验留待用户更新后正常观察反馈，无需逐 App 抓包。IP兜底、IoT区域与325 LIFE身份保留独立未决。
 
 ---
 
@@ -388,6 +389,19 @@
     - **新增确认事实**：北京一卡通AppStore开发者网站/隐私使用bmac.com.cn，国家网络身份认证公安部App条目隐私链接cdnrefresh.ctdidcii.cn，均无现有域名覆盖；多个常用服务官网另有窄资源缺项。12306/银行/滴滴/携程等专用目录含其他或国际业务，不能整包直连；旧矩阵存在过时准入状态及过度体验保证，执行时须按真实规则状态修正。
     - **方案调整与最终验证**：初始22/10加两个有限来源的原型仅为旧方案证据；经两方审核改为21条纯本地规则＋9条DNS，不捆绑来源或编译器改造。ndstatic.cdn.bcebos.com因既有BLOCK/ENTIRE_DOMAIN_TREE及HARD_BLOCK排除，不允许reason备注绕过；其余21条评分处于CONFIDENCE_SCORE，人工共识不是自动放行，实施账本须verified=false。最终候选使用现有剪枝/模拟器预演631→652、无旧规则删除，正例和窄边界/国际反例通过；95＋9条Host无重复。未进行正式build、全量发布门禁或手机验收；完整21/9与证据见待办16。
     - **处理与恢复**：本轮只将最终共识与待实施状态合并进PROJECT_STATE及AI_HUB_SYNC；92个受保护生产文件SHA256与原核查相同，规则、DNS、来源、账本、manifest、构建器与私人配置未改。Gemini执行本批前重新核对真实基线并设一次恢复起点，发布后仅更新两项资产并正常用；无明显改善不默认撤整批，退化时按相关增量单点恢复，保留31/20及既有补丁。本轮审核收尾的文档恢复起点 `84fa95b16cab38414a96ac817028d0196fad3404`；Hub地图/单一事实源归属不变。
+
+  * **国内常用服务 21 条直连规则 + 9 条配套 DNS 实施发布（2026-10-05，Gemini 执行收尾）**：
+    - **任务来源与范围**：严格依据 `08-ChatGPT-最终共识与Gemini执行交接.md` 清单执行；纯本地增补 21 条规则至 `rules/custom/China-Personal.list`，9 条 DNS 映射至 `plugins/Loon-China-DNS.lpx` 的 `[Host]`；严格排除 `ndstatic.cdn.bcebos.com` 及百度云整域，不整包引入大厂目录。
+    - **资产变化**：China-Personal 63 → 84 (+21)；China-Direct 631 → 652 (+21)；19 规则集总规则数 21,267 → 21,288 (+21)；Host 映射 95 → 104 (+9)；决策账本 85 → 106 (+21，全部 verified: false，复查周期 180 天)；manifest 内容版本 `7635cc51f7d7`；其余 18 个规则集内容保持不变。
+    - **矩阵与文档校正**：校正 `docs/China-Personal-Matrix.md` 中的过时准入状态，将 `tb.cn` 修正为淘宝官方短链（非贴吧短链），补充 2026-10-05 批次；在 `docs/app-audit-matrix.md` 中全面去绝对化断言（删除“彻底治愈/秒开/彻底闭环/彻底根除”等词汇，增加端到端真机核验边界提示）。
+    - **质量门禁验证**：6 门严格前置质量门禁全部通过：
+      - `python scripts/build.py`：构建成功，0 错误，内容版本 `7635cc51f7d7`；
+      - `python -B -m unittest scripts.test_rules`：45/45 单元测试全部通过（含新增 `test_45_domestic_plan_21_9_boundaries` 正反边界与隔离验证，耗时 180.5s）；
+      - `python scripts/check_conflicts.py --strict`：PASS，零越界与冲突；
+      - `node --test tests/test_diagnostic.js`：19/19 测试全部通过（耗时 1.8s）；
+      - `python -B -m unittest scripts.test_score_engine`：4/4 测试全部通过（耗时 0.02s）；
+      - `python scripts/verify_mirrors.py --pre-release`：PASS，预发布本地完整性与签名校验通过。
+    - **真机边界与恢复**：端到端手机加载及实际运行体验尚未验证（需用户在 Loon 更新远程规则集及 DNS 插件后正常使用 1~2 天反馈）；若出现退化或异常，按增量条目单点回退并重新构建，保留既有 31/20 及前序补丁成果。
 
 ---
 

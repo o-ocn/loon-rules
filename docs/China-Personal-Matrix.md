@@ -13,44 +13,44 @@
 
 本视图面向**真实应用层**（App 视角），明确记录哪些个人高频应用的核心主干域名已建立防护，哪些存在第三方 SDK 或动态接口潜在盲区，以便未来遇到分流或网络卡顿异常时**第一时间定向排查**。
 
-### 1. 核心已知域名已覆盖的高频 App（基础体验已保障）
+### 1. 核心已知域名已覆盖的高频 App
 
 | 应用分类 | 应用名称 | 规则覆盖来源 | 核心生效域名 | 当前保障体验 |
 | :--- | :--- | :--- | :--- | :--- |
-| **出行民航** | **航旅纵横** | Phase 1 (China-Personal) | `umetrip.com` | 彻底解决行程刷新、电子登机牌 30s 代理延迟 |
-| | **滴滴出行** | Phase 1 (China-Personal) | `didichuxing.com` | 司机接单定位与订单调度 API 秒级直连 |
-| | **哈啰** | Phase 1 (China-Personal) | `hellobike.com` | 单车开锁扫码与顺风车即时通讯直连 |
-| | **铁路 12306** | 历史 Custom (`China-Direct.list`) | `12306.cn` | 购票车票查询与乘车码离线/在线刷新直连 |
-| **物流快递** | **顺丰速运** | Phase 1 (China-Personal) | `sf-express.com` | 查件推送与快递员寄件下单直连 |
-| | **菜鸟** | Phase 1 (China-Personal) | `cainiao.com` | 菜鸟裹裹取件码、驿站自提柜扫码秒开 |
-| | **通达系快递** | Phase 1 (China-Personal) | `zto.com`, `ytoexpress.com`, `yundaex.com`, `sto.cn` | 中通/圆通/韵达/申通物流轨迹查询全覆盖 |
-| **办公生产力** | **WPS Office** | Phase 1 (China-Personal) | `wps.cn` | 多端云文档秒级漫游同步，消除异地登录风控 |
+| **出行民航** | **航旅纵横** | Phase 1 (China-Personal) | `umetrip.com` | 行程刷新、电子登机牌直连访问 |
+| | **滴滴出行** | Phase 1 (China-Personal) | `didichuxing.com` | 乘客端定位与订单调度 API 直连 |
+| | **哈啰** | Phase 1 (China-Personal) | `hellobike.com` | 单车开锁与即时通讯直连 |
+| | **铁路 12306** | 历史 Custom (`China-Direct.list`) | `12306.cn` | 购票车票查询与乘车码刷新直连 |
+| **物流快递** | **顺丰速运** | Phase 1 (China-Personal) | `sf-express.com` | 查件推送与寄件下单直连 |
+| | **菜鸟** | Phase 1 (China-Personal) | `cainiao.com` | 取件码与驿站扫码直连 |
+| | **通达系快递** | Phase 1 (China-Personal) | `zto.com`, `ytoexpress.com`, `yundaex.com`, `sto.cn` | 中通/圆通/韵达/申通物流轨迹查询直连 |
+| **办公生产力** | **WPS Office** | Phase 1 (China-Personal) | `wps.cn` | 多端云文档漫游同步直连 |
 | | **钉钉** | Phase 1 (China-Personal) | `dingtalk.com` | 考勤打卡、内部审批与即时消息直连 |
-| | **企业微信** | WeChat 上游包 | `work.weixin.qq.com` | 随微信官方包全量直连覆盖 |
-| **社交生活** | **微信 / QQ** | WeChat / Tencent 上游包 | `qq.com`, `weixin.qq.com`, `qpic.cn` | 聊天、朋友圈图床与语音视频全量直连 |
-| | **豆瓣** | Phase 1 (China-Personal) | `douban.com`, `doubanio.com` | 动态图文与书影音资料秒级加载 |
+| | **企业微信** | WeChat 上游包 | `work.weixin.qq.com` | 随微信官方上游包直连覆盖 |
+| **社交生活** | **微信 / QQ** | WeChat 上游包 + Custom | `qq.com`, `weixin.qq.com`, `qpic.cn` | 聊天、朋友圈图床与语音视频直连 |
+| | **豆瓣** | Phase 1 (China-Personal) | `douban.com`, `doubanio.com` | 图文与书影音资料直连加载 |
 | | **NGA 社区** | Phase 1 (China-Personal) | `nga.cn`, `ngabbs.com` | 论坛发帖与附件图片直连加载 |
-| | **起点读书** | Phase 1 (China-Personal) | `qidian.com` | 云端书架漫游与小说章节加载 |
-| | **什么值得买** | Phase 1 (China-Personal) | `smzdm.com` | 导购社区爆料与好价推荐流秒开 |
-| **电商购物** | **淘宝 / 闲鱼 / 1688**| Alibaba 上游包 | `taobao.com`, `alicdn.com`, `1688.com` | 商品详情页与海量商品图秒级加载 |
-| | **京东 / 京东到家**| JingDong 上游 + Phase 1 | `jd.com`, `360buyimg.com`, `jddj.com`, `daojia.com` | 商城主站及生鲜即时送全链路直连 |
+| | **起点读书** | Phase 1 (China-Personal) | `qidian.com` | 云端书架漫游与小说章节直连加载 |
+| | **什么值得买** | Phase 1 (China-Personal) | `smzdm.com` | 导购社区爆料与推荐流直连加载 |
+| **电商购物** | **淘宝 / 闲鱼 / 1688**| Alibaba 上游包 | `taobao.com`, `alicdn.com`, `1688.com` | 商品详情页与商品图直连加载 |
+| | **京东 / 京东到家**| JingDong 上游 + Phase 1 | `jd.com`, `360buyimg.com`, `jddj.com`, `daojia.com` | 商城主站及即时送全链路直连 |
 | | **拼多多** | 历史 Custom (`China-Direct.list`) | `pinduoduo.com`, `yangkeduo.com` | 拼单与商品图床直连 |
-| **内容音视频** | **抖音 / 伴侣** | DouYin 上游 + 历史 Custom | `douyin.com`, `iesdouyin.com`, `zzcdnx.com` | 直播流与自建边缘 CDN 秒开，无首帧卡顿 |
-| | **哔哩哔哩** | BiliBili 上游包 | `bilibili.com`, `bilivideo.com` | 4K/高码率视频流与弹幕直连 |
-| | **小红书 / 知乎** | 历史 Custom (`China-Direct.list`) | `xiaohongshu.com`, `zhihu.com`, `zhimg.com` | 图文推荐流与大图加载直连 |
-| **金融支付** | **微信支付 / 支付宝**| 上游腾讯/阿里 + Custom | `alipay.com`, `tenpay.com` | 扫码支付与收银台全链路直连 |
+| **内容音视频** | **抖音 / 伴侣** | DouYin 上游 + 历史 Custom | `douyin.com`, `iesdouyin.com`, `zzcdnx.com` | 直播流与自建边缘 CDN 直连 |
+| | **哔哩哔哩** | BiliBili 上游包 | `bilibili.com`, `bilivideo.com` | 视频流与弹幕直连 |
+| | **小红书 / 知乎** | 历史 Custom (`China-Direct.list`) | `xiaohongshu.com`, `zhihu.com`, `zhimg.com` | 图文推荐流与大图直连加载 |
+| **金融支付** | **微信支付 / 支付宝**| WeChat/Alibaba 上游 + Custom | `alipay.com`, `tenpay.com` | 扫码支付与收银台全链路直连 |
 | | **招商银行/掌上生活**| 历史 Custom (`China-Direct.list`) | `cmbchina.com`, `cmbimg.com` | 手机银行账户明细与账单查询直连 |
 | | **云闪付 / 银联** | 历史 Custom (`China-Direct.list`) | `95516.com`, `unionpay.com` | 银联跨行清算与付款码展码直连 |
 | | **国有六大行** | 历史 Custom (`China-Direct.list`) | `icbc.com.cn`, `ccb.com`, `boc.cn`, `abchina.com` 等 | 工建农中交邮核心手机银行直连 |
-| **政务民生** | **交管 12123** | Phase 1 (China-Personal) | `122.gov.cn` | 驾照查分与违章处理秒级响应 |
-| | **个人所得税** | Phase 1 (China-Personal) | `chinatax.gov.cn` | 每年汇算清缴与专项附加扣除申报直连 |
-| | **国家医保平台** | Phase 1 (China-Personal) | `nhsa.gov.cn` | 医保码展码与门诊统筹报销直连 |
+| **政务民生** | **交管 12123** | Phase 1 (China-Personal) | `122.gov.cn` | 驾照查分与违章处理直连 |
+| | **个人所得税** | Phase 1 (China-Personal) | `chinatax.gov.cn` | 汇算清缴与专项附加扣除申报直连 |
+| | **国家医保平台** | Phase 1 (China-Personal) | `nhsa.gov.cn` | 医保码展码与门诊统筹直连 |
 | | **全国人社 12333** | Phase 1 (China-Personal) | `12333.gov.cn` | 社保账户明细与电子社保卡直连 |
 | | **国家移民局 12367**| Phase 1 (China-Personal) | `nia.gov.cn` | 出入境记录与港澳通行证签注查询直连 |
 | | **国家政务服务平台**| Phase 1 (China-Personal) | `gjzwfw.gov.cn` | 一体化政务办事与电子证照直连 |
 | | **北京住房公积金** | Phase 1 (China-Personal) | `gjj.beijing.gov.cn` | 公积金账户结息与提取查询直连 |
 | **医疗问诊** | **微医 / 好大夫** | Phase 1 (China-Personal) | `guahao.com`, `haodf.com` | 公立医院全国挂号平台与名医问诊直连 |
-| **电信营业** | **中国联通 / 电信** | 历史 Custom + Phase 1 | `10010.com`, `189.cn` | 联通/电信手厅充值与宽带故障报修直连 |
+| **电信营业** | **中国联通 / 电信** | 历史 Custom + Phase 1 | `10010.com`, `189.cn` | 联通/电信手厅充值与宽带报修直连 |
 
 ---
 
@@ -65,11 +65,11 @@
 | **招商银行 / 云闪付 (高级功能)** | 核心交易已直连；特殊人脸/风控待观察 | 核心主域已在直连，但涉及第三方征信查询、人脸核身 SDK（如中视、旷视独立接口）或特殊营销 H5 | 若转账刷脸或抽奖活动白块，检查是否有未收录的第三方金融认证服务二级域名，切忌盲目扩大整行泛域名 |
 | **铁路 12306 (高峰期)** | 核心购票已直连；边缘 CDN 待观察 | 主站 `12306.cn` 已直连，但春运/高峰期可能动态启用第三方商业 CDN（如网宿、腾讯云动态节点）加速排队队列 | 若高峰期排队界面提示网络错误，检查是否有第三方动态 CDN 域名穿透走代理 |
 | **国内主要航司直销 App** | 暂未独立覆盖 (Phase 1.5) | 国航、南航、东航、海航等官方直销 App，目前未单独录入官方域名（如 `csair.com`, `airchina.com.cn`） | 若直接使用各大航司官方 App 购票/选座卡顿，抓包提取该航司主域后单条加入 `China-Personal.list` |
-| **携程旅行** | 国内主站需观察；国际版严禁直连 | 携程包含境内业务（`ctrip.com`）与海外国际业务（`trip.com`），需防止混淆放行 | 使用携程 App 订国内酒店机票如发现较慢，需确认当前请求是否属于 `ctrip.com`；严禁误将 `trip.com` 放入直连 |
-| **飞猪 / 盒马** | 阿里独立业务待观察 | 虽属阿里旗下，但使用独立域名 `fliggy.com`、`freshippo.com`，阿里基础包未完整收录 | 若飞猪出票慢、盒马生鲜结算页卡顿，优先核对是否击穿落入代理，按需移入 A 类 |
-| **天翼云 / 移动云盘** | 暂未独立覆盖 (Phase 1.5) | `ctyun.cn`（天翼云）与 `139.com`（移动云盘）涉及企业级跨境云与历史老业务 | 若使用云盘大文件上传下载速度受限，抓包确认传输端点后录入 |
+| **携程旅行** | 国内主站已直连；国际版严禁直连 | 境内主站 (`ctrip.com`) 与静态 CDN (`c-ctrip.com`) 已在 Phase 1.5 纳入直连；海外国际业务 (`trip.com`) 严格保持代理 | 使用携程 App 订国内酒店机票如发现异常，需确认请求是否属于 `ctrip.com`；严禁误将 `trip.com` 放入直连 |
+| **飞猪 / 盒马** | 核心主域已直连 | `fliggy.com` 与 `freshippo.com` 已在 Phase 1.5 纳入直连；若遇偶发未收录子资源按需针对性排查 | 若飞猪或盒马偶发加载慢，优先核对是否击穿落入代理 |
+| **天翼云 / 移动云盘** | 移动139与天翼云盘网页已直连 | `139.com` 已纳入直连（整域多业务风险已披露）；`cloud.dlife.cn` 已收录；天翼企业级公有云 `ctyun.cn` 暂不全域放行 | 若使用云盘大文件上传下载速度受限，抓包确认传输端点后录入 |
 | **绿米 / 云鲸 / 华硕** | 智能家居硬件待观察 | 扫地机后台图传（`narwal.com`）、智能开关（`aqara.com`）与路由器本地管理 | 若扫地机地图加载慢或家庭网关响应滞后，排查是否未命中直连 |
-| **北京市政一卡通** | 待观察 (Phase 1.5) | 待抓取实际刷码 API 域名（如 `bjsuperpass.com` 或乘车码专用子域） | 若乘车刷码离线提示网络超时，优先抓包确认手机端接口 |
+| **北京市政一卡通** | 核心主域已直连 | `bjsuperpass.com` 与 `bmac.com.cn` 均已收录直连 | 若乘车刷码离线提示网络超时，核对手机端接口 |
 | **三甲医院自建挂号** | 待观察 (Phase 1.5) | 协和、北医三院、301 医院等自建独立挂号预约小程序或微信号 | 微医/好大夫已直连；若挂号直接访问医院自建二级域名，就医时现场抓包后单条精准追加 |
 
 ---
@@ -85,39 +85,43 @@
 | | 哈啰 | `hellobike.com` | **A** | 单车与顺风车高频刚需，国内纯净资产 |
 | | 高德地图/高德打车 | `amap.com`, `autonavi.com` | **B** | 阿里大厂包已覆盖地图主域，打车聚合服务待实际抓包观察是否有第三方独立调度域名 |
 | | 国内主要航司 App | `airchina.com.cn`, `csair.com`, `ceair.com`, `hnair.com` 等 | **B** | 国航、南航、东航、海航等官方直销 App，待实际购票与值机场景抓包按需吸纳 |
-| | 携程旅行 | `ctrip.com`, `c-ctrip.com` | **B** | 携程具全球化涉外业务，暂缓至第二批观察是否存在国际节点混合 |
-| | 飞猪旅行 | `fliggy.com`, `alitrip.com` | **B** | 阿里独立旅游业务，列入第二批观察 |
-| | 飞常准 | `variflight.com`, `feeyo.com`| **B** | 国际航班数据与业务较为复杂，第二批核验后按需吸纳 |
+| | 携程旅行 | `ctrip.com`, `c-ctrip.com` | **A** | 国内核心主站与静态CDN，已在 Phase 1.5 纳入直连 |
+| | 飞猪旅行 | `fliggy.com`, `alitrip.com` | **A** | 阿里独立旅游业务，已在 Phase 1.5 纳入直连 |
+| | 飞常准 | `variflight.com`, `feeyo.com`| **A** | 航班动态核心查询，已在 Phase 1.5 纳入直连 |
 | | 曹操/T3/花小猪 | `caocaokeji.cn`, `t3go.cn`, `huaxiaozhu.com` | **B** | 次要网约出行备用平台，第二批观察 |
 | | *携程国际版* | `trip.com` | **C** | **出海双生**：境外机票酒店必须走代理，严禁加入直连 |
 | **物流** | 顺丰速运 | `sf-express.com` | **A** | 高频查件寄件主力，服务节点 100% 境内电信机房 |
 | | 菜鸟网络 | `cainiao.com` | **A** | 裹裹取件码与驿站扫码核心 API |
-| | 通达系快递 | `zto.com`, `ytoexpress.com`, `yundaex.com`, `sto.cn` | **A** | 国内主力快递包裹轨迹查询平台，一次性解决物流漏网 |
-| | 圆通老域名 | `yto.net.cn` | **B** | 已有 `ytoexpress.com`，为精简规则暂不收录备用后缀 |
+| | 通达系快递 | `zto.com`, `ytoexpress.com`, `yundaex.com`, `sto.cn` | **A** | 国内主力快递包裹轨迹查询平台 |
+| | 圆通老域名 | `yto.net.cn` | **A** | 已在 Phase 1.5 纳入直连 |
 | | 极兔速递(国内)| `jtexpress.com.cn` | **B** | 国内特定接口，需与国际业务隔离验证 |
 | | *极兔全球网* | `jtexpress.com` | **C** | 涉外与东南亚门户，维持代理策略 |
-| **电商** | 什么值得买 | `smzdm.com` | **A** | 高频消费资讯与导购社区，国内纯净无冲突 |
+| **电商** | 什么值得买 | `smzdm.com`, `zdmimg.com` | **A** | 高频消费资讯与导购社区，官网图片 CDN 已于 2026-10-05 补齐 |
 | | 京东到家 | `jddj.com`, `daojia.com` | **A** | 达达集团即时配送核心域名，弥补京东大厂包缺口 |
-| | 盒马鲜生 | `freshippo.com`, `hemaos.com`| **B** | 虽未被阿里公共包收录，但先列入第二批观察，防过度放行 |
+| | 盒马鲜生 | `freshippo.com`, `hemaos.com`| **A** | 阿里旗下零售业务，已在 Phase 1.5 纳入直连 |
+| | 淘宝资源 | `tbcdn.cn`, `taobaocdn.com` | **A** | 淘宝官方资源域名，已于 2026-10-05 审定批次纳入直连 |
+| | 阿里兼容 | `mmstat.com` | **A** | 阿里官方允许请求域，已于 2026-10-05 审定批次纳入直连 |
 | | 叮咚/朴朴生鲜 | `100.me`, `pupumall.com` | **B** | 区域性即时生鲜，第二批观察 |
 | **本地** | 豆瓣 | `douban.com`, `doubanio.com` | **A** | 书影音生活社区与图片 CDN，低风险日常资产 |
 | | NGA 社区 | `nga.cn`, `ngabbs.com` | **A** | 游戏生活社区论坛，纯国内直连诉求 |
 | | 起点读书 | `qidian.com` | **A** | 阅文集团主域，网络小说云端书架同步 |
-| | *贴吧短链* | `tb.cn` | **C** | 短域名极易引发未知碰撞冲突，且淘宝大厂包已覆盖，不录入 |
-| | 小黑盒社区 | `xiaoheihe.cn` | **B** | 涉及 Steam 国际 API 代理混用，需抓包排查 |
+| | 淘宝短链 | `tb.cn` | **A** | 淘宝官方短链接服务（非贴吧），已在 Phase 1.5 纳入直连与决策账本 |
+| | 小黑盒社区 | `xiaoheihe.cn` | **B** | 涉及 Steam 国际 API 代理混用；其独立静态资源 `cdn.max-c.com`、`static.max-c.com` 已于 2026-10-05 纳入直连 |
 | **办公** | WPS Office | `wps.cn` | **A** | 金山办公多端文档漫游与版本云同步主力域名 |
 | | 钉钉 | `dingtalk.com` | **A** | 阿里企业通讯与办公协同核心资产 |
+| | BOSS直聘图片 | `img.bosszhipin.com` | **A** | 官网图片资源，已于 2026-10-05 审定批次纳入直连 |
 | | 金山历史域 | `ksosoft.com` | **B** | 包含金山毒霸、快盘等老业务，颗粒度过大，暂缓观察 |
 | | *海外版飞书* | `larksuite.com` | **C** | 涉外协同专用资产，必须走代理，严禁加入直连 |
 | | *海外版腾讯会议*| `voovmeeting.com` | **C** | 国际视频会议节点，必须走代理，严禁加入直连 |
 | **政务** | 交管 12123 | `122.gov.cn` | **A** | 公安部交通安全平台，驾照/违章处理高频服务 |
 | | 个人所得税 | `chinatax.gov.cn` | **A** | 税务总局个税 App 申报与凭证核心接口 |
 | | 国家医保平台 | `nhsa.gov.cn` | **A** | 国家医疗保障局医保码与在线服务 |
-| | 国家政务平台 | `gjzwfw.gov.cn` | **A** | 国务院全国一体化政务综合服务门户 |
+| | 国家政务平台 | `gjzwfw.gov.cn`, `gjzwfw.www.gov.cn` | **A** | 国务院一体化政务门户主域及入口，已于 2026-10-05 补齐入口 |
 | | 移民局 12367 | `nia.gov.cn` | **A** | 国家出入境业务办理与证件记录查询 |
 | | 全国人社社保 | `12333.gov.cn` | **A** | 全国社保综合服务平台 |
 | | 北京住房公积金| `gjj.beijing.gov.cn` | **A** | 北京住房公积金精准子域名 |
-| | 北京一卡通 | `bjsuperpass.com` | **B** | 待抓包提取精准刷码 API 子域名后录入 |
+| | 北京一卡通 | `bjsuperpass.com`, `bmac.com.cn` | **A** | 北京一卡通乘车码及官方服务，已于 2026-10-05 补齐官方主域 |
+| | 网络身份认证 | `cdnrefresh.ctdidcii.cn` | **A** | 公安部 AppStore 条目链接隐私主机，已于 2026-10-05 纳入直连 |
 | | *国家政务泛域*| `gov.cn` | **C** | 颗粒度过大，坚决不设泛域名，遵循精准业务白名单 |
 | **医疗** | 微医挂号 | `guahao.com` | **A** | 全国统一公立医院挂号与在线问诊平台 |
 | | 好大夫在线 | `haodf.com` | **A** | 线上名医咨询与三甲医院问诊核心平台 |
@@ -127,6 +131,9 @@
 | | 绿米 / 云鲸 | `aqara.com`, `narwal.com` | **B** | 第二批按需抓包核验 |
 | | 华硕路由器管理| `router.asus.com` 等 | **B** | 需配合局域网 `Lan.lsr` 审查本地 DNS 劫持情况 |
 | **运营商**| 电信营业厅 | `189.cn` | **A** | 电信官方门户、宽带报修与账户直连 |
-| | 移动掌厅主域 | `chinamobile.com` | **B** | 中国移动体系过于庞大，暂缓第二批深入核对 |
-| | 天翼云/移动云 | `ctyun.cn`, `139.com` | **B** | 涉及企业级跨境云与历史业务，第二批观察 |
-| **金融** | 银行补全 | `psbc.cn`, `pingan.cn` | **B** | 金融类 App 存在敏感风控与证书机制，不盲目主动扩展 |
+| | 移动掌厅主域 | `chinamobile.com`, `10086.cn` | **A** | 中国移动主干与掌厅服务，已在 Phase 1.5 纳入直连 |
+| | 移动云盘/天翼云| `139.com`, `cloud.dlife.cn` | **A** | 移动139云盘及天翼云盘网页资源已收录直连 |
+| | 天翼企业云 | `ctyun.cn` | **B** | 涉及企业级跨境云与历史业务，暂缓第二批观察 |
+| **金融** | 银行补全 | `psbc.cn`, `pingan.cn` | **A** | 邮储与平安官方主域，已在 Phase 1.5 纳入直连 |
+| | 中国银行资源 | `csv2.bankofchina.com`, `pic.bankofchina.com`, `srh.bankofchina.com` | **A** | 官网网页资源与站内搜索，已于 2026-10-05 纳入直连 |
+| | 招行/翼支付资源 | `s3gw.cmbimg.cn`, `wwwcdn.cmbimg.cn`, `ctcdn.bestpay.cn` | **A** | 官网实际资源引用，已于 2026-10-05 纳入直连 |

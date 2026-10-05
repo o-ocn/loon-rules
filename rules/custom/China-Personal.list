@@ -99,3 +99,27 @@ DOMAIN-SUFFIX,jspcdn.cn
 
 # Owner-approved exact-host certificate download routing; not a verified Taobao CAPTCHA fix (2026-10-05)
 DOMAIN,secure.globalsign.com
+
+# 10. 常用服务与资源补齐 (2026-10-05 审定批次 - 21条纯本地规则)
+DOMAIN-SUFFIX,tbcdn.cn
+DOMAIN-SUFFIX,taobaocdn.com
+DOMAIN-SUFFIX,mmstat.com
+DOMAIN-SUFFIX,iesdouyin.com
+DOMAIN-SUFFIX,y.gtimg.cn
+DOMAIN-SUFFIX,bmac.com.cn
+DOMAIN,cdnrefresh.ctdidcii.cn
+DOMAIN,img.bosszhipin.com
+DOMAIN-SUFFIX,zdmimg.com
+DOMAIN,cloud.dlife.cn
+DOMAIN,cdn.sm.cn
+DOMAIN,gjzwfw.www.gov.cn
+DOMAIN,res.wxqcloud.qq.com.cn
+DOMAIN,s3gw.cmbimg.cn
+DOMAIN,wwwcdn.cmbimg.cn
+DOMAIN,ctcdn.bestpay.cn
+DOMAIN,cdn.max-c.com
+DOMAIN,static.max-c.com
+DOMAIN,csv2.bankofchina.com
+DOMAIN,pic.bankofchina.com
+DOMAIN,srh.bankofchina.com
+

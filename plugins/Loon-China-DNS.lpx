@@ -124,3 +124,15 @@ music.126.net = server:223.5.5.5
 
 # Targeted DNS companion for vegslb.com; paired trial (2026-10-04)
 *.vegslb.com = server:223.5.5.5
+
+# 常用服务配套极速 DNS 分流 (2026-10-05 审定批次 - 9条)
+*.taobaocdn.com = server:223.5.5.5
+*.mmstat.com = server:223.5.5.5
+img.bosszhipin.com = server:223.5.5.5
+*.zdmimg.com = server:223.5.5.5
+cdn.max-c.com = server:223.5.5.5
+static.max-c.com = server:223.5.5.5
+csv2.bankofchina.com = server:223.5.5.5
+pic.bankofchina.com = server:223.5.5.5
+srh.bankofchina.com = server:223.5.5.5
+

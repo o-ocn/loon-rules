@@ -1961,6 +1961,85 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         for ed in excluded_domains:
             self.assertNotIn(ed, cd_domains, f"Violation: Excluded overseas twin domain '{ed}' found in China-Direct.lsr!")
 
+    def test_45_domestic_plan_21_9_boundaries(self):
+        """Verify 2026-10-05 21-rule + 9-DNS batch boundaries, exact host isolation, and excluded domains."""
+        cd_path = os.path.join(DIST_DIR, "China-Direct.lsr")
+        with open(cd_path, "r", encoding="utf-8") as f:
+            cd_lines = [l.strip() for l in f if l.strip() and not l.startswith(("#", ";"))]
+        cd_set = set(cd_lines)
+
+        # 1. Positive checks: All 21 rules are present in China-Direct.lsr
+        expected_21_rules = [
+            "DOMAIN-SUFFIX,tbcdn.cn",
+            "DOMAIN-SUFFIX,taobaocdn.com",
+            "DOMAIN-SUFFIX,mmstat.com",
+            "DOMAIN-SUFFIX,iesdouyin.com",
+            "DOMAIN-SUFFIX,y.gtimg.cn",
+            "DOMAIN-SUFFIX,bmac.com.cn",
+            "DOMAIN,cdnrefresh.ctdidcii.cn",
+            "DOMAIN,img.bosszhipin.com",
+            "DOMAIN-SUFFIX,zdmimg.com",
+            "DOMAIN,cloud.dlife.cn",
+            "DOMAIN,cdn.sm.cn",
+            "DOMAIN,gjzwfw.www.gov.cn",
+            "DOMAIN,res.wxqcloud.qq.com.cn",
+            "DOMAIN,s3gw.cmbimg.cn",
+            "DOMAIN,wwwcdn.cmbimg.cn",
+            "DOMAIN,ctcdn.bestpay.cn",
+            "DOMAIN,cdn.max-c.com",
+            "DOMAIN,static.max-c.com",
+            "DOMAIN,csv2.bankofchina.com",
+            "DOMAIN,pic.bankofchina.com",
+            "DOMAIN,srh.bankofchina.com"
+        ]
+        for r in expected_21_rules:
+            self.assertIn(r, cd_set, f"Expected 21-batch rule missing from China-Direct.lsr: {r}")
+
+        # 2. Strict exclusions and boundary checks: bcebos and broad suffixes must NOT be present
+        forbidden_rules = [
+            "DOMAIN,ndstatic.cdn.bcebos.com",
+            "DOMAIN-SUFFIX,bcebos.com",
+            "DOMAIN-SUFFIX,gov.cn",
+            "DOMAIN-SUFFIX,bankofchina.com",
+            "DOMAIN-SUFFIX,bosszhipin.com",
+            "DOMAIN-SUFFIX,max-c.com",
+            "DOMAIN-SUFFIX,dlife.cn",
+            "DOMAIN-SUFFIX,cmbimg.cn",
+            "DOMAIN-SUFFIX,bestpay.cn",
+            "DOMAIN-SUFFIX,ctdidcii.cn",
+            "DOMAIN-SUFFIX,sm.cn"
+        ]
+        for fr in forbidden_rules:
+            self.assertNotIn(fr, cd_set, f"Forbidden boundary / broad suffix leaked into China-Direct.lsr: {fr}")
+
+        # 3. Companion DNS: 9 entries present in plugins/Loon-China-DNS.lpx
+        dns_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        with open(dns_path, "r", encoding="utf-8") as f:
+            dns_content = f.read()
+        expected_9_dns = [
+            "*.taobaocdn.com = server:223.5.5.5",
+            "*.mmstat.com = server:223.5.5.5",
+            "img.bosszhipin.com = server:223.5.5.5",
+            "*.zdmimg.com = server:223.5.5.5",
+            "cdn.max-c.com = server:223.5.5.5",
+            "static.max-c.com = server:223.5.5.5",
+            "csv2.bankofchina.com = server:223.5.5.5",
+            "pic.bankofchina.com = server:223.5.5.5",
+            "srh.bankofchina.com = server:223.5.5.5"
+        ]
+        for d in expected_9_dns:
+            self.assertIn(d, dns_content, f"Expected DNS companion missing from Loon-China-DNS.lpx: {d}")
+
+        # 4. Decisions ledger: All 21 rules recorded with verified=False
+        decisions_path = os.path.join(BASE_DIR, "history", "decisions.jsonl")
+        with open(decisions_path, "r", encoding="utf-8") as f:
+            ledger = [json.loads(line) for line in f if line.strip()]
+        rule_to_dec = {entry["rule"]: entry for entry in ledger if "rule" in entry}
+        for r in expected_21_rules:
+            self.assertIn(r, rule_to_dec, f"Rule missing from decisions ledger: {r}")
+            self.assertEqual(rule_to_dec[r].get("decision"), "APPROVED")
+            self.assertFalse(rule_to_dec[r].get("verified"), f"Batch 21 rule must have verified=False: {r}")
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)
