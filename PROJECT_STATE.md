@@ -47,7 +47,7 @@
   * **jspcdn.cn 定向直连补丁**：2026-10-04 所有者明确授权 ChatGPT/Codex 直接执行并推送，针对该域名再次落入 FINAL 且上传517B、下载0B的请求，新增 `DOMAIN-SUFFIX,jspcdn.cn` 至 China-Personal 并编译进 China-Direct；现有 `*.cn` 国内DNS映射已命中，本次不改DNS。China-Personal 62条、China-Direct 630条、全库21,266条。工程检查通过，手机有效加载与体验、国内IP兜底为何未命中仍待验证；未把无下行现象认定为确定握手故障或卡顿唯一原因。
   * **GlobalSign 精确域名出口调整（2026-10-05）**：按所有者要求新增 `DOMAIN,secure.globalsign.com` 至 China-Personal 并编译进 China-Direct；仅调整该主机出口，不扩展 GlobalSign 整域、不改DNS或私人配置。官方资料确认该主机提供证书文件，未找到其代理请求触发本次淘宝验证码的证据；手机加载、证书请求可用性及验证码变化仍待验证，账本保持 `verified=false`。
   * **国内常用服务上游覆盖审计（2026-10-05）**：Alibaba.list全部57条保留，但配套Alibaba_Domain.list未声明接入，其中21/1263项已有域名覆盖。扩展核对22组参考来源后，微信、抖音、京东、B站已接入清单的域名语义均完整；腾讯集团与字节扩展目录未接入，QQ音乐实际引用的y.gtimg.cn、设计要求的iesdouyin.com及部分其他常用服务参考域名在审计时发现缺项（本批后续已补齐，手机效果未验收）。来源范围差异不等于手机必走FINAL、App失败率或已确认卡顿/验证码原因；全清单核查及最终范围见待办15/16及本轮核查记录。
-  * **2026-10-05 国内常用服务 21 条直连规则 + 9 条配套 DNS 审定方案正式合入 (Domestic Plan 21/9 Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的最终共识清单（08号交接文档），在 `rules/custom/China-Personal.list` 纯本地扩充 21 条直连规则（含携程国内、飞猪、飞常准、淘宝资源及短链、阿里兼容、BOSS直聘图片、什么值得买图片、小黑盒静态CDN、政务平台入口、北京一卡通、网络身份认证、移动139与天翼云盘、中国银行资源/搜索、招行与翼支付CDN等），China-Personal 从 63 条增至 84 条，`China-Direct.lsr` 从 631 条扩充至 652 条（净增 21 条）；严格排除命中既有禁令的 `ndstatic.cdn.bcebos.com` 及百度云主机；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 扩充 9 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）映射（总数达 104 条）；全库有效规则达到 **21,288 条**；决策账本按试行登记（verified 保持 false，复查周期 180 天，效果待验证）。
+  * **2026-10-05 国内常用服务 21 条直连规则 + 9 条配套 DNS 审定方案正式合入 (Domestic Plan 21/9 Ingestion)**：依据 ChatGPT 与 DeepSeek 共同审定的最终共识清单（08号交接文档），在 `rules/custom/China-Personal.list` 纯本地扩充 21 条直连规则（本批增补淘宝官方资源与阿里兼容域、抖音基础域与QQ音乐图片、BOSS直聘和什么值得买图片、小黑盒静态资源、政务入口与网络身份认证、北京一卡通、天翼云盘与夸克网页资源、微信官方资源、招行/翼支付CDN和中国银行资源及搜索接口；携程、飞猪、飞常准和139主域为既有保留），China-Personal 从 63 条增至 84 条，`China-Direct.lsr` 从 631 条扩充至 652 条（净增 21 条）；严格排除命中既有禁令的 `ndstatic.cdn.bcebos.com` 及百度云主机；同步在 `plugins/Loon-China-DNS.lpx` 的 `[Host]` 扩充 9 条非 `.cn` 域名的阿里极速 DNS（223.5.5.5）映射（总数达 104 条）；全库有效规则达到 **21,288 条**；决策账本按试行登记（verified 保持 false，复查周期 180 天，效果待验证）。
 
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
@@ -393,11 +393,11 @@
   * **国内常用服务 21 条直连规则 + 9 条配套 DNS 实施发布与收尾（2026-10-05，Gemini 执行收尾）**：
     - **任务依据与范围**：严格依据 `08-ChatGPT-最终共识与Gemini执行交接.md` 清单执行；纯本地增补 21 条规则至 `rules/custom/China-Personal.list`，9 条 DNS 映射至 `plugins/Loon-China-DNS.lpx` 的 `[Host]`；严格排除 `ndstatic.cdn.bcebos.com` 及百度云整域，不整包引入大厂目录。
     - **资产与缓存快照**：China-Personal 63 → 84 (+21)；China-Direct 631 → 652 (+21)；19 规则集总规则数 21,267 → 21,288 (+21)；Host 映射 95 → 104 (+9)；决策账本 85 → 106 (+21，全部 verified: false，复查周期 180 天)；manifest 内容版本 `7635cc51f7d7`；其余 18 个规则集内容保持不变。披露已跟踪缓存刷新：`7871aa32a3ea6248.list` 从 19,230 刷新至 19,258 行，来源锁未改，China-GeoIP 发布集合仍为 19,244 条，无需回退缓存。
-    - **提交、CI 与公开资产核验**：发布提交为 `8de8544ecfa3741e4fb12a5a15e0312f238b8c1c`；远端 GitHub Actions 发布 CI Run #78（ID `37328009178`）核验成功（completed / success）；公开主、备产物取回核对通过（SHA256 一致，见 09 号证据）。
-    - **测试守护补强与维护指引收尾（F1/F2/F3）**：
-      - 测试补强（F3）：对 `test_45_domestic_plan_21_9_boundaries` 补充真实匹配模拟（复用 `simulate_hit` 的 `load_dist_rules` 与 `match_target`）与严格负向边界断言（隔离额外子域、未批准同族主机、禁止的共享云反例，并以内存突变规则验证断言灵敏度）；移除对账本 21 条永久 `verified: false` 的锁定，保留 APPROVED 决策与 boolean 类型断言，确保合法未来验证不被误阻；
+    - **提交、CI 与公开资产核验**：发布提交为 `8de8544ecfa3741e4fb12a5a15e0312f238b8c1c`；远端 GitHub Actions 发布 CI Run #78（ID `37328009178`）与收尾 CI Run #79（ID `37334476097`）核验成功（completed / success）；公开主、备产物取回核对通过（SHA256 一致，见 09 号证据）。
+    - **测试守护补强与维护指引收尾（F1/F2/F3 与 12 号补正）**：
+      - 测试补强（F3）：对 `test_45_domestic_plan_21_9_boundaries` 补充真实匹配模拟（复用 `simulate_hit` 的 `load_dist_rules` 与 `match_target`）与严格负向边界断言（动态覆盖全部 14 项精确主机的 probe 子域隔离、未批准同族主机、禁止的共享云反例，并以内存突变规则验证断言灵敏度）；移除对账本 21 条永久 `verified: false` 的锁定，保留 APPROVED 决策与 boolean 类型断言，确保合法未来验证不被误阻；
       - 文档校正（F2）：消除 `docs/app-audit-matrix.md` 中缺乏真机证据的过度体验断言（改为“规则与DNS已收录，相关效果待观察”）；将 `docs/China-Personal-Matrix.md` 中 9 处常规“抓包”要求降级为维护者低负担标准指引（AI 先核对现有规则与公开资料，确需手机证据才给出单次低负担步骤）；
-      - 汇报校正（F1）：澄清携程/飞猪/航旅/139邮箱等 7 项为 Phase 1.5 既有保留规则而非本批新增。
+      - 汇报校正（F1）：澄清 `ctrip.com`、`c-ctrip.com`、`fliggy.com`、`alitrip.com`、`variflight.com`、`feeyo.com`、`139.com` 等 7 项为 Phase 1.5 既有保留规则而非本批新增；校正新增 9 条 DNS 清单（排除已有全域规则覆盖的 `*.cn`，真实映射指向阿里极速 DNS）。
     - **真机边界与恢复**：手机端实际加载与日常使用体验仍未验收（保留待日常使用反馈确认）；若出现退化或异常，按增量条目单点回退并重新构建，保留既有 31/20 及前序补丁成果。
 
 ---

@@ -2087,20 +2087,9 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             self.assertEqual(m_sub[0]["ruleset"], "China-Direct.lsr")
 
         # 5b. Negative boundary verification:
-        # DOMAIN exact items must NOT match extra subdomains (strict host isolation)
+        # DOMAIN exact items must NOT match extra subdomains (strict host isolation for all 14 exact hosts)
         extra_subdomain_negatives = [
-            "probe.cdn.max-c.com",
-            "probe.static.max-c.com",
-            "probe.pic.bankofchina.com",
-            "probe.csv2.bankofchina.com",
-            "probe.srh.bankofchina.com",
-            "probe.cdnrefresh.ctdidcii.cn",
-            "probe.img.bosszhipin.com",
-            "probe.cloud.dlife.cn",
-            "probe.cdn.sm.cn",
-            "probe.s3gw.cmbimg.cn",
-            "probe.wwwcdn.cmbimg.cn",
-            "probe.ctcdn.bestpay.cn",
+            f"probe.{host}" for host in exact_domain_targets
         ]
         for neg in extra_subdomain_negatives:
             m_neg = simulate_hit.match_target(neg, cd_rules)
@@ -2132,9 +2121,10 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             self.assertEqual(len(m_ctn), 0, f"Forbidden shared cloud / foreign twin matched China-Direct: {ctn}")
 
         # 5c. Memory-injection test: confirm boundary assertion catches broadened mutant rules
-        mutant_rules = [("China-Direct.lsr", [("DOMAIN-SUFFIX", "cdn.max-c.com", "DOMAIN-SUFFIX,cdn.max-c.com", 1)])]
-        mutant_matches = simulate_hit.match_target("probe.cdn.max-c.com", mutant_rules)
-        self.assertTrue(len(mutant_matches) > 0, "Mutant rule must match probe.cdn.max-c.com to verify test boundary sensitivity")
+        for broadened_suffix in ["cdn.max-c.com", "gjzwfw.www.gov.cn", "res.wxqcloud.qq.com.cn"]:
+            mutant_rules = [("China-Direct.lsr", [("DOMAIN-SUFFIX", broadened_suffix, f"DOMAIN-SUFFIX,{broadened_suffix}", 1)])]
+            mutant_matches = simulate_hit.match_target(f"probe.{broadened_suffix}", mutant_rules)
+            self.assertTrue(len(mutant_matches) > 0, f"Mutant rule must match probe.{broadened_suffix} to verify test boundary sensitivity")
 
     @classmethod
     def tearDownClass(cls):
