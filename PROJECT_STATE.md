@@ -17,8 +17,9 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-07 晚间字节与腾讯音乐补齐：本地验收通过，待正常推送与远端验证**：恢复起点 `ab3f46cf5993574f6cc7ab18a3be380705b20060`。截图中 render.ecombdpage.com、lf6-font-sign.bytehwm.com、img/p/ad.tencentmusic.com 五个国内服务主机，现均首命中 China-Direct；补齐六个服务后缀 bytehwm.com、ecombdpage.com、ecombdimg.com、ecombdstatic.com、ecombdvod.com、tencentmusic.com，并增加六条国内DNS映射。ecombdapi.com 原有覆盖保留；Sentry、RevenueCat、nsloon 未新增国内直连或拦截。规则保持策略中立，实际出口仍由用户既有绑定决定。
+* **2026-10-07 晚间字节与腾讯音乐补齐：已发布并完成本地、CI与主备验收**：恢复起点 `ab3f46cf5993574f6cc7ab18a3be380705b20060`。截图中 render.ecombdpage.com、lf6-font-sign.bytehwm.com、img/p/ad.tencentmusic.com 五个国内服务主机，现均首命中 China-Direct；补齐六个服务后缀 bytehwm.com、ecombdpage.com、ecombdimg.com、ecombdstatic.com、ecombdvod.com、tencentmusic.com，并增加六条国内DNS映射。ecombdapi.com 原有覆盖保留；Sentry、RevenueCat、nsloon 未新增国内直连或拦截。规则保持策略中立，实际出口仍由用户既有绑定决定。
 * **当前构建基线**：19规则集、21,321条有效规则；China-Direct 680、Apple-Direct 170、China-Personal 109、DNS Host 117；manifest内容签名 `d3c24481f524`。相对晚间恢复起点仅 China-Direct 规则正文改变，其余18个规则集正文不变，DNS源与dist副本一致。账本136条、原130条完整保留，新六条 verified=false、180天复查。90行服务登记保留，273个已知参考样本与67个候选共340个唯一主机；新增样本包含合成回归主机，不表示完整App依赖或真机成功率。
+* **本轮发布证据**：代码 `8cf4d07bed88a3193310e6f0ec4f4f760b692e26` 正常推送成功；[CI Run #83](https://github.com/o-ocn/loon-rules/actions/runs/37643102870)（ID `37643102870`）针对该SHA为 completed/success，实际日志规则49项、诊断19项及严格冲突/预发布门禁通过，远端构建未产生额外规则改动。GitHub Raw与Fastly普通地址各5项公开资产均HTTP200、规范化换行后的SHA256与本地一致，manifest为 `d3c24481f524`，没有缓存绕过参数；备用四项旧缓存已定向刷新后复核一致。代码发布后本地与origin/main及实际远端一致（0/0），工作树clean；手机加载与体验未验。
 * **本轮已验证与范围决策**：Codex独立全量规则49/49通过；诊断19/19、评分4/4、构建、严格冲突与预发布完整性通过，常用服务参考样本0退化。test_49验证截图首命中、根域及合成同族、海外负例、伪装后缀和扩大范围故障注入，并修补DNS守卫对上层通配符 *.com 的漏检。ByteDance完整目录混有Lark、海外游戏、TikTok UA及公有云，本轮未整包接入；bytehwm及ecombdimg/static/vod在该参考目录，tencentmusic在Tencent_Domain及v2fly/tencent-tme，ecombdpage缺失只指本次抽查来源。独立双DNS返回不同地域CDN，支持配套国内DNS试行；不能据此认定截图时手机DNS或GeoIP未命中的原因。手机有效加载、卡顿和业务改善仍未验证。
 * **此前2026-10-07常用服务专项发布归档**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记328个公开参考主机，其中261个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
 * **此前27规则/7DNS发布基线（历史证据）**：19规则集、21,315条有效规则；China-Direct 674、Apple-Direct 170、China-Personal 103、DNS Host 111；manifest内容签名`a5b55d35b9a6`。相对恢复起点净增27条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过。初版发布94d35fa4ebe8459d235140c216c9473edee7b1da的CI81（37566329787）成功；最终代码发布00ce6ba3b3f7b1317a7ae3b38f74e115db5be183已正常推送，CI82（37568672941）completed/success，规则48与诊断19项及前置门禁通过。最终GitHub Raw与Fastly各5项公开资产均HTTP200、与本地一致，无缓存绕过参数；备用China-Direct曾有旧缓存，已按该文件定向刷新后核对通过。最终增量含极兔中国jtexpress.cn、维迈通官方下载app.vimoto.top及模拟器假回退修复；维迈通只是下载页而非对讲API已验。代码发布时本地与origin/main及实际远端SHA一致（0/0），工作树clean；本条为发布证据归档。
@@ -27,15 +28,15 @@
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
   * 5 门严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
     1. 构建规则与诊断插件：`python scripts/build.py`
-    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（当前本地49/49通过，本轮远端待验）
+    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（当前本地与CI均49/49通过）
     3. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
     4. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
     5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN镜像 100% 保持未被触碰）；
   * 自动化提交与发布后 CDN 探测：
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
-  * **已核验的规则发布 CI 运行事实**：前轮GitHub Actions Run **#80**（ID `37336844815`，针对`aa29325d6c53b469f353fed594bba909a141e9b9`）为completed/success；本轮最终代码发布[Run #82](https://github.com/o-ocn/loon-rules/actions/runs/37568672941)（ID `37568672941`，针对`00ce6ba3b3f7b1317a7ae3b38f74e115db5be183`）completed/success；后续独立主备资产核验10/10一致，手机生效未验。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,321 条有效规则**），已全量构建至 `dist/`；当前本地门禁通过，本轮远端与公开资产待核对；手机生效仍须正常使用确认。
+  * **已核验的规则发布 CI 运行事实**：当前晚间服务族补齐代码 `8cf4d07` 的 [Run #83](https://github.com/o-ocn/loon-rules/actions/runs/37643102870) completed/success，规则49项、诊断19项与发布前门禁通过；普通主备资产10/10一致。以下为此前发布历史：前轮GitHub Actions Run **#80**（ID `37336844815`，针对`aa29325d6c53b469f353fed594bba909a141e9b9`）为completed/success；本轮最终代码发布[Run #82](https://github.com/o-ocn/loon-rules/actions/runs/37568672941)（ID `37568672941`，针对`00ce6ba3b3f7b1317a7ae3b38f74e115db5be183`）completed/success；后续独立主备资产核验10/10一致，手机生效未验。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,321 条有效规则**），已全量构建至 `dist/`；当前本地、远端CI与公开主备资产核对通过；手机生效仍须正常使用确认。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,244 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -185,7 +186,7 @@
 ## 七、当前观察期与待办事项
 
 ### 1. 常用服务专项发布后的日常观察（不要求逐App抓包）
-- **本轮下一步**：正常推送后核验对应CI及GitHub Raw/Fastly普通订阅地址；通过后手机更新China-Direct和Loon-China-DNS插件并重连一次，正常使用即可，不要求逐App抓包。若出现新的业务退化，只撤本轮六规则/六DNS并重新构建发布，保留此前专项成果。
+- **本轮下一步**：代码已正常推送，CI与GitHub Raw/Fastly普通订阅地址核验通过；手机更新China-Direct和Loon-China-DNS插件并重连一次，正常使用即可，不要求逐App抓包。若出现新的业务退化，只撤本轮六规则/六DNS并重新构建发布，保留此前专项成果。
 - **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
