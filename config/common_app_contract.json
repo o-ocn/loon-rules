@@ -160,13 +160,47 @@
         {
           "host": "www.douyin.com",
           "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "bytehwm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ecombdpage.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ecombdimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ecombdstatic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ecombdvod.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "render.ecombdpage.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "lf6-font-sign.bytehwm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "lf3-font-sign.bytehwm.com",
+          "ruleset": "China-Direct.lsr"
         }
       ],
       "reference_candidates": [],
       "sources": [
-        "https://www.douyin.com/"
+        "https://www.douyin.com/",
+        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/ByteDance/ByteDance.list",
+        "https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/bytedance"
       ],
-      "boundary": "主清单13条覆盖；配套资源和IP兜底另查，保留既有试行"
+      "boundary": "主清单及2026-10-07补齐的ecombd电商与bytehwm资源；lf3-font-sign为合成回归样本。未整批接入ByteDance，Lark、TikTok、海外游戏及公有云边界仍保留。"
     },
     {
       "id": "service-005",
@@ -501,11 +535,30 @@
         {
           "host": "y.qq.com",
           "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tencentmusic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img.tencentmusic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "p.tencentmusic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ad.tencentmusic.com",
+          "ruleset": "China-Direct.lsr"
         }
       ],
       "reference_candidates": [],
-      "sources": [],
-      "boundary": "官网实际引用y.gtimg.cn，当前无覆盖；仅提窄图片子域，非整个gtimg.cn"
+      "sources": [
+        "https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/tencent-tme",
+        "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Tencent/Tencent_Domain.list"
+      ],
+      "boundary": "保留y.gtimg.cn精确资源规则，补齐腾讯音乐tencentmusic.com服务族；未将海外JOOX、WeTV加入国内直连。"
     },
     {
       "id": "service-015",

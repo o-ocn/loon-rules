@@ -129,7 +129,7 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
                 clean_h = host.lstrip("*.")
                 if host in allowed_exact_dns and "*" not in host and clean_h not in forbidden_dns:
                     continue
-                if clean_h == f_dom or clean_h.endswith("." + f_dom):
+                if clean_h == f_dom or clean_h.endswith("." + f_dom) or (host.startswith("*.") and f_dom.endswith("." + clean_h)):
                     errors.append(
                         f"[{eco_name}] Red line violation: Forbidden domain '{f_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"
                     )

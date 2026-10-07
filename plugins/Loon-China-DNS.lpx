@@ -146,3 +146,11 @@ cl5.apple.com = server:223.5.5.5
 
 # miIO China API only; regional prefixed hosts remain separate. Public client source + CN DNS sample.
 api.io.mi.com = server:223.5.5.5
+
+# 2026-10-07 字节与腾讯音乐 5主机差集配套补齐
+*.bytehwm.com = server:223.5.5.5
+*.ecombdpage.com = server:223.5.5.5
+*.ecombdimg.com = server:223.5.5.5
+*.ecombdstatic.com = server:223.5.5.5
+*.ecombdvod.com = server:223.5.5.5
+*.tencentmusic.com = server:223.5.5.5

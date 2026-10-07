@@ -160,3 +160,12 @@ DOMAIN-SUFFIX,pupumall.com
 # 13. 2026-10-07 最后两处补齐 (极兔国内与维迈通官方App下载页)
 DOMAIN-SUFFIX,jtexpress.cn
 DOMAIN,app.vimoto.top
+
+# 14. 2026-10-07 字节与腾讯音乐 5主机差集配套补齐 (Codex核准6项根域)
+# 来源：blackmatrix7/ByteDance, v2fly/bytedance, v2fly/tencent-tme 等共同参考；手机实际生效待验证
+DOMAIN-SUFFIX,bytehwm.com
+DOMAIN-SUFFIX,ecombdpage.com
+DOMAIN-SUFFIX,ecombdimg.com
+DOMAIN-SUFFIX,ecombdstatic.com
+DOMAIN-SUFFIX,ecombdvod.com
+DOMAIN-SUFFIX,tencentmusic.com

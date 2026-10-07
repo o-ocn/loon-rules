@@ -2324,6 +2324,89 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, errors)
 
+
+    def test_49_bytedance_tme_service_families(self):
+        # 1. 验证五截图首命中China-Direct及六根域，包括合成子域
+        rules = simulate_hit.load_dist_rules()
+        cases = [
+            ("render.ecombdpage.com", "China-Direct.lsr", "ecombdpage.com"),
+            ("lf6-font-sign.bytehwm.com", "China-Direct.lsr", "bytehwm.com"),
+            ("img.tencentmusic.com", "China-Direct.lsr", "tencentmusic.com"),
+            ("p.tencentmusic.com", "China-Direct.lsr", "tencentmusic.com"),
+            ("ad.tencentmusic.com", "China-Direct.lsr", "tencentmusic.com"),
+            ("ecombdpage.com", "China-Direct.lsr", "ecombdpage.com"),
+            ("bytehwm.com", "China-Direct.lsr", "bytehwm.com"),
+            ("ecombdimg.com", "China-Direct.lsr", "ecombdimg.com"),
+            ("ecombdstatic.com", "China-Direct.lsr", "ecombdstatic.com"),
+            ("ecombdvod.com", "China-Direct.lsr", "ecombdvod.com"),
+            ("tencentmusic.com", "China-Direct.lsr", "tencentmusic.com"),
+            ("lf3-font-sign.bytehwm.com", "China-Direct.lsr", "bytehwm.com"),
+            ("cdn.ecombdimg.com", "China-Direct.lsr", "ecombdimg.com"),
+            ("static.ecombdstatic.com", "China-Direct.lsr", "ecombdstatic.com"),
+            ("video.ecombdvod.com", "China-Direct.lsr", "ecombdvod.com")
+        ]
+        for host, expected_set, expected_suffix in cases:
+            with self.subTest(host=host):
+                matches = simulate_hit.match_target(host, rules)
+                self.assertTrue(matches, f"Expected match for {host}, got none")
+                self.assertEqual(matches[0]["ruleset"], expected_set)
+                self.assertEqual(matches[0]["rule"], f"DOMAIN-SUFFIX,{expected_suffix}")
+
+        # 2. 海外/跨域负例隔离
+        negatives = [
+            ("larksuite.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("larksuitecdn.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("mobilelegends.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("moonton.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("tiktok.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("byteoversea.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("joox.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("wetv.vip", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("api.revenuecat.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("o33249.ingest.us.sentry.io", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("www.nsloon.com", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"]),
+            ("tencentmusic.com.evil.example", ["China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"])
+        ]
+        def assert_isolation(candidate_rules):
+            for target, forbidden_rulesets in negatives:
+                forbidden_hits = [m for m in simulate_hit.match_target(target, candidate_rules)
+                                  if m["ruleset"] in forbidden_rulesets]
+                self.assertEqual(forbidden_hits, [], f"Forbidden domestic match for {target}")
+
+        assert_isolation(rules)
+
+        # 3. 隔离断言验证扩大成 DOMAIN-SUFFIX,com 的故障注入确实被拦 (模拟规则被破坏)
+        mutant_rules = [("China-Direct.lsr", [("DOMAIN-SUFFIX", "com", "DOMAIN-SUFFIX,com", 1)])]
+        with self.assertRaises(AssertionError):
+            assert_isolation(mutant_rules)
+
+        # 4. 真实插件 Host 验证
+        plugin_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        with open(plugin_path, "r", encoding="utf-8") as f:
+            plugin_content = f.read()
+
+        required_dns = [
+            "*.bytehwm.com", "*.ecombdpage.com", "*.ecombdimg.com",
+            "*.ecombdstatic.com", "*.ecombdvod.com", "*.tencentmusic.com"
+        ]
+        for d in required_dns:
+            self.assertIn(f"{d} = server:223.5.5.5", plugin_content, f"Missing {d} routing in real plugin")
+
+        # 5. DNS 故障夹具验证
+        import check_conflicts
+        for pattern, expected in [
+            ("*.bytehwm.com", True),
+            ("*.tencentmusic.com", True),
+            ("*.com", False),
+            ("*.cn", True)
+        ]:
+            with self.subTest(pattern=pattern):
+                fixture = os.path.join(TEST_TMP_DIR, "cdn_dns.fixture")
+                with open(fixture, "w", encoding="utf-8") as f:
+                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
+                self.assertEqual(ok, expected, errors)
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)
