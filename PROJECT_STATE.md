@@ -17,8 +17,8 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-07 常用服务专项：本地验证通过，待正常发布**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记325个公开参考主机，其中258个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
-* **本轮构建基线**：19规则集、21,313条有效规则；China-Direct 672、Apple-Direct 170、China-Personal 101、DNS Host 111；manifest内容签名`e10611a7b4ab`。相对恢复起点净增25条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过；远端提交、CI和镜像以发布核验记录为准。
+* **2026-10-07 常用服务专项：最终增量本地验收通过，准备发布**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记328个公开参考主机，其中261个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
+* **本轮构建基线**：19规则集、21,315条有效规则；China-Direct 674、Apple-Direct 170、China-Personal 103、DNS Host 111；manifest内容签名`a5b55d35b9a6`。相对恢复起点净增27条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过；初版提交94d35fa4ebe8459d235140c216c9473edee7b1da已推送、CI81（37566329787）success；主备5项新版资产均HTTP200且与本地一致。末轮补入极兔中国jtexpress.cn、维迈通官方下载app.vimoto.top，并修正显式空规则列表与有配置却缺FINAL的假回退；最后完整48项本地回归、4评分、严格冲突与预发布再次通过。最终增量尚待提交推送/CI核验，维迈通只是下载页而非对讲API已验。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
   * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、48+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
@@ -103,8 +103,8 @@
 
 ### 1. 离线全量测试基线（100% PASS）
 - **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **48/48 全部通过**（保留既有门禁；test_46加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47未知FINAL与脱敏；test_48精确Apple CDN DNS授权）；
-- **归档配置只读核验（2026-10-07）**：现有迁移目录的最新归档含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
-- **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、325唯一参考主机、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
+- **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
+- **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、328唯一参考主机、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
 - **评分引擎**：`python -B -m unittest scripts.test_score_engine` **4/4 PASS**。
 - **Node.js 诊断插件测试**：`node --test tests/test_diagnostic.js` **19/19 全部通过**（快速/完整模式、看门狗超时保全、4 态路由判定、策略嗅探）；
 - **防撞车与 DNS 禁区检测**：`python scripts/check_conflicts.py --strict` **PASS**（0 未授权跨界碰撞）；
@@ -269,10 +269,10 @@
 * **最后更新**：2026-10-07（Codex统筹，Antigravity/Gemini调查与部分执行）
 
   * **2026-10-07 常用服务可靠性与全清单回归**：
-    - 新增22条手动试行规则（personal 17＋Apple精确5），账本128记录、原106完整保留；新增全部verified=false。4个小上游净增3条字面规则；移除10条重复custom副本，保持原有语义覆盖。贴吧已有关键词覆盖，不冒称本轮修好贴吧全业务。
+    - 新增24条手动试行规则（personal 19＋Apple精确5），账本130记录、原106完整保留；新增全部verified=false。4个小上游净增3条字面规则；移除10条重复custom副本，保持原有语义覆盖。贴吧已有关键词覆盖，不冒称本轮修好贴吧全业务。
     - 规则/DNS：TRTC仅mlvbdc；Apple仅cl1-cl5；小米仅中国api.io.mi.com。保持Steam/TikTok/Apple账号媒体、银行海外、公有云及PCDN边界；不采纳Gemini早期整包放行建议。未改私人.lcf策略。
     - 13条公开引用补齐明确区分官网/图片/Web客户端与原生App接口。小米官方HA常量是ha.api.io.mi.com，本轮native中国接口依据是公开miIO区域实现与DNS，不能冒充官方HA的同名证明。
-    - 已知样本入CI、模拟器修复无LCF时假FINAL,DIRECT；严格DNS守卫只放5个精确Apple主机，宽泛和委派子域故障注入均拦截。
+    - 已知样本入CI、模拟器修复无LCF及实际缺FINAL时假FINAL,DIRECT；显式空远程规则列表不再静默恢复默认清单；严格DNS守卫只放5个精确Apple主机，宽泛和委派子域故障注入均拦截。
     - 本地48/19/4、严格冲突、预发布及构建通过；前期Gemini当前账号Pro/Flash均429；通过既有账号切换工具复用备用账号，22号终审补正已真实交付。Codex对照生产文件核验，无阻塞代码问题；20号初稿误把测试负例当生产规则及App身份断言已拒绝，BCE排除的实际三主机以sources.yml为准。远端发布核验待补。
   * **字节跳动骨干静态 CDN 补丁与 GeoIP 去 no-resolve 架构收敛**：
     - 精准收录 `bytecdn.com` 与 `bytecdn.cn` 至 `rules/custom/China-Direct.list`，彻底解决字节前端组件（`lf-leads-fe-scm`）绕行香港代理导致的抖音评论区图片转圈与卡顿，真机实测验证秒开；

@@ -1314,16 +1314,22 @@
       "id": "service-042",
       "name": "维迈通",
       "category": "出行/通讯",
-      "samples": [],
+      "samples": [
+        {
+          "host": "app.vimoto.top",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
       "reference_candidates": [
         "cdn.trantor.top",
         "vimoto.top",
         "www.vimoto.top"
       ],
       "sources": [
-        "https://vimoto.top/dodo/privacy_agreement_lwd.html"
+        "https://app.vimoto.top/download/",
+        "AppStore id1384821185"
       ],
-      "boundary": "AppStore对应维迈通多多，开发者隐私在vimoto.top；仅确认官网不等于对讲API已定位"
+      "boundary": "仅下载支持入口，不认定摩托对讲后台已覆盖"
     },
     {
       "id": "service-043",
@@ -2112,12 +2118,23 @@
       "id": "service-076",
       "name": "极兔国内",
       "category": "物流",
-      "samples": [],
+      "samples": [
+        {
+          "host": "jtexpress.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.jtexpress.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
       "reference_candidates": [
         "jtexpress.com.cn"
       ],
-      "sources": [],
-      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+      "sources": [
+        "https://www.jtexpress.cn/distM/privacy.html"
+      ],
+      "boundary": "中国区官方物流服务站点，排除全球jtexpress.com"
     },
     {
       "id": "service-077",

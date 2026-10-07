@@ -2222,7 +2222,9 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             ("probe.cl2.apple.com", ["Apple-Direct.lsr"]),
             ("probe.cl3.apple.com", ["Apple-Direct.lsr"]),
             ("probe.cl4.apple.com", ["Apple-Direct.lsr"]),
-            ("probe.cl5.apple.com", ["Apple-Direct.lsr"])
+            ("probe.cl5.apple.com", ["Apple-Direct.lsr"]),
+            ("jtexpress.com", ["China-Direct.lsr"]),
+            ("app.vimoto.com.tw", ["China-Direct.lsr"])
         ]
 
         def assert_isolation(candidate_rules):
@@ -2258,6 +2260,9 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         import io
         import simulate_hit
         from contextlib import redirect_stdout
+
+        # Test 0: load_dist_rules explicit empty list
+        self.assertEqual(simulate_hit.load_dist_rules(order=[]), [])
 
         # Test A: No match, no LCF -> outputs unknown/unverified, NO "FINAL,DIRECT" or fake success
         buf = io.StringIO()
@@ -2296,6 +2301,14 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         with redirect_stdout(direct_buf):
             simulate_hit.simulate("unmatched.example", [], lcf_meta={"final_policy": "DIRECT"})
         self.assertIn("FINAL,DIRECT", direct_buf.getvalue())
+
+        # Test C: lcf_meta with has_final = False must output unknown
+        unknown_buf = io.StringIO()
+        with redirect_stdout(unknown_buf):
+            simulate_hit.simulate("unmatched.example", [], lcf_meta={"has_final": False, "final_policy": "DIRECT"})
+        out4 = unknown_buf.getvalue()
+        self.assertNotIn("FINAL,DIRECT", out4)
+        self.assertIn("未知/未验证", out4)
 
     def test_48_apple_cdn_exact_dns_delegation(self):
         import check_conflicts

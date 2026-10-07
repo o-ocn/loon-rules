@@ -86,7 +86,7 @@ def check_ip_in_network(ip_str, cidr_str):
 
 def load_dist_rules(order=None):
     """Loads all dist/*.lsr remote rules in explicit top-to-bottom evaluation order."""
-    eval_order = order or DEFAULT_REMOTE_RULE_ORDER
+    eval_order = order if order is not None else DEFAULT_REMOTE_RULE_ORDER
     rules_by_file = []
     for fname in eval_order:
         fpath = os.path.join(DIST_DIR, fname)
@@ -283,15 +283,22 @@ def simulate(target, rules_by_file, local_rules=None, plugin_rules=None, lcf_met
 
     if not matches:
         if lcf_meta:
-            raw_final = lcf_meta.get("final_policy", "DIRECT")
-            final_upper = raw_final.upper().strip()
-            if final_upper in ("DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"):
-                sanitized_final = final_upper
+            is_valid_final = lcf_meta.get("has_final", "final_policy" in lcf_meta)
+
+            if is_valid_final:
+                raw_final = lcf_meta.get("final_policy", "DIRECT")
+                final_upper = raw_final.upper().strip()
+                if final_upper in ("DIRECT", "REJECT", "REJECT-DROP", "REJECT-TINYGIF"):
+                    sanitized_final = final_upper
+                else:
+                    sanitized_final = "PROXY"
+                print("命中层级: Stage 4 (FINAL 兜底规则)")
+                print(f"命中规则: FINAL,{sanitized_final}")
+                print("判定结论: 正常命中默认兜底规则 (非故障，标准 Fallback 行为)")
             else:
-                sanitized_final = "PROXY"
-            print("命中层级: Stage 4 (FINAL 兜底规则)")
-            print(f"命中规则: FINAL,{sanitized_final}")
-            print("判定结论: 正常命中默认兜底规则 (非故障，标准 Fallback 行为)")
+                print("命中层级: Stage 4 (FINAL 兜底规则)")
+                print("命中规则: FINAL,未知/未验证")
+                print("判定结论: 配置已提供但缺已确认FINAL，兜底动作未知。")
         else:
             print("命中层级: Stage 4 (FINAL 兜底规则)")
             print("命中规则: FINAL,未知/未验证")

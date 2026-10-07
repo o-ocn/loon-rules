@@ -156,3 +156,7 @@ DOMAIN,pc.ctyun.cn
 DOMAIN-SUFFIX,100.me
 # 朴朴: https://www.pupumall.com/ | 官方商城引用同后缀fe/felib/common-material-files；中国生鲜专用服务，未执行App订单
 DOMAIN-SUFFIX,pupumall.com
+
+# 13. 2026-10-07 最后两处补齐 (极兔国内与维迈通官方App下载页)
+DOMAIN-SUFFIX,jtexpress.cn
+DOMAIN,app.vimoto.top
