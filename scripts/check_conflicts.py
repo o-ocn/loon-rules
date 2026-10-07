@@ -46,7 +46,7 @@ def load_ruleset_domains(dist_dir=DIST_DIR):
         rules_by_file[fname] = entries
     return rules_by_file
 
-def load_dns_plugin_hosts(plugin_path=DNS_PLUGIN_PATH):
+def load_dns_plugin_hosts(plugin_path=DNS_PLUGIN_PATH, preserve_patterns=False):
     """
     Extracts all mapped host patterns from Loon DNS plugin.
     """
@@ -63,7 +63,9 @@ def load_dns_plugin_hosts(plugin_path=DNS_PLUGIN_PATH):
             if l.startswith("[") and in_host:
                 break
             if in_host and "=" in l:
-                left = l.split("=")[0].strip().lstrip("*.").lower()
+                left = l.split("=")[0].strip().lower()
+                if not preserve_patterns:
+                    left = left.lstrip("*.")
                 if left:
                     hosts.append(left)
     return hosts
@@ -85,7 +87,7 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
     ecosystems = spec.get("ecosystems", {})
 
     rules_by_file = load_ruleset_domains(dist_dir)
-    dns_hosts = load_dns_plugin_hosts(dns_path)
+    dns_hosts = load_dns_plugin_hosts(dns_path, preserve_patterns=True)
 
     errors = []
     warnings = []
@@ -121,9 +123,12 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
     # Check 2b: Verify DNS plugin does not route forbidden infrastructure domains to domestic DNS
     for eco_name, eco in ecosystems.items():
         forbidden_dns = eco.get("forbidden_domestic_dns_domains", [])
+        allowed_exact_dns = set(eco.get("allowed_exact_domestic_dns_hosts", []))
         for f_dom in forbidden_dns:
             for host in dns_hosts:
                 clean_h = host.lstrip("*.")
+                if host in allowed_exact_dns and "*" not in host and clean_h not in forbidden_dns:
+                    continue
                 if clean_h == f_dom or clean_h.endswith("." + f_dom):
                     errors.append(
                         f"[{eco_name}] Red line violation: Forbidden domain '{f_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"

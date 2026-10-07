@@ -1,8 +1,8 @@
 # NAME: China-Direct
 # DESCRIPTION: Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)
 # AUTHOR: o-ocn
-# REVISION: 740c52d06e4a
-# TOTAL: 652
+# REVISION: 21428626e148
+# TOTAL: 672
 # ==============================================================================
 DOMAIN-SUFFIX,qq.com
 DOMAIN-SUFFIX,tencent.com
@@ -47,17 +47,7 @@ DOMAIN-SUFFIX,bdimg.com
 DOMAIN-SUFFIX,bdstatic.com
 DOMAIN-SUFFIX,zhihu.com
 DOMAIN-SUFFIX,zhimg.com
-DOMAIN-SUFFIX,xiaohongshu.com
-DOMAIN-SUFFIX,xhscdn.com
-DOMAIN-SUFFIX,xhscdn.net
-DOMAIN-SUFFIX,meituan.com
-DOMAIN-SUFFIX,meituan.net
-DOMAIN-SUFFIX,dianping.com
 DOMAIN-SUFFIX,dpfile.com
-DOMAIN-SUFFIX,sankuai.com
-DOMAIN-SUFFIX,pinduoduo.com
-DOMAIN-SUFFIX,yangkeduo.com
-DOMAIN-SUFFIX,pddpic.com
 DOMAIN-SUFFIX,ele.me
 DOMAIN-SUFFIX,elemecdn.com
 DOMAIN-SUFFIX,kuaishou.com
@@ -183,6 +173,23 @@ DOMAIN,static.max-c.com
 DOMAIN,csv2.bankofchina.com
 DOMAIN,pic.bankofchina.com
 DOMAIN,srh.bankofchina.com
+DOMAIN-SUFFIX,xiaoheihe.cn
+DOMAIN,com.max.xiaoheihe.localfont
+DOMAIN,mlvbdc.live.tlivesource.com
+DOMAIN-SUFFIX,samsclub.cn
+DOMAIN,www.cmbchina.cn
+DOMAIN,bestpay.cn
+DOMAIN-SUFFIX,sinaimg.cn
+DOMAIN,gaode.com
+DOMAIN,api.io.mi.com
+DOMAIN,cn.narwal.com
+DOMAIN,image-www.narwal.com
+DOMAIN,www.aqara.cn
+DOMAIN,static-resource.aqara.com
+DOMAIN,desk.ctyun.cn
+DOMAIN,pc.ctyun.cn
+DOMAIN-SUFFIX,100.me
+DOMAIN-SUFFIX,pupumall.com
 DOMAIN,apd-pcdnwxlogin.teg.tencent-cloud.net
 DOMAIN,slife.xy-asia.com
 DOMAIN-SUFFIX,iot-tencent.com
@@ -656,3 +663,16 @@ IP-CIDR,120.92.113.99/32,no-resolve
 IP-CIDR,120.92.153.217/32,no-resolve
 IP-CIDR,134.175.207.130/32,no-resolve
 IP-CIDR,203.107.1.0/24,no-resolve
+DOMAIN-SUFFIX,pddpic.com
+DOMAIN-SUFFIX,pinduoduo.com
+DOMAIN-SUFFIX,yangkeduo.com
+DOMAIN-SUFFIX,dianping.com
+DOMAIN-SUFFIX,maoyan.com
+DOMAIN-SUFFIX,meituan.com
+DOMAIN-SUFFIX,meituan.net
+DOMAIN-SUFFIX,neixin.cn
+DOMAIN-SUFFIX,sankuai.com
+DOMAIN-SUFFIX,xhscdn.com
+DOMAIN-SUFFIX,xhscdn.net
+DOMAIN-SUFFIX,xiaohongshu.com
+DOMAIN-SUFFIX,tieba.baidu.com

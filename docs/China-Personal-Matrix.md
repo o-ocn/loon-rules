@@ -15,7 +15,7 @@
 
 ### 1. 核心已知域名已覆盖的高频 App
 
-| 应用分类 | 应用名称 | 规则覆盖来源 | 核心生效域名 | 当前保障体验 |
+| 应用分类 | 应用名称 | 规则覆盖来源 | 核心生效域名 | 覆盖意图（手机未验） |
 | :--- | :--- | :--- | :--- | :--- |
 | **出行民航** | **航旅纵横** | Phase 1 (China-Personal) | `umetrip.com` | 行程刷新、电子登机牌直连访问 |
 | | **滴滴出行** | Phase 1 (China-Personal) | `didichuxing.com` | 乘客端定位与订单调度 API 直连 |
@@ -34,7 +34,7 @@
 | | **什么值得买** | Phase 1 (China-Personal) | `smzdm.com` | 导购社区爆料与推荐流直连加载 |
 | **电商购物** | **淘宝 / 闲鱼 / 1688**| Alibaba 上游包 | `taobao.com`, `alicdn.com`, `1688.com` | 商品详情页与商品图直连加载 |
 | | **京东 / 京东到家**| JingDong 上游 + Phase 1 | `jd.com`, `360buyimg.com`, `jddj.com`, `daojia.com` | 商城主站及即时送全链路直连 |
-| | **拼多多** | 历史 Custom (`China-Direct.list`) | `pinduoduo.com`, `yangkeduo.com` | 拼单与商品图床直连 |
+| | **拼多多** | 审查后的Pinduoduo上游 | `pinduoduo.com`, `yangkeduo.com` | 拼单与商品图床直连 |
 | **内容音视频** | **抖音 / 伴侣** | DouYin 上游 + 历史 Custom | `douyin.com`, `iesdouyin.com`, `zzcdnx.com` | 直播流与自建边缘 CDN 直连 |
 | | **哔哩哔哩** | BiliBili 上游包 | `bilibili.com`, `bilivideo.com` | 视频流与弹幕直连 |
 | | **小红书 / 知乎** | 历史 Custom (`China-Direct.list`) | `xiaohongshu.com`, `zhihu.com`, `zhimg.com` | 图文推荐流与大图直连加载 |
@@ -56,7 +56,7 @@
 
 ### 2. 待观察 / 存在潜在盲区的 App（未来出现卡顿优先检查）
 
-> **排查指引**：下列应用虽然大部分功能正常，但因涉及**聚合第三方 SDK、混合国际云节点、动态短域名或专用硬件协议**，若在真机使用中发现异常，请**优先对照本表排查**。
+> **排查指引**：下列应用尚未完成手机业务验证，但因涉及**聚合第三方 SDK、混合国际云节点、动态短域名或专用硬件协议**，若在真机使用中发现异常，请**优先对照本表排查**。
 
 | 应用名称 | 当前实际状态 | 潜在盲区与风险点 | 未来异常时的排查要点与行动建议 |
 | :--- | :--- | :--- | :--- |
@@ -106,7 +106,7 @@
 | | NGA 社区 | `nga.cn`, `ngabbs.com` | **A** | 游戏生活社区论坛，纯国内直连诉求 |
 | | 起点读书 | `qidian.com` | **A** | 阅文集团主域，网络小说云端书架同步 |
 | | 淘宝短链 | `tb.cn` | **A** | 淘宝官方短链接服务（非贴吧），已在 Phase 1.5 纳入直连与决策账本 |
-| | 小黑盒社区 | `xiaoheihe.cn` | **B** | 涉及 Steam 国际 API 代理混用；其独立静态资源 `cdn.max-c.com`、`static.max-c.com` 已于 2026-10-05 纳入直连 |
+| | 小黑盒社区 | `xiaoheihe.cn`、两个max-c静态主机 | **A** | 2026-10-07补自有社区/API；Steam独立域仍按Gaming，不因混合功能拒绝自有API。localfont仅精确试行、仍NXDOMAIN；手机卡顿未验 |
 | **办公** | WPS Office | `wps.cn` | **A** | 金山办公多端文档漫游与版本云同步主力域名 |
 | | 钉钉 | `dingtalk.com` | **A** | 阿里企业通讯与办公协同核心资产 |
 | | BOSS直聘图片 | `img.bosszhipin.com` | **A** | 官网图片资源，已于 2026-10-05 审定批次纳入直连 |
@@ -127,7 +127,7 @@
 | | 好大夫在线 | `haodf.com` | **A** | 线上名医咨询与三甲医院问诊核心平台 |
 | | 平安健康 | `pa18.com`, `jk.cn` | **B** | 平安集团业务庞杂，涉及金融保单交叉，暂缓第二批 |
 | | 三甲医院自建 | 协和/北医三院等 | **B** | 各医院自建二级域名，先核对官网与服务资料，确有需要时按需单条录入 |
-| **IoT** | 米家 / 小米 | `mi.com`, `xiaomi.com` | **B** | 智能家居虽高频，但因存在国际服/国际多区服务器混部，第二批深入验证 |
+| **IoT** | 米家 / 小米 | 精确`api.io.mi.com`；`mi.com`、`xiaomi.com`仍不整域加入 | **A/B** | miIO公开区域实现与双DNS支持中国API精确试行，sg/de等前缀保持隔离；其他设备控制/图片端点未穷尽 |
 | | 绿米 / 云鲸 | `aqara.com`, `narwal.com` | **B** | 第二批按需核对服务资料与边界 |
 | | 华硕路由器管理| `router.asus.com` 等 | **B** | 需配合局域网 `Lan.lsr` 审查本地 DNS 劫持情况 |
 | **运营商**| 电信营业厅 | `189.cn` | **A** | 电信官方门户、宽带报修与账户直连 |
@@ -137,3 +137,10 @@
 | **金融** | 银行补全 | `psbc.cn`, `pingan.cn` | **A** | 邮储与平安官方主域，已在 Phase 1.5 纳入直连 |
 | | 中国银行资源 | `csv2.bankofchina.com`, `pic.bankofchina.com`, `srh.bankofchina.com` | **A** | 官网网页资源与站内搜索，已于 2026-10-05 纳入直连 |
 | | 招行/翼支付资源 | `s3gw.cmbimg.cn`, `wwwcdn.cmbimg.cn`, `ctcdn.bestpay.cn` | **A** | 官网实际资源引用，已于 2026-10-05 纳入直连 |
+
+
+## 三、2026-10-07 全服务公开参考回归
+
+`config/common_app_contract.json` 是同一公开参考样本契约（含别名/类别），`test_46` 在生产CI校验当前已知首命中，`scripts/audit_common_apps.py` 可重复输出实际状态。参考采样不等于App依赖穷举、私人规则绑定或手机交易验收。
+
+小黑盒自有API、山姆中国、TRTC精确mlvbdc、miIO中国API与Apple cl1-cl5已补；新增国内官网/支持页、图床与云电脑Web入口分别保留来源和业务边界。四个小上游明确排除共享云/SDK/广告来源，并迁移重复手写副本。其他候选由AI先核原始资料；用户不承担逐App抓包和统计工作。

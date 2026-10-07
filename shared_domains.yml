@@ -76,6 +76,13 @@ ecosystems:
     forbidden_domestic_dns_domains:
       - apple.com
       - icloud.com
+    # Exact Apple CN CDN hosts only; root and wildcard DNS delegations stay forbidden.
+    allowed_exact_domestic_dns_hosts:
+      - cl1.apple.com
+      - cl2.apple.com
+      - cl3.apple.com
+      - cl4.apple.com
+      - cl5.apple.com
     domestic_rulesets:
       - Apple-Direct.lsr
       - Apple-Push.lsr

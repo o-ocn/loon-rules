@@ -9,6 +9,7 @@
 
 | 应用 / 生态分类 | 核心生产域名 (`China-Direct`) | 关键图床 / 静态 CDN | 规则状态 | DNS 调度状态 (`223.5.5.5` / `119.29.29.29`) | 明确排除 / 海外隔离边界 | 最后验证时间 | 备注与关键依据 |
 | :--- | :--- | :--- | :--- | :---: | :--- | :---: | :--- |
+| **小黑盒 / 山姆中国** | `xiaoheihe.cn` / `samsclub.cn` | `cdn.max-c.com` / `static.max-c.com` | 精准补齐 | 现有.cn及精确TRTC配套，手机未验 | Steam、海外Sam保持隔离；localfont不扩整后缀 | 2026-10-07 | 自有API缺项已确认；localfont仍NXDOMAIN，不能等同恢复 |
 | **微信 (WeChat)** | `weixin.com`<br>`qq.com`<br>`tencent.com` | `qpic.cn`<br>`wx.gtimg.com`<br>`vweixinthumb.tc.qq.com` | ✅ 已完成 | ✅ 已完成 (`119.29.29.29`) | 国际版多媒体 (`novacdn.com`)、WeChat Out 走海外代理 | 2026-10 | 核心长连接与支付稳定，qpic/gtimg 国内极速解析 |
 | **支付宝 (Alipay)** | `alipay.com` | `alipayobjects.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | 海外本地钱包 (AlipayHK, GCash, TrueMoney) 走海外 | 2026-10 | 补齐 alipayobjects，解决账单、小程序图床加载延迟 |
 | **淘宝 / 天猫 / 1688** | `taobao.com`<br>`tmall.com`<br>`1688.com`<br>`idlefish.com` | `alicdn.com` | ✅ 已完成 | ✅ 已完成 (`223.5.5.5`) | 速卖通 (AliExpress)、Lazada、Miravia 走海外代理 | 2026-10 | 1688 批发 API 曾因 DoH 返回香港 CDN 导致绕行，现已完成规则与 DNS 收录 |
@@ -54,4 +55,6 @@
    - `netease.com`（网易出海游戏节点 `global.netease.com` 部署在 GCP 日本）
    - `bcebos.com`（百度智能云对象存储，包含新加坡 `sin.bcebos.com` 与香港节点）
 4. **Apple 账户安全与全局系统禁区**：
-   - `apple.com`, `icloud.com`（严禁泛解析至国内 DNS，仅允许静态资源 `*.mzstatic.com` 走国内 DNS）
+   - `apple.com`, `icloud.com`（严禁泛解析至国内 DNS，允许`*.mzstatic.com`及经过独立核验的cl1-cl5.apple.com五个精确Host；不允许根域、通配或委派子域）
+
+全服务参考样本见 `config/common_app_contract.json`；同一契约进入规则CI与 `scripts/audit_common_apps.py`。官网资源、客户端API和手机效果分开判断，详细本轮证据见 `PROJECT_STATE.md`。

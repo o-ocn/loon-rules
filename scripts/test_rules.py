@@ -2126,6 +2126,191 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             mutant_matches = simulate_hit.match_target(f"probe.{broadened_suffix}", mutant_rules)
             self.assertTrue(len(mutant_matches) > 0, f"Mutant rule must match probe.{broadened_suffix} to verify test boundary sensitivity")
 
+    def test_46_common_app_reliability_and_boundaries(self):
+        """Verify common app reliability boundaries and strict BCEBOS containment."""
+        import simulate_hit
+        rules_by_file = simulate_hit.load_dist_rules()
+
+        # 1. Positive matches (must hit expected rulesets)
+        test_targets = [
+            ("api.xiaoheihe.cn", "China-Direct.lsr"),
+            ("images.xiaoheihe.cn", "China-Direct.lsr"),
+            ("cdn.max-c.com", "China-Direct.lsr"),
+            ("static.max-c.com", "China-Direct.lsr"),
+            ("com.max.xiaoheihe.localfont", "China-Direct.lsr"),
+            ("mlvbdc.live.tlivesource.com", "China-Direct.lsr"),
+            ("cl1.apple.com", "Apple-Direct.lsr"),
+            ("cl2.apple.com", "Apple-Direct.lsr"),
+            ("cl3.apple.com", "Apple-Direct.lsr"),
+            ("cl4.apple.com", "Apple-Direct.lsr"),
+            ("cl5.apple.com", "Apple-Direct.lsr"),
+            ("cms.samsclub.cn", "China-Direct.lsr"),
+            ("douyin.com", "China-Direct.lsr"),
+            ("douyinpic.com", "China-Direct.lsr"),
+            ("douyinvod.com", "China-Direct.lsr"),
+            ("iesdouyin.com", "China-Direct.lsr"),
+            ("vegslb.com", "China-Direct.lsr"),
+            ("jspcdn.cn", "China-Direct.lsr"),
+            ("weixin.qq.com", "China-Direct.lsr"),
+            ("qpic.cn", "China-Direct.lsr"),
+            ("res.wxqcloud.qq.com.cn", "China-Direct.lsr"),
+            ("pinduoduo.com", "China-Direct.lsr"),
+            ("yangkeduo.com", "China-Direct.lsr"),
+            ("pddpic.com", "China-Direct.lsr"),
+            ("taobao.com", "China-Direct.lsr"),
+            ("alicdn.com", "China-Direct.lsr"),
+            ("tbcdn.cn", "China-Direct.lsr"),
+            ("taobaocdn.com", "China-Direct.lsr"),
+            ("mmstat.com", "China-Direct.lsr"),
+            ("umetrip.com", "China-Direct.lsr"),
+            ("tieba.baidu.com", "China-Direct.lsr"),
+            ("tb1.bdstatic.com", "China-Direct.lsr"),
+            ("cmbchina.com", "China-Direct.lsr"),
+            ("cmbimg.com", "China-Direct.lsr"),
+            ("95516.com", "China-Direct.lsr"),
+            ("unionpay.com", "China-Direct.lsr"),
+            ("fuwu.nhsa.gov.cn", "China-Direct.lsr")
+        ]
+
+        # Keep the full reviewed service sample inventory in CI, including aliases/categories.
+        with open(os.path.join(BASE_DIR, "config", "common_app_contract.json"), encoding="utf-8") as f:
+            contract = json.load(f)
+        self.assertEqual(contract["schema_version"], 1)
+        services = contract["services"]
+        self.assertTrue(services)
+        self.assertEqual(len({app["id"] for app in services}), len(services))
+        for app in services:
+            self.assertTrue(app["name"])
+            self.assertIn("reference_candidates", app)
+            test_targets.extend((sample["host"], sample["ruleset"]) for sample in app["samples"])
+
+        for target, expected_ruleset in test_targets:
+            matches = simulate_hit.match_target(target, rules_by_file)
+            self.assertTrue(len(matches) > 0, f"Expected match for {target}, got none")
+            self.assertEqual(matches[0]["ruleset"], expected_ruleset, f"Expected {target} to hit {expected_ruleset}")
+
+        # 2. Negative boundaries
+        negatives = [
+            ("steampowered.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("tiktok.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("tv.apple.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("bcebos.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("test.bcebos.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("netease.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("global.netease.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("kwai.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("kwaicdn.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("cmbwinglungbank.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("cmbi.com.hk", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("chinapayhongkong.com", ["China-Direct.lsr", "Apple-Direct.lsr"]),
+            ("mi.com", ["China-Direct.lsr"]),
+            ("xiaomi.com", ["China-Direct.lsr"]),
+            ("de.api.io.mi.com", ["China-Direct.lsr"]),
+            ("sg.api.io.mi.com", ["China-Direct.lsr"]),
+            ("probe.api.io.mi.com", ["China-Direct.lsr"]),
+            ("www.narwal.com", ["China-Direct.lsr"]),
+            ("global.aqara.com", ["China-Direct.lsr"]),
+            ("storage.ctyun.cn", ["China-Direct.lsr"]),
+            ("samsclub.com", ["China-Direct.lsr"]),
+            ("cl6.apple.com", ["Apple-Direct.lsr"]),
+            ("cl.apple.com", ["Apple-Direct.lsr"]),
+            ("com.another.localfont", ["China-Direct.lsr"]),
+            ("probe.com.max.xiaoheihe.localfont", ["China-Direct.lsr"]),
+            ("probe.mlvbdc.live.tlivesource.com", ["China-Direct.lsr"]),
+            ("sdkdc.live.tlivesource.com", ["China-Direct.lsr"]),
+            ("probe.cl1.apple.com", ["Apple-Direct.lsr"]),
+            ("probe.cl2.apple.com", ["Apple-Direct.lsr"]),
+            ("probe.cl3.apple.com", ["Apple-Direct.lsr"]),
+            ("probe.cl4.apple.com", ["Apple-Direct.lsr"]),
+            ("probe.cl5.apple.com", ["Apple-Direct.lsr"])
+        ]
+
+        def assert_isolation(candidate_rules):
+            for target, forbidden_rulesets in negatives:
+                forbidden_hits = [m for m in simulate_hit.match_target(target, candidate_rules)
+                                  if m["ruleset"] in forbidden_rulesets]
+                self.assertEqual(forbidden_hits, [], f"Forbidden domestic match for {target}")
+
+        assert_isolation(rules_by_file)
+
+        # 3. Comprehensive BCEBOS boundary scan on all China-Direct DOMAIN/DOMAIN-SUFFIX
+        cd_path = os.path.join(DIST_DIR, "China-Direct.lsr")
+        with open(cd_path, "r", encoding="utf-8") as f:
+            cd_lines = [l.strip() for l in f if l.strip() and not l.startswith(("#", ";"))]
+
+        for rule in cd_lines:
+            parts = rule.split(",")
+            if len(parts) >= 2 and parts[0] in ("DOMAIN", "DOMAIN-SUFFIX"):
+                val = parts[1]
+                self.assertNotIn("bcebos.com", val, f"Forbidden bcebos.com leaked into China-Direct: {rule}")
+
+        # 4. Fault injection: prove precision
+        for broadened_suffix, ruleset in [("cl1.apple.com", "Apple-Direct.lsr"),
+                                          ("com.max.xiaoheihe.localfont", "China-Direct.lsr"),
+                                          ("mlvbdc.live.tlivesource.com", "China-Direct.lsr"),
+                                          ("api.io.mi.com", "China-Direct.lsr")]:
+            mutant_rules = [(ruleset, [("DOMAIN-SUFFIX", broadened_suffix, f"DOMAIN-SUFFIX,{broadened_suffix}", 1)])]
+            with self.assertRaises(AssertionError):
+                assert_isolation(mutant_rules)
+
+    def test_47_simulate_hit_no_lcf_fallback_and_metadata_masking(self):
+        """Verify simulate_hit outputs unknown/unverified without lcf, and masks proxy correctly with lcf."""
+        import io
+        import simulate_hit
+        from contextlib import redirect_stdout
+
+        # Test A: No match, no LCF -> outputs unknown/unverified, NO "FINAL,DIRECT" or fake success
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            simulate_hit.simulate("completely-unmatched-unknown.xyz", [], local_rules=[], lcf_meta=None)
+        out = buf.getvalue()
+
+        self.assertNotIn("FINAL,DIRECT", out)
+        self.assertNotIn("正常", out)
+        self.assertIn("未知/未验证", out)
+        self.assertIn("未提供", out)
+
+        # Test B: With LCF meta
+        mock_lcf = os.path.join(TEST_TMP_DIR, "mock_simulate.lcf")
+        with open(mock_lcf, "w", encoding="utf-8") as f:
+            f.write("[Rule]\nDOMAIN,known-direct.com,DIRECT\nDOMAIN,known-proxy.com,MySecretProxy\nFINAL,DefaultProxy\n")
+        pipe = simulate_hit.load_lcf_pipeline(mock_lcf)
+
+        buf2 = io.StringIO()
+        with redirect_stdout(buf2):
+            simulate_hit.simulate("known-proxy.com", [], local_rules=pipe["local_rules"], lcf_meta=pipe)
+        out2 = buf2.getvalue()
+        self.assertNotIn("MySecretProxy", out2, "Secret proxy must be sanitized")
+        self.assertIn("Local [Rule]", out2)
+        self.assertIn("known-proxy.com", out2)
+
+        buf3 = io.StringIO()
+        with redirect_stdout(buf3):
+            simulate_hit.simulate("completely-unmatched-unknown2.xyz", [], local_rules=pipe["local_rules"], lcf_meta=pipe)
+        out3 = buf3.getvalue()
+        self.assertNotIn("DefaultProxy", out3)
+        self.assertIn("FINAL,PROXY", out3)
+        self.assertIn("正常命中默认兜底规则", out3)
+
+        direct_buf = io.StringIO()
+        with redirect_stdout(direct_buf):
+            simulate_hit.simulate("unmatched.example", [], lcf_meta={"final_policy": "DIRECT"})
+        self.assertIn("FINAL,DIRECT", direct_buf.getvalue())
+
+    def test_48_apple_cdn_exact_dns_delegation(self):
+        import check_conflicts
+        for pattern, expected in [(f"cl{i}.apple.com", True) for i in range(1, 6)] + [
+            ("apple.com", False), ("*.apple.com", False), ("icloud.com", False),
+            ("*.icloud.com", False), ("*.cl3.apple.com", False),
+            ("probe.cl3.apple.com", False), ("idmsa.apple.com", False), ("cl6.apple.com", False)
+        ]:
+            with self.subTest(pattern=pattern):
+                fixture = os.path.join(TEST_TMP_DIR, "cdn_dns.fixture")
+                with open(fixture, "w", encoding="utf-8") as f:
+                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
+                self.assertEqual(ok, expected, errors)
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)

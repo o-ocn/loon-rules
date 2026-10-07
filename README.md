@@ -14,7 +14,7 @@
 
 本项目建立了一套高度工程化的**“规则路由层 + DNS 调度层 + 冲突防护层”**三层协同体系：
 
-1. **第 1 层：规则路由层（Routing Layer・19 个策略中立规则集，共 21,158 条规则）**：
+1. **第 1 层：规则路由层（Routing Layer・19 个策略中立规则集；当前规模与发布证据见 PROJECT_STATE.md）**：
    - **职责**：决定网络请求“去向何方”（走 DIRECT 还是 PROXY）。
    - **成熟上游为主**：以 `blackmatrix7/ios_rule_script` (GPL-2.0) 为主要规则源，保障 Gemini、Telegram、Google Drive、Apple 等成熟服务规则的全面性与健壮度，不要求用户长期手动抓包补域名。
    - **策略绝对中立**：所有 `.lsr` 绝不写入用户策略组名称、地区（HK/US/JP）、节点名称或策略动作。用户在 Loon 中按需自由绑定专属策略组。
@@ -22,7 +22,7 @@
 2. **第 2 层：DNS 调度层（Resolution Layer・国内大厂与区域 CDN 极速分流）**：
    - **职责**：决定 DIRECT 直连流量“找哪个就近边缘节点”（解决 IP 调度质量）。
    - **解决直连反向卡顿**：防范全局纯境外 DoH 导致国内 CDN（阿里 1688、抖音支付、App Store 静态图）被调度至美西或香港 Anycast IP，进而引发直连断崖式卡顿。
-   - **精细化区域优化**：在 `plugins/Loon-China-DNS.lpx` 中为国内大厂及 Apple 静态资源 CDN（`*.mzstatic.com`）指定国内极速 DNS（`223.5.5.5`），实现毫秒级秒开；同时对 `apple.com`、`icloud.com` 保持严格隔离，绝不泛绑定。
+   - **精细化区域优化**：在 `plugins/Loon-China-DNS.lpx` 中为国内大厂及 Apple 静态资源 CDN（`*.mzstatic.com`）指定国内极速 DNS（`223.5.5.5`），用于国内CDN就近调度；手机效果以实际使用为准；同时对 `apple.com`、`icloud.com` 保持严格隔离，绝不泛绑定。
 3. **第 3 层：冲突防护层（Conflict & Boundary Guard・自动化 CI 强门禁）**：
    - **职责**：守卫生态边界，严防跨国孪生业务（抖音 vs TikTok、微信 vs WeChat）及 Apple 禁区打穿。
    - **规格化防撞车**：由 `shared_domains.yml` 明确定义共享基础设施与海外独占域名；由 `scripts/check_conflicts.py --strict` 执行双向审查，CI 自动化强拦截任何违规外泄。
@@ -126,9 +126,16 @@ python scripts/simulate_hit.py webchannel-robinfrontend-pa.googleapis.com 17.249
 ```
 * 支持域名及 IPv4/IPv6 CIDR 多阶段静态推演（Local Rule -> Remote Rule -> FINAL）。
 * **自动识别并跳过** `enabled=false` 的未启用规则。
-* 输出严格脱敏，不打印私人配置与动作。插件规则若未加载明确提示 `[未验证: 插件注入规则未加载]`。
+* 没有私人配置且无域名匹配时明确显示未知/未验证，不假设FINAL,DIRECT；已提供配置时仅显示脱敏类别。输出不打印私人节点名称。插件规则若未加载明确提示 `[未验证: 插件注入规则未加载]`。
 
-### 2. 日志严格脱敏分析器 (`scripts/sanitize_log.py`)
+### 2. 常用服务参考样本核查 (`scripts/audit_common_apps.py`)
+读取 `config/common_app_contract.json`，自动核对全部已登记的公开服务参考主机，已知样本的分流退化由规则CI拦截。
+```bash
+python -B scripts/audit_common_apps.py --output common-apps.csv
+```
+候选保留来源与边界，不自动加规则；无域名命中不等于手机落FINAL，也不代表App失败。此工具不执行登录、交易或手机业务。
+
+### 3. 日志严格脱敏分析器 (`scripts/sanitize_log.py`)
 离线分析 Loon 手动导出的 HAR 或纯文本日志：
 ```bash
 python scripts/sanitize_log.py path_to_log.har
@@ -152,13 +159,16 @@ loon-rules/
 ├── plugins/                       # DNS 分流插件源码
 │   └── Loon-China-DNS.lpx         # 国内大厂与区域 CDN 极速分流插件
 ├── dist/                          # Loon 最终订阅的 .lsr 与发布产物
-│   ├── *.lsr                      # 19 个独立服务分类规则文件 (共 21,158 条策略中立规则)
+│   ├── *.lsr                      # 19 个独立服务分类规则文件 (规模见 PROJECT_STATE.md)
 │   ├── plugins/
 │   │   └── Loon-China-DNS.lpx     # 发布版 DNS 极速分流插件
 │   └── diagnostics/
 │       ├── LoonRules-Diagnostic.lpx
 │       ├── loon-rules-diagnostic.js
 │       └── manifest.json          # 规则版本、SHA256 校验值、包签名与服务清单
+├── audit/                         # 只读影子审计产物
+│   ├── shadow_report.md          # 只读影子审计报告
+│   └── shadow_report.json        # 同一影子报告的机器格式
 ├── docs/                          # 详细运维与对照报告
 │   ├── app-audit-matrix.md        # 中国大陆常用 App 与生态分流审计矩阵 (分流/DNS/排除边界)
 │   ├── real-device-validation.md  # 真机验证记录与日常巡检底册 (日常使用追踪与异常 SOP)
@@ -172,15 +182,17 @@ loon-rules/
 ├── scripts/
 │   ├── build.py                   # 规则拉取、清洗、去重与 manifest 签名生成引擎
 │   ├── check_conflicts.py         # 跨国孪生业务与 Apple DNS 禁区防撞车检测器 (--strict)
-│   ├── test_rules.py              # 自动化单元测试套件 (43 项测试，含多阶段仿真与故障注入)
+│   ├── test_rules.py              # 自动化单元测试套件 (当前数量见 PROJECT_STATE.md，含多阶段仿真与故障注入)
 │   ├── verify_mirrors.py          # 交付物哈希自校验、预发布强门禁与 CDN 健康探针
 │   ├── verify_private_lcf.py      # 本地脱敏私人配置结构与隐私验收工具
+│   ├── audit_common_apps.py       # 全服务公开参考样本复核
 │   ├── simulate_hit.py            # 4 阶段离线规则命中模拟器
 │   ├── sanitize_log.py            # 日志脱敏分析器
 │   └── upstream_lock.json         # 各上游有效规则数锁定基线
 ├── tests/
 │   ├── test_diagnostic.js         # 诊断插件 Node.js 本地离线测试套件 (19 项测试)
 │   └── fixtures/                  # 公开、脱敏的测试夹具 (含 sample_order_19.fixture)
+├── config/common_app_contract.json # 同一服务参考样本契约
 ├── shared_domains.yml             # 跨国孪生业务共享基建、独占域名与 DNS 禁区规范清单
 ├── sources.yml                    # 声明式只读上游来源配置
 ├── requirements.txt               # Python 依赖 (pyyaml)

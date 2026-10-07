@@ -1,0 +1,2346 @@
+{
+  "schema_version": 1,
+  "reference_date": "2026-10-05",
+  "checked_date": "2026-10-07",
+  "scope": "Public reference-host routing samples, not an installation inventory, complete App dependency list, phone test, or failure rate. Aliases and service categories remain separate rows. Candidates are not auto-admitted.",
+  "services": [
+    {
+      "id": "service-001",
+      "name": "微信",
+      "category": "社交",
+      "samples": [
+        {
+          "host": "qpic.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "res.wxqcloud.qq.com.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "weixin.qq.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://weixin.qq.com/"
+      ],
+      "boundary": "WeChat参考域名完整；集团全清单另有共享和海外业务"
+    },
+    {
+      "id": "service-002",
+      "name": "QQ",
+      "category": "社交",
+      "samples": [
+        {
+          "host": "gtimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "inews.qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "mat1.gtimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "puui.qpic.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qpic.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.qq.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.qq.com/"
+      ],
+      "boundary": "qq.com覆盖精确接口；gtimg.cn配套资源不能由gtimg.com包含"
+    },
+    {
+      "id": "service-003",
+      "name": "淘宝",
+      "category": "电商",
+      "samples": [
+        {
+          "host": "alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "g.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gw.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "mmstat.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "o.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "taobao.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "taobaocdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tbcdn.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.taobao.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.taobao.com/"
+      ],
+      "boundary": "配套域名清单未接入；验证码触发原因未确认"
+    },
+    {
+      "id": "service-004",
+      "name": "抖音",
+      "category": "内容",
+      "samples": [
+        {
+          "host": "douyin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "douyinpic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "douyinstatic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "douyinvod.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "iesdouyin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "jspcdn.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "vegslb.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.douyin.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.douyin.com/"
+      ],
+      "boundary": "主清单13条覆盖；配套资源和IP兜底另查，保留既有试行"
+    },
+    {
+      "id": "service-005",
+      "name": "闲鱼",
+      "category": "电商",
+      "samples": [
+        {
+          "host": "alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "g.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "goofish.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gw.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "o.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.goofish.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "xianyu.mobi"
+      ],
+      "sources": [
+        "https://www.goofish.com/"
+      ],
+      "boundary": "XianYu清单含多条随机外观域，归属及业务证据不足，不能整包准入"
+    },
+    {
+      "id": "service-006",
+      "name": "百度网盘",
+      "category": "云盘",
+      "samples": [
+        {
+          "host": "baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "baidupcs.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "nd-static.bdstatic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pan.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "baidubce.com",
+        "ndstatic.cdn.bcebos.com",
+        "staticiot.cdn.bcebos.com",
+        "staticsns.cdn.bcebos.com"
+      ],
+      "sources": [
+        "https://pan.baidu.com/"
+      ],
+      "boundary": "百度公有云bcebos.com不整域放行；Terabox独立排除"
+    },
+    {
+      "id": "service-007",
+      "name": "支付宝",
+      "category": "支付",
+      "samples": [
+        {
+          "host": "alipay.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "alipayobjects.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gw.alipayobjects.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.alipay.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "alipay.cn",
+        "alipay.com.cn"
+      ],
+      "sources": [
+        "https://www.alipay.com/"
+      ],
+      "boundary": "AliPay清单包含alipay.hk和alipayplus.com；国内范围须筛选"
+    },
+    {
+      "id": "service-008",
+      "name": "Edge浏览器",
+      "category": "浏览器",
+      "samples": [],
+      "reference_candidates": [
+        "edge.microsoft.com",
+        "msedge.api.cdp.microsoft.com"
+      ],
+      "sources": [],
+      "boundary": "浏览网页按网站目的地分流；不把microsoft.com或全部浏览器流量改直连"
+    },
+    {
+      "id": "service-009",
+      "name": "京东",
+      "category": "电商",
+      "samples": [
+        {
+          "host": "360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gias.jd.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img10.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img11.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img12.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img13.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img14.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "jd.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "m.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "misc.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "static.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "storage.360buyimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "wl.jd.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.jd.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.jd.com/"
+      ],
+      "boundary": "参考域名清单完整不等于所有插件与App业务已验收"
+    },
+    {
+      "id": "service-010",
+      "name": "小红书",
+      "category": "内容",
+      "samples": [
+        {
+          "host": "fe-static.xhscdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "fe-video-qc.xhscdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "picasso-static.xiaohongshu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.xiaohongshu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "xhscdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "xiaohongshu.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "fengkongcloud.com"
+      ],
+      "sources": [
+        "https://www.xiaohongshu.com/"
+      ],
+      "boundary": "fengkongcloud.com为旧矩阵明确排除项；需审查既有取舍，不自动撤禁"
+    },
+    {
+      "id": "service-011",
+      "name": "抖音直播伴侣",
+      "category": "直播",
+      "samples": [
+        {
+          "host": "douyin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "douyincdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "douyinstatic.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "与抖音关联核查；官方开发文档已有资源域不能代替全部推流端点"
+    },
+    {
+      "id": "service-012",
+      "name": "1688",
+      "category": "电商",
+      "samples": [
+        {
+          "host": "1688.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "at.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "g.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gw.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "o.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "taobaocdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tbcdn.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.1688.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.1688.com/"
+      ],
+      "boundary": "air.1688.com由1688.com包含；共享资源按阿里候选核查"
+    },
+    {
+      "id": "service-013",
+      "name": "米家",
+      "category": "IoT",
+      "samples": [
+        {
+          "host": "api.io.mi.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "mi.com",
+        "xiaomi.com"
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/rytilahti/python-miio/master/miio/cloud.py"
+      ],
+      "boundary": "公开miIO客户端源码区分中国区无前缀和境外区域前缀；双DNS为CN；精确接口，不扩展mi.com或子域；手机业务未验收。集团和IoT API多区域；未锁定国内专属接口前不整域新增"
+    },
+    {
+      "id": "service-014",
+      "name": "QQ音乐",
+      "category": "音频",
+      "samples": [
+        {
+          "host": "qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "y.gtimg.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "y.qq.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "官网实际引用y.gtimg.cn，当前无覆盖；仅提窄图片子域，非整个gtimg.cn"
+    },
+    {
+      "id": "service-015",
+      "name": "微信输入法",
+      "category": "输入法",
+      "samples": [
+        {
+          "host": "qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "weixin.qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "wetype.weixin.qq.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "专用上游1条已由qq.com后缀包含；不重复补规则"
+    },
+    {
+      "id": "service-016",
+      "name": "九号出行",
+      "category": "出行/IoT",
+      "samples": [
+        {
+          "host": "www.googletagmanager.com",
+          "ruleset": "Google.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "apm.volccdn.com",
+        "cdn.consentmanager.net",
+        "lf3-data.volccdn.com",
+        "ninebot.com",
+        "ninebotapp.wjx.cn",
+        "segway.com",
+        "www.ninebot.com"
+      ],
+      "sources": [
+        "https://www.ninebot.com/"
+      ],
+      "boundary": "全球业务混用；AppStore身份已核对，国内通信端点仍待官方资料核验"
+    },
+    {
+      "id": "service-017",
+      "name": "夸克网盘",
+      "category": "云盘",
+      "samples": [
+        {
+          "host": "cdn.sm.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "g.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pan.quark.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "quark.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "myquark.cn"
+      ],
+      "sources": [
+        "https://pan.quark.cn/"
+      ],
+      "boundary": "UC清单多业务；quark.cn已收录，独立资源候选需确认网盘用途"
+    },
+    {
+      "id": "service-018",
+      "name": "哔哩哔哩",
+      "category": "内容",
+      "samples": [
+        {
+          "host": "bilibili.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "bilivideo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "hdslb.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s1.hdslb.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.bilibili.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.bilibili.com/"
+      ],
+      "boundary": "BiliBili参考域名完整；BiliBiliIntl不纳入国内层"
+    },
+    {
+      "id": "service-019",
+      "name": "美团",
+      "category": "本地生活",
+      "samples": [
+        {
+          "host": "dianping.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img.meituan.net",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "meituan.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "meituan.net",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "p0.meituan.net",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s3plus.meituan.net",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "sankuai.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.meituan.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.meituan.com/"
+      ],
+      "boundary": "MeiTuan差项含猫眼和其他集团业务，不都是外卖依赖"
+    },
+    {
+      "id": "service-020",
+      "name": "知乎",
+      "category": "内容",
+      "samples": [
+        {
+          "host": "www.zhihu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "zhihu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "zhimg.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.zhihu.com/"
+      ],
+      "boundary": "参考2条域名均覆盖；UA和IP不能当域名覆盖指标"
+    },
+    {
+      "id": "service-021",
+      "name": "小黑盒",
+      "category": "社区/游戏",
+      "samples": [
+        {
+          "host": "api.xiaoheihe.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "cdn.max-c.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "com.max.xiaoheihe.localfont",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "images.xiaoheihe.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "static.max-c.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.xiaoheihe.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "xiaoheihe.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.xiaoheihe.cn/"
+      ],
+      "boundary": "小黑盒自有社区/API xiaoheihe.cn已准入；Steam独立主机继续Gaming；localfont仅精确试行，双DNS NXDOMAIN，不证明字体恢复。"
+    },
+    {
+      "id": "service-022",
+      "name": "航旅纵横",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "umetrip.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.umetrip.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.umetrip.com/"
+      ],
+      "boundary": "个人主域已发布；上游669目录无同名专用包，API/CDN边界继续查"
+    },
+    {
+      "id": "service-023",
+      "name": "百度贴吧",
+      "category": "社区",
+      "samples": [
+        {
+          "host": "baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tbcdn.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tieba.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://tieba.baidu.com/"
+      ],
+      "boundary": "差项有百度广告和bcebos客户域；tb.cn属于淘宝短链，不能标作贴吧"
+    },
+    {
+      "id": "service-024",
+      "name": "拼多多",
+      "category": "电商",
+      "samples": [
+        {
+          "host": "cdn.pinduoduo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "images.pinduoduo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pddpic.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pinduoduo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.pinduoduo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "yangkeduo.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.pinduoduo.com/"
+      ],
+      "boundary": "参考3条域名均覆盖"
+    },
+    {
+      "id": "service-025",
+      "name": "天翼云盘",
+      "category": "云盘",
+      "samples": [
+        {
+          "host": "189.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "cloud.189.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "cloud.dlife.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://cloud.189.cn/"
+      ],
+      "boundary": "cloud.189.cn已由189.cn包含；企业云ctyun不同业务"
+    },
+    {
+      "id": "service-026",
+      "name": "大众点评",
+      "category": "本地生活",
+      "samples": [
+        {
+          "host": "dianping.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "meituan.net",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s0.meituan.net",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "sankuai.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.dianping.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.dianping.com/"
+      ],
+      "boundary": "共享美团图片已纳入，不把集团其余域全部算缺口"
+    },
+    {
+      "id": "service-027",
+      "name": "Aqara Home",
+      "category": "IoT",
+      "samples": [
+        {
+          "host": "hm.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "res.wx.qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "static-resource.aqara.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.aqara.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "aqara-offical-web-1300889962.cos.ap-guangzhou.myqcloud.com",
+        "aqara.cn",
+        "aqara.com",
+        "aqara.com.cn",
+        "www.aqara.com"
+      ],
+      "sources": [
+        "https://www.aqara.com/cn/",
+        "https://www.aqara.cn/"
+      ],
+      "boundary": "中国官网64处静态资源引用；不放行全球aqara.com；手机业务未验收。中国官网；不能等同国际/国内设备控制API已验收；手机业务未验收。国际区域与国内网关混用；按区域接口核验，不整域加aqara.com"
+    },
+    {
+      "id": "service-028",
+      "name": "中国移动云盘",
+      "category": "云盘",
+      "samples": [
+        {
+          "host": "139.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "yun.139.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "yun.mcloud.139.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "lf3-data.volccdn.com"
+      ],
+      "sources": [
+        "https://yun.139.com/"
+      ],
+      "boundary": "139.com已收录；额外资源需识别个人云盘用途"
+    },
+    {
+      "id": "service-029",
+      "name": "豆瓣",
+      "category": "社区",
+      "samples": [
+        {
+          "host": "asset.doubanio.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "douban.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "doubanio.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img2.doubanio.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img3.doubanio.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img9.doubanio.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.douban.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "douban.fm",
+        "pic.arkread.com"
+      ],
+      "sources": [
+        "https://www.douban.com/"
+      ],
+      "boundary": "3条参考域中FM另属音频业务；不机械填齐"
+    },
+    {
+      "id": "service-030",
+      "name": "云鲸智能",
+      "category": "IoT",
+      "samples": [
+        {
+          "host": "cn.narwal.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "hm.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "image-www.narwal.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "narwal.com",
+        "static.guance.com",
+        "www.narwal.com"
+      ],
+      "sources": [
+        "https://www.narwal.com/cn/",
+        "https://cn.narwal.com/"
+      ],
+      "boundary": "中国官网实际引用的图片资源；非控制API证据；手机业务未验收。中国官网；不能等同扫地机控制API已验收；手机业务未验收。国内与全球站混用；无同名专用上游，需开发者资料核验"
+    },
+    {
+      "id": "service-031",
+      "name": "中国联通",
+      "category": "运营商",
+      "samples": [
+        {
+          "host": "10010.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.10010.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.10010.com/"
+      ],
+      "boundary": "集团参考33条域名有其他业务；手机一键登录需窄接口验证"
+    },
+    {
+      "id": "service-032",
+      "name": "中国移动",
+      "category": "运营商",
+      "samples": [
+        {
+          "host": "10086.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "chinamobile.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.10086.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.10086.cn/"
+      ],
+      "boundary": "主域已有，参考差项不全是掌厅；与个人云盘分场景"
+    },
+    {
+      "id": "service-033",
+      "name": "中国电信",
+      "category": "运营商",
+      "samples": [
+        {
+          "host": "189.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.189.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "ct10000.com"
+      ],
+      "sources": [
+        "https://www.189.cn/"
+      ],
+      "boundary": "189.cn已有；云网集团资产不能全部当消费App"
+    },
+    {
+      "id": "service-034",
+      "name": "招商银行",
+      "category": "金融",
+      "samples": [
+        {
+          "host": "cmbchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "cmbimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s3gw.cmbimg.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s3gw.cmbimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.cmbchina.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.cmbchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "wwwcdn.cmbimg.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "wwwcdn.cmbimg.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "cmbchina.cn",
+        "cmburl.cn"
+      ],
+      "sources": [
+        "https://www.cmbchina.com/"
+      ],
+      "boundary": "官网HTML引用的站点；不认定为手机交易API；手机业务未验收。参考包含招商永隆、香港投行、CNKI等；不整包直连"
+    },
+    {
+      "id": "service-035",
+      "name": "掌上生活",
+      "category": "金融",
+      "samples": [
+        {
+          "host": "cmbchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "cmbimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s3gw.cmbimg.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s3gw.cmbimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.cmbchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "wwwcdn.cmbimg.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "wwwcdn.cmbimg.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "8008205555.com"
+      ],
+      "sources": [
+        "https://www.cmbchina.com/"
+      ],
+      "boundary": "与招行同组，独立业务接口仍待参考核验"
+    },
+    {
+      "id": "service-036",
+      "name": "中国银行",
+      "category": "金融",
+      "samples": [
+        {
+          "host": "as.boc.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "boc.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "csv2.bankofchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pic.bankofchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "srh.bankofchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.boc.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "bankofchina.com"
+      ],
+      "sources": [
+        "https://www.boc.cn/"
+      ],
+      "boundary": "参考含bochk/bocaviation等海外及其他业务，不整包直连"
+    },
+    {
+      "id": "service-037",
+      "name": "其他银行类App",
+      "category": "金融",
+      "samples": [
+        {
+          "host": "abchina.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ccb.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "icbc.com.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pingan.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "psbc.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "bocom.com"
+      ],
+      "sources": [],
+      "boundary": "这是类别不是额外已确认App；主要已有核心，逐家排除境外金融和集团业务"
+    },
+    {
+      "id": "service-038",
+      "name": "铁路12306",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "12306.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "kyfw.12306.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.12306.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.12306.cn/"
+      ],
+      "boundary": "15条专用包含铁路货运和出版社；12306.cn已覆盖，不需按名字补14条"
+    },
+    {
+      "id": "service-039",
+      "name": "翼支付",
+      "category": "支付",
+      "samples": [
+        {
+          "host": "bestpay.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "bestpay.com.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ctcdn.bestpay.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "hm.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.bestpay.com.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.bestpay.com.cn/",
+        "http://bestpay.cn/"
+      ],
+      "boundary": "官方短链重定向至bestpay.com.cn；非交易接口验收；手机业务未验收。已有.com.cn；.cn来自旧草案，非已验证客户端依赖"
+    },
+    {
+      "id": "service-040",
+      "name": "交管12123",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "122.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "精确政务业务已有；GovCN泛gov.cn和医疗域不整包纳入"
+    },
+    {
+      "id": "service-041",
+      "name": "起点读书",
+      "category": "阅读",
+      "samples": [
+        {
+          "host": "qidian.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.qidian.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "qidian.cn"
+      ],
+      "sources": [
+        "https://www.qidian.com/"
+      ],
+      "boundary": "主域已有；集团清单其他资产不自动直连"
+    },
+    {
+      "id": "service-042",
+      "name": "维迈通",
+      "category": "出行/通讯",
+      "samples": [],
+      "reference_candidates": [
+        "cdn.trantor.top",
+        "vimoto.top",
+        "www.vimoto.top"
+      ],
+      "sources": [
+        "https://vimoto.top/dodo/privacy_agreement_lwd.html"
+      ],
+      "boundary": "AppStore对应维迈通多多，开发者隐私在vimoto.top；仅确认官网不等于对讲API已定位"
+    },
+    {
+      "id": "service-043",
+      "name": "BOSS直聘",
+      "category": "招聘",
+      "samples": [
+        {
+          "host": "hm.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "img.bosszhipin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "logapi.zhipin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "res.zhipin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "static.zhipin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.zhipin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "z.zhipin.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "zhanzhang.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "zhipin.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "zhipin.cn",
+        "zhipinstatic.com"
+      ],
+      "sources": [
+        "https://www.zhipin.com/"
+      ],
+      "boundary": "BOSS别名暂按此项关联，原文保留；额外CDN需官网实际引用证据"
+    },
+    {
+      "id": "service-044",
+      "name": "云闪付",
+      "category": "支付",
+      "samples": [
+        {
+          "host": "95516.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "unionpay.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "unionpaysecure.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.unionpay.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.unionpay.com/"
+      ],
+      "boundary": "参考含国际银联和香港支付，国内边界筛选"
+    },
+    {
+      "id": "service-045",
+      "name": "325 LIFE",
+      "category": "身份待确认",
+      "samples": [],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "未在上游目录和公开App条目找到可靠同名身份；不能猜域名或当已覆盖"
+    },
+    {
+      "id": "service-046",
+      "name": "华硕路由器",
+      "category": "局域网/IoT",
+      "samples": [],
+      "reference_candidates": [
+        "asus.com",
+        "asus.com.cn",
+        "router.asus.com"
+      ],
+      "sources": [],
+      "boundary": "局域网管理与国际固件不同；先查Lan规则和本地解析，不整域直连asus.com"
+    },
+    {
+      "id": "service-047",
+      "name": "boss（别名待确认）",
+      "category": "身份待确认",
+      "samples": [],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "暂关联BOSS直聘但不另猜厂商；若是另一App，身份未决"
+    },
+    {
+      "id": "service-048",
+      "name": "什么值得买",
+      "category": "电商资讯",
+      "samples": [
+        {
+          "host": "a.zdmimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "aigc-document.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "avatarimg.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "eimg.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "hm.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qny.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qnz.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "res.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "static.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tmpf.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.googletagservices.com",
+          "ruleset": "Google.lsr"
+        },
+        {
+          "host": "www.smzdm.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "y.zdmimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "z.zdmimg.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "zdmimg.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "smzdmimg.com",
+        "trust.hss.org.cn"
+      ],
+      "sources": [
+        "https://www.smzdm.com/"
+      ],
+      "boundary": "参考含valueq-sea.com，不能整包；独立图床是可核验候选"
+    },
+    {
+      "id": "service-049",
+      "name": "数字人民币",
+      "category": "支付",
+      "samples": [
+        {
+          "host": "download.pbcdci.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pbcdci.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pilot.app.ecny.pbcdci.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://download.pbcdci.cn:9003/doms-public/userPrivacyAgreement-zh-CN.html"
+      ],
+      "boundary": "AppStore支持与隐私链接证实pbcdci.cn服务域，已有后缀覆盖"
+    },
+    {
+      "id": "service-050",
+      "name": "国家政务服务平台",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "gjzwfw.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gjzwfw.www.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.gjzwfw.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://gjzwfw.www.gov.cn/"
+      ],
+      "boundary": "主域已有；第三方实名SDK与SSO仍未能由主域完整证明"
+    },
+    {
+      "id": "service-051",
+      "name": "QQ邮箱",
+      "category": "邮件",
+      "samples": [
+        {
+          "host": "mail.qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qq.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "res.wx.qq.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://mail.qq.com/"
+      ],
+      "boundary": "qq.com已有；用户添加其他提供商邮箱时按其目的地，不统归腾讯直连"
+    },
+    {
+      "id": "service-052",
+      "name": "北京协和医院",
+      "category": "医疗",
+      "samples": [
+        {
+          "host": "hm.baidu.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pumch.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.pumch.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.pumch.cn/register.html"
+      ],
+      "boundary": "官网明确患者App入口；不误用武汉协和；后台供应商接口未穷尽"
+    },
+    {
+      "id": "service-053",
+      "name": "微博",
+      "category": "内容",
+      "samples": [
+        {
+          "host": "sinaimg.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "weibo.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "weibo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "weibocdn.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.sina.com.cn/"
+      ],
+      "boundary": "官网140处实际资源引用；专用图片资源后缀；手机业务未验收。微博主参考后缀已有；不加宽泛KEYWORD,weibo或整个Sina集团"
+    },
+    {
+      "id": "service-054",
+      "name": "个人所得税",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "chinatax.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "etax.chinatax.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://etax.chinatax.gov.cn/"
+      ],
+      "boundary": "业务主域已有，不声明全部实名SDK验收"
+    },
+    {
+      "id": "service-055",
+      "name": "北京一卡通",
+      "category": "公共交通",
+      "samples": [
+        {
+          "host": "bjsuperpass.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "bmac.com.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "h5prod.bmac.com.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ihelp.jd.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "prod-pioneer.bmac.com.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://h5prod.bmac.com.cn/zc_ysxy/index.html"
+      ],
+      "boundary": "AppStore实际网站和隐私在bmac.com.cn；已加bjsuperpass.com不能覆盖该域"
+    },
+    {
+      "id": "service-056",
+      "name": "国家医保服务平台",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "fuwu.nhsa.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "nhsa.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://fuwu.nhsa.gov.cn/"
+      ],
+      "boundary": "业务主域已有，统一认证/地方跳转与外部SDK还需官方参考"
+    },
+    {
+      "id": "service-057",
+      "name": "天翼云电脑",
+      "category": "云/远程桌面",
+      "samples": [
+        {
+          "host": "desk.ctyun.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pc.ctyun.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "ctyun.cn",
+        "t.ctyun.cn"
+      ],
+      "sources": [
+        "https://pc.ctyun.cn/",
+        "https://desk.ctyun.cn/doc/100011/v2/?deviceType=25"
+      ],
+      "boundary": "官方手册明确Web客户端地址；非桌面连接/文件传输已验收；手机业务未验收。官方云电脑手册、客户端下载/订购入口；不扩展公有云根域；手机业务未验收。与云盘分开；企业云整域多租户，需消费云电脑专属端点"
+    },
+    {
+      "id": "service-058",
+      "name": "NGA玩家社区",
+      "category": "社区",
+      "samples": [
+        {
+          "host": "bbs.nga.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "nga.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ngabbs.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "ngacn.cc"
+      ],
+      "sources": [
+        "https://bbs.nga.cn/"
+      ],
+      "boundary": "NGA包含178.com游戏平台，非必需论坛依赖"
+    },
+    {
+      "id": "service-059",
+      "name": "国家网络身份认证",
+      "category": "政务/认证",
+      "samples": [
+        {
+          "host": "cdnrefresh.ctdidcii.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ctid.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://cdnrefresh.ctdidcii.cn/w1/WHClient_H5/pages/secret.html"
+      ],
+      "boundary": "AppStore公安部条目实际隐私在ctdidcii.cn；ctid.cn不能覆盖它"
+    },
+    {
+      "id": "service-060",
+      "name": "国家移民管理局12367",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "app.nia.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "nia.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "s.nia.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://app.nia.gov.cn/userManual/secret_ch.html"
+      ],
+      "boundary": "国家移民局官方平台与隐私均在nia.gov.cn已覆盖"
+    },
+    {
+      "id": "service-061",
+      "name": "滴滴出行",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "didichuxing.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "udache.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "connect.facebook.net",
+        "didistatic.com",
+        "tracker.didiglobal.com",
+        "website.didiglobal.com",
+        "www.didiglobal.com"
+      ],
+      "sources": [
+        "https://www.didiglobal.com/"
+      ],
+      "boundary": "DiDi参考含海外送餐/日本/澳洲和企业云，不能整包"
+    },
+    {
+      "id": "service-062",
+      "name": "高德打车",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "a.amap.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "amap.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "at.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "autonavi.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "g.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gaode.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.amap.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.amap.com/"
+      ],
+      "boundary": "地图基础主域已覆盖，运力服务与地图分开核验"
+    },
+    {
+      "id": "service-063",
+      "name": "高德地图",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "a.amap.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "amap.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "at.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "autonavi.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "g.alicdn.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "gaode.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "www.amap.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "amapauto.com"
+      ],
+      "sources": [
+        "https://www.amap.com/"
+      ],
+      "boundary": "地图官网前端直接引用；网页范围，非打车调度已验收；手机业务未验收。参考9条逐项对照，不把所有车机集团域都当地图API"
+    },
+    {
+      "id": "service-064",
+      "name": "顺丰",
+      "category": "物流",
+      "samples": [
+        {
+          "host": "sf-express.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-065",
+      "name": "菜鸟",
+      "category": "物流",
+      "samples": [
+        {
+          "host": "cainiao.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "guoguo-app.com"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-066",
+      "name": "携程",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "c-ctrip.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ctrip.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-067",
+      "name": "去哪儿",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "qunar.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "qunarzz.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-068",
+      "name": "哈啰",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "hellobike.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-069",
+      "name": "飞常准",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "feeyo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "variflight.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-070",
+      "name": "同程",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "ly.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "tongcheng.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "elongstatic.com"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-071",
+      "name": "飞猪",
+      "category": "出行",
+      "samples": [
+        {
+          "host": "alitrip.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "fliggy.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-072",
+      "name": "中通",
+      "category": "物流",
+      "samples": [
+        {
+          "host": "zto.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-073",
+      "name": "圆通",
+      "category": "物流",
+      "samples": [
+        {
+          "host": "yto.net.cn",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "ytoexpress.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-074",
+      "name": "韵达",
+      "category": "物流",
+      "samples": [
+        {
+          "host": "yundaex.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-075",
+      "name": "申通",
+      "category": "物流",
+      "samples": [
+        {
+          "host": "sto.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-076",
+      "name": "极兔国内",
+      "category": "物流",
+      "samples": [],
+      "reference_candidates": [
+        "jtexpress.com.cn"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-077",
+      "name": "盒马",
+      "category": "购物",
+      "samples": [
+        {
+          "host": "freshippo.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "hemaos.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [
+        "hemaapi.cn"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-078",
+      "name": "京东到家",
+      "category": "购物",
+      "samples": [
+        {
+          "host": "daojia.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "jddj.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-079",
+      "name": "叮咚买菜",
+      "category": "购物",
+      "samples": [
+        {
+          "host": "100.me",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.100.me/"
+      ],
+      "boundary": "中国生鲜配送服务官方站点/支持页；未执行App订单；手机业务未验收。不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-080",
+      "name": "朴朴",
+      "category": "购物",
+      "samples": [
+        {
+          "host": "common-material-files.pupumall.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "fe.pupumall.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "felib.pupumall.com",
+          "ruleset": "China-Direct.lsr"
+        },
+        {
+          "host": "pupumall.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://www.pupumall.com/"
+      ],
+      "boundary": "官方商城引用同后缀fe/felib/common-material-files；中国生鲜专用服务，未执行App订单；手机业务未验收。不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-081",
+      "name": "全国人社12333",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "12333.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-082",
+      "name": "北京住房公积金",
+      "category": "政务",
+      "samples": [
+        {
+          "host": "gjj.beijing.gov.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-083",
+      "name": "微医",
+      "category": "医疗",
+      "samples": [
+        {
+          "host": "guahao.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-084",
+      "name": "好大夫",
+      "category": "医疗",
+      "samples": [
+        {
+          "host": "haodf.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-085",
+      "name": "平安健康",
+      "category": "医疗",
+      "samples": [],
+      "reference_candidates": [
+        "jk.cn",
+        "pa18.com"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-086",
+      "name": "阿里健康",
+      "category": "医疗",
+      "samples": [],
+      "reference_candidates": [
+        "alihealth.cn"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-087",
+      "name": "WPS",
+      "category": "办公",
+      "samples": [
+        {
+          "host": "wps.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-088",
+      "name": "钉钉",
+      "category": "办公",
+      "samples": [
+        {
+          "host": "dingtalk.com",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-089",
+      "name": "国内航司",
+      "category": "出行",
+      "samples": [],
+      "reference_candidates": [
+        "airchina.com.cn",
+        "ceair.com",
+        "csair.com",
+        "hnair.com"
+      ],
+      "sources": [],
+      "boundary": "不因列作扩展候选而自动准入；国际业务、共享云和SDK需单独边界"
+    },
+    {
+      "id": "service-090",
+      "name": "山姆会员商店",
+      "category": "购物",
+      "samples": [
+        {
+          "host": "apps.apple.com",
+          "ruleset": "Apple-Direct.lsr"
+        },
+        {
+          "host": "cms.samsclub.cn",
+          "ruleset": "China-Direct.lsr"
+        }
+      ],
+      "reference_candidates": [],
+      "sources": [
+        "https://apps.apple.com/cn/app/id818237113"
+      ],
+      "boundary": "中国服务samsclub.cn已准入；海外samsclub.com不扩展；手机未验收"
+    }
+  ]
+}

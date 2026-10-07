@@ -67,6 +67,14 @@ DOMAIN-SUFFIX,sandbox.apple.com
 # Reason: Domestic CDN acceleration for map tiles and POI rendering; completely distinct from apple.com media
 DOMAIN-SUFFIX,apple-mapkit.com
 
+# Target: Apple CDN resource hosts (cl1-cl5)
+# Evidence: AliDNS CNAME chains for cl1-cl5 use Apple CN aliases and mainland CDN endpoints (2026-10-07)
+DOMAIN,cl1.apple.com
+DOMAIN,cl2.apple.com
+DOMAIN,cl3.apple.com
+DOMAIN,cl4.apple.com
+DOMAIN,cl5.apple.com
+
 # --- Apple China Local CDN Cache ---
 # Target: Official Apple China CDN IPv4 subnet
 # Evidence: Apple official documentation on China CDN cache IPs, 2026-09-28

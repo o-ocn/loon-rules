@@ -282,6 +282,28 @@ rulesets:
       - name: "BiliBili"
         url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BiliBili/BiliBili.list"
         min_rules: 20
+      # Reviewed app-specific sources; broad groups and new CDN trees remain excluded.
+      - name: "Pinduoduo"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/Pinduoduo/Pinduoduo.list"
+        min_rules: 3
+      - name: "MeiTuan"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/MeiTuan/MeiTuan.list"
+        min_rules: 7
+        filter_excluded:
+          - "DOMAIN-SUFFIX,mtyun.com"
+      - name: "XiaoHongShu"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/XiaoHongShu/XiaoHongShu.list"
+        min_rules: 4
+        filter_excluded:
+          - "DOMAIN-SUFFIX,fengkongcloud.com"
+      - name: "BaiDuTieBa"
+        url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Loon/BaiDuTieBa/BaiDuTieBa.list"
+        min_rules: 32
+        filter_excluded:
+          - "DOMAIN,cpro.baidustatic.com"
+          - "DOMAIN,mediago-static.cdn.bcebos.com"
+          - "DOMAIN,ns-strategy.cdn.bcebos.com"
+          - "DOMAIN,tieba-ares.cdn.bcebos.com"
     local_custom:
       - "rules/custom/China-Direct.list"
       - "rules/custom/China-Personal.list"

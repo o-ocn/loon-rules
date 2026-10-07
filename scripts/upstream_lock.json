@@ -49,7 +49,11 @@
     "Alibaba": 57,
     "JingDong": 249,
     "DouYin": 13,
-    "BiliBili": 127
+    "BiliBili": 127,
+    "Pinduoduo": 3,
+    "MeiTuan": 7,
+    "XiaoHongShu": 4,
+    "BaiDuTieBa": 32
   },
   "China-GeoIP": {
     "ChinaIPs": 19258

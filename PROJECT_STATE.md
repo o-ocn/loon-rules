@@ -17,21 +17,22 @@
 
 ## 二、当前状态与基线定型
 
-* **Phase 1.5 规则发布基线**：commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`（短哈希 `4d64afd`，已推送到 `origin/main` 保持同步；日常旁路审计巡检提交如 `a83668b` 仅暂存影子报告，不改动规则基线；前序治理提交基线为 `1e498f3` / `06e55aa` / `32a95b2` / `91f4da9` / `301ee14` / `1612e61` / `d91da37` / `69555ca` / `c711ffe` / `eb66580` / `b1434f5` / `82382a0`）。
+* **2026-10-07 常用服务专项：本地验证通过，待正常发布**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记325个公开参考主机，其中258个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
+* **本轮构建基线**：19规则集、21,313条有效规则；China-Direct 672、Apple-Direct 170、China-Personal 101、DNS Host 111；manifest内容签名`e10611a7b4ab`。相对恢复起点净增25条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过；远端提交、CI和镜像以发布核验记录为准。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
-  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、44+19项门禁与 CDN 镜像校验发布）；
+  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、48+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
   * 5 门严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
     1. 构建规则与诊断插件：`python scripts/build.py`
-    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（44/44 单元测试全部通过）
+    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（48/48 单元测试全部通过）
     3. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
     4. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
     5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN镜像 100% 保持未被触碰）；
   * 自动化提交与发布后 CDN 探测：
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
-  * **已核验的规则发布 CI 运行事实**：GitHub Actions Run **#68**（ID `37124392780`，针对规则发布基线 commit `4d64afd54e0f39c416074c9aadeb92d1c717ef88`，push 事件）执行完毕，状态 **completed / success**（URL: `https://github.com/o-ocn/loon-rules/actions/runs/37124392780`；历史旧流水线包括 Run #49 ID `36753242952` 等）。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,288 条有效规则**），已全量构建至 `dist/`；本轮本地完整性校验通过，远端发布与手机生效以对应发布验证为准。
+  * **已核验的规则发布 CI 运行事实**：前轮GitHub Actions Run **#80**（ID `37336844815`，针对`aa29325d6c53b469f353fed594bba909a141e9b9`）为completed/success；本轮发布验证待补齐。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,313 条有效规则**），已全量构建至 `dist/`；本轮本地完整性校验通过，远端发布与手机生效以对应发布验证为准。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,244 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -77,8 +78,8 @@
 | **`TestFlight.lsr`** | 3 | Apple TestFlight 内测分发平台 | 100% 策略中立 |
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
-| **`Apple-Direct.lsr`** | 165 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 652 | 微信、淘宝、京东、抖音/字节生态 (含 zzcdnx/baike/bytecdn/vegslb)、国内CDN补丁(jspcdn.cn)、B站、1688、拼多多、饿了么、美团/点评、快手、小红书、云音乐、银行金融、一键认证基建、联通、央视图床，以及 Phase 1 & 1.5 个人生活直连层与 2026-10-05 审定批次 (China-Personal 84条，含精确证书主机secure.globalsign.com、携程/去哪儿/飞猪/同程/飞常准/圆通/闲鱼/盒马/淘宝短链/BOSS直聘/夸克/CTID/协和/翼支付/央行数字货币/邮储/平安/微博/移动/vegslb/jspcdn，以及 2026-10-05 补齐的淘宝/阿里资源与兼容域、BOSS直聘图片、ZDM图片、小黑盒静态资源、政务平台、天翼云盘、中国银行资源/搜索、招行与翼支付CDN等) | 100% 策略中立 |
+| **`Apple-Direct.lsr`** | 170 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
+| **`China-Direct.lsr`** | 672 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 101条；本轮补小黑盒API、山姆中国、TRTC精确主机、miIO中国接口、国内站点与资源，并接入4个经过滤的App专用上游 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,244 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -91,7 +92,7 @@
    * *失败/放弃原因*：面对国内具有多国 CDN / 全球 Anycast 架构的大厂业务（如 `1688.com`、`doupay.com`），若客户端启用了海外 DoH（如 `dns.google`），解析返回的境外 IP（如香港 Anycast 节点）将直接绕过 `GEOIP,CN` 跌落进 `FINAL` 代理；必须采取“域名规则（`China-Direct.lsr`）+ 国内极速 DNS（`223.5.5.5`）分流 + 物理 CIDR / GeoIP”双重保险闭环，彻底否决并放弃纯 GeoIP 方案。
 2. **放弃方案 2：Apple 全域泛化分流与泛解析（Apple 全域泛化方案）**
    * *背景与尝试*：曾探讨将 `apple.com` 或 `17.0.0.0/8` 全部送入海外代理，或在 DNS 插件中将 `apple.com` / `icloud.com` 泛解析至国内 DNS。
-   * *失败/放弃原因*：全量代理 Apple 会严重拖慢国内 App Store 应用下载、导致国内 Apple CDN 缓存失效并消耗大量代理流量；而在 DNS 层将 `apple.com`/`icloud.com` 泛解析至国内 DNS 则触犯账户安全红线并引发跨区认证异常。现已彻底放弃全域泛化，确立精细化分层治理（`Apple-Direct.lsr` 直连基础服务、国内极速 DNS 仅就近解析静态 CDN `*.mzstatic.com`、严禁对 `apple.com`/`icloud.com` 泛解析、独立保留 `Apple-Push` 最小化通道与 `Apple-Media` 流媒体）。
+   * *失败/放弃原因*：全量代理 Apple 会严重拖慢国内 App Store 应用下载、导致国内 Apple CDN 缓存失效并消耗大量代理流量；而在 DNS 层将 `apple.com`/`icloud.com` 泛解析至国内 DNS 则触犯账户安全红线并引发跨区认证异常。现已彻底放弃全域泛化，确立精细化分层治理（`Apple-Direct.lsr` 直连基础服务、国内极速DNS就近解析`*.mzstatic.com`及本轮独立核实的cl1-cl5.apple.com精确主机、严禁对 `apple.com`/`icloud.com` 泛解析、独立保留 `Apple-Push` 最小化通道与 `Apple-Media` 流媒体）。
 3. **放弃方案 3：TikTok / 微信共享域粗暴分流（共享基础设施粗暴一刀切）**
    * *背景与尝试*：曾考虑将跨国出海孪生业务的底层域名一刀切代理以彻底隔离国内外流量。
    * *失败/放弃原因*：字节跳动出海业务（TikTok）与国内抖音共享底层域名与图床（如 `bytedance.com`, `byteimg.com`, `ibytedtos.com`, `snssdk.com`）；腾讯出海 WeChat 与国内微信共享底层通信基础设施。粗暴一刀切全盘走代理会导致国内抖音刷不出视频、评论卡死或国内微信关键功能受损。现已确立：独占业务域名精准走代理，共享底层基础设施严格保留直连与国内 DNS，严禁粗暴一刀切。
@@ -101,7 +102,10 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **44/44 全部通过**（包含 URL 隐私白名单、主备源自校验、FINAL 段落严格拦截、12 类清单故障注入、3 类跨生态防碰撞注入及新增 Phase 1 个人层与海外核心隔离断言 `test_44`）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **48/48 全部通过**（保留既有门禁；test_46加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47未知FINAL与脱敏；test_48精确Apple CDN DNS授权）；
+- **归档配置只读核验（2026-10-07）**：现有迁移目录的最新归档含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
+- **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、325唯一参考主机、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
+- **评分引擎**：`python -B -m unittest scripts.test_score_engine` **4/4 PASS**。
 - **Node.js 诊断插件测试**：`node --test tests/test_diagnostic.js` **19/19 全部通过**（快速/完整模式、看门狗超时保全、4 态路由判定、策略嗅探）；
 - **防撞车与 DNS 禁区检测**：`python scripts/check_conflicts.py --strict` **PASS**（0 未授权跨界碰撞）；
 - **预发布镜像签名自校验**：`python scripts/verify_mirrors.py --pre-release` **PASS**（19 规则集正文、诊断元数据与包 SHA256 签名完全吻合）。
@@ -175,7 +179,7 @@
 
 ## 七、当前观察期与待办事项
 
-### 1. 1~2 周静默稳定观察期（正式启动・规则库进入冻结观察期）
+### 1. 常用服务专项发布后的日常观察（不要求逐App抓包）
 - **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
@@ -196,9 +200,9 @@
   1. `aliexpress.com` 策略迁移与私人层绑定（显式登记“公开直连 vs 文档称代理”矛盾）；
   2. `doh-server = dns.google` 单变量对照验证；
   3. `ctyun.cn` 整域边界核验（天翼云电脑登录、桌面连接、文件传输端点 vs 公有云服务）；
-  4. `ninebot.com`（九号）、IoT四项（小米/Aqara/云鲸/华硕）、`microsoft.com`、`xiaoheihe.cn` 分流边界核验；
+  4. 九号、IoT其余区域接口和Microsoft分流仍待取证；小黑盒自有xiaoheihe.cn已补，Steam独立域保持Gaming；miIO仅api.io.mi.com中国接口准入，Aqara/云鲸新增网站资源不等于设备控制后台验收；
   5. `blank_1688.com`、`jcloudwaftest.com` 真实性确认；
-  6. `维迈通`、`325 LIFE` 服务身份与域名归属核验；
+  6. 维迈通已找到官方App/下载支持页，但对讲后台未证；原“325 LIFE”无精确官方条目，疑似352 Life，名称澄清前不发明域名；
   7. 完整回退配置的其余第三方插件（Kelee等）离线冻结与真机加载验收；
   8. iPhone 真机日常使用无感体验验证（国内服务与海外代理正常即可，无需批量抓包）；
   9. 微博与中国移动专项源长期生产接入方案评估（当前首批以本地补充层过渡）；
@@ -212,6 +216,8 @@
   15. **淘宝 / 阿里配套域名接入缺口补齐方案（2026-10-05）**：tbcdn.cn、taobaocdn.com、mmstat.com已在本批21＋9共识中批准通过个人层补齐，已按第16项完成实施，手机使用观察待完成；不宣称配套来源已经接入。部分aliyuncs.com下验证码接口虽有公开文档线索，但尚未纳入本批，不能据此补公有云整域或断言本次滑块原因。配套来源为点域名格式，未来确需接入时再评估转换及业务过滤，不捆绑本批编译器改造；不要求所有者逐域名抓包。
 
   16. **常用国内服务资源补齐方案（2026-10-05，Gemini 已完成 21＋9 实施与本地发布前门禁验证，待手机端使用观察）**：已对63项用户清单/类别/别名及26项扩展候选完成桌面核查，不能等同App完整验收。ChatGPT与DeepSeek审定同意21条规则加入China-Personal、9条DNS加入现有插件；不新增来源、不改编译器/YAML解析器/来源锁/评分器。ndstatic.cdn.bcebos.com命中现有整树HARD_BLOCK，本批排除且不改旧禁令。Gemini 已按共识实施落地，China-Personal 扩充至 84 条，China-Direct 扩充至 652 条，Host 映射扩充至 104 条，账本补充 21 条（verified 标为 false），全部 6 门质量门禁（单测 45/45、严格冲突、诊断 19/19、评分 4/4、预发布校验）全部通过；手机端加载与使用体验留待用户更新后正常观察反馈，无需逐 App 抓包。IP兜底、IoT区域与325 LIFE身份保留独立未决。
+
+  17. **本轮67个参考候选保持可审计未决**：公开DNS仅为当前样本，国外A不能直接证明业务归属、无A不等于永久失效；共享云/SDK、IoT区域、类别/别名及海外业务不自动放行。后续AI先用同一契约重跑，核验原始资料和真实客户端身份；不要求所有者逐App抓包。
 
 ---
 
@@ -260,7 +266,14 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-05
+* **最后更新**：2026-10-07（Codex统筹，Antigravity/Gemini调查与部分执行）
+
+  * **2026-10-07 常用服务可靠性与全清单回归**：
+    - 新增22条手动试行规则（personal 17＋Apple精确5），账本128记录、原106完整保留；新增全部verified=false。4个小上游净增3条字面规则；移除10条重复custom副本，保持原有语义覆盖。贴吧已有关键词覆盖，不冒称本轮修好贴吧全业务。
+    - 规则/DNS：TRTC仅mlvbdc；Apple仅cl1-cl5；小米仅中国api.io.mi.com。保持Steam/TikTok/Apple账号媒体、银行海外、公有云及PCDN边界；不采纳Gemini早期整包放行建议。未改私人.lcf策略。
+    - 13条公开引用补齐明确区分官网/图片/Web客户端与原生App接口。小米官方HA常量是ha.api.io.mi.com，本轮native中国接口依据是公开miIO区域实现与DNS，不能冒充官方HA的同名证明。
+    - 已知样本入CI、模拟器修复无LCF时假FINAL,DIRECT；严格DNS守卫只放5个精确Apple主机，宽泛和委派子域故障注入均拦截。
+    - 本地48/19/4、严格冲突、预发布及构建通过；前期Gemini当前账号Pro/Flash均429；通过既有账号切换工具复用备用账号，22号终审补正已真实交付。Codex对照生产文件核验，无阻塞代码问题；20号初稿误把测试负例当生产规则及App身份断言已拒绝，BCE排除的实际三主机以sources.yml为准。远端发布核验待补。
   * **字节跳动骨干静态 CDN 补丁与 GeoIP 去 no-resolve 架构收敛**：
     - 精准收录 `bytecdn.com` 与 `bytecdn.cn` 至 `rules/custom/China-Direct.list`，彻底解决字节前端组件（`lf-leads-fe-scm`）绕行香港代理导致的抖音评论区图片转圈与卡顿，真机实测验证秒开；
     - 落地项目最高准则“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端放弃 `no-resolve` 束缚，恢复 GeoIP 主动触发本地 DNS 反查兜底，实现日常使用彻底无感；

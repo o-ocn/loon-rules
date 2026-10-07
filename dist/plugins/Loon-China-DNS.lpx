@@ -136,3 +136,13 @@ csv2.bankofchina.com = server:223.5.5.5
 pic.bankofchina.com = server:223.5.5.5
 srh.bankofchina.com = server:223.5.5.5
 
+# 2026-10-07 补充专项 (小黑盒、TRTC、Apple Maps、山姆)
+mlvbdc.live.tlivesource.com = server:223.5.5.5
+cl1.apple.com = server:223.5.5.5
+cl2.apple.com = server:223.5.5.5
+cl3.apple.com = server:223.5.5.5
+cl4.apple.com = server:223.5.5.5
+cl5.apple.com = server:223.5.5.5
+
+# miIO China API only; regional prefixed hosts remain separate. Public client source + CN DNS sample.
+api.io.mi.com = server:223.5.5.5

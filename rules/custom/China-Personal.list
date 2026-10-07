@@ -123,3 +123,36 @@ DOMAIN,csv2.bankofchina.com
 DOMAIN,pic.bankofchina.com
 DOMAIN,srh.bankofchina.com
 
+# 11. 2026-10-07 补充专项 (小黑盒、TRTC、山姆)
+DOMAIN-SUFFIX,xiaoheihe.cn
+DOMAIN,com.max.xiaoheihe.localfont
+DOMAIN,mlvbdc.live.tlivesource.com
+DOMAIN-SUFFIX,samsclub.cn
+
+# 12. 2026-10-07 全清单公开引用补齐：站点/资源证据不等于手机业务验收
+# 招商银行: https://www.cmbchina.com/ | 官网HTML引用的站点；不认定为手机交易API
+DOMAIN,www.cmbchina.cn
+# 翼支付: http://bestpay.cn/ | 官方短链重定向至bestpay.com.cn；非交易接口验收
+DOMAIN,bestpay.cn
+# 微博: https://www.sina.com.cn/ | 官网140处实际资源引用；专用图片资源后缀
+DOMAIN-SUFFIX,sinaimg.cn
+# 高德地图: https://www.amap.com/ | 地图官网前端直接引用；网页范围，非打车调度已验收
+DOMAIN,gaode.com
+# 米家: https://raw.githubusercontent.com/rytilahti/python-miio/master/miio/cloud.py | 公开miIO客户端源码区分中国区无前缀和境外区域前缀；双DNS为CN；精确接口，不扩展mi.com或子域
+DOMAIN,api.io.mi.com
+# 云鲸智能: https://cn.narwal.com/ | 中国官网；不能等同扫地机控制API已验收
+DOMAIN,cn.narwal.com
+# 云鲸智能: https://cn.narwal.com/ | 中国官网实际引用的图片资源；非控制API证据
+DOMAIN,image-www.narwal.com
+# Aqara Home: https://www.aqara.cn/ | 中国官网；不能等同国际/国内设备控制API已验收
+DOMAIN,www.aqara.cn
+# Aqara Home: https://www.aqara.cn/ | 中国官网64处静态资源引用；不放行全球aqara.com
+DOMAIN,static-resource.aqara.com
+# 天翼云电脑: https://desk.ctyun.cn/doc/100011/v2/?deviceType=25 | 官方云电脑手册、客户端下载/订购入口；不扩展公有云根域
+DOMAIN,desk.ctyun.cn
+# 天翼云电脑: https://desk.ctyun.cn/doc/100011/v2/?deviceType=25 | 官方手册明确Web客户端地址；非桌面连接/文件传输已验收
+DOMAIN,pc.ctyun.cn
+# 叮咚买菜: https://www.100.me/ | 中国生鲜配送服务官方站点/支持页；未执行App订单
+DOMAIN-SUFFIX,100.me
+# 朴朴: https://www.pupumall.com/ | 官方商城引用同后缀fe/felib/common-material-files；中国生鲜专用服务，未执行App订单
+DOMAIN-SUFFIX,pupumall.com
