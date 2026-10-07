@@ -17,8 +17,8 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-07 常用服务专项：最终增量本地验收通过，准备发布**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记328个公开参考主机，其中261个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
-* **本轮构建基线**：19规则集、21,315条有效规则；China-Direct 674、Apple-Direct 170、China-Personal 103、DNS Host 111；manifest内容签名`a5b55d35b9a6`。相对恢复起点净增27条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过；初版提交94d35fa4ebe8459d235140c216c9473edee7b1da已推送、CI81（37566329787）success；主备5项新版资产均HTTP200且与本地一致。末轮补入极兔中国jtexpress.cn、维迈通官方下载app.vimoto.top，并修正显式空规则列表与有配置却缺FINAL的假回退；最后完整48项本地回归、4评分、严格冲突与预发布再次通过。最终增量尚待提交推送/CI核验，维迈通只是下载页而非对讲API已验。
+* **2026-10-07 常用服务专项：最终规则已发布并完成主备核验，进入日常观察**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记328个公开参考主机，其中261个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
+* **本轮构建基线**：19规则集、21,315条有效规则；China-Direct 674、Apple-Direct 170、China-Personal 103、DNS Host 111；manifest内容签名`a5b55d35b9a6`。相对恢复起点净增27条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过。初版发布94d35fa4ebe8459d235140c216c9473edee7b1da的CI81（37566329787）成功；最终代码发布00ce6ba3b3f7b1317a7ae3b38f74e115db5be183已正常推送，CI82（37568672941）completed/success，规则48与诊断19项及前置门禁通过。最终GitHub Raw与Fastly各5项公开资产均HTTP200、与本地一致，无缓存绕过参数；备用China-Direct曾有旧缓存，已按该文件定向刷新后核对通过。最终增量含极兔中国jtexpress.cn、维迈通官方下载app.vimoto.top及模拟器假回退修复；维迈通只是下载页而非对讲API已验。代码发布时本地与origin/main及实际远端SHA一致（0/0），工作树clean；本条为发布证据归档。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
   * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、48+19项门禁与 CDN 镜像校验发布）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
@@ -31,14 +31,14 @@
   * 自动化提交与发布后 CDN 探测：
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
-  * **已核验的规则发布 CI 运行事实**：前轮GitHub Actions Run **#80**（ID `37336844815`，针对`aa29325d6c53b469f353fed594bba909a141e9b9`）为completed/success；本轮发布验证待补齐。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,313 条有效规则**），已全量构建至 `dist/`；本轮本地完整性校验通过，远端发布与手机生效以对应发布验证为准。
+  * **已核验的规则发布 CI 运行事实**：前轮GitHub Actions Run **#80**（ID `37336844815`，针对`aa29325d6c53b469f353fed594bba909a141e9b9`）为completed/success；本轮最终代码发布[Run #82](https://github.com/o-ocn/loon-rules/actions/runs/37568672941)（ID `37568672941`，针对`00ce6ba3b3f7b1317a7ae3b38f74e115db5be183`）completed/success；后续独立主备资产核验10/10一致，手机生效未验。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,315 条有效规则**），已全量构建至 `dist/`；本轮本地门禁、远端发布与公开资产核对通过，手机生效仍须正常使用确认。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,244 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
   * Apple MapKit 地图矢量瓦片与 POI 图床 (`apple-mapkit.com`) 纳入 `Apple-Direct` 直连，修复国内电信 CDN 节点 (`119.147.195.212`) 跌入 FINAL 产生折返跑延迟，严格保持 `apple.com` 泛域名不添加并保持 `Apple-Media` 与 `TestFlight` 策略隔离；
-  * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行（工建农中交邮）及全国股份制商业银行（平安、中信、光大、浦发、兴业、民生、广发、华夏等）全量金融域名纳入直连与国内极速 DNS（223.5.5.5）分流调度，彻底阻断国内银行与支付流量因上游 USER-AGENT 规则失效而跌落 FINAL 绕行海外专线引发的风控拦截；
+  * 招商银行 (`cmbchina.com`, `cmbimg.com`)、中国银联/云闪付 (`unionpay.com`, `unionpaysecure.com`, `95516.com`)、六大国有行及主要股份制银行的已知国内域名已纳入直连，并配套国内DNS；本轮补招行国内官网精确入口。已知主机样本通过不等于银行App完整依赖、支付交易或风控效果已验，海外子行与未决域名保留各自边界；
   * **Phase 0.5 首批人工核验放行**：一键免密认证基建 (`cmpassport.com`)、联通官方 (`10010.com`)、点评图床 (`dpfile.com`)、百度静态资源 (`bdstatic.com`)、央视媒体图床 (`cctvpic.com`) 5 条高置信规则正式入库；
   * **Phase 0.5 第二批真机抓包精准补丁**：Apple 补充组件 OTA 目录 (`gdmf-ados.apple.com`) 纳入直连根除 61s 超时；抖音自建边缘流媒体 CDN (`zzcdnx.com`) 纳入直连根除 1~3s 首帧卡顿；七牛云 PCDN (`qrstuvwxyzab.com`) 暂缓入库并进入隔离池审计；
   * **Phase 0.5 第三批真机抓包精准补丁**：中国大陆百科服务 (`baike.com`) 纳入直连，修复 `m.baike.com` 绕行香港代理访问国内电信节点 (119.147.195.212) 问题；
@@ -79,7 +79,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 170 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 672 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 101条；本轮补小黑盒API、山姆中国、TRTC精确主机、miIO中国接口、国内站点与资源，并接入4个经过滤的App专用上游 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 674 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 103条；本轮补小黑盒API、山姆中国、TRTC精确主机、miIO中国接口、国内站点与资源，并接入4个经过滤的App专用上游 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,244 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -273,7 +273,7 @@
     - 规则/DNS：TRTC仅mlvbdc；Apple仅cl1-cl5；小米仅中国api.io.mi.com。保持Steam/TikTok/Apple账号媒体、银行海外、公有云及PCDN边界；不采纳Gemini早期整包放行建议。未改私人.lcf策略。
     - 13条公开引用补齐明确区分官网/图片/Web客户端与原生App接口。小米官方HA常量是ha.api.io.mi.com，本轮native中国接口依据是公开miIO区域实现与DNS，不能冒充官方HA的同名证明。
     - 已知样本入CI、模拟器修复无LCF及实际缺FINAL时假FINAL,DIRECT；显式空远程规则列表不再静默恢复默认清单；严格DNS守卫只放5个精确Apple主机，宽泛和委派子域故障注入均拦截。
-    - 本地48/19/4、严格冲突、预发布及构建通过；前期Gemini当前账号Pro/Flash均429；通过既有账号切换工具复用备用账号，22号终审补正已真实交付。Codex对照生产文件核验，无阻塞代码问题；20号初稿误把测试负例当生产规则及App身份断言已拒绝，BCE排除的实际三主机以sources.yml为准。远端发布核验待补。
+    - 本地48/19/4、严格冲突、预发布及构建通过；前期Gemini当前账号Pro/Flash均429；通过既有账号切换工具复用备用账号，22号终审补正已真实交付。Codex对照生产文件核验，无阻塞代码问题；20号初稿误把测试负例当生产规则及App身份断言已拒绝，BCE排除的实际三主机以sources.yml为准。最终代码发布00ce6ba及CI82成功，主备各5项公开资产独立核对一致；CDN旧缓存已定向刷新。收尾校正贴吧行误列淘宝tbcdn.cn参考主机，淘宝/1688仍保留其覆盖，261个唯一已知主机集合不变，test_46与全清单审计重跑通过。外部29号报告保存完整证据与收尾Git状态，正式详细事实源仍只有本文件。
   * **字节跳动骨干静态 CDN 补丁与 GeoIP 去 no-resolve 架构收敛**：
     - 精准收录 `bytecdn.com` 与 `bytecdn.cn` 至 `rules/custom/China-Direct.list`，彻底解决字节前端组件（`lf-leads-fe-scm`）绕行香港代理导致的抖音评论区图片转圈与卡顿，真机实测验证秒开；
     - 落地项目最高准则“稳定使用 > 减少人工 > 易维护 > 极端场景完善”，客户端放弃 `no-resolve` 束缚，恢复 GeoIP 主动触发本地 DNS 反查兜底，实现日常使用彻底无感；

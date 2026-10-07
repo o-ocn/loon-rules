@@ -753,10 +753,6 @@
           "ruleset": "China-Direct.lsr"
         },
         {
-          "host": "tbcdn.cn",
-          "ruleset": "China-Direct.lsr"
-        },
-        {
           "host": "tieba.baidu.com",
           "ruleset": "China-Direct.lsr"
         }
@@ -765,7 +761,7 @@
       "sources": [
         "https://tieba.baidu.com/"
       ],
-      "boundary": "差项有百度广告和bcebos客户域；tb.cn属于淘宝短链，不能标作贴吧"
+      "boundary": "差项有百度广告和bcebos客户域；tb.cn及tbcdn.cn属于淘宝相关域名，不标作贴吧依赖"
     },
     {
       "id": "service-024",
