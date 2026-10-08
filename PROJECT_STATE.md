@@ -17,10 +17,12 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-08 两个Apple主机精确优化：已发布，本地/CI/主备验收通过**：所有者明确授权 pancake.apple.com 与 tr.iadsdk.apple.com；恢复起点 `80c8ffb9d9461c01dfede55d3b314f1e3ea615c7`。Apple-Direct新增两个 DOMAIN 精确规则，DNS插件新增两个223.5.5.5精确Host，白名单从cl1-cl5五项扩为七项；守卫代码不变，其他Apple子域、通配和账号/媒体边界未放宽。未改私人LCF、策略绑定、广告拦截或来源配置。原截图TCP已有正常下行；独立双DNS证据支持国内CDN调度试行，不证明业务用途、手机DNS或卡顿原因。
-* **当前构建基线**：19集21,322条，Apple-Direct172、China-Direct680、China-GeoIP19,243、China-Personal109、DNS Host119；内容签名 `96fe50cf4464`。个人优化为净增两个规则/两个DNS；正常构建同时同步成熟ChinaIPs上游删除 `103.144.244.0/23` 一项（源条目19,258→19,257，公开原文独立复核），所以全库相对起点净增一条；其余17个规则集正文不变。账本138条、原136条保留，两条新增verified=false、180天复查。
-* **本次发布证据**：代码 `85a8327075bd3ce0e82aaf634d2b955bc1992e84` 正常推送成功；[CI Run #84](https://github.com/o-ocn/loon-rules/actions/runs/37733112204)（ID `37733112204`）针对该SHA为completed/success，日志实际规则50项、诊断19项及前置门禁通过，CI构建未产生额外改动。GitHub Raw与Fastly普通订阅地址各六项资产均HTTP200、规范化SHA256与本地一致，manifest签名96fe50cf4464，没有缓存绕过参数；备用China-GeoIP一次SSL传输中断已重试并核验一致。代码发布后工作树clean；手机有效加载与实际效果仍未验证。
-* **当前验证**：Codex独立规则50/50、诊断19/19、评分4/4、正常构建、严格冲突及预发布完整性通过。test_50验证精确首命中、子域/伪装排除、DOMAIN扩大为DOMAIN-SUFFIX的故障注入，以及两个精确DNS正例与11个扩大范围负例；test_48/49保留。Gemini经Antigravity CLI完成常规实施，CLI收尾有EOF传输错误；验收依据是实际文件与Codex独立测试，没有用零退出码或自报结果替代证据。任务证据位于 `E:\Document\AI-Workspace\loon-rules\2026-10-08-apple-two-hosts`；手机有效加载和体验仍未验证。
+* **2026-10-08 guzzoni.smoot.apple.com (Siri/搜索) 精确优化：本地已验证、待Codex审查发布**：所有者明确授权将 Downloads 三张截图（IMG_1010/1011/1012）中确需优化的项目与 `guzzoni.smoot.apple.com` 一起优化；恢复起点 `57ca124bc2d4276c012093b1a482b3ea110821ab`（起点工作树 clean）。Apple-Direct 新增一条 DOMAIN 精确规则，DNS 插件新增一条 223.5.5.5 精确 Host，白名单从 7 项扩至 8 项；守卫算法不变，严格禁止通配符或 smoot/apple 泛域委托。其余五域名（openaiassets.z19.web.core.windows.net, api.revenuecat.com, o33249.ingest.us.sentry.io, www.nsloon.com, m.hotmail.com）按各自服务用途与既有分流目标，继续保持代理兜底（FINAL）；截图TCP有下行，不证明完整业务成功或时间字段含义，不新增 DIRECT/REJECT，Hotmail QUIC 保持不变。独立双 DoH 实时核验证实 AliDNS A 解析返回地址101.34.195.126；Codex另次得到同网段101.34.190.217，均命中现有China-GeoIP 101.34.0.0/15；Google返回54.203.140.83未命中本库CN CIDR，支持配套国内 DNS 试行。
+* **当前构建基线**：19集 21,323条，Apple-Direct 173、China-Direct 680、China-GeoIP 19,243、China-Personal 109、DNS Host 120；内容签名 `02c5ceb22c3a`。相对起点仅 Apple-Direct 规则正文增加 1 条，其余 18 个规则集正文完全不变。账本 139 条、原 138 条保留，新增一条 verified=false、180 天复查。
+* **本地门禁验收证据**：`scripts/build.py` 构建通过（1 ruleset updated, 18 unchanged, 0 upstream drift）；`test_rules.py` 新增 `test_51_guzzoni_smoot_siri_trial`，全量 51/51 项测试全部通过（精确首命中、子域/同族未批准域/伪装后缀/其余5域名隔离断言、DOMAIN-SUFFIX 内存变异故障注入、DNS 插件 source/dist 一致性与 12 组夹具正负例）；Node.js 诊断测试 19/19 通过；评分测试 4/4 通过；严格冲突检测 `check_conflicts.py --strict` 0 违规 PASS；预发布镜像自校验 `verify_mirrors.py --pre-release` 签名验证 PASS。代码尚未 commit/push，待 Codex 审查后发布；手机有效加载与真机体验仍未验证。
+* **此前2026-10-08 两个Apple主机精确优化：已发布，本地/CI/主备验收通过**：所有者明确授权 pancake.apple.com 与 tr.iadsdk.apple.com；恢复起点 `80c8ffb9d9461c01dfede55d3b314f1e3ea615c7`。Apple-Direct新增两个 DOMAIN 精确规则，DNS插件新增两个223.5.5.5精确Host，白名单从cl1-cl5五项扩为七项；守卫代码不变，其他Apple子域、通配和账号/媒体边界未放宽。未改私人LCF、策略绑定、广告拦截或来源配置。原截图TCP已有正常下行；独立双DNS证据支持国内CDN调度试行，不证明业务用途、手机DNS或卡顿原因。
+* **此前构建基线（Apple两个主机）**：19集21,322条，Apple-Direct172、China-Direct680、China-GeoIP19,243、China-Personal109、DNS Host119；内容签名 `96fe50cf4464`。个人优化为净增两个规则/两个DNS；正常构建同时同步成熟ChinaIPs上游删除 `103.144.244.0/23` 一项（源条目19,258→19,257，公开原文独立复核），所以全库相对起点净增一条；其余17个规则集正文不变。账本138条、原136条保留，两条新增verified=false、180天复查。
+* **此前发布证据（Apple两个主机）**：代码 `85a8327075bd3ce0e82aaf634d2b955bc1992e84` 正常推送成功；[CI Run #84](https://github.com/o-ocn/loon-rules/actions/runs/37733112204)（ID `37733112204`）针对该SHA为completed/success，日志实际规则50项、诊断19项及前置门禁通过，CI构建未产生额外改动。GitHub Raw与Fastly普通订阅地址各六项资产均HTTP200、规范化SHA256与本地一致，manifest签名96fe50cf4464，没有缓存绕过参数；备用China-GeoIP一次SSL传输中断已重试并核验一致。代码发布后工作树clean；手机有效加载与实际效果仍未验证。
 * **此前2026-10-07字节与腾讯音乐发布归档**：恢复起点 `ab3f46cf5993574f6cc7ab18a3be380705b20060`。截图中 render.ecombdpage.com、lf6-font-sign.bytehwm.com、img/p/ad.tencentmusic.com 五个国内服务主机，现均首命中 China-Direct；补齐六个服务后缀 bytehwm.com、ecombdpage.com、ecombdimg.com、ecombdstatic.com、ecombdvod.com、tencentmusic.com，并增加六条国内DNS映射。ecombdapi.com 原有覆盖保留；Sentry、RevenueCat、nsloon 未新增国内直连或拦截。规则保持策略中立，实际出口仍由用户既有绑定决定。
 * **此前字节/TME基线（历史）**：19规则集、21,321条有效规则；China-Direct 680、Apple-Direct 170、China-Personal 109、DNS Host 117；manifest内容签名 `d3c24481f524`。相对晚间恢复起点仅 China-Direct 规则正文改变，其余18个规则集正文不变，DNS源与dist副本一致。账本136条、原130条完整保留，新六条 verified=false、180天复查。90行服务登记保留，273个已知参考样本与67个候选共340个唯一主机；新增样本包含合成回归主机，不表示完整App依赖或真机成功率。
 * **此前字节/TME发布证据**：代码 `8cf4d07bed88a3193310e6f0ec4f4f760b692e26` 正常推送成功；[CI Run #83](https://github.com/o-ocn/loon-rules/actions/runs/37643102870)（ID `37643102870`）针对该SHA为 completed/success，实际日志规则49项、诊断19项及严格冲突/预发布门禁通过，远端构建未产生额外规则改动。GitHub Raw与Fastly普通地址各5项公开资产均HTTP200、规范化换行后的SHA256与本地一致，manifest为 `d3c24481f524`，没有缓存绕过参数；备用四项旧缓存已定向刷新后复核一致。代码发布后本地与origin/main及实际远端一致（0/0），工作树clean；手机加载与体验未验。
@@ -87,7 +89,7 @@
 | **`TestFlight.lsr`** | 3 | Apple TestFlight 内测分发平台 | 100% 策略中立 |
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
-| **`Apple-Direct.lsr`** | 172 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
+| **`Apple-Direct.lsr`** | 173 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
 | **`China-Direct.lsr`** | 680 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 109条；保留小黑盒、山姆、TRTC等既有补齐，新增字节电商/字体与腾讯音乐六个服务族 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,243 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
@@ -111,7 +113,7 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **50/50 全部通过**（test_50验证本批Apple精确主机与DNS边界；test_49新增字节/TME服务族、境外隔离及通配符故障注入；保留既有门禁；test_46加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47未知FINAL与脱敏；test_48精确Apple CDN DNS授权）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **51/51 全部通过**（新增 test_51 验证 guzzoni.smoot.apple.com 精确首命中、负向隔离、内存变异故障注入及 DNS 守卫；test_50 验证 pancake/tr.iadsdk；test_49 新增字节/TME服务族、境外隔离及通配符故障注入；保留既有门禁；test_46 加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47 未知FINAL与脱敏；test_48 精确Apple CDN DNS授权）；
 - **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
 - **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、340唯一参考主机（273已知/67候选）、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
 - **评分引擎**：`python -B -m unittest scripts.test_score_engine` **4/4 PASS**。
@@ -128,6 +130,8 @@
 ---
 
 ## 六、关键架构决策
+
+- **2026-10-08 Siri / Search 精确主机 (guzzoni.smoot.apple.com) 试行**：官方 Apple 支持文档 https://support.apple.com/en-us/101555 明列 *.smoot.apple.com 为 Siri、Spotlight、Lookup等搜索服务；仅准入精确 DOMAIN 规则与配套 223.5.5.5 精确 DNS，严格禁止通配符或 root/wildcard 委托。其余 5 个截图域名保持现有代理兜底，不为消灭 FINAL 破坏策略边界。
 
 - **2026-10-08 Apple两个完整主机试行**：只准入pancake.apple.com和tr.iadsdk.apple.com的精确规则/精确DNS，保持域树和媒体账号边界；构建同步的单条ChinaIPs删除单独核验，不混称用户补丁。
 

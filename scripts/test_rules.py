@@ -2504,6 +2504,122 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, f"Pattern '{pattern}' expected ok={expected}, got {ok} with errors: {errors}")
 
+    def test_51_guzzoni_smoot_siri_trial(self):
+        """Verify guzzoni.smoot.apple.com exact DOMAIN match, domestic isolation, fault injection, and DNS guards."""
+        # 1. 真实 simulate_hit 首命中 Apple-Direct.lsr (严格 DOMAIN,host，非 DOMAIN-SUFFIX)
+        rules = simulate_hit.load_dist_rules()
+        target_host = "guzzoni.smoot.apple.com"
+        matches = simulate_hit.match_target(target_host, rules)
+        self.assertTrue(matches, f"Expected match for {target_host}, got none")
+        self.assertEqual(matches[0]["ruleset"], "Apple-Direct.lsr")
+        self.assertEqual(matches[0]["type"], "DOMAIN")
+        self.assertEqual(matches[0]["value"], target_host)
+        self.assertEqual(matches[0]["rule"], f"DOMAIN,{target_host}")
+
+        # 2. probe子域、同族未批准域、伪装后缀、其他五个截图主机严禁误入任何国内直连规则 (China-Direct, Apple-Direct, AI-China-Direct)
+        domestic_rulesets = {"China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"}
+        negative_targets = [
+            # 子域
+            "sub.guzzoni.smoot.apple.com",
+            "probe.guzzoni.smoot.apple.com",
+            "api.guzzoni.smoot.apple.com",
+            # 同族未批准域 / 父域 / 根域
+            "smoot.apple.com",
+            "apple.com",
+            "other.smoot.apple.com",
+            "v.aaplimg.com",
+            "guzzoni-smoot.v.aaplimg.com",
+            # 伪装后缀
+            "guzzoni.smoot.apple.com.evil.example",
+            "guzzoni.smoot.apple.com.attacker.com",
+            "guzzoni.smoot.apple.com.spoof.org",
+            # 其他五个截图主机 (继续现有代理兜底，不误直连)
+            "openaiassets.z19.web.core.windows.net",
+            "api.revenuecat.com",
+            "o33249.ingest.us.sentry.io",
+            "www.nsloon.com",
+            "m.hotmail.com",
+        ]
+        def assert_domestic_isolation(candidate_rules):
+            for target in negative_targets:
+                forbidden_hits = [m for m in simulate_hit.match_target(target, candidate_rules)
+                                  if m["ruleset"] in domestic_rulesets]
+                self.assertEqual(forbidden_hits, [], f"Forbidden domestic match for {target}: {forbidden_hits}")
+
+        assert_domestic_isolation(rules)
+
+        # 3. 内存故障注入变异测试：确保当 DOMAIN 变异为 DOMAIN-SUFFIX (匹配子域) 时负向断言确实失败
+        mutant_suffix = [("Apple-Direct.lsr", [("DOMAIN-SUFFIX", "guzzoni.smoot.apple.com", "DOMAIN-SUFFIX,guzzoni.smoot.apple.com", 1)])]
+        with self.assertRaises(AssertionError):
+            assert_domestic_isolation(mutant_suffix)
+
+        mutant_smoot = [("Apple-Direct.lsr", [("DOMAIN-SUFFIX", "smoot.apple.com", "DOMAIN-SUFFIX,smoot.apple.com", 1)])]
+        with self.assertRaises(AssertionError):
+            assert_domestic_isolation(mutant_smoot)
+
+        # 4. 验证真实 DNS 插件中精确条目，且 source 和 dist 一致
+        plugin_src_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        plugin_dist_path = os.path.join(DIST_DIR, "plugins", "Loon-China-DNS.lpx")
+
+        with open(plugin_src_path, "r", encoding="utf-8") as f:
+            src_content = f.read()
+
+        self.assertIn("guzzoni.smoot.apple.com = server:223.5.5.5", src_content, "Missing exact entry in source plugin")
+        self.assertNotIn("*.guzzoni.smoot.apple.com =", src_content)
+        self.assertNotIn("*.smoot.apple.com =", src_content)
+        self.assertNotIn("*.v.aaplimg.com =", src_content)
+        self.assertNotIn("*.aaplimg.com =", src_content)
+
+        self.assertTrue(os.path.isfile(plugin_dist_path), "Compiled DNS plugin must exist")
+        with open(plugin_dist_path, "r", encoding="utf-8") as f:
+            dist_content = f.read()
+        self.assertEqual(src_content, dist_content, "source and dist plugins must be identical")
+
+        # 验证已解析的 DNS 插件映射条目中包含精确主机，且不包含通配符
+        import check_conflicts
+        plugin_hosts = check_conflicts.load_dns_plugin_hosts(plugin_src_path, preserve_patterns=True)
+        self.assertIn("guzzoni.smoot.apple.com", plugin_hosts)
+        self.assertNotIn("*.guzzoni.smoot.apple.com", plugin_hosts)
+        self.assertNotIn("*.smoot.apple.com", plugin_hosts)
+        self.assertNotIn("smoot.apple.com", plugin_hosts)
+
+        # 5. DNS 冲突检查器夹具验证 (精确放行正例，红线负例包含子域/父域/通配/wildcard-ancestor)
+        fixture_cases = [
+            # Positives (精确放行)
+            ("guzzoni.smoot.apple.com", True),
+            # Negatives (严禁放行：父域、祖先域、通配及子域)
+            ("apple.com", False),
+            ("*.apple.com", False),
+            ("icloud.com", False),
+            ("*.icloud.com", False),
+            ("smoot.apple.com", False),
+            ("*.smoot.apple.com", False),
+            ("*.guzzoni.smoot.apple.com", False),
+            ("probe.guzzoni.smoot.apple.com", False),
+            ("sub.guzzoni.smoot.apple.com", False),
+            ("api.guzzoni.smoot.apple.com", False),
+            ("*.com", False),
+        ]
+        for pattern, expected in fixture_cases:
+            with self.subTest(fixture_pattern=pattern):
+                fixture = os.path.join(TEST_TMP_DIR, "guzzoni_smoot_dns.fixture")
+                with open(fixture, "w", encoding="utf-8") as f:
+                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
+                self.assertEqual(ok, expected, f"Pattern '{pattern}' expected ok={expected}, got {ok} with errors: {errors}")
+
+        # 6. 决策账本契约：本轮新试行值false另行验收；允许将来真实验证后改为true
+        decisions_path = os.path.join(BASE_DIR, "history", "decisions.jsonl")
+        with open(decisions_path, "r", encoding="utf-8") as f:
+            ledger = [json.loads(line) for line in f if line.strip()]
+        rule_to_dec = {entry["rule"]: entry for entry in ledger if "rule" in entry}
+        self.assertIn("DOMAIN,guzzoni.smoot.apple.com", rule_to_dec, "Missing guzzoni.smoot.apple.com in decisions ledger")
+        dec = rule_to_dec["DOMAIN,guzzoni.smoot.apple.com"]
+        self.assertEqual(dec.get("decision"), "APPROVED")
+        self.assertEqual(dec.get("scope"), "EXACT_APP_SERVICE")
+        self.assertIsInstance(dec.get("verified"), bool)
+        self.assertEqual(dec.get("recheck_interval_days"), 180)
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)
