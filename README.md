@@ -16,7 +16,7 @@
 
 1. **第 1 层：规则路由层（Routing Layer・19 个策略中立规则集；当前规模与发布证据见 PROJECT_STATE.md）**：
    - **职责**：决定网络请求“去向何方”（走 DIRECT 还是 PROXY）。
-   - **成熟上游为主与静态基线扩容**：以 `blackmatrix7/ios_rule_script` (GPL-2.0) 为主要规则源，保障成熟服务规则的全面性与健壮度。本次纳管经过滤审定的策略中立静态基线层（`China-Baseline.list`，2,599 条规则，编译净增 2,559 条至 3,239 条，全库 23,882 条），大幅拓宽国内日常业务覆盖；暂缓已识别的共享基础设施和歧义家族（如腾讯云/阿里IoT共享端点）；严格排除未知公有云租户、多租户 CDN、出海孪生业务、海外学术/金融机构及含 cdn/cloud/dns/global/international 歧义资产；静态正文由哈希锁强校验，杜绝未经审查的动态更新；离线模拟记录不替代真机验证。
+   - **成熟上游与审查底座**：继续采用 `blackmatrix7/ios_rule_script` (GPL-2.0)，另接入固定快照、Gemini筛选与Codex独立审核的策略中立 `China-Baseline.list`，扩大国内日常业务覆盖。暂缓已识别的共享基础设施、出海服务及歧义家族；静态正文锁定和分流/故障变异门禁保护批次更新，来源变化需重新审核。实际统计、发布证据和手机待验证边界见 `PROJECT_STATE.md`，不要求用户逐App抓包。
    - **策略绝对中立**：所有 `.lsr` 绝不写入用户策略组名称、地区（HK/US/JP）、节点名称或策略动作。用户在 Loon 中按需自由绑定专属策略组。
    - **8 大服务边界与防碰撞**：包含 Gemini 与普通 Google、YouTube 与 Google、Grok 与 Twitter、Muse from Meta 精准识别、TestFlight/Media 与 Direct 隔离等。
 2. **第 2 层：DNS 调度层（Resolution Layer・国内大厂与区域 CDN 极速分流）**：
