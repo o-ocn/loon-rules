@@ -307,6 +307,7 @@ rulesets:
     local_custom:
       - "rules/custom/China-Direct.list"
       - "rules/custom/China-Personal.list"
+      - "rules/custom/China-Baseline.list"
 
   # ======================================================================
   # 3. STRUCTURAL CATCH-ALLS (LAN bypass BEFORE GeoIP fallback)

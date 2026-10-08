@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-08T10:51:14.991343+00:00",
-  "content_revision": "02c5ceb22c3a",
-  "package_sha256": "02c5ceb22c3afcf81a6be8db6f6abf9df4cf81ff26e6a44ba762bc614cab5bc2",
+  "build_timestamp": "2026-10-08T16:29:21.066526+00:00",
+  "content_revision": "cc70392cee8a",
+  "package_sha256": "cc70392cee8a9c857c73374cc45a2be1c4a58421df11ac0b8ac3d4e164828ded",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -104,9 +104,9 @@
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {
-      "total_rules": 680,
-      "revision": "11b0ca21aff8",
-      "sha256": "11b0ca21aff8c83c8d9038f38b4d69ca70a74abe8c6831e55d91122289f620d5",
+      "total_rules": 3239,
+      "revision": "5f61732c7ea5",
+      "sha256": "5f61732c7ea5fa6afc26dbc90d11ad758a71530e2d043fc5b5c84ad69e04c1c9",
       "description": "Mainland China daily apps (WeChat, Taobao, JD, Xianyu, Douyin, Bilibili)"
     },
     "Lan.lsr": {

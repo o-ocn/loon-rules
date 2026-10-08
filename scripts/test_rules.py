@@ -21,6 +21,7 @@ import ipaddress
 import urllib.request
 import urllib.error
 import yaml
+import copy
 from unittest.mock import patch, MagicMock
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -2619,6 +2620,143 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertEqual(dec.get("scope"), "EXACT_APP_SERVICE")
         self.assertIsInstance(dec.get("verified"), bool)
         self.assertEqual(dec.get("recheck_interval_days"), 180)
+
+    def test_52_china_baseline_guard_and_behavior_probes(self):
+        """Verify China-Baseline static layer integrity, strict boundary guards, real probe behaviors, and mutation fault injection."""
+        baseline_path = os.path.join(BASE_DIR, "rules", "custom", "China-Baseline.list")
+        self.assertTrue(os.path.isfile(baseline_path), "rules/custom/China-Baseline.list must exist")
+
+        # 1. 真实编译 dist 正向首命中验证：审定新增服务在真实编译 dist 中首命中必须为 China-Direct
+        rules = simulate_hit.load_dist_rules()
+        positive_services = [
+            "didistatic.com",
+            "ceair.com",
+            "csair.com",
+            "hnair.com",
+            "ngacn.cc",
+            "douban.fm",
+            "8008205555.com",
+        ]
+        for host in positive_services:
+            m = simulate_hit.match_target(host, rules)
+            self.assertTrue(len(m) > 0, f"Expected match for positive service host {host}")
+            self.assertEqual(m[0]["ruleset"], "China-Direct.lsr",
+                             f"Host {host} must first-hit China-Direct.lsr, got {m[0]['ruleset']}")
+
+        # 2. 真实 simulate_hit 负向首命中隔离验证：海外、共享云、正则排除及出海暂缓域严禁误入国内直连 (保持为 FINAL)
+        domestic_rulesets = {"China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"}
+        critical_negative_targets = [
+            # 真实曾发生误判的海外/共享云服务
+            "m.hotmail.com",
+            "openaiassets.z19.web.core.windows.net",
+            "login.microsoftonline.com",
+            "login.live.com",
+            "unreviewed-tenant.windows.net",
+            "api.revenuecat.com",
+            "o33249.ingest.us.sentry.io",
+            "www.nsloon.com",
+            # 出海与海外分支/海外云
+            "trip.com",
+            "cloudsigma.com",
+            "cncbinternational.com",
+            "didiglobal.com",
+            "tracker.didiglobal.com",
+            "website.didiglobal.com",
+            # 精确主机子域负例 (必须保持隔离，不因父域直连误伤)
+            "sub.guzzoni.smoot.apple.com",
+            "probe.pancake.apple.com",
+            "probe.tr.iadsdk.apple.com",
+            # 正则分类冲突暂缓域及 probe 子域 (必须保持隔离为 FINAL)
+            "u17i.com",
+            "probe.u17i.com",
+            "u17t.com",
+            "probe.u17t.com",
+            "uuu9.com",
+            "probe.uuu9.com",
+            "z28j.com",
+            "probe.z28j.com",
+            # 暂缓共享云/平台家族及端点 (必须保持隔离为 FINAL)
+            "tencentyun.com",
+            "hkccr.ccs.tencentyun.com",
+            "unknown.tencentyun.com",
+            "aliyun-iot-share.com",
+            "probe.aliyun-iot-share.com",
+        ]
+
+        def assert_domestic_isolation(candidate_rules):
+            for target in critical_negative_targets:
+                forbidden_hits = [m for m in simulate_hit.match_target(target, candidate_rules)
+                                  if m["ruleset"] in domestic_rulesets]
+                self.assertEqual(forbidden_hits, [], f"Forbidden domestic match for {target}: {forbidden_hits}")
+
+        assert_domestic_isolation(rules)
+
+        # 3. 故障注入变异测试：注入真实误判父域 (windows.net / hotmail.com / trip.com / didiglobal.com / tencentyun.com) 必须触发断言失败
+        for mutant_domain in ["windows.net", "hotmail.com", "trip.com", "didiglobal.com", "tencentyun.com", "aliyun-iot-share.com"]:
+            mutant_rules = [("China-Direct.lsr", [("DOMAIN-SUFFIX", mutant_domain, f"DOMAIN-SUFFIX,{mutant_domain}", 1)])]
+            with self.assertRaises(AssertionError, msg=f"Mutation fault injection failed to trigger for {mutant_domain}"):
+                assert_domestic_isolation(mutant_rules)
+
+        # 4. check_conflicts --strict 对真实 baseline 验收
+        import check_conflicts
+        ok, errors, _ = check_conflicts.check_conflicts(strict=True)
+        self.assertTrue(ok, f"check_conflicts --strict failed on real baseline: {errors}")
+
+        # 5. 真实 strict 夹具变异测试：夹具设置完全一致的正确 hash 和 count，仍因 Boundary/Collision 严格拒绝
+        with open(os.path.join(BASE_DIR, "shared_domains.yml"), "r", encoding="utf-8") as f:
+            spec_base = yaml.safe_load(f)
+
+        fixture_cases = [
+            ("safe.example.test", True),
+            ("windows.net", False),
+            ("hotmail.com", False),
+            ("trip.com", False),
+            ("tencentyun.com", False),
+            ("aliyun-iot-share.com", False),
+        ]
+        for domain, expected_ok in fixture_cases:
+            rule_text = f"DOMAIN-SUFFIX,{domain}\n"
+            f_list = os.path.join(TEST_TMP_DIR, f"guard_{domain}.list")
+            with open(f_list, "w", encoding="utf-8") as f:
+                f.write(rule_text)
+            f_hash = hashlib.sha256(rule_text.encode("utf-8")).hexdigest()
+
+            spec_case = copy.deepcopy(spec_base)
+            spec_case["china_baseline_guard"]["baseline_file"] = f_list
+            spec_case["china_baseline_guard"]["pinned_body_sha256"] = f_hash
+            spec_case["china_baseline_guard"]["expected_rule_count"] = 1
+
+            f_yml = os.path.join(TEST_TMP_DIR, f"guard_{domain}.yml")
+            with open(f_yml, "w", encoding="utf-8") as f:
+                yaml.dump(spec_case, f)
+
+            c_ok, c_errors, _ = check_conflicts.check_conflicts(spec_path=f_yml, strict=True)
+            self.assertEqual(c_ok, expected_ok, f"Unexpected check_conflicts strict result for {domain}")
+            if not expected_ok:
+                # 必须是因为边界或海外碰撞失败，绝对不能是因为 hash mismatch
+                has_boundary_or_collision = any(("Forbidden boundary" in e or "Overseas collision" in e) for e in c_errors)
+                self.assertTrue(has_boundary_or_collision, f"Expected boundary/collision error for {domain}, got: {c_errors}")
+                has_hash_mismatch = any("hash mismatch" in e.lower() for e in c_errors)
+                self.assertFalse(has_hash_mismatch, f"Fixture for {domain} must have matching hash, but had hash mismatch: {c_errors}")
+
+        # 6. check_conflicts --strict 对 baseline 故障注入：缺失文件与哈希篡改
+        # 变异一：缺失文件
+        missing_fixture = os.path.join(TEST_TMP_DIR, "missing_baseline.yml")
+        spec_mutant = copy.deepcopy(spec_base)
+        spec_mutant["china_baseline_guard"]["baseline_file"] = "rules/custom/NonExistent.list"
+        with open(missing_fixture, "w", encoding="utf-8") as f:
+            yaml.dump(spec_mutant, f)
+        ok_m, errors_m, _ = check_conflicts.check_conflicts(spec_path=missing_fixture, strict=True)
+        self.assertFalse(ok_m, "check_conflicts must fail when baseline file is missing")
+
+        # 变异二：哈希篡改
+        hash_fixture = os.path.join(TEST_TMP_DIR, "bad_hash_baseline.yml")
+        spec_mutant2 = copy.deepcopy(spec_base)
+        spec_mutant2["china_baseline_guard"]["pinned_body_sha256"] = "0000000000000000000000000000000000000000000000000000000000000000"
+        with open(hash_fixture, "w", encoding="utf-8") as f:
+            yaml.dump(spec_mutant2, f)
+        ok_h, errors_h, _ = check_conflicts.check_conflicts(spec_path=hash_fixture, strict=True)
+        self.assertFalse(ok_h, "check_conflicts must fail when baseline body hash is mismatched")
 
     @classmethod
     def tearDownClass(cls):

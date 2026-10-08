@@ -17,13 +17,15 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-08 国内底座静态扩大（China-Baseline.list）实施完成，待 Codex 审核发布**：恢复起点 `0fd85e6012a39299419c462af069b4bfe9c7df16`。依据所有者减少人工维护的授权，从固定 Commit URL 上游 `blackmatrix7/ios_rule_script`（SHA `036c097eb26c6a52c4f04ebcb6633043cb942669`）`China_Domain.list`（3,689 裸域）实施保守精细过滤。严格排除既有直连覆盖（362）、含 cdn/cloud/dns/global/international/intl 歧义资产（293）、境外商业/学术/跨国机构（255）、红线公有云/多租户/DDNS（108）、精确主机隔离冲突（49，含 gaode.com）、未审查海外主机/VPS/工具（11）、v2fly 正则命中（4，u17i.com, u17t.com, uuu9.com, z28j.com）、海外双向碰撞（6），并暂缓已识别共享平台基础设施（2，tencentyun.com 与 aliyun-iot-share.com 标记 SHARED_PLATFORM_AMBIGUITY 并加入守卫），合计排除 1,090 条；保留 2,599 条 100% 策略中立规则落入静态层 `rules/custom/China-Baseline.list`（正文 SHA256 `8b643f2463199d2e1b7d8fbf53d44ee02f324e94747eec29df5fab747f8d2b72`，由 `shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 强校验保护）。暂缓已识别的共享基础设施和歧义家族；静态 hash 保护未经复审的批次更新；未证明全球域名穷举或全部业务归属。
+* **真实编译构建净增长**：China-Direct.lsr 经编译器子域合并去重后从 680 条增至 3,239 条（净增 +2,559 条，40 条被子域剪枝去重）；全库 19 规则集总规则数从 21,323 条增至 23,882 条（净增 +2,559 条）；其余 18 个规则集语义正文 100% 保持不变；DNS Host 120 条保持不变；决策账本 139 条历史字节保持不变；构建内容签名从 `02c5ceb22c3a` 变为 `cc70392cee8a`。
+* **离线全量门禁 100% PASS**：Python 规则单元测试 52/52 PASS（test_52 覆盖编译后 7 个新增服务正向首命中、u17i/u17t/uuu9/z28j及probe子域负向隔离、tencentyun/aliyun-iot-share暂缓负例保持FINAL、真实strict对windows.net/hotmail.com/trip.com/tencentyun.com/aliyun-iot-share.com等变异夹具在hash/count完全一致时仍因边界拒绝以及安全夹具通过）；Node 诊断测试 19/19 PASS；评分引擎 4/4 PASS；`check_conflicts --strict` PASS；`verify_mirrors --pre-release` PASS；321 项已知契约样本逐条模拟记录 0 退化，163 边界保持，340 唯一参考主机（273 已知/67 候选），8 项候选（didistatic.com, ceair.com, csair.com 等）首命中升入 China-Direct；`root-verify-implementation.py` PASS。
+* **真机未验与边界保留**：321 项契约样本系离线模拟契约（已知契约样本逐条模拟记录），340 为唯一参考主机总量，不能将所有 340 称作既有已验证样本，不伪装真机测试；手机端 App Store 系统 DNS 候选仍未上机、根因未知；手机端 China-Baseline 实际加载与日常网络体验仍待真机确认；本次未执行 `git add/commit/push`，留存完整真实 diff 供 Codex 独立审核。
 * **2026-10-08 App Store：正常替代配置已由用户确认，原项目 DNS 单变量候选待真机**：用户报告原项目配置下商店加载失败、全局直连仍慢、全局代理正常；切换 `E:\Download\Baidu\2026_10_03_10_26_49_909_自动配置 (2).lcf` 后商店恢复。该文件含36远程规则，本地 `DOMAIN-SUFFIX,apps.apple.com,DIRECT` 优先命中，默认仅 `dns-server=system`。这不证明整个商店所有请求均直连，也不证明10月3日归档与故障时手机配置完全一致；DNS、插件与绑定存在多变量差异，根因尚未确认。商店改代理仅为已取消的未实施方案。
 * **单变量候选与独立验收**：恢复基准 `b0670f87ac37f2fe82b89649d1c7791eae2fdaed`；新候选 `E:\Document\AI-Workspace\loon-rules\2026-10-08-appstore-china-baseline\Loon-19Rules-AppStore-SystemDNS-candidate-2026-10-08.lcf`（SHA256 `939878c460841356d7b1a6fd58d23bb4aa53605f88444951e355990a9a6ea60f`）仅删除原19集归档中的Google DoH单行。Codex字节对照确认原件和正常配置均未动，其他字节及私密字段完全保留；同19远程规则、37插件/36启用。本地验收为 PARTIAL_PASS / UNVERIFIED_PLUGINS；候选未上手机、不是已修复或正式部署。113项公开工程文件与基线比较（归一化换行）不变，公开19集/21,323规则/120 DNS Host/139账本均未改；沿用此前功能CI #85证据。
-* **国内底座扩大尚未部署**：固定blackmatrix7 SHA `036c097eb26c6a52c4f04ebcb6633043cb942669`：China_Domain裸域表3689行，China.list原生非域名/泛域部分63行，不能把单份China.list当完整3752条域名源。Gemini初筛3309草案经Codex反例仿真，`m.hotmail.com`、截图中的Azure主机 `openaiassets.z19.web.core.windows.net` 等将由FINAL误入China-Direct，且 `netease.com` 触发现有红线；拒绝这版草案入库。Azure主机归属未独立证实；既有海外集前置不能保护所有未知共享云租户。后续批量过滤国内底座，不要求用户逐App抓包。详见本地 `20-Codex-final-review.md`。
 * **2026-10-08 guzzoni.smoot.apple.com (Siri/搜索) 精确优化：代码/CI/主源已发布核验；副CDN传播待复核，手机未验**：所有者明确授权将 Downloads 三张截图（IMG_1010/1011/1012）中确需优化的项目与 `guzzoni.smoot.apple.com` 一起优化；恢复起点 `57ca124bc2d4276c012093b1a482b3ea110821ab`（起点工作树 clean）。Apple-Direct 新增一条 DOMAIN 精确规则，DNS 插件新增一条 223.5.5.5 精确 Host，白名单从 7 项扩至 8 项；守卫算法不变，严格禁止通配符或 smoot/apple 泛域委托。其余五域名（openaiassets.z19.web.core.windows.net, api.revenuecat.com, o33249.ingest.us.sentry.io, www.nsloon.com, m.hotmail.com）按各自服务用途与既有分流目标，继续保持代理兜底（FINAL）；截图 TCP 有下行，不证明完整业务成功或时间字段含义，不新增 DIRECT/REJECT，Hotmail QUIC 保持不变。独立双 DoH 实时核验证实 AliDNS A 解析返回地址 101.34.195.126，Codex 另次得到同网段 101.34.190.217，均命中现有 China-GeoIP 101.34.0.0/15；Google 返回 54.203.140.83 未命中本库 CN CIDR，支持配套国内 DNS 试行。
-* **当前构建基线**：19集 21,323条，Apple-Direct 173、China-Direct 680、China-GeoIP 19,243、China-Personal 109、DNS Host 120；内容签名 `02c5ceb22c3a`。相对起点仅 Apple-Direct 规则正文增加 1 条，其余 18 个规则集正文完全不变。账本 139 条、原 138 条字节前缀完整保留，新增一条 verified=false、180 天复查。
-* **本次发布与主备核验事实**：代码 `9b52b0af23db50d9283960a0ac93cb3d3e972fc1` 正常推送成功；远端 [CI Run #85](https://github.com/o-ocn/loon-rules/actions/runs/37767776142)（ID `37767776142`，job `113279523141`）针对该 SHA 为 completed/success，日志实际 51 规则、19 诊断、strict 与 pre-release 通过，CI 构建“No rule changes detected”；CI 末尾附有 `SOFT_CDN` jsDelivr 边缘传播中警告（非致命告警，GitHub Raw 为主源 SSOT）。主源 GitHub Raw 3 项普通订阅 URL（`Apple-Direct.lsr`、`Loon-China-DNS.lpx`、`manifest.json`）HTTP 200 且换行规范化 SHA256 与本地完全一致，主源可立即正常更新使用。副源 Fastly 普通 URL 仅 `manifest.json` 一致，`Apple-Direct.lsr` 与 `Loon-China-DNS.lpx` 仍为旧缓存。两次精准 purge 请求返回 finished，但复核两项仍旧，带 no-cache 诊断请求亦未解决；绝不虚构“主备全部通过”，不能把 purge 成功当已刷新。官方 jsDelivr 文档记录分支缓存长达 12 小时，属外部 CDN 传播边界，后续观察普通 URL 自然过期更新，不改动用户订阅 URL、不另造发布系统。手机端有效加载、Siri/搜索体验改善与 DNS 实际效果仍未在真机验证。
-* **测试质量改进与门禁验收**：Codex 独立审查并修正 `test_51`（去除父域子串误报，采用完整 Host key 隔离；强制 dist 编译插件存在；verified 只验 bool 类型允许未来真机验收，当前记录仍保持 `false`）；修正后 Codex 独立运行 test_51、严格冲突检测、诊断 19/19、评分 4/4、预发布完整性全部通过；Gemini 本地全量 51/51 项测试亦全部通过。
+* **此前构建基线**：19集 21,323条，Apple-Direct 173、China-Direct 680、China-GeoIP 19,243、China-Personal 109、DNS Host 120；内容签名 `02c5ceb22c3a`。相对起点仅 Apple-Direct 规则正文增加 1 条，其余 18 个规则集正文完全不变。账本 139 条、原 138 条字节前缀完整保留，新增一条 verified=false、180 天复查。
+
 * **此前2026-10-08 两个Apple主机精确优化：已发布，本地/CI/主备验收通过**：所有者明确授权 pancake.apple.com 与 tr.iadsdk.apple.com；恢复起点 `80c8ffb9d9461c01dfede55d3b314f1e3ea615c7`。Apple-Direct新增两个 DOMAIN 精确规则，DNS插件新增两个223.5.5.5精确Host，白名单从cl1-cl5五项扩为七项；守卫代码不变，其他Apple子域、通配和账号/媒体边界未放宽。未改私人LCF、策略绑定、广告拦截或来源配置。原截图TCP已有正常下行；独立双DNS证据支持国内CDN调度试行，不证明业务用途、手机DNS或卡顿原因。
 * **此前构建基线（Apple两个主机）**：19集21,322条，Apple-Direct172、China-Direct680、China-GeoIP19,243、China-Personal109、DNS Host119；内容签名 `96fe50cf4464`。个人优化为净增两个规则/两个DNS；正常构建同时同步成熟ChinaIPs上游删除 `103.144.244.0/23` 一项（源条目19,258→19,257，公开原文独立复核），所以全库相对起点净增一条；其余17个规则集正文不变。账本138条、原136条保留，两条新增verified=false、180天复查。
 * **此前发布证据（Apple两个主机）**：代码 `85a8327075bd3ce0e82aaf634d2b955bc1992e84` 正常推送成功；[CI Run #84](https://github.com/o-ocn/loon-rules/actions/runs/37733112204)（ID `37733112204`）针对该SHA为completed/success，日志实际规则50项、诊断19项及前置门禁通过，CI构建未产生额外改动。GitHub Raw与Fastly普通订阅地址各六项资产均HTTP200、规范化SHA256与本地一致，manifest签名96fe50cf4464，没有缓存绕过参数；备用China-GeoIP一次SSL传输中断已重试并核验一致。代码发布后工作树clean；手机有效加载与实际效果仍未验证。
@@ -94,7 +96,7 @@
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
 | **`Apple-Direct.lsr`** | 173 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
-| **`China-Direct.lsr`** | 680 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 109条；保留小黑盒、山姆、TRTC等既有补齐，新增字节电商/字体与腾讯音乐六个服务族 | 100% 策略中立 |
+| **`China-Direct.lsr`** | 3,239 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 109条、已审定China-Baseline静态基线层2,599条（净增+2,559条）；暂缓已识别共享基础设施、出海服务与歧义家族；覆盖非穷举 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,243 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
 
@@ -117,7 +119,8 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **51/51 全部通过**（新增 test_51 验证 guzzoni.smoot.apple.com 精确首命中、负向隔离、内存变异故障注入及 DNS 守卫；test_50 验证 pancake/tr.iadsdk；test_49 新增字节/TME服务族、境外隔离及通配符故障注入；保留既有门禁；test_46 加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47 未知FINAL与脱敏；test_48 精确Apple CDN DNS授权）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **52/52 全部通过**（新增 test_52 验证 China-Baseline 静态层完整性、哈希锁、真实历史海外/共享云探针隔离、精确主机子域隔离及 4 类故障注入变异测试；test_51 验证 guzzoni.smoot.apple.com；test_50 验证 pancake/tr.iadsdk；test_49 新增字节/TME服务族、境外隔离及通配符故障注入；保留既有门禁；test_46 加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47 未知FINAL与脱敏；test_48 精确Apple CDN DNS授权）；
+
 - **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
 - **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、340唯一参考主机（273已知/67候选）、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
 - **评分引擎**：`python -B -m unittest scripts.test_score_engine` **4/4 PASS**。
@@ -135,9 +138,12 @@
 
 ## 六、关键架构决策
 
+- **2026-10-08/09 国内静态底座准入决策**：为减少逐 App 抓包，采用固定上游快照、Gemini批量筛选与Codex独立审核，将2,599条策略中立域名规则并入既有China-Direct，编译净增2,559条。审查中拒绝未经筛选的3309草案，补除海外分类重叠、共享平台、正则分类冲突和高德等精确主机扩域；原批准层不回滚。shared_domains.yml是静态正文锁定值的唯一配置事实源，边界检查和正确hash的故障变异仍独立生效；未知上游候选不自动进生产，离线检查不代表所有域名归属或手机效果。
+
 - **2026-10-08 取消 App Store 走海外代理方案 (07 计划废止)**：正常文件的apps本地DIRECT与系统DNS提供可工作的反例；两配置多变量不同，缺少直接改商店代理的必要证据；保持 19 规则集策略中立与规则正文不变。
 
 - **2026-10-08 否决未经精细过滤的 3,309 域名大扩容草案**：`root-candidate-mutation-probes.json` 变异仿真证实该草案将导致 `m.hotmail.com`、`openaiassets.z19.web.core.windows.net`、`login.microsoftonline.com` 从代理兜底（FINAL）误突变为国内直连，且 `netease.com` 触发 ScoreEngine 红线；禁止直接扩容落盘。后续采用精细过滤机制扩充国内底座，无需用户逐 App 抓包。
+
 
 - **2026-10-08 单变量系统 DNS 试行候选决策**：保持 19 集标准体系与全部37插件（36启用）及策略绑定原样，仅在本地候选配置中剔除全局 Google DoH，受控验证系统 DNS 恢复效果；不声称“已确认根因”或“功能已修复”，不要求用户停用正常配置。
 
@@ -207,7 +213,7 @@
 ## 七、当前观察期与待办事项
 
 ### 1. 常用服务专项发布后的日常观察（不要求逐App抓包）
-- **本轮下一步**：本批正常推送、CI与普通主备订阅内容均已核验通过；手机更新Apple-Direct和Loon-China-DNS插件并重连一次，正常使用即可。若两个主机业务退化，由AI只撤这两条规则、两条DNS及对应精确授权，同步测试/账本并重建发布，保留此前专项成果与成熟上游更新。
+- **本轮下一步**：先保持用户已确认正常的替代配置；方便时加载既有19集系统DNS候选并在App Store搜索同一软件，做一次对照即可。公开规则发布不等于当前手机已加载；本批扩容、此前Apple精确DNS的真机效果继续如实待验，不要求逐App抓包或停用正常配置。若出现退化，AI按相关增量定位和恢复。
 - **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
@@ -220,7 +226,7 @@
 
 ### 2. 待办事项
 - [ ] **App Store 单变量系统 DNS 候选真机试行**：候选文件 `E:\Document\AI-Workspace\loon-rules\2026-10-08-appstore-china-baseline\Loon-19Rules-AppStore-SystemDNS-candidate-2026-10-08.lcf`（仅移除 Google DoH，其余19规则/37插件（36启用）/策略绑定完全一致，`verify_private_lcf.py` PARTIAL_PASS）；待用户方便时加载试行反馈，当前用户继续保留并使用正常配置 `2026_10_03_10_26_49_909_自动配置 (2).lcf`；
-- [ ] **国内分流底座精细过滤方案（无需用户逐 App 抓包）**：针对 3,309 候选草案暴露的共享云与出海业务误伤风险，后续结合 `shared_domains.yml`、ScoreEngine 与多租户排除规则制定严密过滤机制，不将未经审核的宽泛域名直接合入生产库，不要求所有者逐个应用抓包；
+- [x] **国内分流底座精细过滤与实施**：固定上游、批量排除、实际编译、分流与故障注入门禁已完成；正式发布证据见当前状态。后续快照变化由AI重新批量审查，不要求所有者逐App抓包。
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
 - [x] **唯一私人候选与可恢复回退配置装配**：已在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`）；两份文件的结构、本地匹配与FINAL检查部分通过（PARTIAL_PASS / UNVERIFIED_PLUGINS，36个启用插件的运行时注入未验证）。两项固定回退资产另经独立取回核对，HTTP 200且SHA256与真实Git对象一致；手机当前加载及实际体验尚未验收；
 - [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管；

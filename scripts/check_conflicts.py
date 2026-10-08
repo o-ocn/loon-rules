@@ -161,6 +161,77 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
                 else:
                     warnings.append(msg)
 
+    # Check 4: China-Baseline guard validation (static layer security, hash lock, and boundary enforcement)
+    guard_cfg = spec.get("china_baseline_guard", {})
+    if guard_cfg.get("enabled", False):
+        baseline_rel = guard_cfg.get("baseline_file", "rules/custom/China-Baseline.list")
+        baseline_path = os.path.join(BASE_DIR, baseline_rel)
+        if not os.path.isfile(baseline_path):
+            errors.append(f"[China-Baseline] Required baseline file missing: {baseline_rel}")
+        else:
+            with open(baseline_path, "r", encoding="utf-8") as bf:
+                raw_lines = bf.readlines()
+            bl_rules = []
+            syntax_errors = []
+            for l_idx, line in enumerate(raw_lines, 1):
+                clean_l = line.strip()
+                if not clean_l or clean_l.startswith(("#", ";")):
+                    continue
+                parts = clean_l.split(",")
+                if len(parts) != 2 or parts[0] not in ("DOMAIN", "DOMAIN-SUFFIX") or "*" in parts[1]:
+                    syntax_errors.append(f"Line {l_idx}: invalid rule or non-neutral policy '{clean_l}'")
+                else:
+                    bl_rules.append((parts[0], parts[1].strip().lower()))
+
+            if syntax_errors:
+                errors.extend([f"[China-Baseline] Syntax/neutrality error: {se}" for se in syntax_errors])
+
+            # Pinned body SHA256 check
+            normalized_body = "\n".join([f"{rtype},{val}" for rtype, val in bl_rules]) + "\n"
+            import hashlib
+            body_sha = hashlib.sha256(normalized_body.encode("utf-8")).hexdigest()
+            pinned_sha = guard_cfg.get("pinned_body_sha256", "")
+            if pinned_sha and body_sha != pinned_sha:
+                errors.append(
+                    f"[China-Baseline] Pinned body hash mismatch: expected {pinned_sha}, got {body_sha}. "
+                    "Static baseline requires deliberate AI review before hash updates."
+                )
+
+            expected_cnt = guard_cfg.get("expected_rule_count")
+            if expected_cnt and len(bl_rules) != expected_cnt:
+                errors.append(
+                    f"[China-Baseline] Rule count mismatch: expected {expected_cnt}, got {len(bl_rules)}"
+                )
+
+            # Forbidden boundary check
+            forbidden_boundaries = set(guard_cfg.get("forbidden_boundary_domains", []))
+            for rtype, val in bl_rules:
+                for fb in forbidden_boundaries:
+                    if val == fb or val.endswith("." + fb):
+                        errors.append(
+                            f"[China-Baseline] Forbidden boundary domain violation: '{val}' matches forbidden '{fb}'"
+                        )
+
+            # Ambiguous keywords check
+            ambiguous_keywords = guard_cfg.get("ambiguous_keywords", [])
+            for rtype, val in bl_rules:
+                for kw in ambiguous_keywords:
+                    if kw in val:
+                        errors.append(
+                            f"[China-Baseline] Ambiguous infrastructure keyword violation: '{val}' contains '{kw}'"
+                        )
+
+            # Bidirectional overlap check with overseas rulesets
+            for o_set in overseas_rulesets:
+                if o_set not in rules_by_file:
+                    continue
+                for o_type, o_dom in rules_by_file[o_set]:
+                    for rtype, val in bl_rules:
+                        if val == o_dom or (rtype == "DOMAIN-SUFFIX" and o_dom.endswith("." + val)) or (o_type == "DOMAIN-SUFFIX" and val.endswith("." + o_dom)):
+                            errors.append(
+                                f"[China-Baseline] Overseas collision with {o_set} ({o_type},{o_dom}): baseline rule ({rtype},{val})"
+                            )
+
     # Print results
     if warnings:
         print(f"\n[!] Detected {len(warnings)} shared domain advisory warning(s):")

@@ -126,3 +126,29 @@ ecosystems:
       - daraz.com
     current_domestic_rulesets:
       - China-Direct.lsr
+
+china_baseline_guard:
+  enabled: true
+  baseline_file: "rules/custom/China-Baseline.list"
+  pinned_body_sha256: "8b643f2463199d2e1b7d8fbf53d44ee02f324e94747eec29df5fab747f8d2b72"
+  expected_rule_count: 2599
+  pinned_upstream_source_sha: "036c097eb26c6a52c4f04ebcb6633043cb942669"
+  forbidden_boundary_domains:
+    - windows.net
+    - hotmail.com
+    - live.com
+    - microsoftonline.com
+    - trip.com
+    - bcebos.com
+    - netease.com
+    - cloudsigma.com
+    - cncbinternational.com
+    - didiglobal.com
+    - tencentyun.com
+    - aliyun-iot-share.com
+  ambiguous_keywords:
+    - cdn
+    - cloud
+    - dns
+    - global
+    - international
