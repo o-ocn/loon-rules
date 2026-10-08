@@ -74,6 +74,8 @@ DOMAIN,cl2.apple.com
 DOMAIN,cl3.apple.com
 DOMAIN,cl4.apple.com
 DOMAIN,cl5.apple.com
+DOMAIN,pancake.apple.com
+DOMAIN,tr.iadsdk.apple.com
 
 # --- Apple China Local CDN Cache ---
 # Target: Official Apple China CDN IPv4 subnet

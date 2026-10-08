@@ -1,8 +1,8 @@
 # NAME: China-GeoIP
 # DESCRIPTION: Mainland China IP traffic and GeoIP fallback (safety net)
 # AUTHOR: o-ocn
-# REVISION: f9583856c85f
-# TOTAL: 19244
+# REVISION: 678a7eaff8ef
+# TOTAL: 19243
 # ==============================================================================
 GEOIP,CN
 IP-CIDR,1.0.1.0/24,no-resolve
@@ -1029,7 +1029,6 @@ IP-CIDR,103.144.136.0/23,no-resolve
 IP-CIDR,103.144.148.0/23,no-resolve
 IP-CIDR,103.144.158.0/23,no-resolve
 IP-CIDR,103.144.240.0/23,no-resolve
-IP-CIDR,103.144.244.0/23,no-resolve
 IP-CIDR,103.144.40.0/23,no-resolve
 IP-CIDR,103.144.41.0/24,no-resolve
 IP-CIDR,103.144.52.0/23,no-resolve

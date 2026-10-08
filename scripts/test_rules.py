@@ -2407,6 +2407,103 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, errors)
 
+    def test_50_apple_two_hosts_bounded_trial(self):
+        """Verify pancake.apple.com and tr.iadsdk.apple.com exact DOMAIN match, isolation, and DNS guards."""
+        # 1. 验证两精确主机首命中 Apple-Direct.lsr (严格 DOMAIN,host，非 DOMAIN-SUFFIX)
+        rules = simulate_hit.load_dist_rules()
+        exact_hosts = ["pancake.apple.com", "tr.iadsdk.apple.com"]
+        for host in exact_hosts:
+            with self.subTest(exact_host=host):
+                matches = simulate_hit.match_target(host, rules)
+                # simulate_hit.match_target 返回字典列表，非字符串
+                self.assertTrue(matches, f"Expected match for {host}, got none")
+                self.assertEqual(matches[0]["ruleset"], "Apple-Direct.lsr")
+                self.assertEqual(matches[0]["type"], "DOMAIN")
+                self.assertEqual(matches[0]["value"], host)
+                self.assertEqual(matches[0]["rule"], f"DOMAIN,{host}")
+
+        # 2. 委托子域与伪装后缀严禁命中任何国内直连规则 (China-Direct, Apple-Direct, AI-China-Direct)
+        domestic_rulesets = {"China-Direct.lsr", "Apple-Direct.lsr", "AI-China-Direct.lsr"}
+        delegated_and_spoofed = [
+            "sub.pancake.apple.com",
+            "probe.pancake.apple.com",
+            "api.pancake.apple.com",
+            "sub.tr.iadsdk.apple.com",
+            "probe.tr.iadsdk.apple.com",
+            "api.tr.iadsdk.apple.com",
+            "pancake.apple.com.evil.example",
+            "tr.iadsdk.apple.com.evil.example",
+            "pancake.apple.com.attacker.com",
+            "tr.iadsdk.apple.com.spoof.org",
+        ]
+        def assert_domestic_isolation(candidate_rules):
+            for target in delegated_and_spoofed:
+                forbidden_hits = [m for m in simulate_hit.match_target(target, candidate_rules)
+                                  if m["ruleset"] in domestic_rulesets]
+                self.assertEqual(forbidden_hits, [], f"Forbidden domestic match for {target}: {forbidden_hits}")
+
+        assert_domestic_isolation(rules)
+
+        # 3. 故障注入变异测试：确保当新 DOMAIN 被变异为 DOMAIN-SUFFIX (匹配子域) 时断言确实失败
+        mutant_pancake = [("Apple-Direct.lsr", [("DOMAIN-SUFFIX", "pancake.apple.com", "DOMAIN-SUFFIX,pancake.apple.com", 1)])]
+        with self.assertRaises(AssertionError):
+            assert_domestic_isolation(mutant_pancake)
+
+        mutant_tr = [("Apple-Direct.lsr", [("DOMAIN-SUFFIX", "tr.iadsdk.apple.com", "DOMAIN-SUFFIX,tr.iadsdk.apple.com", 1)])]
+        with self.assertRaises(AssertionError):
+            assert_domestic_isolation(mutant_tr)
+
+        # 4. 验证真实 DNS 插件中两精确条目且无通配符映射
+        plugin_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        with open(plugin_path, "r", encoding="utf-8") as f:
+            plugin_content = f.read()
+
+        for host in exact_hosts:
+            self.assertIn(f"{host} = server:223.5.5.5", plugin_content, f"Missing exact entry for {host} in real plugin")
+
+        # 严格禁止通配符及泛域名映射行
+        self.assertNotIn("*.pancake.apple.com =", plugin_content)
+        self.assertNotIn("*.tr.iadsdk.apple.com =", plugin_content)
+        self.assertNotIn("*.iadsdk.apple.com =", plugin_content)
+        self.assertNotIn("*.apple.com =", plugin_content)
+
+        # 验证已解析的 DNS 插件映射条目中包含两精确主机，且不包含通配符
+        import check_conflicts
+        plugin_hosts = check_conflicts.load_dns_plugin_hosts(plugin_path, preserve_patterns=True)
+        for host in exact_hosts:
+            self.assertIn(host, plugin_hosts)
+        self.assertNotIn("*.pancake.apple.com", plugin_hosts)
+        self.assertNotIn("*.tr.iadsdk.apple.com", plugin_hosts)
+        self.assertNotIn("*.iadsdk.apple.com", plugin_hosts)
+        self.assertNotIn("*.apple.com", plugin_hosts)
+
+        # 5. DNS 冲突检查器夹具验证 (2个精确放行正例，11个红线负例)
+        import check_conflicts
+        fixture_cases = [
+            # Positives (精确放行)
+            ("pancake.apple.com", True),
+            ("tr.iadsdk.apple.com", True),
+            # Negatives (严禁放行)
+            ("apple.com", False),
+            ("*.apple.com", False),
+            ("icloud.com", False),
+            ("*.icloud.com", False),
+            ("iadsdk.apple.com", False),
+            ("*.iadsdk.apple.com", False),
+            ("*.pancake.apple.com", False),
+            ("*.tr.iadsdk.apple.com", False),
+            ("probe.pancake.apple.com", False),
+            ("probe.tr.iadsdk.apple.com", False),
+            ("*.com", False),
+        ]
+        for pattern, expected in fixture_cases:
+            with self.subTest(fixture_pattern=pattern):
+                fixture = os.path.join(TEST_TMP_DIR, "apple_two_hosts_dns.fixture")
+                with open(fixture, "w", encoding="utf-8") as f:
+                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
+                self.assertEqual(ok, expected, f"Pattern '{pattern}' expected ok={expected}, got {ok} with errors: {errors}")
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)

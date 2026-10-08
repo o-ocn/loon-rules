@@ -1,8 +1,8 @@
 # NAME: Apple-Direct
 # DESCRIPTION: Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)
 # AUTHOR: o-ocn
-# REVISION: 9bfa900f577d
-# TOTAL: 170
+# REVISION: 9e83c7177fa0
+# TOTAL: 172
 # ==============================================================================
 DOMAIN-SUFFIX,apps.apple.com
 DOMAIN-SUFFIX,itunes.apple.com
@@ -35,6 +35,8 @@ DOMAIN,cl2.apple.com
 DOMAIN,cl3.apple.com
 DOMAIN,cl4.apple.com
 DOMAIN,cl5.apple.com
+DOMAIN,pancake.apple.com
+DOMAIN,tr.iadsdk.apple.com
 IP-CIDR,17.248.128.0/17,no-resolve
 DOMAIN-SUFFIX,applemusic.com
 DOMAIN-SUFFIX,blobstore.apple.com

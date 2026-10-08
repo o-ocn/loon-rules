@@ -55,6 +55,6 @@
    - `netease.com`（网易出海游戏节点 `global.netease.com` 部署在 GCP 日本）
    - `bcebos.com`（百度智能云对象存储，包含新加坡 `sin.bcebos.com` 与香港节点）
 4. **Apple 账户安全与全局系统禁区**：
-   - `apple.com`, `icloud.com`（严禁泛解析至国内 DNS，允许`*.mzstatic.com`及经过独立核验的cl1-cl5.apple.com五个精确Host；不允许根域、通配或委派子域）
+   - `apple.com`, `icloud.com`（严禁泛解析至国内 DNS，允许`*.mzstatic.com`及经过独立核验的cl1-cl5.apple.com、pancake.apple.com、tr.iadsdk.apple.com七个精确Host；不允许apple.com/icloud.com根域、Apple通配或未授权委派子域）
 
 全服务参考样本见 `config/common_app_contract.json`；同一契约进入规则CI与 `scripts/audit_common_apps.py`。官网资源、客户端API和手机效果分开判断，详细本轮证据见 `PROJECT_STATE.md`。

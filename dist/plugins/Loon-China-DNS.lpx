@@ -154,3 +154,7 @@ api.io.mi.com = server:223.5.5.5
 *.ecombdstatic.com = server:223.5.5.5
 *.ecombdvod.com = server:223.5.5.5
 *.tencentmusic.com = server:223.5.5.5
+
+# 2026-10-08 Apple CDN 精确主机配套试行
+pancake.apple.com = server:223.5.5.5
+tr.iadsdk.apple.com = server:223.5.5.5

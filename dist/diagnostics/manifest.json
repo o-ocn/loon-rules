@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-07T14:25:04.219361+00:00",
-  "content_revision": "d3c24481f524",
-  "package_sha256": "d3c24481f524287791054c4fc5641126a98c7a1dd2109cfd382c9ad3260ae626",
+  "build_timestamp": "2026-10-08T05:23:39.273709+00:00",
+  "content_revision": "96fe50cf4464",
+  "package_sha256": "96fe50cf446456a76daf66e3840c35e0c663d0714ee2662d8451da9de6acfc5b",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -98,9 +98,9 @@
       "description": "Mainland China AI services (DeepSeek, Kimi, Tongyi Qianwen, Doubao, etc.)"
     },
     "Apple-Direct.lsr": {
-      "total_rules": 170,
-      "revision": "9bfa900f577d",
-      "sha256": "9bfa900f577d85e1893307ee873f14d7e1c6f0b5decf228accdd78210e6af25e",
+      "total_rules": 172,
+      "revision": "9e83c7177fa0",
+      "sha256": "9e83c7177fa006800517e2b0c69433c1850d2d2db7e3efe699c0d4267ad8813f",
       "description": "Apple baseline services (iCloud, CloudKit, App Store, Apple ID, HomeKit, Apple Music, SystemOTA)"
     },
     "China-Direct.lsr": {
@@ -116,9 +116,9 @@
       "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
     },
     "China-GeoIP.lsr": {
-      "total_rules": 19244,
-      "revision": "f9583856c85f",
-      "sha256": "f9583856c85fc881a20d6b0d5ffcf7f95190f8c7d990d952ea345898b7552f0c",
+      "total_rules": 19243,
+      "revision": "678a7eaff8ef",
+      "sha256": "678a7eaff8efd871fa82354ee93dd884be1202395bf6226ce3863fd7f9a28772",
       "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
     }
   },

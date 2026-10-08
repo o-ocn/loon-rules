@@ -83,6 +83,8 @@ ecosystems:
       - cl3.apple.com
       - cl4.apple.com
       - cl5.apple.com
+      - pancake.apple.com
+      - tr.iadsdk.apple.com
     domestic_rulesets:
       - Apple-Direct.lsr
       - Apple-Push.lsr
