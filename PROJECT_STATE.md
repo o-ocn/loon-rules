@@ -17,6 +17,9 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-08 App Store：正常替代配置已由用户确认，原项目 DNS 单变量候选待真机**：用户报告原项目配置下商店加载失败、全局直连仍慢、全局代理正常；切换 `E:\Download\Baidu\2026_10_03_10_26_49_909_自动配置 (2).lcf` 后商店恢复。该文件含36远程规则，本地 `DOMAIN-SUFFIX,apps.apple.com,DIRECT` 优先命中，默认仅 `dns-server=system`。这不证明整个商店所有请求均直连，也不证明10月3日归档与故障时手机配置完全一致；DNS、插件与绑定存在多变量差异，根因尚未确认。商店改代理仅为已取消的未实施方案。
+* **单变量候选与独立验收**：恢复基准 `b0670f87ac37f2fe82b89649d1c7791eae2fdaed`；新候选 `E:\Document\AI-Workspace\loon-rules\2026-10-08-appstore-china-baseline\Loon-19Rules-AppStore-SystemDNS-candidate-2026-10-08.lcf`（SHA256 `939878c460841356d7b1a6fd58d23bb4aa53605f88444951e355990a9a6ea60f`）仅删除原19集归档中的Google DoH单行。Codex字节对照确认原件和正常配置均未动，其他字节及私密字段完全保留；同19远程规则、37插件/36启用。本地验收为 PARTIAL_PASS / UNVERIFIED_PLUGINS；候选未上手机、不是已修复或正式部署。113项公开工程文件与基线比较（归一化换行）不变，公开19集/21,323规则/120 DNS Host/139账本均未改；沿用此前功能CI #85证据。
+* **国内底座扩大尚未部署**：固定blackmatrix7 SHA `036c097eb26c6a52c4f04ebcb6633043cb942669`：China_Domain裸域表3689行，China.list原生非域名/泛域部分63行，不能把单份China.list当完整3752条域名源。Gemini初筛3309草案经Codex反例仿真，`m.hotmail.com`、截图中的Azure主机 `openaiassets.z19.web.core.windows.net` 等将由FINAL误入China-Direct，且 `netease.com` 触发现有红线；拒绝这版草案入库。Azure主机归属未独立证实；既有海外集前置不能保护所有未知共享云租户。后续批量过滤国内底座，不要求用户逐App抓包。详见本地 `20-Codex-final-review.md`。
 * **2026-10-08 guzzoni.smoot.apple.com (Siri/搜索) 精确优化：代码/CI/主源已发布核验；副CDN传播待复核，手机未验**：所有者明确授权将 Downloads 三张截图（IMG_1010/1011/1012）中确需优化的项目与 `guzzoni.smoot.apple.com` 一起优化；恢复起点 `57ca124bc2d4276c012093b1a482b3ea110821ab`（起点工作树 clean）。Apple-Direct 新增一条 DOMAIN 精确规则，DNS 插件新增一条 223.5.5.5 精确 Host，白名单从 7 项扩至 8 项；守卫算法不变，严格禁止通配符或 smoot/apple 泛域委托。其余五域名（openaiassets.z19.web.core.windows.net, api.revenuecat.com, o33249.ingest.us.sentry.io, www.nsloon.com, m.hotmail.com）按各自服务用途与既有分流目标，继续保持代理兜底（FINAL）；截图 TCP 有下行，不证明完整业务成功或时间字段含义，不新增 DIRECT/REJECT，Hotmail QUIC 保持不变。独立双 DoH 实时核验证实 AliDNS A 解析返回地址 101.34.195.126，Codex 另次得到同网段 101.34.190.217，均命中现有 China-GeoIP 101.34.0.0/15；Google 返回 54.203.140.83 未命中本库 CN CIDR，支持配套国内 DNS 试行。
 * **当前构建基线**：19集 21,323条，Apple-Direct 173、China-Direct 680、China-GeoIP 19,243、China-Personal 109、DNS Host 120；内容签名 `02c5ceb22c3a`。相对起点仅 Apple-Direct 规则正文增加 1 条，其余 18 个规则集正文完全不变。账本 139 条、原 138 条字节前缀完整保留，新增一条 verified=false、180 天复查。
 * **本次发布与主备核验事实**：代码 `9b52b0af23db50d9283960a0ac93cb3d3e972fc1` 正常推送成功；远端 [CI Run #85](https://github.com/o-ocn/loon-rules/actions/runs/37767776142)（ID `37767776142`，job `113279523141`）针对该 SHA 为 completed/success，日志实际 51 规则、19 诊断、strict 与 pre-release 通过，CI 构建“No rule changes detected”；CI 末尾附有 `SOFT_CDN` jsDelivr 边缘传播中警告（非致命告警，GitHub Raw 为主源 SSOT）。主源 GitHub Raw 3 项普通订阅 URL（`Apple-Direct.lsr`、`Loon-China-DNS.lpx`、`manifest.json`）HTTP 200 且换行规范化 SHA256 与本地完全一致，主源可立即正常更新使用。副源 Fastly 普通 URL 仅 `manifest.json` 一致，`Apple-Direct.lsr` 与 `Loon-China-DNS.lpx` 仍为旧缓存。两次精准 purge 请求返回 finished，但复核两项仍旧，带 no-cache 诊断请求亦未解决；绝不虚构“主备全部通过”，不能把 purge 成功当已刷新。官方 jsDelivr 文档记录分支缓存长达 12 小时，属外部 CDN 传播边界，后续观察普通 URL 自然过期更新，不改动用户订阅 URL、不另造发布系统。手机端有效加载、Siri/搜索体验改善与 DNS 实际效果仍未在真机验证。
@@ -132,6 +135,12 @@
 
 ## 六、关键架构决策
 
+- **2026-10-08 取消 App Store 走海外代理方案 (07 计划废止)**：正常文件的apps本地DIRECT与系统DNS提供可工作的反例；两配置多变量不同，缺少直接改商店代理的必要证据；保持 19 规则集策略中立与规则正文不变。
+
+- **2026-10-08 否决未经精细过滤的 3,309 域名大扩容草案**：`root-candidate-mutation-probes.json` 变异仿真证实该草案将导致 `m.hotmail.com`、`openaiassets.z19.web.core.windows.net`、`login.microsoftonline.com` 从代理兜底（FINAL）误突变为国内直连，且 `netease.com` 触发 ScoreEngine 红线；禁止直接扩容落盘。后续采用精细过滤机制扩充国内底座，无需用户逐 App 抓包。
+
+- **2026-10-08 单变量系统 DNS 试行候选决策**：保持 19 集标准体系与全部37插件（36启用）及策略绑定原样，仅在本地候选配置中剔除全局 Google DoH，受控验证系统 DNS 恢复效果；不声称“已确认根因”或“功能已修复”，不要求用户停用正常配置。
+
 - **2026-10-08 Siri / Search 精确主机 (guzzoni.smoot.apple.com) 试行**：官方 Apple 支持文档 https://support.apple.com/en-us/101555 明列 *.smoot.apple.com 为 Siri、Spotlight、Lookup等搜索服务；仅准入精确 DOMAIN 规则与配套 223.5.5.5 精确 DNS，严格禁止通配符或 root/wildcard 委托。其余 5 个截图域名保持现有代理兜底，不为消灭 FINAL 破坏策略边界。
 
 - **2026-10-08 Apple两个完整主机试行**：只准入pancake.apple.com和tr.iadsdk.apple.com的精确规则/精确DNS，保持域树和媒体账号边界；构建同步的单条ChinaIPs删除单独核验，不混称用户补丁。
@@ -210,6 +219,8 @@
   - 连续日常使用 1~2 周无超时、无误伤、无漂移报错，且自动化 CI 巡航稳定，即可正式解除观察期，冻结日常手动干预。
 
 ### 2. 待办事项
+- [ ] **App Store 单变量系统 DNS 候选真机试行**：候选文件 `E:\Document\AI-Workspace\loon-rules\2026-10-08-appstore-china-baseline\Loon-19Rules-AppStore-SystemDNS-candidate-2026-10-08.lcf`（仅移除 Google DoH，其余19规则/37插件（36启用）/策略绑定完全一致，`verify_private_lcf.py` PARTIAL_PASS）；待用户方便时加载试行反馈，当前用户继续保留并使用正常配置 `2026_10_03_10_26_49_909_自动配置 (2).lcf`；
+- [ ] **国内分流底座精细过滤方案（无需用户逐 App 抓包）**：针对 3,309 候选草案暴露的共享云与出海业务误伤风险，后续结合 `shared_domains.yml`、ScoreEngine 与多租户排除规则制定严密过滤机制，不将未经审核的宽泛域名直接合入生产库，不要求所有者逐个应用抓包；
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
 - [x] **唯一私人候选与可恢复回退配置装配**：已在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`）；两份文件的结构、本地匹配与FINAL检查部分通过（PARTIAL_PASS / UNVERIFIED_PLUGINS，36个启用插件的运行时注入未验证）。两项固定回退资产另经独立取回核对，HTTP 200且SHA256与真实Git对象一致；手机当前加载及实际体验尚未验收；
 - [ ] **Phase 0.5 旁路影子巡检稳定观察期 (2~4周)**：依托 `.github/workflows/shadow-audit.yml` 每日自动巡检，持续累积 `audit/shadow_report.md` 观察数据，严禁在此期间进行生产规则接管；
@@ -252,6 +263,8 @@
    - 在中国大陆运营商 5G/4G 双栈网络下，若未妥善分流 IPv6，系统底层长连接可能逃逸至物理网卡直连国内。
 5. **节点长连接保活心跳（Keep-Alive）**：
    - 部分机场对空闲 TCP 设置超时断开，可能导致 APNs 5223 长连接频繁重建引起通知延迟。
+6. **App Store 故障机制真机未确认与候选待验**：
+   - 虽然电脑端观察到 Google DoH 解析 Fastly Anycast，但两份配置存在规则集数量（36 vs 19）、本地规则（apps DIRECT）、DNS 与插件等多重差异；未在真机捕获具体网络重置或抓包，Google DoH 是否为唯一根因尚未证实，单变量候选在真机上的实际效果尚未验证。
 
 ---
 
@@ -286,6 +299,13 @@
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
 * **最后更新**：2026-10-08（Codex独立审查、验证与发布；Antigravity/Gemini常规实施）
+
+  * **2026-10-08 App Store 调查纠正与单变量系统 DNS 候选装配（Gemini实施 / Codex独立复核）**：
+    - 完成调查纠正报告（`08-Gemini-corrected-investigation.md` 与 `10-corrected-evidence.json`），纠正将 DNS 差异认定为已证实唯一根因、排除全部运行时插件以及 3309 安全候选的错误；
+    - 采纳 `root-candidate-mutation-probes.json`，正式否决 3,309 域名扩容落盘（防范Hotmail、截图中的Azure主机及微软登录改变现有代理分流，`netease.com` 触发红线）；
+    - 正式取消 07 商店改代理方案（正常文件apps本地DIRECT、默认系统DNS，但不能归纳全部商店流量或确认单一根因）；
+    - 装配全新单变量系统 DNS 候选 `E:\Document\AI-Workspace\loon-rules\2026-10-08-appstore-china-baseline\Loon-19Rules-AppStore-SystemDNS-candidate-2026-10-08.lcf`（SHA256: `939878c4..`），源基准文件 `Loon-v2-19Rules-candidate-2026-10-03.lcf`（SHA256: `293ada72..`）原样未动，仅删除 `doh-server = https://dns.google/dns-query` 单行，经 `verify_private_lcf.py` 脱敏验收（PARTIAL_PASS / UNVERIFIED_PLUGINS）；用户正常配置继续保留使用；
+    - 公开规则库（19 规则集、21,323 条规则、120 DNS Host、139 账本）内容未修改，Codex独立验收原件与候选字节差异、113项工程文件一致及配置结构PARTIAL_PASS；本轮不把此前51项CI证据当新测试运行。Gemini完成实施与状态交接，Codex审核后正常提交/推送本次状态文档；未部署规则扩容或候选。
 
   * **2026-10-08 Apple精确两个主机**：本地50/19/4与严格/预发布门禁通过；新规则、DNS与精确授权各两项，原账本136条保留，另有已核实的ChinaIPs单条自动更新；不声明手机体验已验。
 
