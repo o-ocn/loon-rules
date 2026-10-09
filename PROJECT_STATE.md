@@ -17,10 +17,11 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-10 双 AI 文档收尾与 Project 复用规范**：Gemini已将母版五条复用规范正文合入本项目 `AGENTS.md`，Codex已核对实际差异与保留范围；同一工程默认复用 Project，长上下文优先原 Project 新对话，确需隔离才新建。Hub母版与Hub AGENTS亦合入相同规范，项目身份、路径和阶段未变，不更新地图或其他工程。本轮不添加DNS、不改生产代码/规则/插件/来源/账本或私人策略（AI仍 `policy=All`），不执行界面或入口删除；入口清理由所有者自行操作，尚未核验其清理结果。原下载导出文件已由所有者自行清理，当前 iCloud V3、本地 V3及工作区V2三份副本与本轮恢复基线哈希一致；原件已不在原下载路径，不声称四份基线文件全保留。本轮恢复起点为Loon `ce21882cd002da8727c9781718459cfc27269e8e`、Hub `26c3ecadfed9b9ebd8e89bdac0c075a94e3e6889`；文档任务未重跑功能测试，既有功能发布与真机未验边界保留，最终Git与独立核验回执为 `E:\Document\AI-Workspace\loon-rules\2026-10-10-closeout-project-reuse\06-Codex-最终收尾.json`。
 * **2026-10-10 Google/腾讯 DoH 冗余评估完成，生产配置未改**：
   - Gemini完成48次电脑探针，Codex独立8次以默认TLS及DNS消息校验复核；四家样本均HTTP200、RCODE0、有A，但结果存在CDN差异。独立样本中腾讯为ChatGPT返回的地址经ARIN登记属于Facebook网络，其他三家当次返回Cloudflare网络；这是限制腾讯用途的风险线索，不能扩展成所有查询异常、已证明污染机制或手机卡顿因果。
   - 官方明确全局多DoH并发采用先返回结果，Google加入后参与日常解析；静态规则中Google与CF沿不同既有绑定，不等于已核验手机出站。单个Host多DoH、负响应选择细节及双OFF下的启动独立性未获原生证据，不能声称腾讯国内双备已实现或Google必依赖CF。全局混放腾讯不推荐；仅默认层CF+Google可作未实施的独立试用候选；国内Ali+腾讯原生方式待证，不承诺加后无卡顿。
-  - 本轮未添加Google/腾讯、未生成或同步新LCF、未动策略组/绑定/129映射及GUI；原件与116项目文件、42Hub文件在评估阶段哈希不变。具体证据与终审见 `E:\Document\AI-Workspace\loon-rules\2026-10-10-dns-redundancy-assessment\09-Codex-final-assessment.md` 与10号回执；当前仅保存新调查事实，后续先核验原生启动/分层机制与最小手机日常试用，不要求逐App抓包。
+  - 本轮未添加Google/腾讯、未生成或同步新LCF、未动策略组/绑定/129映射及GUI；原件与116项目文件、42Hub文件在评估阶段哈希不变。所有者明确暂不添加 Google/腾讯 DNS，当前维持现状，后续实际有问题再排查；不再把 DNS 冗余试用写成当前必做下一步。具体证据与终审见 `E:\Document\AI-Workspace\loon-rules\2026-10-10-dns-redundancy-assessment\09-Codex-final-assessment.md` 与10号回执。
 * **2026-10-10 AI 与国内媒体 DNS 增补（Gemini 执行、Codex 审核；已发布，新件手机待验）**：
   - **规则与策略**：AI-Overseas 38→45，净增 7 条 Claude/OpenAI/Google AI 专属规则；总规则数 23,889，其他 18 集正文不变。规则仍策略中立，私人配置所有策略组、节点及 19 项绑定原样保留，AI 仍 `policy=All`；只有所有者明确指定才可改绑定或组。该偏好已合入 Hub 母版及双方 AGENTS。两项 Google 精确主机仅补登记至既有 `KNOWN_SAFE_DELEGATIONS`，未改编译算法、来源或共享域红线。
   - **DNS 范围**：原 122 条映射完整保留，新增 `*.douyinpic.com`、`*.douyinstatic.com`、`*.douyinvod.com`、`*.douyinliving.com`、`*.toutiaoimg.com`、`*.toutiaovod.com`、`*.pstatp.com` 至阿里 DoH；合计 129，源与 dist 字节一致。7 类均已有 China-Direct 分类，本批未增加国内路由或改任何 policy。共享 byteimg/ibytedtos 暂缓；全局 Cloudflare、系统 DNS OFF、查询回落 OFF、DoH Rule 保持。
@@ -246,7 +247,7 @@
 ## 七、当前观察期、未完成事项与下一步
 
 ### 1. 常用服务专项发布后的日常观察（不要求逐App抓包）
-- **本轮下一步**：完成本批 AI/DNS 与数据库新候选的发布及独立验收后，手机仅选中交付的新配置、刷新外部资源并正常使用。V2 的 DoH 空列表问题已由后续截图与用户反馈关闭，不重复安排旧对照。继续审计已登记常用服务的配套 DNS 缺口，先核对规则/来源/业务归属，不要求所有者逐 App 抓包，不自动投产多上游候选。
+- **本轮下一步**：本批 AI/DNS 与数据库候选已发布并完成独立验收，所有者已确认选中V3及OFF/OFF/Rule，继续正常使用，不再安排重复切换。暂不添加 Google/腾讯 DNS，后续实际遇到问题再排查，不将 DNS 冗余试用作为当前必做下一步。V2 的 DoH 空列表问题已关闭，不重复安排旧对照。配套DNS缺口的后续审计由AI依据已有契约与公开资料推进，不要求所有者逐App抓包、不自动投产多上游候选；V3新件体验与全机海外隐私仍未验，不将配置选中当作性能或防泄漏验收。
 - **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
@@ -343,7 +344,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-10（Gemini 完成本批 AI 7 条、媒体 DNS 7 项、规范与私人候选装配；Codex 独立审核、修正可增长测试及旧验收待办，独立全量验证通过，GitHub CI #88 与主源核验通过，新私人副本已写入原 iCloud 目录，手机新件体验仍待验）
+* **最后更新**：2026-10-10（Gemini完成规范正文合入与文档收尾；Codex独立核对差异、修正旧下一步及回执口径，完成本轮文档审核；DNS暂不增补，策略主权与既有未验边界保留，入口删除由所有者自行处理；最终提交、推送及远端核验见本轮收尾回执）
 
   * **2026-10-09 加密 DNS 分流实施与 App Store 精确优化（Gemini 执行实施 / 待 Codex 独立复核）**：
     - 将 `plugins/Loon-China-DNS.lpx` 与 `dist/plugins/Loon-China-DNS.lpx` 中全部 120 条既有明文 UDP 映射统一迁移至阿里公共 DoH 端点 `server:https://223.5.5.5/dns-query`，腾讯 5 条映射因 2024 年不再公开 IP 接入且 119.29.29.29:443 超时统一切换至已验证 IP 证书与响应的 AliDNS 223.5.5.5；
