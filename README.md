@@ -21,7 +21,7 @@
    - **8 大服务边界与防碰撞**：包含 Gemini 与普通 Google、YouTube 与 Google、Grok 与 Twitter、Muse from Meta 精准识别、TestFlight/Media 与 Direct 隔离等。
 2. **第 2 层：DNS 调度层（Resolution Layer・国内大厂与区域 CDN 加密分流）**：
    - **职责**：决定 DIRECT 直连流量“找哪个就近边缘节点”（解决 IP 调度质量与传输隐私）。
-   - **解决直连反向卡顿与传输泄露**：防范全局纯境外 DoH 导致国内 CDN（阿里 1688、抖音支付、App Store 静态图）被调度至美西或香港 Anycast IP，进而引发直连断崖式卡顿；同时防止国内查询以明文 UDP 泄露。
+   - **就近调度与传输加密**：为国内业务指定近端加密解析，减少全局境外解析可能造成的 CDN 调度差异；手机体验需实际验证。
    - **精细化区域加密分流 (122 Host 映射)**：在 `plugins/Loon-China-DNS.lpx` 中将国内大厂、`.cn` 顶级域、Apple 静态资源 CDN（`*.mzstatic.com`）及 10 个已审定 Apple 精确主机（含本次经 Apple CN 官网嵌入实证与企业网络要求新增的 `apps.apple.com`、`amp-api-edge.apps.apple.com`）统一映射至阿里极速 DoH（`server:https://223.5.5.5/dns-query`）作为近端就近调度候选；严格禁止泛绑定 `*.apple.com`、`*.icloud.com` 或 `*itunes*`。
    - **加密分流装配指南与真机边界**：
      - **公共插件**：提供 122 条国内 DoH Host 映射，Apple 新增项仅限两个已审精确主机；
