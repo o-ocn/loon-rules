@@ -12,7 +12,7 @@ This phase does not modify:
 
 AUTO_PASS means simulated production eligibility only.
 
-> ⏱ **生成时间**: `2026-10-08T08:16:53.956261+00:00`  
+> ⏱ **生成时间**: `2026-10-09T08:18:31.826788+00:00`  
 > 🛡 **运行模式**: 只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状  
 
 ---
@@ -21,15 +21,15 @@ AUTO_PASS means simulated production eligibility only.
 
 | 指标项 | 规则数量 | 占比 | 说明 |
 | :--- | :---: | :---: | :--- |
-| **上游去重聚合总量** | **111500** | 100% | 多源清洗规范化后的全局规则集 |
-| **生产已有覆盖 (In Prod)** | **409** | - | 当前 `China-Direct.lsr` 已稳定纳管的规则 |
-| **新增候选差集 (Delta)** | **111091** | 100% | 上游存在但未纳入当前生产的域名/网段 |
+| **上游去重聚合总量** | **111831** | 100% | 多源清洗规范化后的全局规则集 |
+| **生产已有覆盖 (In Prod)** | **2870** | - | 当前 `China-Direct.lsr` 已稳定纳管的规则 |
+| **新增候选差集 (Delta)** | **108961** | 100% | 上游存在但未纳入当前生产的域名/网段 |
 | ├─ **拟自动放行 (`AUTO_PASS`)** | **50** | 0.0% | 模拟生产放行（高置信度/双重凭证/大陆核心App） |
-| ├─ **拟隔离待审 (`REVIEW`)** | **388** | 0.3% | 拟入隔离池（需 AI 会审或观察中候选） |
-| └─ **拟彻底阻断 (`BLOCK`)** | **110653** | 99.6% | 彻底剔除（海外代理碰撞/低分/禁止类型如 IP-CIDR） |
+| ├─ **拟隔离待审 (`REVIEW`)** | **120** | 0.1% | 拟入隔离池（需 AI 会审或观察中候选） |
+| └─ **拟彻底阻断 (`BLOCK`)** | **108791** | 99.8% | 彻底剔除（海外代理碰撞/低分/禁止类型如 IP-CIDR） |
 
-> 🎯 **自动决策覆盖率**: **`99.65%`**  
-> （自动决策覆盖率达到 99.65%，其中主要来自自动 BLOCK 与类型过滤。明确区分：自动处理 ≠ 自动放行。）
+> 🎯 **自动决策覆盖率**: **`99.89%`**  
+> （自动决策覆盖率达到 99.89%，其中主要来自自动 BLOCK 与类型过滤。明确区分：自动处理 ≠ 自动放行。）
 
 ---
 
@@ -41,21 +41,21 @@ AUTO_PASS means simulated production eligibility only.
 | :--- | :--- | :---: | :---: | :--- |
 | `DOMAIN-SUFFIX,cn` | acl4ssr_china, blackmatrix7_china | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,00cdn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,115.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,12306.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,126.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,126.net` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,127.net` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,13th.tech` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,163.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,163yun.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,17173.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,178.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,17k.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,21cn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
-| `DOMAIN-SUFFIX,360.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,423down.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,51jobcdn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,8686c.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,88cdn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,alibabachengdun.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,alibabacloud.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,alicloudccp.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,aliyuncdn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,aliyuncs.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,allawnfs.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 
-*(其余 373 条详见 shadow_report.json)*
+*(其余 105 条详见 shadow_report.json)*
 
 ---
 
@@ -81,12 +81,12 @@ AUTO_PASS means simulated production eligibility only.
 | `USER-AGENT,%e4%bc%98%e9%85%b7*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
 | `USER-AGENT,%e5%8d%b3%e5%88%bb*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
 
-*(其余 110638 条详见 shadow_report.json)*
+*(其余 108776 条详见 shadow_report.json)*
 
 ---
 
 ## 四、Phase 0 准出标准评估 (Exit Criteria Check)
 
 - [x] **生产产物零破坏**：`dist/` 保持完全干净，未修改线上规则。
-- [x] **自动化率达成**：当前自动化率 **99.65%**，满足 90% 自动化维护预期。
+- [x] **自动化率达成**：当前自动化率 **99.89%**，满足 90% 自动化维护预期。
 - [x] **硬门禁有效性**：海外代理红线与出海服务被 100% 拦截，无漏判放行。
