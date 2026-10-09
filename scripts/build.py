@@ -60,6 +60,8 @@ KNOWN_SAFE_DELEGATIONS = {
     "geminiweb-pa.googleapis.com": ("AI-Overseas", "Google"),
     "gemini.gstatic.com": ("AI-Overseas", "Google"),
     "cloudcode-pa.googleapis.com": ("AI-Overseas", "Google"),
+    "daily-cloudcode-pa.googleapis.com": ("AI-Overseas", "Google"),
+    "cloudaicompanion.googleapis.com": ("AI-Overseas", "Google"),
 
     # Google Drive (GoogleDrive) carved out from Google
     "drive.google.com": ("GoogleDrive", "Google"),

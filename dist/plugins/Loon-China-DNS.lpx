@@ -3,7 +3,7 @@
 #!author = o-ocn
 #!homepage = https://github.com/o-ocn/loon-rules
 #!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Speedtest.png
-#!date = 2026-10-09
+#!date = 2026-10-10
 
 [Host]
 # 顶级域名
@@ -167,3 +167,12 @@ guzzoni.smoot.apple.com = server:https://223.5.5.5/dns-query
 # 严格禁止通配 *.apple.com / *.icloud.com / *itunes*，严禁向国内 DNS 委托账户认证与隐私域名。
 apps.apple.com = server:https://223.5.5.5/dns-query
 amp-api-edge.apps.apple.com = server:https://223.5.5.5/dns-query
+
+# 2026-10-10 字节/抖音系常用媒体分发域名配套补齐 (7项)
+*.douyinpic.com = server:https://223.5.5.5/dns-query
+*.douyinstatic.com = server:https://223.5.5.5/dns-query
+*.douyinvod.com = server:https://223.5.5.5/dns-query
+*.douyinliving.com = server:https://223.5.5.5/dns-query
+*.toutiaoimg.com = server:https://223.5.5.5/dns-query
+*.toutiaovod.com = server:https://223.5.5.5/dns-query
+*.pstatp.com = server:https://223.5.5.5/dns-query

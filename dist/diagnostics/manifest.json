@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-08T16:29:21.066526+00:00",
-  "content_revision": "cc70392cee8a",
-  "package_sha256": "cc70392cee8a9c857c73374cc45a2be1c4a58421df11ac0b8ac3d4e164828ded",
+  "build_timestamp": "2026-10-09T16:17:52.857914+00:00",
+  "content_revision": "23b87b311b67",
+  "package_sha256": "23b87b311b67b955c3ed650204e3bf100395639a4bef701561cd0c7fec6c9775",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -14,9 +14,9 @@
       "description": "Apple Push Notification service (APNs) minimal authoritative rules"
     },
     "AI-Overseas.lsr": {
-      "total_rules": 38,
-      "revision": "a1f362bd587f",
-      "sha256": "a1f362bd587fb71280babce6e24a2ba6fa84607af35f04a0cea7c60b666622bb",
+      "total_rules": 45,
+      "revision": "61e01ec755d8",
+      "sha256": "61e01ec755d8399e66edb13bf14ec996c4f0a5de2a8411877270a776496a8c3a",
       "description": "Overseas AI services (ChatGPT, Claude, Gemini, Grok, Muse from Meta)"
     },
     "YouTube.lsr": {

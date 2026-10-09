@@ -2773,9 +2773,11 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             dist_bytes = f.read()
         self.assertEqual(src_bytes, dist_bytes, "Plugin source and dist must have identical bytes")
 
-        # 2. 条目强检：总计 122 条 Host 映射，全部目标为 server:https://223.5.5.5/dns-query，无明文 UDP/HTTP
+        # 2. 条目强检：至少 122 条 Host 映射且无重复，全部目标为 server:https://223.5.5.5/dns-query，无明文 UDP/HTTP
         entries = check_conflicts.load_dns_plugin_entries(plugin_src_path)
-        self.assertEqual(len(entries), 122, f"Expected exactly 122 Host entries in plugin, got {len(entries)}")
+        self.assertGreaterEqual(len(entries), 122, f"Expected at least 122 Host entries in plugin, got {len(entries)}")
+        host_keys = [e["left"] for e in entries]
+        self.assertEqual(len(host_keys), len(set(host_keys)), f"Duplicate host entries detected in plugin: {len(host_keys)} vs {len(set(host_keys))}")
         for e in entries:
             self.assertIsNone(e["error"], f"Plugin contains malformed line: {e}")
             self.assertEqual(e["right"], "server:https://223.5.5.5/dns-query", f"Host {e['left']} must map to Ali DoH, got {e['right']}")
@@ -2856,6 +2858,187 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
                     f.write(f"[Host]\n{l_pattern} = server:https://223.5.5.5/dns-query\n")
                 ok_l, err_l, _ = check_conflicts.check_conflicts(dns_path=f_path, strict=True)
                 self.assertEqual(ok_l, expected_ok, f"Left pattern {l_pattern} expected {expected_ok}, got {ok_l} (errors: {err_l})")
+
+    def test_54_ai_overseas_official_endpoints_and_boundaries(self):
+        """Verify 7 approved AI endpoints in AI-Overseas.lsr, exact-host vs subdomain isolation, negative boundaries, memory mutations, and strategy neutrality."""
+        import simulate_hit
+        rules = simulate_hit.load_dist_rules()
+
+        # 1. 正向首命中验证：7 条代表性主机必须首命中 AI-Overseas.lsr
+        positive_targets = [
+            # Claude 官方登录、平台与内容
+            ("claude.com", "AI-Overseas.lsr"),
+            ("platform.claude.com", "AI-Overseas.lsr"),
+            ("bridge.claudeusercontent.com", "AI-Overseas.lsr"),
+            ("frame.claudeusercontent.com", "AI-Overseas.lsr"),
+            ("interactive.claudemcpcontent.com", "AI-Overseas.lsr"),
+            # OpenAI 专属白名单端点
+            ("oaistatsig.com", "AI-Overseas.lsr"),
+            ("api.oaistatsig.com", "AI-Overseas.lsr"),
+            ("cdn.openaimerge.com", "AI-Overseas.lsr"),
+            # Google AI 专用代码与助手 API
+            ("daily-cloudcode-pa.googleapis.com", "AI-Overseas.lsr"),
+            ("cloudaicompanion.googleapis.com", "AI-Overseas.lsr"),
+        ]
+        for host, expected_ruleset in positive_targets:
+            m = simulate_hit.match_target(host, rules)
+            self.assertTrue(len(m) > 0, f"Expected match for positive host '{host}'")
+            self.assertEqual(m[0]["ruleset"], expected_ruleset,
+                             f"Host '{host}' must first-hit {expected_ruleset}, got {m[0]['ruleset']}")
+
+        # 2. 负向边界强隔离：精确主机不扩到子域/根域，后缀不扩到伪同名、第三方根域及共享基础设施
+        negative_forbidden_in_ai = [
+            # 精确主机子域与根域（严禁命中 AI-Overseas）
+            "sub.cdn.openaimerge.com",
+            "openaimerge.com",
+            "probe.daily-cloudcode-pa.googleapis.com",
+            "probe.cloudaicompanion.googleapis.com",
+            # 伪同名与类似域名（严禁被后缀规则贪婪命中）
+            "notclaude.com",
+            "fakeclaude.com",
+            "fakeclaudeusercontent.com",
+            "myclaudemcpcontent.com",
+            # 第三方共享服务根域（OpenAI statsig 严禁扩大至 Statsig 官方根域）
+            "statsig.com",
+            "api.statsig.com",
+            # 共享认证、分析、支付与平台（严禁并入 AI-Overseas）
+            "accounts.google.com",
+            "sentry.io",
+            "api.revenuecat.com",
+            "challenges.cloudflare.com",
+            # 暂缓域与未放行泛域（严禁并入 AI-Overseas）
+            "openaiassets.z19.web.core.windows.net",
+            "windows.net",
+            "core.windows.net",
+            "googleapis.com",
+            "google.com",
+        ]
+        for host in negative_forbidden_in_ai:
+            m = simulate_hit.match_target(host, rules)
+            ai_hits = [hit for hit in m if hit["ruleset"] == "AI-Overseas.lsr"]
+            self.assertEqual(ai_hits, [], f"Forbidden AI-Overseas match for '{host}': {ai_hits}")
+
+        # 3. 内存扩大匹配变异（Fault Injection）：在内存中篡改规则使匹配扩大，确认负例断言必须有效捕获
+        # 变异一：将 cdn.openaimerge.com 扩大为 DOMAIN-SUFFIX,openaimerge.com
+        mutant_rules_broad_merge = []
+        for rs_name, r_list in rules:
+            if rs_name == "AI-Overseas.lsr":
+                mutant_rules_broad_merge.append((rs_name, list(r_list) + [("DOMAIN-SUFFIX", "openaimerge.com", "DOMAIN-SUFFIX,openaimerge.com", 999)]))
+            else:
+                mutant_rules_broad_merge.append((rs_name, r_list))
+        m_mutant1 = simulate_hit.match_target("openaimerge.com", mutant_rules_broad_merge)
+        self.assertTrue(any(hit["ruleset"] == "AI-Overseas.lsr" for hit in m_mutant1),
+                        "Mutant broadening must be detectable by negative target 'openaimerge.com'")
+
+        # 变异二：将 oaistatsig.com 扩大为 DOMAIN-SUFFIX,statsig.com
+        mutant_rules_statsig = []
+        for rs_name, r_list in rules:
+            if rs_name == "AI-Overseas.lsr":
+                mutant_rules_statsig.append((rs_name, list(r_list) + [("DOMAIN-SUFFIX", "statsig.com", "DOMAIN-SUFFIX,statsig.com", 999)]))
+            else:
+                mutant_rules_statsig.append((rs_name, r_list))
+        m_mutant2 = simulate_hit.match_target("statsig.com", mutant_rules_statsig)
+        self.assertTrue(any(hit["ruleset"] == "AI-Overseas.lsr" for hit in m_mutant2),
+                        "Mutant statsig injection must be detectable by negative target 'statsig.com'")
+
+        # 变异三：将 windows.net 注入 AI-Overseas.lsr
+        mutant_rules_win = []
+        for rs_name, r_list in rules:
+            if rs_name == "AI-Overseas.lsr":
+                mutant_rules_win.append((rs_name, list(r_list) + [("DOMAIN-SUFFIX", "windows.net", "DOMAIN-SUFFIX,windows.net", 999)]))
+            else:
+                mutant_rules_win.append((rs_name, r_list))
+        m_mutant3 = simulate_hit.match_target("openaiassets.z19.web.core.windows.net", mutant_rules_win)
+        self.assertTrue(any(hit["ruleset"] == "AI-Overseas.lsr" for hit in m_mutant3),
+                        "Mutant windows.net injection must be detectable by negative target")
+
+        # 4. 策略中立保证强检：dist/AI-Overseas.lsr 严禁包含任何策略绑定（DIRECT, PROXY, REJECT, US, All 等）
+        ai_lsr_path = os.path.join(DIST_DIR, "AI-Overseas.lsr")
+        self.assertTrue(os.path.isfile(ai_lsr_path), "dist/AI-Overseas.lsr must exist")
+        with open(ai_lsr_path, "r", encoding="utf-8") as f:
+            for line_no, raw_line in enumerate(f, 1):
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = [p.strip() for p in line.split(",")]
+                self.assertIn(parts[0], ("DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "IP-CIDR", "IP-CIDR6", "USER-AGENT", "IP-ASN", "GEOIP"),
+                              f"Line {line_no} has invalid rule type: {line}")
+                self.assertLessEqual(len(parts), 2,
+                                     f"Line {line_no} violates strategy neutrality by specifying extra policy/argument: '{line}'")
+
+    def test_55_china_dns_media_subdomains_and_negative_boundaries(self):
+        """Verify 7 reviewed ByteDance/news media DoH patterns in Loon-China-DNS.lpx, source/dist parity, pattern matching, overseas/Apple isolation, and mutant boundary rejection."""
+        import check_conflicts
+        plugin_src_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        plugin_dist_path = os.path.join(DIST_DIR, "plugins", "Loon-China-DNS.lpx")
+
+        # 1. 源与发布插件一致性及无重复守卫（允许后续经审核增补）
+        self.assertTrue(os.path.isfile(plugin_src_path))
+        self.assertTrue(os.path.isfile(plugin_dist_path))
+        with open(plugin_src_path, "rb") as f:
+            src_bytes = f.read()
+        with open(plugin_dist_path, "rb") as f:
+            dist_bytes = f.read()
+        self.assertEqual(src_bytes, dist_bytes, "DNS plugin source and dist must be 100% byte identical")
+
+        entries = check_conflicts.load_dns_plugin_entries(plugin_src_path)
+        self.assertEqual(len(entries), len({e["left"] for e in entries}), "DNS mappings must not repeat a Host pattern")
+
+        # 2. 7 项新媒体分发模式存在性与目标 DoH 强检
+        expected_7_patterns = [
+            "*.douyinpic.com",
+            "*.douyinstatic.com",
+            "*.douyinvod.com",
+            "*.douyinliving.com",
+            "*.toutiaoimg.com",
+            "*.toutiaovod.com",
+            "*.pstatp.com",
+        ]
+        hosts_map = {e["left"]: e["right"] for e in entries}
+        for pattern in expected_7_patterns:
+            self.assertIn(pattern, hosts_map, f"Missing pattern {pattern} in Loon-China-DNS.lpx")
+            self.assertEqual(hosts_map[pattern], "server:https://223.5.5.5/dns-query",
+                             f"Pattern {pattern} must point to Ali DoH, got {hosts_map[pattern]}")
+
+        # 3. 实际 Host 模式匹配测试：代表性媒体子域必须正向匹配对应模式
+        plugin_hosts = check_conflicts.load_dns_plugin_hosts(plugin_src_path, preserve_patterns=True)
+        sample_positive_hosts = [
+            ("p1.douyinpic.com", "*.douyinpic.com"),
+            ("sf1-cdn-tos.douyinstatic.com", "*.douyinstatic.com"),
+            ("v1-cold.douyinvod.com", "*.douyinvod.com"),
+            ("pull-flv-l3.douyinliving.com", "*.douyinliving.com"),
+            ("p3-tt.toutiaoimg.com", "*.toutiaoimg.com"),
+            ("v3.toutiaovod.com", "*.toutiaovod.com"),
+            ("sf3-ttcdn-tos.pstatp.com", "*.pstatp.com"),
+        ]
+        for host, pattern in sample_positive_hosts:
+            matched = [p for p in plugin_hosts if p.startswith("*.") and (host.endswith(p[1:]) or host == p[2:])]
+            self.assertIn(pattern, matched, f"Host {host} failed to match expected pattern {pattern}")
+
+        # 4. 负向隔离：海外服务、Apple 专属域及共享域严禁命中这 7 类模式
+        isolated_targets = [
+            "google.com",
+            "twitter.com",
+            "tiktok.com",
+            "byteimg.com",
+            "ibytedtos.com",
+            "apple.com",
+            "apps.apple.com",
+            "icloud.com",
+        ]
+        for target in isolated_targets:
+            for p in expected_7_patterns:
+                matched_suffix = target.endswith(p[1:]) or target == p[2:]
+                self.assertFalse(matched_suffix, f"Target {target} illegally matched newly added pattern {p}")
+
+        # 5. 夹具变异测试：使用 *.com 扩大匹配变异验证负例敏感性（严禁通配顶级域）
+        com_mutant_fixture = os.path.join(TEST_TMP_DIR, "dns_mutant_com.lpx")
+        with open(com_mutant_fixture, "w", encoding="utf-8") as f:
+            f.write("[Host]\n*.com = server:https://223.5.5.5/dns-query\n")
+        ok_mutant, err_mutant, _ = check_conflicts.check_conflicts(dns_path=com_mutant_fixture, strict=True)
+        self.assertFalse(ok_mutant, "Broad mutant '*.com' must fail check_conflicts!")
+        self.assertTrue(any("Red line violation" in e or "illegally routed" in e for e in err_mutant),
+                        f"Expected red line violation error for mutant '*.com', got: {err_mutant}")
 
     @classmethod
     def tearDownClass(cls):

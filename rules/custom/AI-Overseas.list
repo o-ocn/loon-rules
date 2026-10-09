@@ -78,3 +78,39 @@ DOMAIN-SUFFIX,sora.com
 # Evidence: Official developer documentation & API trace, 2026-09-28
 # Reason: Enterprise AI API routing
 DOMAIN-SUFFIX,cohere.com
+
+# --- Reviewed Dedicated AI Endpoints (2026-10-10) ---
+# Target: Anthropic Claude web portal, platform and documentation
+# Evidence: Anthropic official network config documentation (https://code.claude.com/docs/en/network-config)
+# Reason: Dedicated routing for Claude web, login and platform endpoints
+DOMAIN-SUFFIX,claude.com
+
+# Target: Anthropic Claude user content and artifact framing endpoints
+# Evidence: Anthropic official network config documentation (https://code.claude.com/docs/en/network-config)
+# Reason: Dedicated routing for Claude artifact/user content
+DOMAIN-SUFFIX,claudeusercontent.com
+
+# Target: Anthropic Claude Model Context Protocol interactive components
+# Evidence: Anthropic official network config documentation (https://code.claude.com/docs/en/network-config)
+# Reason: Dedicated routing for Claude MCP interactive components
+DOMAIN-SUFFIX,claudemcpcontent.com
+
+# Target: OpenAI statsig feature gate endpoint
+# Evidence: OpenAI official network recommendations (https://help.openai.com/en/articles/9247338)
+# Reason: Dedicated routing for OpenAI official telemetry and feature flag endpoint
+DOMAIN-SUFFIX,oaistatsig.com
+
+# Target: OpenAI CDN merge endpoint
+# Evidence: OpenAI official network recommendations (https://help.openai.com/en/articles/9247338)
+# Reason: Exact host routing for OpenAI static/CDN merge service
+DOMAIN,cdn.openaimerge.com
+
+# Target: Daily Cloud Code / Gemini Code Assist backend endpoint
+# Evidence: Local Antigravity CLI runtime invocation evidence (not represented as official doc explicit citation)
+# Reason: Exact host routing for daily Cloud Code assistant API
+DOMAIN,daily-cloudcode-pa.googleapis.com
+
+# Target: Google Cloud Code Assist / AI Companion backend API
+# Evidence: Google Cloud Code Assist official setup documentation (https://docs.cloud.google.com/gemini/docs/codeassist/set-up-gemini)
+# Reason: Exact host routing for Cloud AI Companion developer API
+DOMAIN,cloudaicompanion.googleapis.com

@@ -17,7 +17,12 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-09 私人 DNS 兼容 V2 候选已装配及独立核验，手机未验**：Gemini在旧候选复制件上仅将全球 DoH 改为官方 `https://cloudflare-dns.com/dns-query`，补齐普通 `dns-server = 1.1.1.1,1.0.0.1`（不含system），添加精确单IP Host `cloudflare-dns.com = 1.1.1.1,use-in-proxy=true` 与沿原 FINAL 策略的精确域名规则。订阅专用 AliDNS DoH及原四条端点规则保留；Codex独立逐字节反向重建确认其他全部段、19远程规则、37插件、策略和证书不变，原源和V1哈希不变，报告/日志未检出原件订阅或证书秘密值。V2为 `E:\Document\AI-Workspace\loon-rules\2026-10-09-encrypted-dns-split\private\Loon-19Rules-EncryptedDNS-v2-2026-10-09.lcf`，SHA256 `dfe430070d15c4b964f87f21cc913d69f5f75d129377c87c563e81c541aa87ca`，15,274字节；已用新文件名复制至原iCloud Loon同步目录，本机副本同哈希，云端与手机可见/导入待验。电脑端标准域名加固定IP探针通过默认TLS验证、HTTP200及有效DNS响应，仅证明电脑端点可用。普通DNS为UDP，绝非加密；固定单IP减少端点容错，规则路线依赖有效代理和Rule模式。加入基础DNS或换域名能否解决手机提示仍属待验；必须先看到有效DoH条目，再确认系统OFF/回落OFF/Rule，不能将文本存在或网页单次测试当全部App隐私验收。Gemini CLI返回ERROR且错误字段为远程连接关闭，实际产物及收尾报告另经Codex独立验证通过；未改公开生产规则、插件或编译器，本轮公开仓库仅记录已确认的新边界。证据为本任务24/25及phone-dns-ui-compatibility内27/29/30；恢复起点为 `aadc14e49bc822c1e9f69e018e93be68c30446a0`，私人V1与原配置保留。
+* **2026-10-10 AI 与国内媒体 DNS 增补（Gemini 执行、Codex 审核；发布待完成）**：
+  - **规则与策略**：AI-Overseas 38→45，净增 7 条 Claude/OpenAI/Google AI 专属规则；总规则数 23,889，其他 18 集正文不变。规则仍策略中立，私人配置所有策略组、节点及 19 项绑定原样保留，AI 仍 `policy=All`；只有所有者明确指定才可改绑定或组。该偏好已合入 Hub 母版及双方 AGENTS。两项 Google 精确主机仅补登记至既有 `KNOWN_SAFE_DELEGATIONS`，未改编译算法、来源或共享域红线。
+  - **DNS 范围**：原 122 条映射完整保留，新增 `*.douyinpic.com`、`*.douyinstatic.com`、`*.douyinvod.com`、`*.douyinliving.com`、`*.toutiaoimg.com`、`*.toutiaovod.com`、`*.pstatp.com` 至阿里 DoH；合计 129，源与 dist 字节一致。7 类均已有 China-Direct 分类，本批未增加国内路由或改任何 policy。共享 byteimg/ibytedtos 暂缓；全局 Cloudflare、系统 DNS OFF、查询回落 OFF、DoH Rule 保持。
+  - **私人候选与恢复**：`E:\Document\AI-Workspace\loon-rules\2026-10-09-ai-sources-policy-preservation\private\Loon-19Rules-ReviewedSources-v3-2026-10-09.lcf`（SHA256 `869817ed5b2399a414c6666e15ea48f5e434808d24cd6a3ce0b6901ea4070898`）仅替换 GeoIP/ASN 两个下载地址为 Masaiki/P3TERX 作者发布源，反向替换可还原原始导出全部字节；原件和 V2 保留。恢复基线 `c910b513c8066c2a89f1642abdc255c0daadf767`；新件尚未交付手机验收；私人配置验收器为 PARTIAL_PASS / UNVERIFIED_PLUGINS，36 个启用第三方插件的运行时注入未验证。
+  - **审核与边界**：账本保留历史 139 行原始字节，增补 7 项 APPROVED、verified=false（登记时间 2026-10-10T00:35:00+08:00，复查 180 天，登记不冒称原始授权时刻）。新增 AI 端点/精确子域负例与扩大匹配变异、媒体 DNS 模式及通配变异检查；插件测试允许后续审定增补，不锁死 129 总数。Gemini 自检与收尾完成；Codex 独立 55/55 规则、19/19 诊断、4/4 评分、strict/pre-release 均通过，另核验 9 正例、16 不变负例、3 精确主机扩大匹配变异、历史账本字节与私人秘密值零回显。Git/CI 闭环待完成。V2 手机已确认 CF 条目可见及 OFF/OFF/Rule，App Store 与抖音图文曾正常，现仍偶有抖音视频卡顿；网络类型为“两者都有或不确定”，不登记成已分别复现。静态缺口不证明唯一故障根因；新件体验、原生根域通配语义、全机海外 DNS 隐私尚未验证。
+* **2026-10-09 私人 DNS 兼容 V2 装配记录（历史候选阶段，后续手机反馈见上）**：Gemini在旧候选复制件上仅将全球 DoH 改为官方 `https://cloudflare-dns.com/dns-query`，补齐普通 `dns-server = 1.1.1.1,1.0.0.1`（不含system），添加精确单IP Host `cloudflare-dns.com = 1.1.1.1,use-in-proxy=true` 与沿原 FINAL 策略的精确域名规则。订阅专用 AliDNS DoH及原四条端点规则保留；Codex独立逐字节反向重建确认其他全部段、19远程规则、37插件、策略和证书不变，原源和V1哈希不变，报告/日志未检出原件订阅或证书秘密值。V2为 `E:\Document\AI-Workspace\loon-rules\2026-10-09-encrypted-dns-split\private\Loon-19Rules-EncryptedDNS-v2-2026-10-09.lcf`，SHA256 `dfe430070d15c4b964f87f21cc913d69f5f75d129377c87c563e81c541aa87ca`，15,274字节；已用新文件名复制至原iCloud Loon同步目录，本机副本同哈希，云端与手机可见/导入待验。电脑端标准域名加固定IP探针通过默认TLS验证、HTTP200及有效DNS响应，仅证明电脑端点可用。普通DNS为UDP，绝非加密；固定单IP减少端点容错，规则路线依赖有效代理和Rule模式。加入基础DNS或换域名能否解决手机提示仍属待验；必须先看到有效DoH条目，再确认系统OFF/回落OFF/Rule，不能将文本存在或网页单次测试当全部App隐私验收。Gemini CLI返回ERROR且错误字段为远程连接关闭，实际产物及收尾报告另经Codex独立验证通过；未改公开生产规则、插件或编译器，本轮公开仓库仅记录已确认的新边界。证据为本任务24/25及phone-dns-ui-compatibility内27/29/30；恢复起点为 `aadc14e49bc822c1e9f69e018e93be68c30446a0`，私人V1与原配置保留。
 * **2026-10-09 手机 DNS 页面边界已确认**：所有者确认已切换到 `Loon-19Rules-EncryptedDNS-2026-10-09`；截图显示系统 DNS 开启、查询回落关闭，DoH 列表为空，关闭系统 DNS 时提示 `Please customize a DNS address first.`。本机候选含两条 Cloudflare IP DoH且没有普通 `dns-server` 行，但这不证明手机已解析/应用；初始化或端点兼容性仅为待核查假设。源文件原先已混合换行，不把本次候选换行当作已确认根因。停用 Google DoH 后商店恢复不证明 Google 服务本身故障，也不能保证换 Cloudflare 不复现。私人新方案尚未达到防泄漏验收；公开规则与插件不因本次核查变动。
 * **2026-10-09 公开加密 DNS 工程及私人V1装配核验记录（V1手机未显示DoH；后续V2见上）**：Gemini 实施公开 DNS 插件（122 Host）与单独私人候选；Codex 独立重跑规则 53/53、诊断 19/19、评分 4/4、strict 与 pre-release 均通过，并修复畸形 URL 端口校验及加入对应负例。私人候选 `E:\Document\AI-Workspace\loon-rules\2026-10-09-encrypted-dns-split\private\Loon-19Rules-EncryptedDNS-2026-10-09.lcf`（SHA256 `dd52546af2e37c00068fdd2d4410d60202ab59ccf40c5a47622bc894a92cf8b0`，15,181 字节）从当日 13:51 同名 iCloud 配置复制件装配；13:55 指定导出路径不可读，不声称两份相同。原件 SHA256 `3db617e1bac59cf2bda70781581e16589d31d32102aa167fd700f5748d085d95` 保持不变。仅调整 General DNS、三条订阅的专用加密节点 DNS、四条端点 IP 路由；原有19远程规则、37插件、策略组、证书及其他段的原始字节保留。手机版本 3.5.2 (1005) 支持订阅 `server-dns`（官方门槛996）。全局 Cloudflare 双 IP DoH 沿原 FINAL 策略，国内 Host 与节点解析用 AliDNS DoH；导入后必须确认系统 DNS 关闭、查询回落关闭、DoH 模式 Rule。私人候选已作为新文件写入 Windows 注册的 iCloud Loon 同步目录 `Configs(1)`，本机文件与审核件字节相同；所有者随后确认手机已选中该命名配置，但截图的 DoH 列表仍为空、系统 DNS 开启且无法关闭（提示先自定义 DNS）。手机实际解析/应用候选字段未通过验收；不能把本机字段存在当作手机生效，具体原因与手机实际文件字节仍未确认。功能提交 `41693578a313e50893c8a58a935f873437ceebe3` 正常推送；[CI #87](https://github.com/o-ocn/loon-rules/actions/runs/37914579528) 对该 SHA 为 completed/success，日志实际验证53规则测试、19诊断测试、strict/pre-release，并确认无额外规则提交；主备19规则与诊断镜像通过，DNS插件普通Raw源与dist独立HTTP200且规范化SHA256均为 `cfb0816b16f24116b735e6ef0242025580f6534c30cc9569289db5fc291dad79`。Gemini完成实施/私人装配及最终收尾，Codex完成独立审核、推送、CI与主源核验；证据见本轮任务目录07/08/10/13/15/17/18，最终Git状态在收尾回执中复核。远端已有独立巡检提交 `2e9a971` 已安全快进保留，不混入本次 DNS 差异。
 * **2026-10-09 App Store 已恢复，抖音未检查；系统 DNS 仅为临时恢复措施**：所有者在当前使用的项目配套手机配置中仅注释停用 `doh-server = https://dns.google/dns-query` 后，明确反馈 App Store 即刻恢复、抖音尚未检查。这是当日大陆账号下的手机对照结果；此前正常36规则配置仅为历史对照。当前保留已恢复设置，不把系统 DNS 定为最终防泄漏方案，也不把该结果扩展为全部 App、全部账号/网络或归档候选整份文件上机验收。具体 DNS 失败链路尚未采集。
@@ -87,7 +92,7 @@
 
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
-  2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 将 122 条国内及 Apple 精确主机分流至阿里公共 DoH（`https://223.5.5.5/dns-query`），保障国内大厂及 Apple 静态资源就近加密调度，防范明文 UDP 泄漏与境外 DoH 引发的跨洋反向卡顿；
+  2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 将 129 条国内域名模式及 Apple 精确主机委托至阿里公共 DoH（`https://223.5.5.5/dns-query`），为已审核服务提供国内加密解析；不能据此保证最优 CDN、全部 App 无卡顿或全机无明文查询；
   3. **冲突防护层**：`shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 自动化守卫生态边界，严禁海外独占域名泄露至国内规则，严禁将 `apple.com` / `icloud.com` 泛解析至国内 DNS。
 * **原生一键诊断插件**：`LoonRules-Diagnostic.lpx` 已就绪，遵循 Loon 3.5.1+ Generic Script v2 规范，支持海外 AI 策略动态嗅探，支持快速与完整双模式，纯本机只读执行，输出 15 行内紧凑中文短报告。
 * **大陆应用分流与 DNS 审计矩阵 (`docs/app-audit-matrix.md`)**：正式建立常态化审计矩阵，完整收录 18 类高频应用、金融清算与云存储基建的规则状态、DNS 调度状态、最后验证时间与明确排除边界（红线列表），避免后续 AI 盲目全网扫描或误引入泛域名。
@@ -99,7 +104,7 @@
 | 规则集名称 | 规则条数 | 涵盖核心服务说明 | 策略中立保证 |
 | :--- | :---: | :--- | :---: |
 | **`Apple-Push.lsr`** | 10 | APNs 官方最小推送通道（默认建议关闭） | 100% 策略中立 |
-| **`AI-Overseas.lsr`** | 38 | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse | 100% 策略中立 |
+| **`AI-Overseas.lsr`** | 45 | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse | 100% 策略中立 |
 | **`YouTube.lsr`** | 190 | YouTube 视频流媒体、图片与 CDN（排在 Google 前） | 100% 策略中立 |
 | **`GoogleDrive.lsr`** | 8 | Google Drive 云端硬盘专属服务（排在 Google 前） | 100% 策略中立 |
 | **`Google.lsr`** | 690 | 普通 Google 服务、搜索与基础设施（含共享 googleapis） | 100% 策略中立 |
@@ -237,7 +242,7 @@
 ## 七、当前观察期、未完成事项与下一步
 
 ### 1. 常用服务专项发布后的日常观察（不要求逐App抓包）
-- **本轮下一步**：先解决所有者已选中私人候选但 DoH 列表为空、系统 DNS 无法关闭的兼容性边界；Gemini已装配V2，Codex独立核验通过并用新文件名复制至iCloud同步目录；先选中V2进行一次最小手机对照。必须先确认手机 DNS 页能显示有效 DoH 条目，再验证系统关闭、回落关闭、Rule及 App Store/抖音日常体验；一次海外 DNS 网页探针仅证明其测试域名，不能扩展为全部 App。不得重复要求导入同一失效候选或盲目关闭开关；原配置及临时恢复设置保留。多上游候选不自动投产。
+- **本轮下一步**：完成本批 AI/DNS 与数据库新候选的发布及独立验收后，手机仅选中交付的新配置、刷新外部资源并正常使用。V2 的 DoH 空列表问题已由后续截图与用户反馈关闭，不重复安排旧对照。继续审计已登记常用服务的配套 DNS 缺口，先核对规则/来源/业务归属，不要求所有者逐 App 抓包，不自动投产多上游候选。
 - **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
@@ -249,6 +254,9 @@
   - 连续日常使用 1~2 周无超时、无误伤、无漂移报错，且自动化 CI 巡航稳定，即可正式解除观察期，冻结日常手动干预。
 
 ### 2. 待办事项
+- [x] **本批 AI 7 条与国内媒体 DoH 7 项实施及独立审核**：AI 45、Host 129、账本 146；全部策略保持；来源/锁/红线未改；完整门禁及私人可逆差异通过，发布状态见当前状态。
+- [ ] **V3 手机日常验收**：选中新交付配置、刷新外部资源；商店与抖音正常使用即可。原 V2 已验证 CF 条目及 OFF/OFF/Rule，勿重复安排旧空列表问题。无 Host 证据或插件路径证据时，不承诺全 App 零卡顿、全机 DNS 零泄漏。
+- [ ] **已登记常用服务配套 DNS 复核（AI 负责）**：独立静态扫描共 318 参考行、270 唯一国内主机，存在其他未映射项；先按现有契约、公开客户端资料及规则边界筛选，不把缺映射一概判为故障、不整域放行共享基础设施、不让用户逐 App 抓包。
 - [x] **App Store 单变量系统 DNS 手机实测对照**：2026-10-09 所有者在当前手机配置中仅注释停用 `doh-server = https://dns.google/dns-query`，App Store 即刻恢复正常，单变量对照完成；抖音图文加载待日常自然使用反馈。归档候选（SHA256 `939878c4...`）与备用诊断件（SHA256 `f7392831...`）作为离线准备复制件保留，不整体上机；用户当前使用项目配套配置（已停用 Google DoH），历史 36 规则配置仅作对照。
 - [x] **海外 DNS 隐私防泄漏与大陆直连调度兼顾方案专项实施（公开 DNS 插件 DoH 迁移与守护）**：已完成插件 120 条 UDP 映射迁移至 `https://223.5.5.5/dns-query`，并收敛新增 2 项 Apple 官方精确 Host（`apps.apple.com` 与 `amp-api-edge.apps.apple.com`），Host 总数达到 122 条；`shared_domains.yml` 与 `check_conflicts.py --strict` 强守护落地；测试套件 53/53、诊断 19/19、评分 4/4、strict 与 pre-release 离线全量通过；19 规则集（23,882 规则）与构建签名 `cc70392cee8a` 保持不变；离线工程实施已闭环，Codex独立审核、正常推送及CI #87已完成；私人加密候选已装配并核验，手机加载与日常体验待验。
 - [x] **国内分流底座精细过滤与实施**：固定上游、批量排除、实际编译、分流与故障注入门禁已完成；正式发布证据见当前状态。后续快照变化由AI重新批量审查，不要求所有者逐App抓包。
@@ -284,7 +292,7 @@
 
 ## 八、已知风险、真机边界与未验证项 (UNVERIFIED)
 
-- **当前运行风险与未验证边界**：所有者真机单变量停用 Google DoH 后 App Store 已确认恢复，抖音图文仍待日常自然使用观察反馈；临时系统默认 DNS 未解决海外 DNS 防泄漏诉求，不能作为最终防泄漏架构；不可声称全部 App 均已恢复或 Google 服务器损坏，具体 DNS 失败链路未采集，不排斥运营商网络或 Apple 边缘节点的偶发波动。
+- **当前运行风险与未验证边界**：V2 手机已确认有效 Cloudflare DoH、系统 DNS OFF、回落 OFF、Rule；用户反馈 App Store 与抖音图文正常，仍偶发抖音视频卡顿。未证明 Google 服务故障、DNS 为唯一原因或全机零泄漏。国内 Host 与全局 DoH 的解析路径分开；AI 组仍 All，解析器流量沿既有 Final，不保证两者相同出口。新 V3 及本批媒体映射效果待日常验证。
 
 1. **真机环境边界（必须真机验证，不可凭单测断言）**：
    - 诊断探针与离线单测无法完全代替真实真机上的 APNs TCP 5223 绕行、HomeKit 硬件推流或 Apple Watch 独立蜂窝测试。
@@ -297,7 +305,7 @@
 5. **节点长连接保活心跳（Keep-Alive）**：
    - 部分机场对空闲 TCP 设置超时断开，可能导致 APNs 5223 长连接频繁重建引起通知延迟。
 6. **App Store 故障机制真机未确认与候选待验（历史与现状澄清）**：
-   - 真机已证实注释停用 Google DoH 可恢复 App Store，但电脑端 TUN 探针仅为上游解析器快照，真机未捕获底层网络重置包或具体握手记录；Google DoH 是否为唯一根因尚未完全证实，抖音图文及其他场景仍待日常使用观察。海外 DNS 隐私防泄漏方案仍待专项设计审核。
+   - 真机停用 Google DoH 后商店恢复；后续 V2 的 CF 条目、开关及商店/图文正常已获确认，偶发视频卡顿仍未归因。电脑解析样本不能替代手机拉流与运行时插件路径；海外全机 DNS 隐私未验，新件仅作审定范围增补。
 
 ---
 
@@ -316,7 +324,7 @@
 11. **远程规则 URL 必须强校验主机与路径白名单**：仅允许官方仓库与合法发布分支，且报错时严禁回显私有 URL 或私密规则名。
 12. **Loon 原生配置中 FINAL 必须严格且仅有一条位于 [Rule] 段末尾**：严禁将 FINAL 置于 [Remote Rule] 或其他段落，也严禁在 FINAL 后继续声明规则。
 13. **发布 URL 必须严格拒绝 query、userinfo、fragment 和非预期端口**：防止用户或插件误将包含 token 或账号信息的私有订阅地址带入远程规则，且 jsDelivr 备用源必须精确到已验收的主机（`fastly.jsdelivr.net`），禁止使用通配子域名。
-14. **切忌盲目追求 BrowserLeaks 纯净而全局只开境外 DoH 并禁用系统 DNS**：该极端配置会导致所有国内主流 App 的 CDN 域名向境外 DNS 查询，直连发生跨洋拉取引发断崖式卡顿；必须在客户端采用 `[Host]` 国内 DNS（223.5.5.5）分流实现就近秒开。
+14. **不要以网页 DNS 测试“纯净”代替日常可用性**：全局境外 DoH 可能改变国内 CDN 调度，不能断言必然跨洋或所有 App 都慢。对经审定的国内服务用独立 Host 加密解析，实际效果按日常反馈验证；无需为一个网页分数盲目增加全球解析器。
 15. **不要把香港或境外中资商业银行（如招商永隆银行 `cmbwinglungbank.com`）混入国内直连**：其核心机房与业务在香港本地，强行国内直连会导致离岸金融与代理策略混乱。
 16. **严禁将公有云通用对象存储（如百度云 `bcebos.com`）或跨国游戏集团泛域名（如网易 `netease.com`）粗暴放入国内直连**：它们往往包含新加坡、日本 GCP 等跨国出海节点，必须精准限定在消费级 App 的专属子域（如 `baidupcs.com`、`music.163.com`）。
 17. **Hard Pass 严禁凭大厂企业名称单方免检放行**：必须满足 `verified: true` 且在 `history/decisions.jsonl` 中存在显式审计放行凭证，未经验证的全新大厂泛域名必须走评分或隔离待审；
@@ -331,7 +339,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-09（公开DNS工程已发布并通过CI #87；V1手机未显示DoH/无法关闭系统DNS；Gemini装配私人兼容V2及收尾，Codex独立字节/秘密值检查及端点探针通过，V2已写本机iCloud同步目录，手机导入、界面及隐私/业务效果待验）
+* **最后更新**：2026-10-10（Gemini 完成本批 AI 7 条、媒体 DNS 7 项、规范与私人候选装配；Codex 独立审核、修正可增长测试及旧验收待办，独立全量验证通过，Git/CI 发布待完成）
 
   * **2026-10-09 加密 DNS 分流实施与 App Store 精确优化（Gemini 执行实施 / 待 Codex 独立复核）**：
     - 将 `plugins/Loon-China-DNS.lpx` 与 `dist/plugins/Loon-China-DNS.lpx` 中全部 120 条既有明文 UDP 映射统一迁移至阿里公共 DoH 端点 `server:https://223.5.5.5/dns-query`，腾讯 5 条映射因 2024 年不再公开 IP 接入且 119.29.29.29:443 超时统一切换至已验证 IP 证书与响应的 AliDNS 223.5.5.5；
