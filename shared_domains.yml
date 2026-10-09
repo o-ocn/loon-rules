@@ -7,6 +7,11 @@
 version: 1
 description: "Shared infrastructure domain monitoring and conflict prevention specification"
 
+# Trusted domestic DoH endpoints whitelist for Loon DNS plugins
+trusted_domestic_dns_endpoints:
+  - "https://223.5.5.5/dns-query"
+  - "https://223.6.6.6/dns-query"
+
 # Target ruleset categorizations for proxy vs direct boundary detection
 ruleset_categories:
   overseas_proxy:
@@ -86,6 +91,8 @@ ecosystems:
       - pancake.apple.com
       - tr.iadsdk.apple.com
       - guzzoni.smoot.apple.com
+      - apps.apple.com  # Apple 官方 CN 网页源码真实嵌入 + 企业网络要求 (support.apple.com/en-us/101555)
+      - amp-api-edge.apps.apple.com  # Apple 官方 CN 网页 (apps.apple.com/cn/) 真实嵌入 API 边缘端点
     domestic_rulesets:
       - Apple-Direct.lsr
       - Apple-Push.lsr

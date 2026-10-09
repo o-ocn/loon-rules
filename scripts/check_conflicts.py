@@ -70,6 +70,57 @@ def load_dns_plugin_hosts(plugin_path=DNS_PLUGIN_PATH, preserve_patterns=False):
                     hosts.append(left)
     return hosts
 
+def load_dns_plugin_entries(plugin_path=DNS_PLUGIN_PATH):
+    """
+    Parses all mapped host entries from Loon DNS plugin with line numbers and malformed line detection.
+    Returns list of dicts:
+      {"line_no": int, "left": str, "right": str, "raw": str, "error": Optional[str]}
+    """
+    entries = []
+    if not os.path.isfile(plugin_path):
+        return entries
+    with open(plugin_path, "r", encoding="utf-8", errors="ignore") as f:
+        in_host = False
+        for line_no, raw_line in enumerate(f, 1):
+            line = raw_line.strip()
+            if not line or line.startswith(("#", ";")):
+                continue
+            if line.startswith("[Host]"):
+                in_host = True
+                continue
+            if line.startswith("[") and in_host:
+                break
+            if in_host:
+                if "=" not in line:
+                    entries.append({
+                        "line_no": line_no,
+                        "left": "",
+                        "right": "",
+                        "raw": line,
+                        "error": f"Malformed line without '=' delimiter in [Host]: '{line}'"
+                    })
+                    continue
+                parts = line.split("=", 1)
+                left = parts[0].strip()
+                right = parts[1].strip()
+                if not left or not right:
+                    entries.append({
+                        "line_no": line_no,
+                        "left": left,
+                        "right": right,
+                        "raw": line,
+                        "error": f"Malformed line with empty host or target in [Host]: '{line}'"
+                    })
+                    continue
+                entries.append({
+                    "line_no": line_no,
+                    "left": left,
+                    "right": right,
+                    "raw": line,
+                    "error": None
+                })
+    return entries
+
 def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_PATH, strict=False):
     """
     Runs comprehensive conflict and shared domain boundary checks.
@@ -120,6 +171,25 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
                         f"[{eco_name}] Overseas-exclusive domain '{o_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"
                     )
 
+    # Check 2a: Verify DNS plugin does not route overseas proxy ruleset domains (e.g. google.com, twitter.com) to domestic DNS
+    for o_set in sorted(overseas_rulesets):
+        if o_set not in rules_by_file:
+            continue
+        for rtype, o_dom in rules_by_file[o_set]:
+            is_shared = False
+            for eco in ecosystems.values():
+                if o_dom in eco.get("shared_infrastructure_domains", []) or any(o_dom.endswith("." + s) for s in eco.get("shared_infrastructure_domains", [])):
+                    is_shared = True
+                    break
+            if is_shared:
+                continue
+            for host in dns_hosts:
+                clean_h = host.lstrip("*.")
+                if clean_h == o_dom or clean_h.endswith("." + o_dom):
+                    errors.append(
+                        f"[{o_set}] Overseas proxy domain '{o_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"
+                    )
+
     # Check 2b: Verify DNS plugin does not route forbidden infrastructure domains to domestic DNS
     for eco_name, eco in ecosystems.items():
         forbidden_dns = eco.get("forbidden_domestic_dns_domains", [])
@@ -133,6 +203,52 @@ def check_conflicts(spec_path=SPEC_PATH, dist_dir=DIST_DIR, dns_path=DNS_PLUGIN_
                     errors.append(
                         f"[{eco_name}] Red line violation: Forbidden domain '{f_dom}' illegally routed to domestic DNS in {os.path.basename(dns_path)} (entry: '{host}')"
                     )
+
+    # Check 2c: Verify DNS plugin entries have valid transport, no plaintext/unapproved DoH, and no malformed syntax
+    trusted_domestic_dns = set(spec.get("trusted_domestic_dns_endpoints", [
+        "https://223.5.5.5/dns-query",
+        "https://223.6.6.6/dns-query",
+    ]))
+    from urllib.parse import urlparse
+
+    dns_entries = load_dns_plugin_entries(dns_path)
+    for entry in dns_entries:
+        l_no = entry["line_no"]
+        if entry["error"]:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: {entry['error']}")
+            continue
+        right = entry["right"]
+
+        if not right.startswith("server:"):
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Missing 'server:' prefix in target '{right}'")
+            continue
+
+        endpoint = right[len("server:"):].strip()
+
+        if endpoint.startswith("http://"):
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Plaintext HTTP DNS forbidden in '{right}'")
+            continue
+        elif not endpoint.startswith("https://"):
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Plaintext UDP or unsupported DNS transport forbidden in '{right}'")
+            continue
+
+        try:
+            parsed = urlparse(endpoint)
+            explicit_port = parsed.port
+        except ValueError as e:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Invalid URL structure '{endpoint}': {e}")
+            continue
+
+        if parsed.username or parsed.password:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Userinfo forbidden in DNS endpoint '{endpoint}'")
+        elif explicit_port is not None:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Explicit port forbidden in DNS endpoint '{endpoint}'")
+        elif parsed.fragment:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Fragment forbidden in DNS endpoint '{endpoint}'")
+        elif parsed.query:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Query parameters forbidden in domestic DNS endpoint '{endpoint}'")
+        elif endpoint not in trusted_domestic_dns:
+            errors.append(f"[{os.path.basename(dns_path)}] Line {l_no}: Untrusted domestic DNS endpoint '{endpoint}' (allowed: {sorted(trusted_domestic_dns)})")
 
     # Check 3: Audit shared infrastructure domains placement across Proxy vs Direct
     for eco_name, eco in ecosystems.items():

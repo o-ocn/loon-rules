@@ -1,163 +1,169 @@
-#!name = 国内大厂与区域 CDN 极速分流
-#!desc = 为国内大厂（字节/阿里/腾讯/B站等）、.cn 域名及 Apple 静态资源 CDN（mzstatic）提供阿里/腾讯极速 DNS 解析，防止全走海外 DoH 导致 CDN 跨洋调度漂移卡顿
+#!name = 国内大厂与区域 CDN 加密分流
+#!desc = 为国内大厂（字节/阿里/腾讯/B站等）、.cn 域名及 Apple 静态资源 CDN（mzstatic）与商店核心入口提供阿里极速 DoH（https://223.5.5.5/dns-query）加密解析，作为近端就近调度候选
 #!author = o-ocn
 #!homepage = https://github.com/o-ocn/loon-rules
 #!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Speedtest.png
-#!date = 2026-09-30
+#!date = 2026-10-09
 
 [Host]
 # 顶级域名
-*.cn = server:223.5.5.5
+*.cn = server:https://223.5.5.5/dns-query
 
 # Apple 静态资源与 App Store CDN（应用图标、详情页轮播大图、预览截图，确保就近调度至国内边缘节点）
 # [架构隔离说明] 仅针对静态多媒体资产域名 mzstatic.com 进行国内极速解析；
 # 严禁将 *.apple.com、*.icloud.com 等核心系统与身份认证域名泛指给国内 DNS。
-*.mzstatic.com = server:223.5.5.5
+*.mzstatic.com = server:https://223.5.5.5/dns-query
 
 # 字节跳动 / 抖音全系（注：bytedance.com / snssdk.com 属国内核心基建，保障国内秒开与就近 CDN；未来若启用海外 TikTok 需保留其海外 CDN 走海外解析）
-*.douyin.com = server:223.5.5.5
-*.douyincdn.com = server:223.5.5.5
-*.zijieapi.com = server:223.5.5.5
-*.bytedance.com = server:223.5.5.5
-*.bytetos.com = server:223.5.5.5
-*.ecombdapi.com = server:223.5.5.5
-*.doupay.com = server:223.5.5.5
-*.qishui.com = server:223.5.5.5
-*.amemv.com = server:223.5.5.5
-*.iesdouyin.com = server:223.5.5.5
-*.snssdk.com = server:223.5.5.5
-*.toutiao.com = server:223.5.5.5
-*.bytemaimg.com = server:223.5.5.5
-*.bytegecko.com = server:223.5.5.5
-*.ndcpp.com = server:223.5.5.5
+*.douyin.com = server:https://223.5.5.5/dns-query
+*.douyincdn.com = server:https://223.5.5.5/dns-query
+*.zijieapi.com = server:https://223.5.5.5/dns-query
+*.bytedance.com = server:https://223.5.5.5/dns-query
+*.bytetos.com = server:https://223.5.5.5/dns-query
+*.ecombdapi.com = server:https://223.5.5.5/dns-query
+*.doupay.com = server:https://223.5.5.5/dns-query
+*.qishui.com = server:https://223.5.5.5/dns-query
+*.amemv.com = server:https://223.5.5.5/dns-query
+*.iesdouyin.com = server:https://223.5.5.5/dns-query
+*.snssdk.com = server:https://223.5.5.5/dns-query
+*.toutiao.com = server:https://223.5.5.5/dns-query
+*.bytemaimg.com = server:https://223.5.5.5/dns-query
+*.bytegecko.com = server:https://223.5.5.5/dns-query
+*.ndcpp.com = server:https://223.5.5.5/dns-query
 
 # 哔哩哔哩 (B站视频与图片)
-*.bilibili.com = server:223.5.5.5
-*.bilivideo.com = server:223.5.5.5
-*.hdslb.com = server:223.5.5.5
+*.bilibili.com = server:https://223.5.5.5/dns-query
+*.bilivideo.com = server:https://223.5.5.5/dns-query
+*.hdslb.com = server:https://223.5.5.5/dns-query
 
 # 阿里巴巴 / 淘宝 / 闲鱼 / 支付宝 / 高德 / 1688
-*.taobao.com = server:223.5.5.5
-*.alicdn.com = server:223.5.5.5
-*.alipay.com = server:223.5.5.5
-*.alipayobjects.com = server:223.5.5.5
-*.idlefish.com = server:223.5.5.5
-*.tmall.com = server:223.5.5.5
-*.amap.com = server:223.5.5.5
-*.autonavi.com = server:223.5.5.5
-*.1688.com = server:223.5.5.5
+*.taobao.com = server:https://223.5.5.5/dns-query
+*.alicdn.com = server:https://223.5.5.5/dns-query
+*.alipay.com = server:https://223.5.5.5/dns-query
+*.alipayobjects.com = server:https://223.5.5.5/dns-query
+*.idlefish.com = server:https://223.5.5.5/dns-query
+*.tmall.com = server:https://223.5.5.5/dns-query
+*.amap.com = server:https://223.5.5.5/dns-query
+*.autonavi.com = server:https://223.5.5.5/dns-query
+*.1688.com = server:https://223.5.5.5/dns-query
 
 # 腾讯 / 微信 / 视频
-*.qq.com = server:119.29.29.29
-*.tencent.com = server:119.29.29.29
-*.weixin.com = server:119.29.29.29
-*.qpic.cn = server:119.29.29.29
-*.gtimg.com = server:119.29.29.29
+*.qq.com = server:https://223.5.5.5/dns-query
+*.tencent.com = server:https://223.5.5.5/dns-query
+*.weixin.com = server:https://223.5.5.5/dns-query
+*.qpic.cn = server:https://223.5.5.5/dns-query
+*.gtimg.com = server:https://223.5.5.5/dns-query
 
 # 国内视听 / 天气 (彩云天气、和风天气、华数TV)
-*.caiyunapp.com = server:223.5.5.5
-*.qweather.com = server:223.5.5.5
-*.wasu.tv = server:223.5.5.5
+*.caiyunapp.com = server:https://223.5.5.5/dns-query
+*.qweather.com = server:https://223.5.5.5/dns-query
+*.wasu.tv = server:https://223.5.5.5/dns-query
 
 # 京东 / 拼多多 / 饿了么 / 快手 / 小红书 / 美团 / 网易云音乐 / 百度
-*.jd.com = server:223.5.5.5
-*.360buyimg.com = server:223.5.5.5
-*.pinduoduo.com = server:223.5.5.5
-*.yangkeduo.com = server:223.5.5.5
-*.pddpic.com = server:223.5.5.5
-*.ele.me = server:223.5.5.5
-*.elemecdn.com = server:223.5.5.5
-*.kuaishou.com = server:223.5.5.5
-*.yximgs.com = server:223.5.5.5
-*.gifshow.com = server:223.5.5.5
-*.kuaishoupay.com = server:223.5.5.5
-*.xiaohongshu.com = server:223.5.5.5
-*.xhscdn.com = server:223.5.5.5
-*.xhscdn.net = server:223.5.5.5
-*.meituan.com = server:223.5.5.5
-*.meituan.net = server:223.5.5.5
-*.dianping.com = server:223.5.5.5
-*.sankuai.com = server:223.5.5.5
-music.163.com = server:223.5.5.5
-*.music.163.com = server:223.5.5.5
-music.126.net = server:223.5.5.5
-*.music.126.net = server:223.5.5.5
-*.baidu.com = server:223.5.5.5
-*.baidupcs.com = server:223.5.5.5
+*.jd.com = server:https://223.5.5.5/dns-query
+*.360buyimg.com = server:https://223.5.5.5/dns-query
+*.pinduoduo.com = server:https://223.5.5.5/dns-query
+*.yangkeduo.com = server:https://223.5.5.5/dns-query
+*.pddpic.com = server:https://223.5.5.5/dns-query
+*.ele.me = server:https://223.5.5.5/dns-query
+*.elemecdn.com = server:https://223.5.5.5/dns-query
+*.kuaishou.com = server:https://223.5.5.5/dns-query
+*.yximgs.com = server:https://223.5.5.5/dns-query
+*.gifshow.com = server:https://223.5.5.5/dns-query
+*.kuaishoupay.com = server:https://223.5.5.5/dns-query
+*.xiaohongshu.com = server:https://223.5.5.5/dns-query
+*.xhscdn.com = server:https://223.5.5.5/dns-query
+*.xhscdn.net = server:https://223.5.5.5/dns-query
+*.meituan.com = server:https://223.5.5.5/dns-query
+*.meituan.net = server:https://223.5.5.5/dns-query
+*.dianping.com = server:https://223.5.5.5/dns-query
+*.sankuai.com = server:https://223.5.5.5/dns-query
+music.163.com = server:https://223.5.5.5/dns-query
+*.music.163.com = server:https://223.5.5.5/dns-query
+music.126.net = server:https://223.5.5.5/dns-query
+*.music.126.net = server:https://223.5.5.5/dns-query
+*.baidu.com = server:https://223.5.5.5/dns-query
+*.baidupcs.com = server:https://223.5.5.5/dns-query
 
 # 金融与银行服务 (招行、银联/云闪付、建行、农行、交行、邮储、平安、中信、光大)
-*.cmbchina.com = server:223.5.5.5
-*.cmbimg.com = server:223.5.5.5
-*.unionpay.com = server:223.5.5.5
-*.unionpaysecure.com = server:223.5.5.5
-*.95516.com = server:223.5.5.5
-*.ccb.com = server:223.5.5.5
-*.abchina.com = server:223.5.5.5
-*.bankcomm.com = server:223.5.5.5
-*.psbc.com = server:223.5.5.5
-*.pingan.com = server:223.5.5.5
-*.citicbank.com = server:223.5.5.5
-*.ecitic.com = server:223.5.5.5
-*.cebbank.com = server:223.5.5.5
+*.cmbchina.com = server:https://223.5.5.5/dns-query
+*.cmbimg.com = server:https://223.5.5.5/dns-query
+*.unionpay.com = server:https://223.5.5.5/dns-query
+*.unionpaysecure.com = server:https://223.5.5.5/dns-query
+*.95516.com = server:https://223.5.5.5/dns-query
+*.ccb.com = server:https://223.5.5.5/dns-query
+*.abchina.com = server:https://223.5.5.5/dns-query
+*.bankcomm.com = server:https://223.5.5.5/dns-query
+*.psbc.com = server:https://223.5.5.5/dns-query
+*.pingan.com = server:https://223.5.5.5/dns-query
+*.citicbank.com = server:https://223.5.5.5/dns-query
+*.ecitic.com = server:https://223.5.5.5/dns-query
+*.cebbank.com = server:https://223.5.5.5/dns-query
 
 # 高频生活、航旅出行与通信服务补充 (Phase 1.5 T5 审定名单)
-*.ctrip.com = server:223.5.5.5
-*.c-ctrip.com = server:223.5.5.5
-*.qunar.com = server:223.5.5.5
-*.qunarzz.com = server:223.5.5.5
-*.fliggy.com = server:223.5.5.5
-*.alitrip.com = server:223.5.5.5
-*.ly.com = server:223.5.5.5
-*.tongcheng.com = server:223.5.5.5
-*.variflight.com = server:223.5.5.5
-*.feeyo.com = server:223.5.5.5
-*.udache.com = server:223.5.5.5
-*.goofish.com = server:223.5.5.5
-*.zhipin.com = server:223.5.5.5
-*.freshippo.com = server:223.5.5.5
-*.hemaos.com = server:223.5.5.5
-*.bjsuperpass.com = server:223.5.5.5
-*.weibo.com = server:223.5.5.5
-*.weibocdn.com = server:223.5.5.5
-*.chinamobile.com = server:223.5.5.5
-*.139.com = server:223.5.5.5
+*.ctrip.com = server:https://223.5.5.5/dns-query
+*.c-ctrip.com = server:https://223.5.5.5/dns-query
+*.qunar.com = server:https://223.5.5.5/dns-query
+*.qunarzz.com = server:https://223.5.5.5/dns-query
+*.fliggy.com = server:https://223.5.5.5/dns-query
+*.alitrip.com = server:https://223.5.5.5/dns-query
+*.ly.com = server:https://223.5.5.5/dns-query
+*.tongcheng.com = server:https://223.5.5.5/dns-query
+*.variflight.com = server:https://223.5.5.5/dns-query
+*.feeyo.com = server:https://223.5.5.5/dns-query
+*.udache.com = server:https://223.5.5.5/dns-query
+*.goofish.com = server:https://223.5.5.5/dns-query
+*.zhipin.com = server:https://223.5.5.5/dns-query
+*.freshippo.com = server:https://223.5.5.5/dns-query
+*.hemaos.com = server:https://223.5.5.5/dns-query
+*.bjsuperpass.com = server:https://223.5.5.5/dns-query
+*.weibo.com = server:https://223.5.5.5/dns-query
+*.weibocdn.com = server:https://223.5.5.5/dns-query
+*.chinamobile.com = server:https://223.5.5.5/dns-query
+*.139.com = server:https://223.5.5.5/dns-query
 
 # Targeted DNS companion for vegslb.com; paired trial (2026-10-04)
-*.vegslb.com = server:223.5.5.5
+*.vegslb.com = server:https://223.5.5.5/dns-query
 
 # 常用服务配套极速 DNS 分流 (2026-10-05 审定批次 - 9条)
-*.taobaocdn.com = server:223.5.5.5
-*.mmstat.com = server:223.5.5.5
-img.bosszhipin.com = server:223.5.5.5
-*.zdmimg.com = server:223.5.5.5
-cdn.max-c.com = server:223.5.5.5
-static.max-c.com = server:223.5.5.5
-csv2.bankofchina.com = server:223.5.5.5
-pic.bankofchina.com = server:223.5.5.5
-srh.bankofchina.com = server:223.5.5.5
+*.taobaocdn.com = server:https://223.5.5.5/dns-query
+*.mmstat.com = server:https://223.5.5.5/dns-query
+img.bosszhipin.com = server:https://223.5.5.5/dns-query
+*.zdmimg.com = server:https://223.5.5.5/dns-query
+cdn.max-c.com = server:https://223.5.5.5/dns-query
+static.max-c.com = server:https://223.5.5.5/dns-query
+csv2.bankofchina.com = server:https://223.5.5.5/dns-query
+pic.bankofchina.com = server:https://223.5.5.5/dns-query
+srh.bankofchina.com = server:https://223.5.5.5/dns-query
 
 # 2026-10-07 补充专项 (小黑盒、TRTC、Apple Maps、山姆)
-mlvbdc.live.tlivesource.com = server:223.5.5.5
-cl1.apple.com = server:223.5.5.5
-cl2.apple.com = server:223.5.5.5
-cl3.apple.com = server:223.5.5.5
-cl4.apple.com = server:223.5.5.5
-cl5.apple.com = server:223.5.5.5
+mlvbdc.live.tlivesource.com = server:https://223.5.5.5/dns-query
+cl1.apple.com = server:https://223.5.5.5/dns-query
+cl2.apple.com = server:https://223.5.5.5/dns-query
+cl3.apple.com = server:https://223.5.5.5/dns-query
+cl4.apple.com = server:https://223.5.5.5/dns-query
+cl5.apple.com = server:https://223.5.5.5/dns-query
 
 # miIO China API only; regional prefixed hosts remain separate. Public client source + CN DNS sample.
-api.io.mi.com = server:223.5.5.5
+api.io.mi.com = server:https://223.5.5.5/dns-query
 
 # 2026-10-07 字节与腾讯音乐 5主机差集配套补齐
-*.bytehwm.com = server:223.5.5.5
-*.ecombdpage.com = server:223.5.5.5
-*.ecombdimg.com = server:223.5.5.5
-*.ecombdstatic.com = server:223.5.5.5
-*.ecombdvod.com = server:223.5.5.5
-*.tencentmusic.com = server:223.5.5.5
+*.bytehwm.com = server:https://223.5.5.5/dns-query
+*.ecombdpage.com = server:https://223.5.5.5/dns-query
+*.ecombdimg.com = server:https://223.5.5.5/dns-query
+*.ecombdstatic.com = server:https://223.5.5.5/dns-query
+*.ecombdvod.com = server:https://223.5.5.5/dns-query
+*.tencentmusic.com = server:https://223.5.5.5/dns-query
 
 # 2026-10-08 Apple CDN 精确主机配套试行
-pancake.apple.com = server:223.5.5.5
-tr.iadsdk.apple.com = server:223.5.5.5
+pancake.apple.com = server:https://223.5.5.5/dns-query
+tr.iadsdk.apple.com = server:https://223.5.5.5/dns-query
 
 # 2026-10-08 Siri / Search 精确主机配套试行
-guzzoni.smoot.apple.com = server:223.5.5.5
+guzzoni.smoot.apple.com = server:https://223.5.5.5/dns-query
+
+# App Store 核心分发与商店 API (精确白名单映射至阿里 DoH，确保国内 CDN 调度候选)
+# 依据 Apple 官方 CN 网页源码真实嵌入 API 端点及企业网络要求 (support.apple.com/en-us/101555)；
+# 严格禁止通配 *.apple.com / *.icloud.com / *itunes*，严禁向国内 DNS 委托账户认证与隐私域名。
+apps.apple.com = server:https://223.5.5.5/dns-query
+amp-api-edge.apps.apple.com = server:https://223.5.5.5/dns-query

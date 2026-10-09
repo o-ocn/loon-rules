@@ -19,12 +19,17 @@
    - **成熟上游与审查底座**：继续采用 `blackmatrix7/ios_rule_script` (GPL-2.0)，另接入固定快照、Gemini筛选与Codex独立审核的策略中立 `China-Baseline.list`，扩大国内日常业务覆盖。暂缓已识别的共享基础设施、出海服务及歧义家族；静态正文锁定和分流/故障变异门禁保护批次更新，来源变化需重新审核。实际统计、发布证据和手机待验证边界见 `PROJECT_STATE.md`，不要求用户逐App抓包。
    - **策略绝对中立**：所有 `.lsr` 绝不写入用户策略组名称、地区（HK/US/JP）、节点名称或策略动作。用户在 Loon 中按需自由绑定专属策略组。
    - **8 大服务边界与防碰撞**：包含 Gemini 与普通 Google、YouTube 与 Google、Grok 与 Twitter、Muse from Meta 精准识别、TestFlight/Media 与 Direct 隔离等。
-2. **第 2 层：DNS 调度层（Resolution Layer・国内大厂与区域 CDN 极速分流）**：
-   - **职责**：决定 DIRECT 直连流量“找哪个就近边缘节点”（解决 IP 调度质量）。
-   - **解决直连反向卡顿**：防范全局纯境外 DoH 导致国内 CDN（阿里 1688、抖音支付、App Store 静态图）被调度至美西或香港 Anycast IP，进而引发直连断崖式卡顿。
-   - **精细化区域优化**：在 `plugins/Loon-China-DNS.lpx` 中为国内大厂及 Apple 静态资源 CDN（`*.mzstatic.com`）指定国内极速 DNS（`223.5.5.5`），用于国内CDN就近调度；手机效果以实际使用为准；同时对 `apple.com`、`icloud.com` 保持严格隔离，绝不泛绑定。
-   - **本地装配与DNS隐私**：所有者当前大陆网络下，停用全局Google DoH、保留system后已确认App Store恢复；system仅作临时恢复措施，普通DNS可能明文查询，不能作为最终防泄漏方案。现有国内Host映射仍使用普通UDP，后续由AI审核兼顾国内CDN调度与海外加密解析的方案，不泛绑定apple/icloud，也不凭代理出口或一次DNS测试保证无泄漏。
-     [Loon官方DNS说明](https://nsloon.app/docs/DNS/)确认普通与加密DNS同配时优先使用加密DNS。更新本仓库规则/DNS插件不会自动移除私人配置[General]中的DoH行；后续本地配置由AI安全装配维护，所有者无需逐项维护参数。
+2. **第 2 层：DNS 调度层（Resolution Layer・国内大厂与区域 CDN 加密分流）**：
+   - **职责**：决定 DIRECT 直连流量“找哪个就近边缘节点”（解决 IP 调度质量与传输隐私）。
+   - **解决直连反向卡顿与传输泄露**：防范全局纯境外 DoH 导致国内 CDN（阿里 1688、抖音支付、App Store 静态图）被调度至美西或香港 Anycast IP，进而引发直连断崖式卡顿；同时防止国内查询以明文 UDP 泄露。
+   - **精细化区域加密分流 (122 Host 映射)**：在 `plugins/Loon-China-DNS.lpx` 中将国内大厂、`.cn` 顶级域、Apple 静态资源 CDN（`*.mzstatic.com`）及 10 个已审定 Apple 精确主机（含本次经 Apple CN 官网嵌入实证与企业网络要求新增的 `apps.apple.com`、`amp-api-edge.apps.apple.com`）统一映射至阿里极速 DoH（`server:https://223.5.5.5/dns-query`）作为近端就近调度候选；严格禁止泛绑定 `*.apple.com`、`*.icloud.com` 或 `*itunes*`。
+   - **加密分流装配指南与真机边界**：
+     - **公共插件**：提供 122 条国内 DoH Host 映射，Apple 新增项仅限两个已审精确主机；
+     - **私人 [General]**：全球默认海外加密解析采用 Cloudflare 双 IP-form DoH（`doh-server = https://1.1.1.1/dns-query,https://1.0.0.1/dns-query`），端点已通过电脑端 TLS 与有效 DNS 答复检查，无需先解析 DoH 服务域名；两地址属于同一提供商；
+     - **每条 [Remote Proxy]**：追加 `server-dns="https://223.5.5.5/dns-query,https://223.6.6.6/dns-query"`（Loon >= 3.5.2 (996)+ 支持），保障机场动态节点域名可由国内 DoH 独立直连解析，避免代理前置依赖死锁；
+     - **[Rule] 端点守卫**：显式添加 AliDNS IP（`223.5.5.5/32`, `223.6.6.6/32`）走 `DIRECT,no-resolve`，Cloudflare IP（`1.1.1.1/32`, `1.0.0.1/32`）绑定所有者既有 `FINAL` 代理策略（仅新增 DNS 端点路由，不擅改其他策略绑定），无任何公开凭据；
+     - **手机 GUI 确认要求**：系统 DNS (system)、查询回落 (fallback: false) 与 DoH 模式 (Rule) 均由手机 Loon GUI 确认；官方文本配置未支持查询回落等参数，切勿借用跨软件字段；`[General]` 是否删除 `dns-server = system` 并不等同于手机默认绝不回退系统，导入后必须在手机 GUI 中确认系统 DNS 为 OFF；
+     - **客观事实澄清**：当前停用 Google DoH 后的临时 system 恢复为所有者真机实测事实，但具体系统 resolver/路由及 App Store 内部机制未由抓包证实；公开仓库准备的全新加密分流方案不等于海外 DNS 隐私已完成真机实测或正式部署，最终效果以真机日常使用验证为准。
 
 3. **第 3 层：冲突防护层（Conflict & Boundary Guard・自动化 CI 强门禁）**：
    - **职责**：守卫生态边界，严防跨国孪生业务（抖音 vs TikTok、微信 vs WeChat）及 Apple 禁区打穿。

@@ -17,12 +17,19 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-09 加密 DNS 工程及私人候选已由 Codex 独立审核通过，待正常推送与手机导入**：Gemini 实施公开 DNS 插件（122 Host）与单独私人候选；Codex 独立重跑规则 53/53、诊断 19/19、评分 4/4、strict 与 pre-release 均通过，并修复畸形 URL 端口校验及加入对应负例。私人候选 `E:\Document\AI-Workspace\loon-rules\2026-10-09-encrypted-dns-split\private\Loon-19Rules-EncryptedDNS-2026-10-09.lcf`（SHA256 `dd52546af2e37c00068fdd2d4410d60202ab59ccf40c5a47622bc894a92cf8b0`，15,181 字节）从当日 13:51 同名 iCloud 配置复制件装配；13:55 指定导出路径不可读，不声称两份相同。原件 SHA256 `3db617e1bac59cf2bda70781581e16589d31d32102aa167fd700f5748d085d95` 保持不变。仅调整 General DNS、三条订阅的专用加密节点 DNS、四条端点 IP 路由；原有19远程规则、37插件、策略组、证书及其他段的原始字节保留。手机版本 3.5.2 (1005) 支持订阅 `server-dns`（官方门槛996）。全局 Cloudflare 双 IP DoH 沿原 FINAL 策略，国内 Host 与节点解析用 AliDNS DoH；导入后必须确认系统 DNS 关闭、查询回落关闭、DoH 模式 Rule。私人候选未导入，手机可用性和海外 DNS 路径仍未验；证据见本轮任务目录07/08/10/13。远端已有独立巡检提交 `2e9a971` 已安全快进保留，不混入本次 DNS 差异。
 * **2026-10-09 App Store 已恢复，抖音未检查；系统 DNS 仅为临时恢复措施**：所有者在当前使用的项目配套手机配置中仅注释停用 `doh-server = https://dns.google/dns-query` 后，明确反馈 App Store 即刻恢复、抖音尚未检查。这是当日大陆账号下的手机对照结果；此前正常36规则配置仅为历史对照。当前保留已恢复设置，不把系统 DNS 定为最终防泄漏方案，也不把该结果扩展为全部 App、全部账号/网络或归档候选整份文件上机验收。具体 DNS 失败链路尚未采集。
 * **所有者隐私要求与归档核验**：2026-09-29 归档《判断DNS泄漏原因》的原始设置截图 IMG_0834 显示仅一条 Google DoH，系统 DNS 与查询回落均关闭、DoH 模式为 Rule；IMG_0833 的网页测试结果显示 Google 与 Cloudflare，但不代表手机保存了两个 DoH 端点。后续对话建议增加 Cloudflare，尚无实际保存完成证据。本轮可访问 LCF 的 [General] 核查未见 Cloudflare DoH，不能由此断定所有者从未添加或何次配置切换导致消失。今日 IMG_1027 显示系统 DNS 开启、查询回落关闭、可见 DoH 列表为空，Google 空列表与注释停用一致。隐私目标为海外查询不意外交给本地运营商/国内递归服务商；最终加密分流方案待审核。脱敏归档与Codex图片核验保留于本轮任务目录16/18，配置字段独立核验见19。
 * **配置差异与诊断准备已核验**：Oct3归档19集包含 Google DoH + system DNS；正常36集为 system DNS，37插件中还存在国内DNS插件与iRingo.Siri的差异。既有Oct8系统DNS候选只删除归档的一条DoH设置（SHA256 `939878c460841356d7b1a6fd58d23bb4aa53605f88444951e355990a9a6ea60f`）。Gemini另生成备用诊断复制件 `E:\Document\AI-Workspace\loon-rules\2026-10-09-appstore-douyin-runtime-diagnosis\Loon-19Rules-SystemDNS-DNSPluginOff-diagnostic-2026-10-09.lcf`（SHA256 `f7392831b4b6bc01c47157faf7cc9fd233d383d9f80caff4fe00d6c58d38b7f4`），仅将Oct8候选的国内DNS插件enabled=true改为false；Codex字节比对确认其他字节、节点、订阅与策略保留，原件未改。两份归档复制件未整体导入手机，不是正式配置替换；本次手机直接停用Google DoH已恢复App Store，不再要求重复导入旧候选或立即停用国内DNS插件。
 * **运行审计的真实边界**：Gemini两次运行审计CLI均SUCCESS，公开插件快照、DNS/TLS探针及阶段收尾已产出，Codex独立核验候选字节并修正因果与插件范围表述。PC system DNS返回198.18假IP，连接可能经本机TUN/代理；解析差异和HTTP200/404不证明手机路径、商店搜索或图文成功。当日手机停用Google DoH对照已确认App Store恢复，但具体失败机制及抖音效果仍未确认；不整树绑定apple/icloud，不永久取消其他插件。
 * **多上游比较资料已取得，建议未放行**：blackmatrix固定快照包含China域名表及Alibaba/Tencent配套Domain表（主表仅3/0域名，配套表1263/2498）；v2fly、Loyalsoldier、ACL4SSR的原件与差集已产出，ShuntRules仅Git发布索引且本机发布地址403，不能称五份独立完整规则均成功。Codex独立运行选择性include/属性/虚拟类别三组解析夹具通过，并纠正报告百分比口径；宽表根主机比对不等于整棵域树或手机覆盖率。Gemini最终跨源CLI为ERROR，留有产物不改称SUCCESS；旧27条拟补建议仍未放行，本轮未新增生产规则或DNS。资料在 `E:\Document\AI-Workspace\loon-rules\2026-10-09-multi-upstream-coverage-audit`。
-* **本轮工程范围**：公开 19 集、China-Direct 3239、DNS 120、既有签名和账本保持不变；未构建/发布新规则，未改正式私人 LCF 或 Hub 地图。App Store 单变量对照已完成，抖音待日常自然使用反馈；临时采用系统默认 DNS，海外 DNS 隐私防泄漏方案待专项设计；后续域名候选审核继续保留。
+* **本轮工程范围**：公开 19 集、China-Direct 3239、既有签名和账本保持不变；DNS 插件完成 DoH 迁移与收敛扩充（120 条 UDP 映射迁移至 `server:https://223.5.5.5/dns-query`，新增 2 项 Apple 官方精确 Host 达 122 条）；测试套件增至 53/53 PASS；未改动正式私人 LCF 或 Hub 地图；离线前置门禁全通，待 Codex 独立审核与推送；手机真机效果待验。
+* **2026-10-09 加密 DNS 分流（DoH）与 App Store 精确优化实施：离线门禁 53/53 PASS，待 Codex 独立审核与推送，真机未验**：
+  - **DoH 传输迁移**：将 `plugins/Loon-China-DNS.lpx` 与 `dist/plugins/Loon-China-DNS.lpx` 中全部 120 条既有明文 UDP 映射（115 条阿里 223.5.5.5、5 条腾讯 119.29.29.29）统一迁移至阿里公共 DoH 端点 `server:https://223.5.5.5/dns-query`。统一原因：腾讯自 2024 年发布公告不再公开 IP 接入且 119.29.29.29:443 超时，统一切换至已验证 IP 证书有效与 DNS 响应成功的阿里 223.5.5.5，避免多端点超时回退。
+  - **App Store 精确优化准入**：依据 Apple 官方企业网络要求（支持文档 101555）与中国大陆网页源码公开嵌入 API 端点，仅准入 2 项确有官方依据的精确 Host：`apps.apple.com` 与 `amp-api-edge.apps.apple.com`（均绑定 `server:https://223.5.5.5/dns-query`）；其余 4 项候选（`amp-api.apps`、`amp-api-search-edge`、`itunes`、`init`）排除，不把源码嵌入当实际抓包，HTTP 400/403/404 不构成用途证明；严格禁止泛解析通配符或 root/wildcard 委托。DNS 插件映射从 120 增至 122 条，Apple 精确白名单从 8 增至 10 项。
+  - **强校验守卫与测试套件**：`shared_domains.yml` 引入 `trusted_domestic_dns_endpoints` 白名单（`223.5.5.5` / `223.6.6.6` 的 HTTPS `/dns-query`）；`scripts/check_conflicts.py --strict` 实施右侧逐条强检，严禁明文 UDP、HTTP、未批准 DoH、userinfo/port/query/fragment 及畸形行；Check 2a 强检海外独占规则集域名严禁指向国内 DNS。新增 `test_53_doh_migration_and_guard_boundaries` 变异与负例门禁；单测 53/53 PASS、诊断 19/19 PASS、评分 4/4 PASS、`check_conflicts --strict` PASS、`verify_mirrors --pre-release` PASS。
+  - **零构建契约保持**：19 个分流规则集（23,882 条规则，含 China-Direct 3,239 条）、139 条历史账本字节、`sources.yml`、`upstream_lock.json`、`manifest.json` 签名（`cc70392cee8a`）100% 保持未动；跳过 build，源与 dist 插件直接字节对齐。
+  - **状态与边界**：Gemini 完成工程实施与本地全量门禁，遵循授权不执行 Git 写入，**待 Codex 独立测试与审核 / 待推送**；真机效果及抖音情况待日常使用验证。
 
 
 * **2026-10-09 国内底座静态扩大（China-Baseline.list）已发布，工程及CI通过，手机未验**：恢复起点 `0fd85e6012a39299419c462af069b4bfe9c7df16`。依据所有者减少人工维护的授权，从固定 Commit URL 上游 `blackmatrix7/ios_rule_script`（SHA `036c097eb26c6a52c4f04ebcb6633043cb942669`）`China_Domain.list`（3,689 裸域）实施保守精细过滤。严格排除既有直连覆盖（362）、含 cdn/cloud/dns/global/international/intl 歧义资产（293）、境外商业/学术/跨国机构（255）、红线公有云/多租户/DDNS（108）、精确主机隔离冲突（49，含 gaode.com）、未审查海外主机/VPS/工具（11）、v2fly 正则命中（4，u17i.com, u17t.com, uuu9.com, z28j.com）、海外双向碰撞（6），并暂缓已识别共享平台基础设施（2，tencentyun.com 与 aliyun-iot-share.com 标记 SHARED_PLATFORM_AMBIGUITY 并加入守卫），合计排除 1,090 条；保留 2,599 条 100% 策略中立规则落入静态层 `rules/custom/China-Baseline.list`（正文 SHA256 `8b643f2463199d2e1b7d8fbf53d44ee02f324e94747eec29df5fab747f8d2b72`，由 `shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 强校验保护）。暂缓已识别的共享基础设施和歧义家族；静态 hash 保护未经复审的批次更新；未证明全球域名穷举或全部业务归属。
@@ -78,14 +85,14 @@
 
 * **三层架构体系闭环**：
   1. **规则路由层**：19 个策略中立规则集，首命中优先原则，细分服务排在宽泛服务之前；
-  2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 分流阿里极速 DNS（223.5.5.5），保障国内大厂及 Apple 静态资源 (`*.mzstatic.com`) 就近调度，解决境外 DoH 引发的跨洋反向卡顿；
+  2. **DNS 调度层**：`plugins/Loon-China-DNS.lpx` 将 122 条国内及 Apple 精确主机分流至阿里公共 DoH（`https://223.5.5.5/dns-query`），保障国内大厂及 Apple 静态资源就近加密调度，防范明文 UDP 泄漏与境外 DoH 引发的跨洋反向卡顿；
   3. **冲突防护层**：`shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 自动化守卫生态边界，严禁海外独占域名泄露至国内规则，严禁将 `apple.com` / `icloud.com` 泛解析至国内 DNS。
 * **原生一键诊断插件**：`LoonRules-Diagnostic.lpx` 已就绪，遵循 Loon 3.5.1+ Generic Script v2 规范，支持海外 AI 策略动态嗅探，支持快速与完整双模式，纯本机只读执行，输出 15 行内紧凑中文短报告。
 * **大陆应用分流与 DNS 审计矩阵 (`docs/app-audit-matrix.md`)**：正式建立常态化审计矩阵，完整收录 18 类高频应用、金融清算与云存储基建的规则状态、DNS 调度状态、最后验证时间与明确排除边界（红线列表），避免后续 AI 盲目全网扫描或误引入泛域名。
 
 ---
 
-## 三、规则订阅清单 (19 规则集)
+## 三、已完成事项与规则订阅清单 (19 规则集)
 
 | 规则集名称 | 规则条数 | 涵盖核心服务说明 | 策略中立保证 |
 | :--- | :---: | :--- | :---: |
@@ -128,7 +135,7 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **52/52 全部通过**（新增 test_52 验证 China-Baseline 静态层完整性、哈希锁、真实历史海外/共享云探针隔离、精确主机子域隔离及 4 类故障注入变异测试；test_51 验证 guzzoni.smoot.apple.com；test_50 验证 pancake/tr.iadsdk；test_49 新增字节/TME服务族、境外隔离及通配符故障注入；保留既有门禁；test_46 加入全服务参考样本、精确域与海外边界及真实扩大范围故障注入；test_47 未知FINAL与脱敏；test_48 精确Apple CDN DNS授权）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **53/53 全部通过**（新增 test_53 验证 DNS 插件 122 条 DoH 映射源与 dist 字节等价性、120 既有键保持与 2 项 Apple 精确新增、真实 strict 校验通过、9 类右侧变异拦截如 UDP/HTTP/非信端点/端口/参数/畸形行，以及左侧海外独占域名与 Apple 通配/父域负例隔离；test_52 验证 China-Baseline 静态层完整性与哈希锁；test_51 验证 guzzoni.smoot.apple.com；test_50 验证 pancake/tr.iadsdk；保留既有门禁）；
 
 - **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
 - **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、340唯一参考主机（273已知/67候选）、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
@@ -147,7 +154,7 @@
 
 ## 六、关键架构决策
 
-- **2026-10-09 DNS 临时恢复与隐私整改目标**：停用当前全局Google DoH后App Store已由所有者确认恢复；先维持当前system DNS及既有精准Host映射，不自动重新启用原Google配置，也不把system列为长期防泄漏默认。后续由AI审查兼顾国内CDN就近调度与海外加密解析的方案；不能仅凭代理出口、一次网页DNS测试或DoH加密字样宣称海外查询不经本地递归。国内Host现用223.5.5.5普通UDP，亦需明确隐私边界；不盲目把国内DoH设为全局而将海外域名交给国内解析商。保留现有节点/策略，禁止apple/icloud整树泛绑。
+- **2026-10-09 DNS 临时恢复与加密分流决策**：停用全局 Google DoH 后 App Store 已由所有者确认恢复；system 为候选导入前的临时恢复设置。公开国内 Host 已迁移 AliDNS DoH；私人候选采用全球 Cloudflare 双 IP DoH、订阅专用 AliDNS 双 IP DoH及显式端点路由，保留其他节点/策略。系统 DNS 与查询回落需在手机 GUI 关闭，DoH 模式保持 Rule；删除文本行不证明 GUI 状态已生效，普通 Host CNAME/失败路径及手机体验仍待验。不能仅凭代理出口、一次网页DNS测试或加密字样宣称所有海外查询已验证；不将国内 DoH 加入全局并发列表，不恢复原 Google 默认，不泛绑定 apple/icloud。
 
 - **2026-10-09 运行故障排查顺序**：全局直连仍失败、关闭 Loon 恢复时，优先对照 DNS/Host/插件层，不能仅用扩域名或切商店地区宣布修复；电脑 TUN 下探针只作辅助，手机版配置/体验单列。保留原件与已授权策略，未知手机版不直接被归档诊断件覆盖。
 
@@ -173,7 +180,7 @@
 5. **Apple 基础服务直连、特殊服务独立**：可直连的基础服务集中在 `Apple-Direct.lsr`；`TestFlight`、`Apple-Media`、`Apple-Push` 保持独立。
 6. **公开 CI 与本地私密配置彻底隔离**：公开测试严格封闭于仓库公开夹具；私密配置验收由专用本地脱敏脚本运行，公开测试中绝不假装测试私密文件。
 7. **交付物哈希全闭环自校验**：规则正文、诊断插件以及清单元数据均有严格 SHA256 校验，工具依据实体内容动态重算 `package_sha256`。
-8. **拒绝全局纯海外 DoH 导致的国内 CDN 调度瘫痪**：防范全局纯境外 DoH 导致国内大厂 App 解析出跨洋 IP；采用客户端 `[Host]` 国内 DNS（223.5.5.5）分流解决秒开，外网服务走境外 DoH 杜绝泄漏。
+8. **拒绝全局纯海外 DoH 导致的国内 CDN 调度瘫痪**：防范全局纯境外 DoH 导致国内大厂 App 解析出跨洋 IP；采用客户端 `[Host]` 国内 DoH（`https://223.5.5.5/dns-query`）分流解决秒开与传输加密，外网服务走境外 DoH 降低本地泄漏风险。
 9. **DNS 插件加载优先序准则**：`Loon-China-DNS.lpx` 必须排在 `Prevent_DNS_Leaks.lpx` 之前，确保国内白名单优先就近解析。
 10. **用户策略主权原则**：分流规则（`.lsr`）必须 100% 策略中立；私人配置文件（`.lcf`）中用户的策略组指派归属用户主权，AI 严禁擅自改写策略绑定。
 11. **跨国孪生业务与共享基础设施隔离**：抖音与 TikTok、微信与 WeChat 的共享底层域名保留在直连，独占域名严格走代理。
@@ -225,10 +232,10 @@
 
 ---
 
-## 七、当前观察期与待办事项
+## 七、当前观察期、未完成事项与下一步
 
 ### 1. 常用服务专项发布后的日常观察（不要求逐App抓包）
-- **本轮下一步**：App Store 单变量对照已由所有者真机验证完成，确认停用 Google DoH 后恢复正常；抖音图文加载情况待日常自然使用中观察反馈。不再要求重复切换配置、抓包或整体导入旧候选，亦不再安排停用国内 DNS 插件作为立即下一步。大陆日常装配临时采用 system DNS + 精准国内 Host 映射；海外 DNS 隐私防泄漏方案待专项设计；多上游域名批量候选继续保持可审计未决，不自动投产。
+- **本轮下一步**：发布已审核的加密 DNS 插件后，所有者仅需更新插件并导入本轮新私人候选，确认 DNS 页为系统关闭、回落关闭、Rule；断开重连后正常使用 App Store 搜索、抖音图文，做一次海外 DNS 网页探针检查（仅证明该页测试域名，不能扩展为全部 App）。若新候选异常，切回保留的原配置及其临时系统 DNS 设置。停用 Google DoH 的旧单变量对照已完成，不再要求重复抓包或导入旧归档。多上游域名候选维持未决，不自动投产。
 - **核心原则**：当前以日常稳定使用和少人工维护为目标，避免未经证据和审核的盲目扩充；优先依据成熟来源与已审核清单补齐覆盖，出现具体异常时先核对规则、DNS和业务边界，必要时再做针对性验证，不要求逐App抓包；
 - **观察对象**：
   1. **图片与多媒体流媒体秒开**：拼多多商品大图 (`pddpic`)、美团外卖菜品 (`meituan.net`/`sankuai`)、小红书笔记瀑布流 (`xhscdn`)、快手短视频流 (`yximgs`/`gifshow`)、App Store 截图与预览 (`mzstatic`)；
@@ -241,7 +248,7 @@
 
 ### 2. 待办事项
 - [x] **App Store 单变量系统 DNS 手机实测对照**：2026-10-09 所有者在当前手机配置中仅注释停用 `doh-server = https://dns.google/dns-query`，App Store 即刻恢复正常，单变量对照完成；抖音图文加载待日常自然使用反馈。归档候选（SHA256 `939878c4...`）与备用诊断件（SHA256 `f7392831...`）作为离线准备复制件保留，不整体上机；用户当前使用项目配套配置（已停用 Google DoH），历史 36 规则配置仅作对照。
-- [ ] **海外 DNS 隐私防泄漏与大陆直连调度兼顾方案专项设计与审核**：所有者提出停用 Google DoH 后对海外 DNS 泄露的关切；目前大陆日常环境临时采用 system DNS + 既有国内 Host 映射维持可用性，不作为最终定型的防泄漏架构。待 AI 基于 Loon 官方 DNS/Host 机制与海外代理远端解析特性专项设计兼顾“国内 CDN 就近调度”与“海外域名防向国内运营商泄露”的可行方案，经 Codex 审核后由 AI 在本地安全装配中实施，无需用户手动修改或抓包。
+- [x] **海外 DNS 隐私防泄漏与大陆直连调度兼顾方案专项实施（公开 DNS 插件 DoH 迁移与守护）**：已完成插件 120 条 UDP 映射迁移至 `https://223.5.5.5/dns-query`，并收敛新增 2 项 Apple 官方精确 Host（`apps.apple.com` 与 `amp-api-edge.apps.apple.com`），Host 总数达到 122 条；`shared_domains.yml` 与 `check_conflicts.py --strict` 强守护落地；测试套件 53/53、诊断 19/19、评分 4/4、strict 与 pre-release 离线全量通过；19 规则集（23,882 规则）与构建签名 `cc70392cee8a` 保持不变；离线工程实施已闭环，状态标为“待 Codex 独立测试/审核/推送”，真机加载与日常体验待后续真机验证。
 - [x] **国内分流底座精细过滤与实施**：固定上游、批量排除、实际编译、分流与故障注入门禁已完成；正式发布证据见当前状态。后续快照变化由AI重新批量审查，不要求所有者逐App抓包。
 - [ ] **日常真机追踪记录**：依托 [`docs/real-device-validation.md`](docs/real-device-validation.md) 追踪记录日常使用反馈，严格执行“排查三步法（看规则 -> 看 DNS -> 看业务边界）”，先入矩阵登记再做决策；
 - [x] **唯一私人候选与可恢复回退配置装配**：已在 `E:\Document\ChatGPT\Loon-Migration\config-review-2026-10-03\` 装配 `Loon-v2-19Rules-candidate-2026-10-03.lcf` 与 `Loon-v2-19Rules-rollback-1e498f3.lcf`（回退锚点锁定提交 `1e498f3bbcffbbb5e67179d10f4af63bec5b7753`）；两份文件的结构、本地匹配与FINAL检查部分通过（PARTIAL_PASS / UNVERIFIED_PLUGINS，36个启用插件的运行时注入未验证）。两项固定回退资产另经独立取回核对，HTTP 200且SHA256与真实Git对象一致；手机当前加载及实际体验尚未验收；
@@ -322,7 +329,15 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-09（Gemini完成手机恢复/隐私归档核查，Codex独立复核原图、配置字段与改动边界；App Store已恢复，抖音未检查，加密DNS隐私方案未部署；仅同步README、SSOT与发现入口）
+* **最后更新**：2026-10-09（Gemini 完成 120 Host UDP 映射迁移至 AliDNS DoH `https://223.5.5.5/dns-query` 并准入 2 项 Apple 官方精确 Host 达 122 条；53 门单测全过，严格守护与预发布校验通过；待 Codex 独立测试与审核 / 待推送）
+
+  * **2026-10-09 加密 DNS 分流实施与 App Store 精确优化（Gemini 执行实施 / 待 Codex 独立复核）**：
+    - 将 `plugins/Loon-China-DNS.lpx` 与 `dist/plugins/Loon-China-DNS.lpx` 中全部 120 条既有明文 UDP 映射统一迁移至阿里公共 DoH 端点 `server:https://223.5.5.5/dns-query`，腾讯 5 条映射因 2024 年不再公开 IP 接入且 119.29.29.29:443 超时统一切换至已验证 IP 证书与响应的 AliDNS 223.5.5.5；
+    - 依据 Apple 官方企业网络要求（支持文档 101555）与中国大陆网页源码公开嵌入 API 端点，新增 2 项确有官方依据的精确 Host：`apps.apple.com` 与 `amp-api-edge.apps.apple.com`（均绑定 `server:https://223.5.5.5/dns-query`）；其余 4 项候选（`amp-api.apps`、`amp-api-search-edge`、`itunes`、`init`）排除；严格禁止泛解析通配符或 root/wildcard 委托。DNS 插件映射增至 122 条，Apple 精确白名单增至 10 项；
+    - `shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 强校验：新增 `trusted_domestic_dns_endpoints` 白名单（`223.5.5.5` / `223.6.6.6` HTTPS /dns-query），右侧逐条强检，严禁明文 UDP、HTTP、未批准 DoH、userinfo/port/query/fragment 及畸形行；Check 2a 强检海外独占规则集域名严禁指向国内 DNS；
+    - 新增 `test_53_doh_migration_and_guard_boundaries`；单测 53/53 PASS、诊断 19/19 PASS、评分 4/4 PASS、`check_conflicts --strict` PASS、`verify_mirrors --pre-release` PASS；
+    - 19 规则集（23,882 规则）、139 账本历史字节、`sources.yml`、`upstream_lock.json`、`manifest.json` 签名（`cc70392cee8a`）保持不变；跳过 build，源与 dist 插件直接字节对齐；
+    - 遵循授权不执行 Git 写入与推送，状态标为“待 Codex 独立测试与审核 / 待推送”；真机效果及抖音情况待日常使用验证。
 
   * **2026-10-09 手机 DoH 对照恢复、归档核验与隐私待办收尾（所有者实测 / Gemini实施 / Codex独立审核）**：
     - 所有者在当前手机配置中仅注释停用 `doh-server = https://dns.google/dns-query`，实测确认 App Store 即刻恢复正常，完成真机单变量对照；抖音图文待日常观察；
@@ -505,4 +520,3 @@
 - **变更性质**：规则文本校正（文档级），**非功能或服务实测**。
 - **本次改动**：① 来源与版本标记移至文件顶部；② 收窄新增的“宁可不做，也不新增机制”表述——本文“零”节三问门槛**继续适用**于约束“新增机制”，但**不用于否决“为已实际发生的需求增加必要自动化”**。
 - **未改动**：业务代码、生产配置、真实凭据文件的跟踪状态均未变更。
-

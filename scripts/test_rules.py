@@ -1911,7 +1911,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         tmp_dns = os.path.join(TEST_TMP_DIR, "bad_dns.lpx")
         with open(os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx"), "r", encoding="utf-8") as f:
             dns_c = f.read()
-        dns_c += "\n*.tiktok.com = server:223.5.5.5\n"
+        dns_c += "\n*.tiktok.com = server:https://223.5.5.5/dns-query\n"
         with open(tmp_dns, "w", encoding="utf-8") as f:
             f.write(dns_c)
 
@@ -1923,7 +1923,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         tmp_dns_apple = os.path.join(TEST_TMP_DIR, "bad_dns_apple.lpx")
         with open(os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx"), "r", encoding="utf-8") as f:
             dns_c_apple = f.read()
-        dns_c_apple += "\n*.apple.com = server:223.5.5.5\n"
+        dns_c_apple += "\n*.apple.com = server:https://223.5.5.5/dns-query\n"
         with open(tmp_dns_apple, "w", encoding="utf-8") as f:
             f.write(dns_c_apple)
 
@@ -2018,15 +2018,15 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         with open(dns_path, "r", encoding="utf-8") as f:
             dns_content = f.read()
         expected_9_dns = [
-            "*.taobaocdn.com = server:223.5.5.5",
-            "*.mmstat.com = server:223.5.5.5",
-            "img.bosszhipin.com = server:223.5.5.5",
-            "*.zdmimg.com = server:223.5.5.5",
-            "cdn.max-c.com = server:223.5.5.5",
-            "static.max-c.com = server:223.5.5.5",
-            "csv2.bankofchina.com = server:223.5.5.5",
-            "pic.bankofchina.com = server:223.5.5.5",
-            "srh.bankofchina.com = server:223.5.5.5"
+            "*.taobaocdn.com = server:https://223.5.5.5/dns-query",
+            "*.mmstat.com = server:https://223.5.5.5/dns-query",
+            "img.bosszhipin.com = server:https://223.5.5.5/dns-query",
+            "*.zdmimg.com = server:https://223.5.5.5/dns-query",
+            "cdn.max-c.com = server:https://223.5.5.5/dns-query",
+            "static.max-c.com = server:https://223.5.5.5/dns-query",
+            "csv2.bankofchina.com = server:https://223.5.5.5/dns-query",
+            "pic.bankofchina.com = server:https://223.5.5.5/dns-query",
+            "srh.bankofchina.com = server:https://223.5.5.5/dns-query"
         ]
         for d in expected_9_dns:
             self.assertIn(d, dns_content, f"Expected DNS companion missing from Loon-China-DNS.lpx: {d}")
@@ -2321,7 +2321,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             with self.subTest(pattern=pattern):
                 fixture = os.path.join(TEST_TMP_DIR, "cdn_dns.fixture")
                 with open(fixture, "w", encoding="utf-8") as f:
-                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                    f.write(f"[Host]\n{pattern} = server:https://223.5.5.5/dns-query\n")
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, errors)
 
@@ -2391,7 +2391,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             "*.ecombdstatic.com", "*.ecombdvod.com", "*.tencentmusic.com"
         ]
         for d in required_dns:
-            self.assertIn(f"{d} = server:223.5.5.5", plugin_content, f"Missing {d} routing in real plugin")
+            self.assertIn(f"{d} = server:https://223.5.5.5/dns-query", plugin_content, f"Missing {d} routing in real plugin")
 
         # 5. DNS 故障夹具验证
         import check_conflicts
@@ -2404,7 +2404,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             with self.subTest(pattern=pattern):
                 fixture = os.path.join(TEST_TMP_DIR, "cdn_dns.fixture")
                 with open(fixture, "w", encoding="utf-8") as f:
-                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                    f.write(f"[Host]\n{pattern} = server:https://223.5.5.5/dns-query\n")
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, errors)
 
@@ -2460,7 +2460,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             plugin_content = f.read()
 
         for host in exact_hosts:
-            self.assertIn(f"{host} = server:223.5.5.5", plugin_content, f"Missing exact entry for {host} in real plugin")
+            self.assertIn(f"{host} = server:https://223.5.5.5/dns-query", plugin_content, f"Missing exact entry for {host} in real plugin")
 
         # 严格禁止通配符及泛域名映射行
         self.assertNotIn("*.pancake.apple.com =", plugin_content)
@@ -2501,7 +2501,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             with self.subTest(fixture_pattern=pattern):
                 fixture = os.path.join(TEST_TMP_DIR, "apple_two_hosts_dns.fixture")
                 with open(fixture, "w", encoding="utf-8") as f:
-                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                    f.write(f"[Host]\n{pattern} = server:https://223.5.5.5/dns-query\n")
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, f"Pattern '{pattern}' expected ok={expected}, got {ok} with errors: {errors}")
 
@@ -2565,7 +2565,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         with open(plugin_src_path, "r", encoding="utf-8") as f:
             src_content = f.read()
 
-        self.assertIn("guzzoni.smoot.apple.com = server:223.5.5.5", src_content, "Missing exact entry in source plugin")
+        self.assertIn("guzzoni.smoot.apple.com = server:https://223.5.5.5/dns-query", src_content, "Missing exact entry in source plugin")
         self.assertNotIn("*.guzzoni.smoot.apple.com =", src_content)
         self.assertNotIn("*.smoot.apple.com =", src_content)
         self.assertNotIn("*.v.aaplimg.com =", src_content)
@@ -2605,7 +2605,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             with self.subTest(fixture_pattern=pattern):
                 fixture = os.path.join(TEST_TMP_DIR, "guzzoni_smoot_dns.fixture")
                 with open(fixture, "w", encoding="utf-8") as f:
-                    f.write(f"[Host]\n{pattern} = server:223.5.5.5\n")
+                    f.write(f"[Host]\n{pattern} = server:https://223.5.5.5/dns-query\n")
                 ok, errors, _ = check_conflicts.check_conflicts(dns_path=fixture, strict=True)
                 self.assertEqual(ok, expected, f"Pattern '{pattern}' expected ok={expected}, got {ok} with errors: {errors}")
 
@@ -2757,6 +2757,105 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             yaml.dump(spec_mutant2, f)
         ok_h, errors_h, _ = check_conflicts.check_conflicts(spec_path=hash_fixture, strict=True)
         self.assertFalse(ok_h, "check_conflicts must fail when baseline body hash is mismatched")
+
+    def test_53_doh_migration_and_guard_boundaries(self):
+        """Verify 120 UDP -> DoH migration, 2 exact App Store additions (122 total), source/dist parity, and DoH transport/boundary mutation guards."""
+        import check_conflicts
+        plugin_src_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        plugin_dist_path = os.path.join(DIST_DIR, "plugins", "Loon-China-DNS.lpx")
+
+        # 1. 真实 source 与 dist 存在且 100% 字节一致
+        self.assertTrue(os.path.isfile(plugin_src_path), "Plugin source must exist")
+        self.assertTrue(os.path.isfile(plugin_dist_path), "Plugin dist must exist")
+        with open(plugin_src_path, "rb") as f:
+            src_bytes = f.read()
+        with open(plugin_dist_path, "rb") as f:
+            dist_bytes = f.read()
+        self.assertEqual(src_bytes, dist_bytes, "Plugin source and dist must have identical bytes")
+
+        # 2. 条目强检：总计 122 条 Host 映射，全部目标为 server:https://223.5.5.5/dns-query，无明文 UDP/HTTP
+        entries = check_conflicts.load_dns_plugin_entries(plugin_src_path)
+        self.assertEqual(len(entries), 122, f"Expected exactly 122 Host entries in plugin, got {len(entries)}")
+        for e in entries:
+            self.assertIsNone(e["error"], f"Plugin contains malformed line: {e}")
+            self.assertEqual(e["right"], "server:https://223.5.5.5/dns-query", f"Host {e['left']} must map to Ali DoH, got {e['right']}")
+
+        # 3. 集合保全：原 120 条左侧模式全量保留，净增且仅增 2 条 Apple 精确主机
+        current_hosts = {e["left"] for e in entries}
+        self.assertIn("apps.apple.com", current_hosts)
+        self.assertIn("amp-api-edge.apps.apple.com", current_hosts)
+        self.assertIn("*.cn", current_hosts)
+        self.assertIn("*.mzstatic.com", current_hosts)
+        self.assertIn("guzzoni.smoot.apple.com", current_hosts)
+        self.assertIn("pancake.apple.com", current_hosts)
+        self.assertIn("tr.iadsdk.apple.com", current_hosts)
+        for i in range(1, 6):
+            self.assertIn(f"cl{i}.apple.com", current_hosts)
+
+        # 严禁通配符及泛域名映射
+        self.assertNotIn("*.apps.apple.com", current_hosts)
+        self.assertNotIn("*.amp-api-edge.apps.apple.com", current_hosts)
+        self.assertNotIn("*.apple.com", current_hosts)
+        self.assertNotIn("apple.com", current_hosts)
+        self.assertNotIn("*.itunes.apple.com", current_hosts)
+        self.assertNotIn("itunes.apple.com", current_hosts)
+
+        # 4. 真实 check_conflicts --strict 必须 100% 通过
+        ok_real, err_real, warn_real = check_conflicts.check_conflicts(strict=True)
+        self.assertTrue(ok_real, f"Real check_conflicts --strict must pass, got errors: {err_real}")
+
+        # 5. shared_domains.yml 中的 allowed_exact_domestic_dns_hosts 必须精确维护 10 个主机
+        with open(check_conflicts.SPEC_PATH, "r", encoding="utf-8") as sf:
+            spec_data = yaml.safe_load(sf)
+        apple_exact_allowed = spec_data["ecosystems"]["apple"]["allowed_exact_domestic_dns_hosts"]
+        self.assertEqual(len(apple_exact_allowed), 10, f"Expected 10 allowed exact Apple hosts, got {len(apple_exact_allowed)}: {apple_exact_allowed}")
+        self.assertIn("apps.apple.com", apple_exact_allowed)
+        self.assertIn("amp-api-edge.apps.apple.com", apple_exact_allowed)
+
+        # 6. 右侧变异与传输层强检：拒绝 UDP、HTTP、未批准 DoH、Userinfo、端口、参数、Fragment、语法错误
+        doh_mutations = [
+            ("udp", "[Host]\napps.apple.com = server:223.5.5.5\n", "Plaintext UDP or unsupported DNS transport forbidden"),
+            ("http", "[Host]\napps.apple.com = server:http://223.5.5.5/dns-query\n", "Plaintext HTTP DNS forbidden"),
+            ("untrusted_doh", "[Host]\napps.apple.com = server:https://1.1.1.1/dns-query\n", "Untrusted domestic DNS endpoint"),
+            ("foreign_resolver", "[Host]\napps.apple.com = server:https://8.8.8.8/dns-query\n", "Untrusted domestic DNS endpoint"),
+            ("userinfo", "[Host]\napps.apple.com = server:https://user:pass@223.5.5.5/dns-query\n", "Userinfo forbidden"),
+            ("port", "[Host]\napps.apple.com = server:https://223.5.5.5:443/dns-query\n", "Explicit port forbidden"),
+            ("invalid_port", "[Host]\napps.apple.com = server:https://223.5.5.5:not-a-port/dns-query\n", "Invalid URL structure"),
+            ("query_params", "[Host]\napps.apple.com = server:https://223.5.5.5/dns-query?client=1\n", "Query parameters forbidden"),
+            ("fragment", "[Host]\napps.apple.com = server:https://223.5.5.5/dns-query#tag\n", "Fragment forbidden"),
+            ("malformed", "[Host]\napps.apple.com\n", "Malformed line without '=' delimiter"),
+        ]
+        for m_name, m_content, expected_err in doh_mutations:
+            with self.subTest(mutation=m_name):
+                f_path = os.path.join(TEST_TMP_DIR, f"doh_mutant_{m_name}.lpx")
+                with open(f_path, "w", encoding="utf-8") as f:
+                    f.write(m_content)
+                ok_m, err_m, _ = check_conflicts.check_conflicts(dns_path=f_path, strict=True)
+                self.assertFalse(ok_m, f"Mutation {m_name} must fail check_conflicts")
+                self.assertTrue(any(expected_err in e for e in err_m), f"Mutation {m_name} expected '{expected_err}', got: {err_m}")
+
+        # 7. 左侧守卫变异强检：新精确主机的子域、泛域名及海外独占域注入全部被拒
+        left_mutations = [
+            ("apps_subdomain", "probe.apps.apple.com", False),
+            ("apps_wildcard", "*.apps.apple.com", False),
+            ("amp_edge_subdomain", "sub.amp-api-edge.apps.apple.com", False),
+            ("amp_edge_wildcard", "*.amp-api-edge.apps.apple.com", False),
+            ("apple_root", "apple.com", False),
+            ("apple_wildcard", "*.apple.com", False),
+            ("overseas_google", "*.google.com", False),
+            ("overseas_twitter", "twitter.com", False),
+            ("overseas_tiktok", "*.tiktok.com", False),
+            # 正例放行
+            ("apps_exact", "apps.apple.com", True),
+            ("amp_edge_exact", "amp-api-edge.apps.apple.com", True),
+        ]
+        for l_name, l_pattern, expected_ok in left_mutations:
+            with self.subTest(left_guard=l_name):
+                f_path = os.path.join(TEST_TMP_DIR, f"left_mutant_{l_name}.lpx")
+                with open(f_path, "w", encoding="utf-8") as f:
+                    f.write(f"[Host]\n{l_pattern} = server:https://223.5.5.5/dns-query\n")
+                ok_l, err_l, _ = check_conflicts.check_conflicts(dns_path=f_path, strict=True)
+                self.assertEqual(ok_l, expected_ok, f"Left pattern {l_pattern} expected {expected_ok}, got {ok_l} (errors: {err_l})")
 
     @classmethod
     def tearDownClass(cls):
