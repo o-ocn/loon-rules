@@ -23,6 +23,9 @@
    - **职责**：决定 DIRECT 直连流量“找哪个就近边缘节点”（解决 IP 调度质量）。
    - **解决直连反向卡顿**：防范全局纯境外 DoH 导致国内 CDN（阿里 1688、抖音支付、App Store 静态图）被调度至美西或香港 Anycast IP，进而引发直连断崖式卡顿。
    - **精细化区域优化**：在 `plugins/Loon-China-DNS.lpx` 中为国内大厂及 Apple 静态资源 CDN（`*.mzstatic.com`）指定国内极速 DNS（`223.5.5.5`），用于国内CDN就近调度；手机效果以实际使用为准；同时对 `apple.com`、`icloud.com` 保持严格隔离，绝不泛绑定。
+   - **本地装配与DNS隐私**：所有者当前大陆网络下，停用全局Google DoH、保留system后已确认App Store恢复；system仅作临时恢复措施，普通DNS可能明文查询，不能作为最终防泄漏方案。现有国内Host映射仍使用普通UDP，后续由AI审核兼顾国内CDN调度与海外加密解析的方案，不泛绑定apple/icloud，也不凭代理出口或一次DNS测试保证无泄漏。
+     [Loon官方DNS说明](https://nsloon.app/docs/DNS/)确认普通与加密DNS同配时优先使用加密DNS。更新本仓库规则/DNS插件不会自动移除私人配置[General]中的DoH行；后续本地配置由AI安全装配维护，所有者无需逐项维护参数。
+
 3. **第 3 层：冲突防护层（Conflict & Boundary Guard・自动化 CI 强门禁）**：
    - **职责**：守卫生态边界，严防跨国孪生业务（抖音 vs TikTok、微信 vs WeChat）及 Apple 禁区打穿。
    - **规格化防撞车**：由 `shared_domains.yml` 明确定义共享基础设施与海外独占域名；由 `scripts/check_conflicts.py --strict` 执行双向审查，CI 自动化强拦截任何违规外泄。
