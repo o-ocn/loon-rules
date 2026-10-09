@@ -17,6 +17,10 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-10 Google/腾讯 DoH 冗余评估完成，生产配置未改**：
+  - Gemini完成48次电脑探针，Codex独立8次以默认TLS及DNS消息校验复核；四家样本均HTTP200、RCODE0、有A，但结果存在CDN差异。独立样本中腾讯为ChatGPT返回的地址经ARIN登记属于Facebook网络，其他三家当次返回Cloudflare网络；这是限制腾讯用途的风险线索，不能扩展成所有查询异常、已证明污染机制或手机卡顿因果。
+  - 官方明确全局多DoH并发采用先返回结果，Google加入后参与日常解析；静态规则中Google与CF沿不同既有绑定，不等于已核验手机出站。单个Host多DoH、负响应选择细节及双OFF下的启动独立性未获原生证据，不能声称腾讯国内双备已实现或Google必依赖CF。全局混放腾讯不推荐；仅默认层CF+Google可作未实施的独立试用候选；国内Ali+腾讯原生方式待证，不承诺加后无卡顿。
+  - 本轮未添加Google/腾讯、未生成或同步新LCF、未动策略组/绑定/129映射及GUI；原件与116项目文件、42Hub文件在评估阶段哈希不变。具体证据与终审见 `E:\Document\AI-Workspace\loon-rules\2026-10-10-dns-redundancy-assessment\09-Codex-final-assessment.md` 与10号回执；当前仅保存新调查事实，后续先核验原生启动/分层机制与最小手机日常试用，不要求逐App抓包。
 * **2026-10-10 AI 与国内媒体 DNS 增补（Gemini 执行、Codex 审核；已发布，新件手机待验）**：
   - **规则与策略**：AI-Overseas 38→45，净增 7 条 Claude/OpenAI/Google AI 专属规则；总规则数 23,889，其他 18 集正文不变。规则仍策略中立，私人配置所有策略组、节点及 19 项绑定原样保留，AI 仍 `policy=All`；只有所有者明确指定才可改绑定或组。该偏好已合入 Hub 母版及双方 AGENTS。两项 Google 精确主机仅补登记至既有 `KNOWN_SAFE_DELEGATIONS`，未改编译算法、来源或共享域红线。
   - **DNS 范围**：原 122 条映射完整保留，新增 `*.douyinpic.com`、`*.douyinstatic.com`、`*.douyinvod.com`、`*.douyinliving.com`、`*.toutiaoimg.com`、`*.toutiaovod.com`、`*.pstatp.com` 至阿里 DoH；合计 129，源与 dist 字节一致。7 类均已有 China-Direct 分类，本批未增加国内路由或改任何 policy。共享 byteimg/ibytedtos 暂缓；全局 Cloudflare、系统 DNS OFF、查询回落 OFF、DoH Rule 保持。
