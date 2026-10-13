@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   shadow-audit:
+    if: github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -27,29 +28,98 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Restore Upstream Sources Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: scripts/.upstream_cache
+          key: shadow-upstream-cache-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            shadow-upstream-cache-
+
+      - name: Run Telegram Alert Suite and Health Contract Tests
+        run: |
+          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py
+
+      - name: Prepare Clean Report Workspace
+        run: |
+          # Clean previous run generated files to avoid stale artifacts masquerading as fresh
+          rm -f audit/shadow_report.md audit/shadow_report.json
+
       - name: Execute Shadow Audit Pipeline
+        id: shadow_audit_step
+        continue-on-error: true
+        env:
+          SHADOW_HEALTH_RECEIPT: ${{ runner.temp }}/shadow-health-receipt.json
         run: |
           python scripts/audit_pipeline.py
 
-      - name: Verify Audit Reports Generated
+      - name: Verify Audit Reports and State Generated
+        id: verified_reports
+        env:
+          SHADOW_HEALTH_RECEIPT: ${{ runner.temp }}/shadow-health-receipt.json
         run: |
-          if [ ! -f audit/shadow_report.md ] || [ ! -f audit/shadow_report.json ]; then
-            echo "CRITICAL: Shadow audit report files were not generated!"
+          if [ ! -f audit/shadow_report.md ] || [ ! -f audit/shadow_report.json ] || [ ! -f state/upstream_state.json ]; then
+            echo "CRITICAL: Shadow audit report or state files were not generated!"
             exit 1
           fi
-          echo "Audit report files verified successfully."
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          receipt = json.loads(Path(os.environ['SHADOW_HEALTH_RECEIPT']).read_text())
+          assert receipt['run_id'] == os.environ['GITHUB_RUN_ID'], 'stale audit receipt'
+          files = {'report': 'audit/shadow_report.json', 'markdown': 'audit/shadow_report.md', 'state': 'state/upstream_state.json'}
+          for name, path in files.items():
+              assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == receipt['files'][name], 'audit evidence mismatch'
+          report = json.loads(Path(files['report']).read_text())
+          state = json.loads(Path(files['state']).read_text())
+          health = report['health_status']
+          sources = state['sources']
+          assert isinstance(sources, dict) and sources, 'missing source health'
+          import yaml
+          configured = yaml.safe_load(Path('config/upstream_sources.yml').read_text())['providers']
+          assert set(sources) == set(configured), 'incomplete source state'
+          failed = any(s['status'].startswith('failed:') for s in sources.values())
+          cached = any(s['used_cache'] for s in sources.values())
+          attention = failed or any(s['consecutive_cache_count'] >= 2 for s in sources.values())
+          assert health['is_complete'] == (not failed and not cached)
+          assert health['has_degraded_cache'] == cached
+          assert health['attention_required'] == attention
+          PY
+          echo "Audit report and state verified successfully."
+
+      - name: Upload Verified Shadow Audit Evidence
+        if: always() && steps.verified_reports.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shadow-audit-reports
+          retention-days: 7
+          path: |
+            audit/shadow_report.md
+            audit/shadow_report.json
+            state/upstream_state.json
+            ${{ runner.temp }}/shadow-health-receipt.json
+          if-no-files-found: error
 
       - name: Run Score Engine Regression Tests
+        id: score_tests
         run: |
           python -B -m unittest scripts.test_score_engine
 
-      - name: Commit and Push if Substantive Changes Detected
+      - name: Save Valid Upstream Sources Cache
+        if: always() && steps.verified_reports.outcome == 'success' && steps.score_tests.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: scripts/.upstream_cache
+          key: shadow-upstream-cache-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Commit and Push Verified Shadow Audit and Health State
         run: |
+          # Only commit when valid audit reports and state were freshly produced in this run
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add audit/ state/
           if git diff --staged --quiet; then
-            echo "No shadow audit changes detected."
+            echo "No shadow audit or health state changes detected."
             echo "Skip commit."
           else
             echo "Substantive shadow audit changes detected. Committing..."
@@ -57,3 +127,11 @@ jobs:
             git commit -m "chore(audit): update shadow audit report and upstream state [$TIMESTAMP] [skip ci]"
             git push origin main
           fi
+
+      - name: Shadow Audit Final Quality Gate
+        run: |
+          if [ "${{ steps.shadow_audit_step.outcome }}" != "success" ]; then
+            echo "CRITICAL: Shadow audit pipeline failed upstream health check or execution!"
+            exit 1
+          fi
+          echo "Shadow audit final gate passed."

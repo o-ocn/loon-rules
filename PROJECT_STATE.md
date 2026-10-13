@@ -17,6 +17,22 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-13 GitHub Actions Telegram 异常通知与上游审计健康门禁（Gemini 执行，Codex 独立审核完成并配置 Secrets；待 push 与远端验证）**：
+  - **实现范围与授权**：严格恪守单一事实源、反过度设计与策略主权红线。未发布任何生产规则变更，未动 `rules/`、`dist/`、`plugins/`、`sources.yml`、`shared_domains.yml`、`history/`、私人配置（.lcf）、策略组或策略绑定（AI 仍 `policy=All`）；未执行 `git add/commit/push/reset`；Gemini 未处理/读取任何私人凭据、未发送 Telegram；Codex 已使用用户提供的独立 Bot 完成身份核验，加密配置 GitHub Secrets（`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`），此时尚未 git push，远端 Actions 跨工作流触发与真实 Telegram 发送仍待验证。
+  - **上游健康状态与假绿缺陷修复** (`scripts/audit_pipeline.py`)：移除重复定义的死代码；新增 `assess_upstream_health` 判定，精确区分新鲜抓取 (`fresh`)、缓存降级 (`cache`) 与无缓存失败 (`failed`)。首次失败/无缓存失败绝不伪造 `last_synced_at`（保持 None）；内容 hash 未变时保留原内容变化时间；低于 `expected_min_rules` 判定失败；连续两次及以上缓存或无缓存失败标记 `attention_required`，单次缓存降级继续旁路评估；报告标明 `DEGRADED / INCOMPLETE`，出现不可用源或持续缓存降级时显式非零退出 (`exit 1`)，消除假绿风险。
+  - **影子审计工作流质量门禁** (`.github/workflows/shadow-audit.yml`)：步骤前清理旧状态；采用 `actions/cache/restore@v4` 与 `actions/cache/save@v4` 分离策略维护 `scripts/.upstream_cache`，支持失败降级场景下的有效缓存保留；通过 `SHADOW_HEALTH_RECEIPT` 环境变量与 `runner.temp` 本轮 run_id + 文件 SHA 校验，确保 fresh 证据匹配后才上传 artifact 与 commit；最终门禁与推送失败均显式失败。
+  - **集中通知工作流与安全调度** (`.github/workflows/notify-exceptions.yml`, `scripts/notify_telegram.py`)：
+    - 采用标准库编写纯文本 Telegram 发送与去重调度脚本，不开启 parse_mode；自动过滤控制字符、常见凭据模式与 URL userinfo/query；发送前精确掩码本次 token 与 chat_id；输入为空的 `decision` 严格拒绝；
+    - 监听两个现有工作流的 `workflow_run completed`，数据驱动校验白名单：核验 `github.repository` 与 `head_repository.full_name` 均为 `o-ocn/loon-rules`，仅限 main 上的 push/schedule/workflow_dispatch，明确排除 pull_request、fork 与其他分支；最小权限 `contents: read`, `actions: read`；
+    - 仅对真正异常（failure, timed_out, action_required 等）告警；主动 cancelled/skipped 保持静默；成功（success）静默并解除该 scope 下的去重抑制；
+    - 支持可选 `workflow_dispatch` 的 `test` 与 `decision` 人工触发；sendMessage 严格剥离响应正文/description，错误仅返回数字状态码；有界重试且超限立即失败；
+    - 串行并发控制与细粒度 key 去重，按 scope 隔离缓存，保存去重状态失败显式非零退出，发送失败不记录为已送达。
+  - **测试与门禁核验（26/26 PASS）**：
+    - 单元测试套件：`tests/test_telegram_alerts.py` (16 项) + `tests/test_notification_guards.py` (6 项) + `scripts/test_score_engine.py` (4 项) **全部 26/26 PASS**（耗时 ~6s）；
+    - 原生诊断测试：`node --test tests/test_diagnostic.js` **19/19 PASS**；
+    - 冲突与预发布门禁：`python scripts/check_conflicts.py --strict` **PASS**；`python scripts/verify_mirrors.py --pre-release` **PASS**；
+    - 自动化流水线接入：已将新增测试套件统一以 `.py` 格式分别接入 `sync-and-build.yml` 与 `shadow-audit.yml` 的前置门禁。
+    - **待验项**：此时尚未 git push，远端 Actions 跨工作流触发与真实 Telegram 发送仍待远端验证。操作说明详见 [`docs/telegram-notifications.md`](docs/telegram-notifications.md)。
 * **2026-10-10 双 AI 文档收尾与 Project 复用规范**：Gemini已将母版五条复用规范正文合入本项目 `AGENTS.md`，Codex已核对实际差异与保留范围；同一工程默认复用 Project，长上下文优先原 Project 新对话，确需隔离才新建。Hub母版与Hub AGENTS亦合入相同规范，项目身份、路径和阶段未变，不更新地图或其他工程。本轮不添加DNS、不改生产代码/规则/插件/来源/账本或私人策略（AI仍 `policy=All`），不执行界面或入口删除；入口清理由所有者自行操作，尚未核验其清理结果。原下载导出文件已由所有者自行清理，当前 iCloud V3、本地 V3及工作区V2三份副本与本轮恢复基线哈希一致；原件已不在原下载路径，不声称四份基线文件全保留。本轮恢复起点为Loon `ce21882cd002da8727c9781718459cfc27269e8e`、Hub `26c3ecadfed9b9ebd8e89bdac0c075a94e3e6889`；文档任务未重跑功能测试，既有功能发布与真机未验边界保留，最终Git与独立核验回执为 `E:\Document\AI-Workspace\loon-rules\2026-10-10-closeout-project-reuse\06-Codex-最终收尾.json`。
 * **2026-10-10 Google/腾讯 DoH 冗余评估完成，生产配置未改**：
   - Gemini完成48次电脑探针，Codex独立8次以默认TLS及DNS消息校验复核；四家样本均HTTP200、RCODE0、有A，但结果存在CDN差异。独立样本中腾讯为ChatGPT返回的地址经ARIN登记属于Facebook网络，其他三家当次返回Cloudflare网络；这是限制腾讯用途的风险线索，不能扩展成所有查询异常、已证明污染机制或手机卡顿因果。
@@ -344,9 +360,15 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-10（Gemini完成规范正文合入与文档收尾；Codex独立核对差异、修正旧下一步及回执口径，完成本轮文档审核；DNS暂不增补，策略主权与既有未验边界保留，入口删除由所有者自行处理；最终提交、推送及远端核验见本轮收尾回执）
+* **最后更新**：2026-10-13（Gemini完成 Telegram 异常通知与上游审计健康状态判定工程实施与快速门禁核验；Codex完成独立审核，并配置 GitHub Secrets；未执行 git push，远端 Actions 跨工作流触发与真实 Telegram 发送待远端验证；生产规则与产物未改，策略组保持用户主权 AI policy=All）
 
-  * **2026-10-09 加密 DNS 分流实施与 App Store 精确优化（Gemini 执行实施 / 待 Codex 独立复核）**：
+  * **2026-10-13 GitHub Actions Telegram 异常通知与上游审计监控工程收尾（Gemini 执行 / Codex 独立审核完成并配置 Secrets；待 push 与远端验证）**：
+    - 新增 `.github/workflows/notify-exceptions.yml` 与 `scripts/notify_telegram.py`，支持 `workflow_run completed` 监听（仅限本仓库 main push/schedule/workflow_dispatch，排除 fork/PR/其他分支/主动取消）；
+    - 实现标准库纯文本 Telegram 发送与脱敏（过滤常见凭据/URL userinfo/query/控制字符，剥离 description，不开启 parse_mode）；
+    - 修复 `scripts/audit_pipeline.py` 假绿缺陷：区分 fresh/cache/failed，低于 min_rules 失败，无缓存失败及连续 2 次及以上缓存标记 attention_required 并非零退出；
+    - 影子审计流水线使用 restore/save 分离策略与 RUNNER_TEMP fresh 哈希回执；
+    - 新增单测 `tests/test_telegram_alerts.py` (16 项) 与 `tests/test_notification_guards.py` (6 项)，接入现有 CI 流水线；
+    - 快速测试 26/26 PASS，诊断 19/19 PASS，严格冲突与预发布 PASS；产出操作说明 [`docs/telegram-notifications.md`](docs/telegram-notifications.md)。
     - 将 `plugins/Loon-China-DNS.lpx` 与 `dist/plugins/Loon-China-DNS.lpx` 中全部 120 条既有明文 UDP 映射统一迁移至阿里公共 DoH 端点 `server:https://223.5.5.5/dns-query`，腾讯 5 条映射因 2024 年不再公开 IP 接入且 119.29.29.29:443 超时统一切换至已验证 IP 证书与响应的 AliDNS 223.5.5.5；
     - 依据 Apple 官方企业网络要求（支持文档 101555）与中国大陆网页源码公开嵌入 API 端点，新增 2 项确有官方依据的精确 Host：`apps.apple.com` 与 `amp-api-edge.apps.apple.com`（均绑定 `server:https://223.5.5.5/dns-query`）；其余 4 项候选（`amp-api.apps`、`amp-api-search-edge`、`itunes`、`init`）排除；严格禁止泛解析通配符或 root/wildcard 委托。DNS 插件映射增至 122 条，Apple 精确白名单增至 10 项；
     - `shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 强校验：新增 `trusted_domestic_dns_endpoints` 白名单（`223.5.5.5` / `223.6.6.6` HTTPS /dns-query），右侧逐条强检，严禁明文 UDP、HTTP、未批准 DoH、userinfo/port/query/fragment 及畸形行；Check 2a 强检海外独占规则集域名严禁指向国内 DNS；

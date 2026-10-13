@@ -1,0 +1,152 @@
+name: Notify Exceptions (Telegram)
+
+on:
+  workflow_run:
+    workflows:
+      - "Sync Upstream and Build Loon Rules"
+      - "Shadow Audit Scheduled Run"
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: 'Trigger action type (test / decision)'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - decision
+      description:
+        description: 'Brief reason or decision summary (required for decision)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+# 串行防竞态：按事件类型与监听工作流隔离并发组，防止去重状态读写覆盖
+concurrency:
+  group: notify-telegram-${{ github.event_name }}-${{ github.event.workflow_run.name || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    # 严格数据源门禁：
+    # 1. 明确核验 github.repository 与 github.event.workflow_run.head_repository.full_name
+    # 2. 仅限 main 分支与 push / schedule / workflow_dispatch 白名单事件，明确排除 pull_request 与 fork。
+    if: >-
+      (
+        github.event_name == 'workflow_run' &&
+        github.repository == 'o-ocn/loon-rules' &&
+        github.event.workflow_run.head_repository.full_name == 'o-ocn/loon-rules' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        contains(fromJSON('["push", "schedule", "workflow_dispatch"]'), github.event.workflow_run.event)
+      ) || (
+        github.event_name == 'workflow_dispatch' &&
+        github.repository == 'o-ocn/loon-rules' &&
+        github.ref_name == 'main'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Trusted Main Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 动态计算缓存 Scope：按被监听工作流隔离缓存，人工触发使用 manual-scope
+      - name: Determine Cache Scope
+        id: cache_scope
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "scope=manual" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.workflow_run.name }}" = "Sync Upstream and Build Loon Rules" ]; then
+            echo "scope=sync-build" >> "$GITHUB_OUTPUT"
+          else
+            echo "scope=shadow-audit" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore Deduplication State Cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/alerts
+          key: alert-suppression-${{ steps.cache_scope.outputs.scope }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            alert-suppression-${{ steps.cache_scope.outputs.scope }}-
+
+      # 从 GitHub Actions API 获取失败步骤名称（安全白名单文本，防止日志回显）
+      - name: Query Failed Step Summary
+        id: failed_step_query
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOBS_URL: ${{ github.event.workflow_run.jobs_url }}
+        run: |
+          python -c '
+          import os, sys, json, urllib.request
+          token = os.environ.get("GH_TOKEN", "")
+          jobs_url = os.environ.get("JOBS_URL", "")
+          step_name = "generic"
+          if jobs_url:
+              try:
+                  req = urllib.request.Request(jobs_url, headers={"Authorization": f"Bearer {token}", "User-Agent": "Actions-Alert/1.0"})
+                  with urllib.request.urlopen(req, timeout=10) as resp:
+                      data = json.loads(resp.read().decode())
+                      for job in data.get("jobs", []):
+                          if job.get("conclusion") in ("failure", "timed_out", "action_required"):
+                              for step in job.get("steps", []):
+                                  if step.get("conclusion") in ("failure", "timed_out", "action_required"):
+                                      step_name = step.get("name", "generic")
+                                      break
+                              break
+              except Exception:
+                  pass
+          # 清洗 step_name 确保安全
+          import re
+          safe_step = re.sub(r"[^a-zA-Z0-9_\- ]", "", step_name)[:50]
+          print(f"step={safe_step}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"step={safe_step}\n")
+          '
+
+      - name: Execute Telegram Notification Logic
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          INPUT_ACTION_TYPE: ${{ github.event.inputs.action_type }}
+          INPUT_DESCRIPTION: ${{ github.event.inputs.description }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WORKFLOW_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          FAILED_STEP: ${{ steps.failed_step_query.outputs.step }}
+          CACHE_SCOPE: ${{ steps.cache_scope.outputs.scope }}
+        run: |
+          mkdir -p .cache/alerts
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "[*] Handling manual workflow_dispatch ($INPUT_ACTION_TYPE)..."
+            python scripts/notify_telegram.py \
+              --event-type "$INPUT_ACTION_TYPE" \
+              --workflow-name "Manual Alert Dispatch" \
+              --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --description="$INPUT_DESCRIPTION" \
+              --dedup-state-file ".cache/alerts/state-${CACHE_SCOPE}.json"
+          else
+            echo "[*] Handling workflow_run completed ($WORKFLOW_NAME: $WORKFLOW_CONCLUSION, step: $FAILED_STEP)..."
+            python scripts/notify_telegram.py \
+              --event-type "workflow_run" \
+              --workflow-name "$WORKFLOW_NAME" \
+              --failed-step "$FAILED_STEP" \
+              --conclusion "$WORKFLOW_CONCLUSION" \
+              --run-url "$WORKFLOW_RUN_URL" \
+              --dedup-state-file ".cache/alerts/state-${CACHE_SCOPE}.json" \
+              --suppression-hours 24.0
+          fi

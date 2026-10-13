@@ -58,6 +58,10 @@ jobs:
         run: |
           node --test tests/test_diagnostic.js
 
+      - name: Run Telegram Alert Suite and Health Contract Tests
+        run: |
+          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py
+
       - name: Pre-Release Local Integrity Gate (Fail-Stop Release Barrier)
         # Strict local barrier: stops pipeline BEFORE git commit or push if any rule,
         # hash, policy token, or diagnostic artifact check fails.

@@ -52,7 +52,7 @@ def fetch_source_text(url, min_rules=100, timeout=15, max_retries=3):
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 if resp.status == 200:
                     body = resp.read().decode("utf-8", errors="replace")
-                    lines = [l.strip() for l in body.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+                    lines = [l for l in body.splitlines() if normalize_line(l)]
                     if len(lines) >= min_rules:
                         os.makedirs(UPSTREAM_CACHE_DIR, exist_ok=True)
                         with open(cache_file, "w", encoding="utf-8") as f:
@@ -65,7 +65,7 @@ def fetch_source_text(url, min_rules=100, timeout=15, max_retries=3):
         try:
             with open(cache_file, "r", encoding="utf-8", errors="replace") as f:
                 body = f.read()
-            lines = [l.strip() for l in body.splitlines() if l.strip() and not l.strip().startswith(("#", ";"))]
+            lines = [l for l in body.splitlines() if normalize_line(l)]
             if len(lines) >= min_rules:
                 return body, True
         except Exception:
@@ -149,6 +149,74 @@ def load_existing_production_rules():
 
     return prod_set
 
+def assess_upstream_health(p_id, old_info, outcome, c_hash=None, now_iso=None, error_msg=None, rule_count=0):
+    """
+    提取上游健康状态判定函数。
+    outcome:
+      - 'fresh': 新鲜网络抓取成功
+      - 'cache': 网络抓取失败，降级回退至本地缓存
+      - 'failed': 抓取失败且无有效缓存回退
+    """
+    if now_iso is None:
+        now_iso = datetime.now(timezone.utc).isoformat()
+    old_info = old_info or {}
+    old_hash = old_info.get("content_hash")
+    prev_consecutive = old_info.get("consecutive_cache_count", 0)
+    old_synced_at = old_info.get("last_synced_at")
+
+    if outcome == "fresh":
+        # 新鲜抓取成功：若内容hash不变，保留原last_synced_at（内容变化时间）；hash变化或此前无时间则更新为now_iso
+        if old_hash and old_hash == c_hash and old_synced_at:
+            synced_at = old_synced_at
+            content_changed = False
+        else:
+            synced_at = now_iso
+            content_changed = True
+        return {
+            "last_synced_at": synced_at,
+            "content_hash": c_hash,
+            "rule_count": rule_count,
+            "used_cache": False,
+            "consecutive_cache_count": 0,
+            "status": "synced_shadow",
+            "content_changed": content_changed,
+            "attention_required": False,
+            "health_level": "healthy"
+        }
+    elif outcome == "cache":
+        # 缓存降级：保留原last_synced_at；若此前无已知成功时间则保持None/null，不伪造
+        new_consecutive = prev_consecutive + 1
+        synced_at = old_synced_at
+        # 单次缓存(1)标记降级并继续旁路评估，连续两次(>=2)触发持续缓存预警
+        attn = (new_consecutive >= 2)
+        return {
+            "last_synced_at": synced_at,
+            "content_hash": c_hash,
+            "rule_count": rule_count,
+            "used_cache": True,
+            "consecutive_cache_count": new_consecutive,
+            "status": "cached_degraded",
+            "content_changed": False,
+            "attention_required": attn,
+            "health_level": "degraded" if not attn else "persistent_cache_warning"
+        }
+    else:  # failed (无缓存失败)
+        # 无缓存失败：立即需要关注；失败时不可错误清零连续缓存次数！
+        # 若此前无已知成功时间则保持None/null，严禁新源第一次失败伪造now_iso
+        synced_at = old_synced_at
+        err_str = str(error_msg) if error_msg else "unknown error"
+        return {
+            "last_synced_at": synced_at,
+            "content_hash": old_hash,
+            "rule_count": 0,
+            "used_cache": False,
+            "consecutive_cache_count": prev_consecutive,
+            "status": f"failed: {err_str}",
+            "content_changed": False,
+            "attention_required": True,
+            "health_level": "critical_failure"
+        }
+
 def run_shadow_audit():
     print("=" * 70)
     print("🚀 启动 Phase 0 旁路影子审计流水线 (Shadow Audit Pipeline)")
@@ -179,53 +247,77 @@ def run_shadow_audit():
 
     now_iso = datetime.now(timezone.utc).isoformat()
     upstream_has_changed = False
+    pipeline_has_unhealthy_upstream = False
+    unhealthy_reasons = []
 
     # 1. 多源抓取与规整 (fetch & normalize)
     for p_id, p_meta in providers.items():
         url = p_meta.get("url")
         name = p_meta.get("name", p_id)
         min_rules = p_meta.get("expected_min_rules", 100)
+        old_info = existing_sources_state.get(p_id, {})
         print(f"[*] 正在拉取上游源 [{name}] -> {url} ...")
         
         try:
             body, used_cache = fetch_source_text(url, min_rules=min_rules)
             c_hash = compute_sha256(body)
             valid_rules = 0
+            parsed_rules = []
             for raw_l in body.splitlines():
                 parsed = normalize_line(raw_l)
                 if parsed:
                     valid_rules += 1
-                    aggregated.setdefault(parsed, set()).add(p_id)
+                    parsed_rules.append(parsed)
 
-            old_info = existing_sources_state.get(p_id, {})
-            old_hash = old_info.get("content_hash")
-            if old_hash and old_hash == c_hash:
-                synced_at = old_info.get("last_synced_at", now_iso)
-            else:
-                synced_at = now_iso
+            if valid_rules < min_rules:
+                raise ValueError(f"Parsed valid rules count ({valid_rules}) below expected minimum ({min_rules})")
+            for parsed in parsed_rules:
+                aggregated.setdefault(parsed, set()).add(p_id)
+
+            outcome = "cache" if used_cache else "fresh"
+            health = assess_upstream_health(p_id, old_info, outcome, c_hash=c_hash, now_iso=now_iso, rule_count=valid_rules)
+
+            if health.get("content_changed") or used_cache:
                 upstream_has_changed = True
+            if health.get("attention_required"):
+                pipeline_has_unhealthy_upstream = True
+                unhealthy_reasons.append(f"[{name}] 连续缓存 {health['consecutive_cache_count']} 次降级")
+            elif used_cache:
+                unhealthy_reasons.append(f"[{name}] 单次缓存降级（连续 {health['consecutive_cache_count']} 次）")
 
             sync_states[p_id] = {
                 "name": name,
                 "url": url,
-                "last_synced_at": synced_at,
-                "content_hash": c_hash,
-                "rule_count": valid_rules,
-                "used_cache": used_cache,
-                "status": "synced_shadow"
+                "last_synced_at": health["last_synced_at"],
+                "content_hash": health["content_hash"],
+                "rule_count": health["rule_count"],
+                "used_cache": health["used_cache"],
+                "consecutive_cache_count": health["consecutive_cache_count"],
+                "status": health["status"]
             }
-            print(f"    ✔ 成功解析 {valid_rules} 条有效规则 (SHA256: {c_hash[:10]}...)")
+            cache_tag = " (缓存降级)" if used_cache else ""
+            print(f"    ✔ 成功解析 {valid_rules} 条有效规则{cache_tag} (SHA256: {c_hash[:10]}...)")
         except Exception as e:
             print(f"    ❌ 拉取失败: {e}")
+            health = assess_upstream_health(p_id, old_info, "failed", now_iso=now_iso, error_msg=e)
+            pipeline_has_unhealthy_upstream = True
+            unhealthy_reasons.append(f"[{name}] 拉取失败且无缓存可用: {e}")
+
             sync_states[p_id] = {
                 "name": name,
                 "url": url,
-                "last_synced_at": now_iso,
-                "status": f"failed: {e}"
+                "last_synced_at": health["last_synced_at"],
+                "content_hash": health["content_hash"],
+                "rule_count": 0,
+                "used_cache": False,
+                "consecutive_cache_count": health["consecutive_cache_count"],
+                "status": health["status"]
             }
+            # 无论失败与否，存在健康状态变更时需要更新 upstream_state 记录
             upstream_has_changed = True
 
     # 保存动态同步状态至 state/upstream_state.json (若无变化保留先前时间戳)
+    upstream_has_changed = upstream_has_changed or sync_states != existing_sources_state
     os.makedirs(STATE_DIR, exist_ok=True)
     state_last_updated = now_iso if upstream_has_changed else existing_state_full.get("last_updated", now_iso)
     with open(state_file, "w", encoding="utf-8") as f:
@@ -299,12 +391,14 @@ def run_shadow_audit():
 
     existing_report_kpi = None
     existing_generated_at = now_iso
+    existing_health_status = None
     if os.path.isfile(report_json_path):
         try:
             with open(report_json_path, "r", encoding="utf-8") as f:
                 old_rep = json.load(f)
                 existing_report_kpi = old_rep.get("kpi")
                 existing_generated_at = old_rep.get("generated_at", now_iso)
+                existing_health_status = old_rep.get("health_status", {})
         except Exception:
             pass
 
@@ -318,13 +412,23 @@ def run_shadow_audit():
         "auto_decision_coverage_pct": round(automation_rate, 2)
     }
 
-    # 若上游未变动且核心 KPI 结果一致，保留先前时间戳，消除 Git 无实质变动提交
-    report_generated_at = now_iso if (upstream_has_changed or existing_report_kpi != current_kpi) else existing_generated_at
+    current_health_summary = {
+        "is_complete": not pipeline_has_unhealthy_upstream and not any(s.get("used_cache") for s in sync_states.values()),
+        "has_degraded_cache": any(s.get("used_cache") for s in sync_states.values()),
+        "attention_required": pipeline_has_unhealthy_upstream,
+        "unhealthy_reasons": unhealthy_reasons
+    }
+
+    # 若上游未变动、核心 KPI 结果一致且健康状态一致，保留先前时间戳，消除 Git 无实质变动提交
+    health_changed = (existing_health_status != current_health_summary)
+    report_generated_at = now_iso if (upstream_has_changed or existing_report_kpi != current_kpi or health_changed) else existing_generated_at
 
     report_data = {
         "audit_version": "1.0",
         "generated_at": report_generated_at,
         "kpi": current_kpi,
+        "health_status": current_health_summary,
+        "sources_health": sync_states,
         "simulated_auto_pass": simulated_auto_pass,
         "simulated_review": simulated_review,
         "simulated_block": simulated_block
@@ -336,9 +440,9 @@ def run_shadow_audit():
 
     # 格式化生成 Markdown 报告
     with open(report_md_path, "w", encoding="utf-8") as f:
+        audit_status_title = "SHADOW ONLY (DEGRADED / INCOMPLETE)" if pipeline_has_unhealthy_upstream else "SHADOW ONLY"
         f.write("# Phase 0 Shadow Audit Report\n\n")
-        f.write("Status:\n")
-        f.write("SHADOW ONLY\n\n")
+        f.write(f"Status:\n{audit_status_title}\n\n")
         f.write("This report is generated for evaluation purposes only.\n\n")
         f.write("This phase does not modify:\n")
         f.write("- dist/\n")
@@ -346,7 +450,13 @@ def run_shadow_audit():
         f.write("- production rule output\n\n")
         f.write("AUTO_PASS means simulated production eligibility only.\n\n")
         f.write(f"> ⏱ **生成时间**: `{report_generated_at}`  \n")
-        f.write("> 🛡 **运行模式**: 只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状  \n\n")
+        mode_tag = "⚠️ 上游抓取降级/失败，报告结果为部分或降级数据" if pipeline_has_unhealthy_upstream else "只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状"
+        f.write(f"> 🛡 **运行模式**: {mode_tag}  \n\n")
+        if pipeline_has_unhealthy_upstream:
+            f.write("> ⚠️ **上游健康预警**:\n")
+            for reason in unhealthy_reasons:
+                f.write(f">   - {reason}\n")
+            f.write("\n")
         f.write("---\n\n")
         f.write("## 一、核心 KPI 与自动决策覆盖率\n\n")
         f.write("| 指标项 | 规则数量 | 占比 | 说明 |\n")
@@ -384,11 +494,30 @@ def run_shadow_audit():
         f.write("## 四、Phase 0 准出标准评估 (Exit Criteria Check)\n\n")
         f.write("- [x] **生产产物零破坏**：`dist/` 保持完全干净，未修改线上规则。\n")
         f.write(f"- [x] **自动化率达成**：当前自动化率 **{automation_rate:.2f}%**，满足 90% 自动化维护预期。\n")
-        f.write("- [x] **硬门禁有效性**：海外代理红线与出海服务被 100% 拦截，无漏判放行。\n")
+        if pipeline_has_unhealthy_upstream:
+            f.write("- [ ] **上游健康状态**：存在上游拉取失败或连续缓存降级（门禁未通过）。\n")
+        else:
+            f.write("- [x] **已执行配置中的红线与类型过滤**：结果仅为旁路分类，不等同于全网覆盖或真机验收。\n")
 
     print(f"[+] 审计报告已生成:")
     print(f"    - JSON 数据: {report_json_path}")
     print(f"    - Markdown: {report_md_path}")
+    receipt_path = os.environ.get("SHADOW_HEALTH_RECEIPT")
+    if receipt_path:
+        receipt = {"run_id": os.environ.get("GITHUB_RUN_ID"), "files": {}}
+        for name, path in {"report": report_json_path, "markdown": report_md_path, "state": state_file}.items():
+            with open(path, "rb") as f:
+                receipt["files"][name] = hashlib.sha256(f.read()).hexdigest()
+        with open(receipt_path, "w", encoding="utf-8") as f:
+            json.dump(receipt, f)
+
+    if pipeline_has_unhealthy_upstream:
+        print(f"\n❌ 影子审计上游异常（存在不可用源或持续缓存降级）:")
+        for reason in unhealthy_reasons:
+            print(f"    - {reason}")
+        print("🛑 影子审计流水线非零退出 (Exit Code: 1)")
+        sys.exit(1)
+
     print("\n✅ Phase 0 旁路影子审计完成！")
 
 if __name__ == "__main__":
