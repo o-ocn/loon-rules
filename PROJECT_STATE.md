@@ -11,7 +11,8 @@
 2. **平替外部不受控规则**：全量替代旧版 15 个外部远端分流规则，消除规则混杂、上游滞后、钓鱼域名及劫持风险。
 3. **一致性检查与质量保障**：建立“声明契约、来源配置、构建产物、测试套件、自动化更新”全链路一致性，防止上游更新滞后或规则误伤。
 4. **单文件交付与安全隐私**：用户最终只导入一份由 ChatGPT Work 在本地安全装配的唯一私人 `.lcf`；严格保护私人凭证、订阅、节点与密钥，杜绝泄露至公开仓库。
-5. **AI-Project-Hub 规范纳管**：本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管，具体交接规范与协作协议统一由 [`AGENTS.md`](AGENTS.md) 维护，自动发现与同步入口由 [`AI_HUB_SYNC.md`](AI_HUB_SYNC.md) 提供。
+5. **国内日常体验与维护减负**：以国内常用 App 稳定、舒适为目标，减少所有者抓包和日常维护操作；海外服务与出口策略归所有者选择。
+6. **AI-Project-Hub 规范纳管**：本项目已正式纳入 [AI-Project-Hub](https://github.com/o-ocn/AI-Project-Hub)（永久唯一标识：`repo:loon-rules`）全局项目地图纳管，具体交接规范与协作协议统一由 [`AGENTS.md`](AGENTS.md) 维护，自动发现与同步入口由 [`AI_HUB_SYNC.md`](AI_HUB_SYNC.md) 提供。
 
 ---
 
@@ -78,21 +79,24 @@
 * **此前2026-10-07常用服务专项发布归档**：此前小黑盒仅有两个静态主机规则，现已补齐`xiaoheihe.cn`自有社区/API；`.localfont`双DNS仍NXDOMAIN，仅精确停止代理试行，未证明字体恢复或卡顿唯一原因。由Codex通过Antigravity CLI指挥Gemini完成调查、回归代码和账本，再独立校验与修正范围。原89行服务登记加山姆，90行含别名/类别；`config/common_app_contract.json`登记328个公开参考主机，其中261个当前首命中样本进入现有CI，67个候选未自动准入；不表示App失败数、安装清单或完整依赖覆盖率。`scripts/audit_common_apps.py`可重复生成现状，发现已知样本退化时返回失败。恢复起点`f0eae6bdc1c040d7176d2a6a182d7986c7653e91`；手机加载与真实体验未验。
 * **此前27规则/7DNS发布基线（历史证据）**：19规则集、21,315条有效规则；China-Direct 674、Apple-Direct 170、China-Personal 103、DNS Host 111；manifest内容签名`a5b55d35b9a6`。相对恢复起点净增27条规则、7条精确DNS，其他17个规则集正文不变。本地构建、48规则测试、19诊断测试、4评分测试、严格冲突与预发布完整性全部通过。初版发布94d35fa4ebe8459d235140c216c9473edee7b1da的CI81（37566329787）成功；最终代码发布00ce6ba3b3f7b1317a7ae3b38f74e115db5be183已正常推送，CI82（37568672941）completed/success，规则48与诊断19项及前置门禁通过。最终GitHub Raw与Fastly各5项公开资产均HTTP200、与本地一致，无缓存绕过参数；备用China-Direct曾有旧缓存，已按该文件定向刷新后核对通过。最终增量含极兔中国jtexpress.cn、维迈通官方下载app.vimoto.top及模拟器假回退修复；维迈通只是下载页而非对讲API已验。代码发布时本地与origin/main及实际远端SHA一致（0/0），工作树clean；本条为发布证据归档。
 * **GitHub Actions 自动化 CI/CD 与发布机制**：
-  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、50+19项门禁与 CDN 镜像校验发布）；
+  * **主干生产流水线**：`.github/workflows/sync-and-build.yml`（每周日 00:00 UTC 定时运行与 push 触发，负责生产构建、全量门禁与 CDN 镜像校验发布）；
+  * **异常告警监听流水线**：`.github/workflows/notify-exceptions.yml`（监听既有更新/旁路巡检 workflow_run completed；仅接受本仓库 main 的受信事件，失败或需关注的降级才告警，正常成功静默；手动 test/已审核 decision 另行触发）；
   * **Phase 0.5 旁路影子巡检流水线**：`.github/workflows/shadow-audit.yml`（每日 02:00 UTC / 北京时间 10:00 自动定时运行与 `workflow_dispatch` 手动触发，纯只读拉取多上游并生成影子审计报告，严格抑制空提交，100% 独立于生产规则发布）；
-  * 5 门严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
+  * 严格前置质量门禁（Ubuntu 环境，Python 3.12 + Node.js 20）：
     1. 构建规则与诊断插件：`python scripts/build.py`
-    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（当前本地与CI均50/50通过）
-    3. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
-    4. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
-    5. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN镜像 100% 保持未被触碰）；
+    2. 规则完整性与防撞车单元测试：`python -B -m unittest scripts.test_rules`（当前本地与CI均55/55通过）
+    3. Telegram 告警与通知看门狗专项测试：`python -B -m unittest tests.test_telegram_alerts tests.test_notification_guards`（22/22 全部通过）
+    4. 跨境共享基础设施防泄漏与冲突检测：`python scripts/check_conflicts.py --strict`（PASS）
+    5. 原生诊断插件夹具测试：`node --test tests/test_diagnostic.js`（19/19 全部通过）
+    6. 本地预发布签名自校验（Fail-Stop Release Barrier）：`python scripts/verify_mirrors.py --pre-release`（严格前置熔断屏障：若规则、哈希或签名存在任何异常，流水线在 git commit / push 前立即终止，远程 main 分支与 CDN镜像 100% 保持未被触碰）；
   * 自动化提交与发布后 CDN 探测：
     - 非 PR 运行模式下，若 `dist/`、`sources.yml`、`scripts/upstream_lock.json` 产生构建更新，由 `github-actions[bot]` 自动提交、生成 release tag 并推送到远端；
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
-  * **已核验的规则发布 CI 运行事实**：本次 Siri/搜索 (`guzzoni.smoot.apple.com`) 精确优化代码 `9b52b0a` 的 [Run #85](https://github.com/o-ocn/loon-rules/actions/runs/37767776142)（ID `37767776142`）completed/success，实际 51 项规则、19 项诊断及前置门禁通过，主源 GitHub Raw 3 项资产一致，副源 CDN 传播待复核。此前 Apple 精确两主机代码 `85a8327` 的 [Run #84](https://github.com/o-ocn/loon-rules/actions/runs/37733112204) completed/success，实际 50/19 及前置门禁通过，普通主备 12 项一致。此前晚间服务族补齐代码 `8cf4d07` 的 [Run #83](https://github.com/o-ocn/loon-rules/actions/runs/37643102870) completed/success，规则 49 项、诊断 19 项与发布前门禁通过；普通主备资产 10/10 一致。以下为此前发布历史：前轮 GitHub Actions Run **#80**（ID `37336844815`，针对 `aa29325d6c53b469f353fed594bba909a141e9b9`）为 completed/success；本轮最终代码发布 [Run #82](https://github.com/o-ocn/loon-rules/actions/runs/37568672941)（ID `37568672941`，针对 `00ce6ba3b3f7b1317a7ae3b38f74e115db5be183`）completed/success；后续独立主备资产核验 10/10 一致，手机生效未验。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（共 **21,323 条有效规则**），已全量构建至 `dist/`；当前本地门禁与主源发布核对通过，副源待自然传播复核；手机生效仍须正常使用确认。
+  * **本日发布 CI 已核验**：App Store两项精确DNS功能提交 `a2af126` 的 [Run 38402917871](https://github.com/o-ocn/loon-rules/actions/runs/38402917871) completed/success，55规则、22通知/健康、19诊断及发布前后门禁通过；实际源/dist与手机反馈见第二节。
+  * **此前已核验发布 CI 运行归档**：此前 Siri/搜索 (`guzzoni.smoot.apple.com`) 精确优化代码 `9b52b0a` 的 [Run #85](https://github.com/o-ocn/loon-rules/actions/runs/37767776142)（ID `37767776142`）completed/success，实际 51 项规则、19 项诊断及前置门禁通过，主源 GitHub Raw 3 项资产一致，副源 CDN 传播待复核。此前 Apple 精确两主机代码 `85a8327` 的 [Run #84](https://github.com/o-ocn/loon-rules/actions/runs/37733112204) completed/success，实际 50/19 及前置门禁通过，普通主备 12 项一致。此前晚间服务族补齐代码 `8cf4d07` 的 [Run #83](https://github.com/o-ocn/loon-rules/actions/runs/37643102870) completed/success，规则 49 项、诊断 19 项与发布前门禁通过；普通主备资产 10/10 一致。以下为此前发布历史：前轮 GitHub Actions Run **#80**（ID `37336844815`，针对 `aa29325d6c53b469f353fed594bba909a141e9b9`）为 completed/success；本轮最终代码发布 [Run #82](https://github.com/o-ocn/loon-rules/actions/runs/37568672941)（ID `37568672941`，针对 `00ce6ba3b3f7b1317a7ae3b38f74e115db5be183`）completed/success；后续独立主备资产核验 10/10 一致，手机生效未验。
+* **规则集架构定型**：全库定型为 **19 个独立规则集**（当前生产内容版本 `7a66cea4eb53`，动态数量以 manifest 为准，当前合计 **23,860 条有效规则**，其中 China-GeoIP 现为 19,214 条；历史定型曾为 21,323 条快照），已全量构建至 `dist/`；当前本地门禁与主源发布核对通过，副源待自然传播复核；手机生效仍须正常使用确认。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
-  * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（19,243 条规则），提供中国 IPv4/IPv6 底层防跌落兜底；
+  * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（当时19,243条规则，当前动态数量见manifest），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
   * Apple 定位 (`ls.apple.com`, `wps.apple.com`)、天气 (`weatherkit.apple.com`)、设备激活与沙盒认证纳入直连，解决海外代理无谓绕行；
   * Apple MapKit 地图矢量瓦片与 POI 图床 (`apple-mapkit.com`) 纳入 `Apple-Direct` 直连，修复国内电信 CDN 节点 (`119.147.195.212`) 跌入 FINAL 产生折返跑延迟，严格保持 `apple.com` 泛域名不添加并保持 `Apple-Media` 与 `TestFlight` 策略隔离；
@@ -160,11 +164,11 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **53/53 全部通过**（新增 test_53 验证 DNS 插件 122 条 DoH 映射源与 dist 字节等价性、120 既有键保持与 2 项 Apple 精确新增、真实 strict 校验通过、10 类右侧变异拦截如 UDP/HTTP/非信端点/端口（含非法端口格式）/参数/畸形行，以及左侧海外独占域名与 Apple 通配/父域负例隔离；test_52 验证 China-Baseline 静态层完整性与哈希锁；test_51 验证 guzzoni.smoot.apple.com；test_50 验证 pancake/tr.iadsdk；保留既有门禁）；
-
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **55/55 全部通过**（当前插件源/dist均131项，129既有键保留与2项精确新增另经任务基线核验；test_53校验源/dist字节等价性、已批准Apple精确主机、真实strict与UDP/HTTP/非信端点/端口/参数/畸形行变异，以及海外独占、Apple/itunes通配/父域和认证负例；test_54验证AI-Overseas 7项官方端点及策略中立；test_55验证7项国内媒体DoH与负向隔离；test_52验证China-Baseline静态层与哈希锁；test_51验证guzzoni.smoot.apple.com；test_50验证pancake/tr.iadsdk；历史53/53为DoH初次迁移时点基线）；
+- **Telegram 告警与通知看门狗专项测试**：`python -B -m unittest tests.test_telegram_alerts tests.test_notification_guards` **22/22 全部通过**（覆盖事件过滤、去重抑制、失败告警与恢复静默边界）；
 - **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
 - **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、340唯一参考主机（273已知/67候选）、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
-- **评分引擎**：`python -B -m unittest scripts.test_score_engine` **4/4 PASS**。
+- **评分引擎**：`python -B -m unittest scripts.test_score_engine` **4/4 PASS**（已有基线证据保留，本轮未新增评分变动）。
 - **Node.js 诊断插件测试**：`node --test tests/test_diagnostic.js` **19/19 全部通过**（快速/完整模式、看门狗超时保全、4 态路由判定、策略嗅探）；
 - **防撞车与 DNS 禁区检测**：`python scripts/check_conflicts.py --strict` **PASS**（0 未授权跨界碰撞）；
 - **预发布镜像签名自校验**：`python scripts/verify_mirrors.py --pre-release` **PASS**（19 规则集正文、诊断元数据与包 SHA256 签名完全吻合）。
@@ -275,7 +279,7 @@
 ### 2. 待办事项
 - [x] **轻量 Telegram 异常通知与审计健康修复**：真实测试/故障告警/恢复静默与远端完整门禁通过，继续正常运行；不要求手机换配置，通知范围与未验边界见当前状态。
 - [x] **本批 AI 7 条与国内媒体 DoH 7 项实施及独立审核**：AI 45、Host 129、账本 146；全部策略保持；来源/锁/红线未改；完整门禁及私人可逆差异通过，发布状态见当前状态。
-- [ ] **V3 手机日常验收**：2026-10-10 所有者已确认选中新配置与 OFF/OFF/Rule，不再重复安排切换；商店与抖音新件实际体验待日常反馈。仅更新公开规则或插件时刷新外部资源即可，替换整份私人配置才需要另选新文件；文件经 iCloud 同步可见不等于已选中。原 V2 的 CF 条目及旧空列表问题已关闭。无 Host 证据或插件路径证据时，不承诺全 App 零卡顿、全机 DNS 零泄漏。
+- [ ] **V3 手机日常验收**：2026-10-10 所有者已确认选中新配置与 OFF/OFF/Rule，不再重复安排切换；2026-10-13 App Store 经更新国内 DNS 插件后已有明显恢复正常反馈，但抖音新件、其他 App、不同网络环境及全机海外隐私仍未全部验收，保持观察。仅更新公开规则或插件时刷新外部资源即可，替换整份私人配置才需要另选新文件；文件经 iCloud 同步可见不等于已选中。原 V2 的 CF 条目及旧空列表问题已关闭。无 Host 证据或插件路径证据时，不承诺全 App 零卡顿、全机 DNS 零泄漏。
 - [ ] **已登记常用服务配套 DNS 复核（AI 负责）**：独立静态扫描共 318 参考行、270 唯一国内主机，存在其他未映射项；先按现有契约、公开客户端资料及规则边界筛选，不把缺映射一概判为故障、不整域放行共享基础设施、不让用户逐 App 抓包。
 - [x] **App Store 单变量系统 DNS 手机实测对照**：2026-10-09 所有者在当前手机配置中仅注释停用 `doh-server = https://dns.google/dns-query`，App Store 即刻恢复正常，单变量对照完成；抖音图文加载待日常自然使用反馈。归档候选（SHA256 `939878c4...`）与备用诊断件（SHA256 `f7392831...`）作为离线准备复制件保留，不整体上机；用户当前使用项目配套配置（已停用 Google DoH），历史 36 规则配置仅作对照。
 - [x] **海外 DNS 隐私防泄漏与大陆直连调度兼顾方案专项实施（公开 DNS 插件 DoH 迁移与守护）**：已完成插件 120 条 UDP 映射迁移至 `https://223.5.5.5/dns-query`，并收敛新增 2 项 Apple 官方精确 Host（`apps.apple.com` 与 `amp-api-edge.apps.apple.com`），Host 总数达到 122 条；`shared_domains.yml` 与 `check_conflicts.py --strict` 强守护落地；测试套件 53/53、诊断 19/19、评分 4/4、strict 与 pre-release 离线全量通过；19 规则集（23,882 规则）与构建签名 `cc70392cee8a` 保持不变；离线工程实施已闭环，Codex独立审核、正常推送及CI #87已完成；私人加密候选已装配并核验，手机加载与日常体验待验。
@@ -363,7 +367,7 @@
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
 * **最后更新**：2026-10-13（App Store两项精确API DNS已推送并通过本地门禁、主源、范围及远端CI核验；手机更新后反馈明显恢复正常；Gemini执行者收尾与Codex独立审核完成，最终Git核验见08号回执；Telegram正常成功静默继续运行，私人配置与策略主权保持）
 
-  * **2026-10-13 GitHub Actions Telegram 异常通知与上游审计监控工程收尾（Gemini 执行 / Codex 独立审核完成并配置 Secrets；待 push 与远端验证）**：
+  * **2026-10-09 DNS 迁移与 2026-10-13 Telegram 实施阶段记录（历史实施时点；最终验收见第二节）**：
     - 新增 `.github/workflows/notify-exceptions.yml` 与 `scripts/notify_telegram.py`，支持 `workflow_run completed` 监听（仅限本仓库 main push/schedule/workflow_dispatch，排除 fork/PR/其他分支/主动取消）；
     - 实现标准库纯文本 Telegram 发送与脱敏（过滤常见凭据/URL userinfo/query/控制字符，剥离 description，不开启 parse_mode）；
     - 修复 `scripts/audit_pipeline.py` 假绿缺陷：区分 fresh/cache/failed，低于 min_rules 失败，无缓存失败及连续 2 次及以上缓存标记 attention_required 并非零退出；
@@ -375,7 +379,7 @@
     - `shared_domains.yml` 与 `scripts/check_conflicts.py --strict` 强校验：新增 `trusted_domestic_dns_endpoints` 白名单（`223.5.5.5` / `223.6.6.6` HTTPS /dns-query），右侧逐条强检，严禁明文 UDP、HTTP、未批准 DoH、userinfo/port/query/fragment 及畸形行；Check 2a 强检海外独占规则集域名严禁指向国内 DNS；
     - 新增 `test_53_doh_migration_and_guard_boundaries`；单测 53/53 PASS、诊断 19/19 PASS、评分 4/4 PASS、`check_conflicts --strict` PASS、`verify_mirrors --pre-release` PASS；
     - 19 规则集（23,882 规则）、139 账本历史字节、`sources.yml`、`upstream_lock.json`、`manifest.json` 签名（`cc70392cee8a`）保持不变；跳过 build，源与 dist 插件直接字节对齐；
-    - 遵循授权不执行 Git 写入与推送，状态标为“待 Codex 独立测试与审核 / 待推送”；真机效果及抖音情况待日常使用验证。
+    - 当时遵循授权不执行 Git 写入与推送，状态标为“待 Codex 独立测试与审核 / 待推送”（历史实施时点事实保留；后续已由 Codex 独立审核并通过 CI 推送上线，最终发布与真实验收事实见第二节）；真机效果及抖音情况待日常使用验证。
 
   * **2026-10-09 手机 DoH 对照恢复、归档核验与隐私待办收尾（所有者实测 / Gemini实施 / Codex独立审核）**：
     - 所有者在当前手机配置中仅注释停用 `doh-server = https://dns.google/dns-query`，实测确认 App Store 即刻恢复正常，完成真机单变量对照；抖音图文待日常观察；
