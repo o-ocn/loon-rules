@@ -2759,7 +2759,7 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertFalse(ok_h, "check_conflicts must fail when baseline body hash is mismatched")
 
     def test_53_doh_migration_and_guard_boundaries(self):
-        """Verify 120 UDP -> DoH migration, 2 exact App Store additions (122 total), source/dist parity, and DoH transport/boundary mutation guards."""
+        """Verify encrypted DNS, approved exact Apple hosts, source/dist parity, and transport/boundary mutation guards."""
         import check_conflicts
         plugin_src_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
         plugin_dist_path = os.path.join(DIST_DIR, "plugins", "Loon-China-DNS.lpx")
@@ -2782,10 +2782,12 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             self.assertIsNone(e["error"], f"Plugin contains malformed line: {e}")
             self.assertEqual(e["right"], "server:https://223.5.5.5/dns-query", f"Host {e['left']} must map to Ali DoH, got {e['right']}")
 
-        # 3. 集合保全：原 120 条左侧模式全量保留，净增且仅增 2 条 Apple 精确主机
+        # 3. 集合保全：原 120 条左侧模式全量保留，包含已批准 Apple 精确主机
         current_hosts = {e["left"] for e in entries}
         self.assertIn("apps.apple.com", current_hosts)
         self.assertIn("amp-api-edge.apps.apple.com", current_hosts)
+        self.assertIn("amp-api.apps.apple.com", current_hosts)
+        self.assertIn("amp-api-search-edge.apps.apple.com", current_hosts)
         self.assertIn("*.cn", current_hosts)
         self.assertIn("*.mzstatic.com", current_hosts)
         self.assertIn("guzzoni.smoot.apple.com", current_hosts)
@@ -2797,6 +2799,8 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         # 严禁通配符及泛域名映射
         self.assertNotIn("*.apps.apple.com", current_hosts)
         self.assertNotIn("*.amp-api-edge.apps.apple.com", current_hosts)
+        self.assertNotIn("*.amp-api.apps.apple.com", current_hosts)
+        self.assertNotIn("*.amp-api-search-edge.apps.apple.com", current_hosts)
         self.assertNotIn("*.apple.com", current_hosts)
         self.assertNotIn("apple.com", current_hosts)
         self.assertNotIn("*.itunes.apple.com", current_hosts)
@@ -2806,13 +2810,18 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         ok_real, err_real, warn_real = check_conflicts.check_conflicts(strict=True)
         self.assertTrue(ok_real, f"Real check_conflicts --strict must pass, got errors: {err_real}")
 
-        # 5. shared_domains.yml 中的 allowed_exact_domestic_dns_hosts 必须精确维护 10 个主机
+        # 5. shared_domains.yml 中的 allowed_exact_domestic_dns_hosts 必须包含已批准旧集及本批 2 项
         with open(check_conflicts.SPEC_PATH, "r", encoding="utf-8") as sf:
             spec_data = yaml.safe_load(sf)
-        apple_exact_allowed = spec_data["ecosystems"]["apple"]["allowed_exact_domestic_dns_hosts"]
-        self.assertEqual(len(apple_exact_allowed), 10, f"Expected 10 allowed exact Apple hosts, got {len(apple_exact_allowed)}: {apple_exact_allowed}")
-        self.assertIn("apps.apple.com", apple_exact_allowed)
-        self.assertIn("amp-api-edge.apps.apple.com", apple_exact_allowed)
+        apple_exact_allowed = set(spec_data["ecosystems"]["apple"]["allowed_exact_domestic_dns_hosts"])
+        expected_approved_apple_hosts = {
+            "cl1.apple.com", "cl2.apple.com", "cl3.apple.com", "cl4.apple.com", "cl5.apple.com",
+            "pancake.apple.com", "tr.iadsdk.apple.com", "guzzoni.smoot.apple.com",
+            "apps.apple.com", "amp-api-edge.apps.apple.com",
+            "amp-api.apps.apple.com", "amp-api-search-edge.apps.apple.com"
+        }
+        for eh in expected_approved_apple_hosts:
+            self.assertIn(eh, apple_exact_allowed, f"Approved Apple exact host '{eh}' must be in allowed_exact_domestic_dns_hosts")
 
         # 6. 右侧变异与传输层强检：拒绝 UDP、HTTP、未批准 DoH、Userinfo、端口、参数、Fragment、语法错误
         doh_mutations = [
@@ -2842,14 +2851,24 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             ("apps_wildcard", "*.apps.apple.com", False),
             ("amp_edge_subdomain", "sub.amp-api-edge.apps.apple.com", False),
             ("amp_edge_wildcard", "*.amp-api-edge.apps.apple.com", False),
+            ("amp_api_subdomain", "probe.amp-api.apps.apple.com", False),
+            ("amp_api_wildcard", "*.amp-api.apps.apple.com", False),
+            ("amp_search_edge_subdomain", "probe.amp-api-search-edge.apps.apple.com", False),
+            ("amp_search_edge_wildcard", "*.amp-api-search-edge.apps.apple.com", False),
             ("apple_root", "apple.com", False),
             ("apple_wildcard", "*.apple.com", False),
+            ("itunes_root", "itunes.apple.com", False),
+            ("itunes_wildcard", "*.itunes.apple.com", False),
+            ("gsa_auth", "gsa.apple.com", False),
+            ("gsa_gpk_auth", "gsa-gpk.apple.com", False),
             ("overseas_google", "*.google.com", False),
             ("overseas_twitter", "twitter.com", False),
             ("overseas_tiktok", "*.tiktok.com", False),
             # 正例放行
             ("apps_exact", "apps.apple.com", True),
             ("amp_edge_exact", "amp-api-edge.apps.apple.com", True),
+            ("amp_api_exact", "amp-api.apps.apple.com", True),
+            ("amp_search_edge_exact", "amp-api-search-edge.apps.apple.com", True),
         ]
         for l_name, l_pattern, expected_ok in left_mutations:
             with self.subTest(left_guard=l_name):

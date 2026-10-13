@@ -93,6 +93,8 @@ ecosystems:
       - guzzoni.smoot.apple.com
       - apps.apple.com  # Apple 官方 CN 网页源码真实嵌入 + 企业网络要求 (support.apple.com/en-us/101555)
       - amp-api-edge.apps.apple.com  # Apple 官方 CN 网页 (apps.apple.com/cn/) 真实嵌入 API 边缘端点
+      - amp-api.apps.apple.com  # 本日 App Store 日志实际请求；精确 DoH 试用 (2026-10-13)
+      - amp-api-search-edge.apps.apple.com  # 本日 App Store 搜索日志实际请求；精确 DoH 试用 (2026-10-13)
     domestic_rulesets:
       - Apple-Direct.lsr
       - Apple-Push.lsr

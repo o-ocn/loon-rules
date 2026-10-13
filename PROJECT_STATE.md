@@ -17,6 +17,12 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-13 App Store 首屏/搜索延迟：两项精确 DNS 试用，本地门禁通过，待远端及手机验收**：
+  - **确认现象与范围**：所有者反馈关闭 Loon 立即恢复；此前关闭国内 DNS 插件、切全局直连未确认清缓存。随后恢复规则模式、启用国内 DNS 插件并重启 Loon/App Store，仍然慢或无法加载。原始截图中商店 API、itunes 与图片域名已命中 DIRECT；`gsa-gpk.apple.com`、`dejavu.apple.com` 落 FINAL。连接记录总时长及零下行不能单独证明握手故障或阻塞因果。
+  - **独立证据与决定**：Gemini核查公开插件，Codex复核5份当前源文及规则/DNS命中；Prevent_DNS_Leaks仅23条检测站代理规则，无Host/General，不以插件名称推断全局DNS干预。Codex默认TLS、有效DNS报文的电脑查询中，两个新API主机的CF结果为Fastly地址151.101.*.6（当前CN表未覆盖），Ali结果沿CN CNAME到121.17.252.7/121.18.236.10（当前CN表覆盖）；确认复查4次报文见 `E:\Document\AI-Workspace\loon-rules\2026-10-13-appstore-api-dns\02-Codex-DNS-evidence.json`。这是定向试用依据，不等于手机实际解析、物理CDN位置或唯一根因。10月9日暂缓的两项现有本日真实调用及解析证据，转为最小试用；原宽itunes与认证DNS禁令保留。
+  - **实际增量与保护**：仅为 `amp-api.apps.apple.com`、`amp-api-search-edge.apps.apple.com` 新增 `server:https://223.5.5.5/dns-query` 精确映射，原129项保留，现131项，源/dist一致；对应Apple精确白名单加2项，扩展既有传输与子域/通配变异门禁，不锁死永久总数。19规则集、全局CF、私人LCF、策略组、节点、绑定及AI policy=All不改；不合并gsa-gpk/dejavu或其他itunes修改，不新增Google/腾讯。
+  - **验证与剩余**：Codex串行55规则测试、19诊断测试、strict/pre-release通过，并独立复验本批精确正例、子域/通配、账户认证及传输负例。全量验证产生的非本批GeoIP/锁/manifest更新已恢复，允许6文件外的全部跟踪文件及2份私人件与任务基线哈希相同；证据见本次目录03/04/05/06。Gemini实施，Codex独立审核；远端发布门禁及新条目手机效果待验，不宣称真机已修好。
+  - **下一步与局部恢复**：通过工程门禁后发布；手机只更新原国内DNS插件并重连，正常搜Chrome，不生成新LCF、不要求抓包。若仍慢，分开检查TUN/IP模式等运行差异，不无限补itunes。若退化，仅撤本批2映射、2白名单与对应测试增量，保留其他成果。恢复起点 `4e8f3f4b2b687b5934e2ea82f29a9da838f5d9b9`。
 * **2026-10-13 Telegram 异常通知已上线，双 AI 收尾完成**：
   - **目标与范围**：复用现有 GitHub Actions，独立 Bot `@Loon_Rules_Push_bot`；正常更新静默，构建/测试/发布门禁失败、上游无缓存失败或连续两次缓存降级才通知，同一失败步骤 24 小时内去重，正常恢复静默解除抑制。人工 `test` 与 AI 已审核的 `decision` 单独触发，不把 REVIEW 总量当告警，不自动纳入候选规则，不部署 VPS 或常驻服务。
   - **健康与安全**：上游失败先保存当前报告和状态再非零退出，单次缓存也标降级；保留内容变化时间语义，失败源不进入聚合，不伪造成功时间。当前 run_id 与文件哈希回执核验后才上传/提交健康事实；有效缓存可跨失败运行保存。通知只接受本仓库 main 的受信事件，PR/fork/其他分支/主动取消不发；纯文本发送，响应正文不进日志，失败不登记已送达。凭据由 Codex 私下加密保存为两个 GitHub Secrets，Gemini 未读取凭据，代码和状态无真实 Token。
@@ -352,7 +358,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-13（轻量 Telegram 异常通知上线，Gemini实施与二审收尾、Codex独立门禁/凭据/实际发送/发布与远端验收完成；工程修正和真实失败已关闭，正常恢复静默已验；手机配置与策略主权保持）
+* **最后更新**：2026-10-13（App Store两项精确API DNS试用，本地门禁与范围核验通过，远端及手机效果待验；Telegram正常成功静默继续运行，私人配置与策略主权保持）
 
   * **2026-10-13 GitHub Actions Telegram 异常通知与上游审计监控工程收尾（Gemini 执行 / Codex 独立审核完成并配置 Secrets；待 push 与远端验证）**：
     - 新增 `.github/workflows/notify-exceptions.yml` 与 `scripts/notify_telegram.py`，支持 `workflow_run completed` 监听（仅限本仓库 main push/schedule/workflow_dispatch，排除 fork/PR/其他分支/主动取消）；
