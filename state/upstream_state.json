@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-12T08:25:15.621191+00:00",
+  "last_updated": "2026-10-13T12:05:54.060380+00:00",
   "sources": {
     "blackmatrix7_china": {
       "name": "blackmatrix7-China",
@@ -9,6 +9,7 @@
       "content_hash": "f47b46695d6c4cb6d4c0a878ae00bb4842dd7f60c180ac1023e476bab1426f31",
       "rule_count": 63,
       "used_cache": false,
+      "consecutive_cache_count": 0,
       "status": "synced_shadow"
     },
     "loyalsoldier_direct": {
@@ -18,6 +19,7 @@
       "content_hash": "c91a00128a071c6a3fa94c11cf7448ed1552a691e84ffb30a43b5838b9e39abc",
       "rule_count": 110874,
       "used_cache": false,
+      "consecutive_cache_count": 0,
       "status": "synced_shadow"
     },
     "acl4ssr_china": {
@@ -27,6 +29,7 @@
       "content_hash": "362edd1f605742b360eaf138f151d7eea96cc17f20ef12da73acbfb80c350e08",
       "rule_count": 635,
       "used_cache": false,
+      "consecutive_cache_count": 0,
       "status": "synced_shadow"
     }
   }
