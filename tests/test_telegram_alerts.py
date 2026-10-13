@@ -176,6 +176,7 @@ class TestTelegramNotificationAndDeduplication(unittest.TestCase):
         self.assertNotIn(token, masked)
         self.assertNotIn(chat_id, masked)
 
+    @patch.dict(os.environ, {"GITHUB_ACTIONS": "false"})
     def test_decision_empty_description_rejected(self):
         with patch("sys.argv", ["notify_telegram.py", "--event-type", "decision", "--description", ""]):
             with self.assertRaises(SystemExit) as cm:

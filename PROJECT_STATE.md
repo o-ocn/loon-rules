@@ -17,6 +17,8 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-13 远端通知初验**：功能提交 `c7224b8` 已推送；手动通道测试（run `38394776959`）由 Telegram `ok=true` 确认发送成功，旁路巡检（run `38394782290`）及其后续正常静默通知（run `38394864979`）通过。首次完整更新（run `38394657526`）在新增专项门禁被拦截：空 decision 的单测未隔离实际 GitHub push 事件，安全入口先静默拒绝，造成期望退出码冲突；55 项既有规则测试、strict 与诊断通过，规则发布步骤未执行。该真实失败自动触发异常通知（run `38395179436`），当前仅修正单测环境隔离并重验，不放宽运行时安全入口。完整生产更新准出仍待新一轮 CI；手机配置、规则与策略不变。
+
 * **2026-10-13 GitHub Actions Telegram 异常通知与上游审计健康门禁（Gemini 执行，Codex 独立审核完成并配置 Secrets；待 push 与远端验证）**：
   - **实现范围与授权**：严格恪守单一事实源、反过度设计与策略主权红线。未发布任何生产规则变更，未动 `rules/`、`dist/`、`plugins/`、`sources.yml`、`shared_domains.yml`、`history/`、私人配置（.lcf）、策略组或策略绑定（AI 仍 `policy=All`）；未执行 `git add/commit/push/reset`；Gemini 未处理/读取任何私人凭据、未发送 Telegram；Codex 已使用用户提供的独立 Bot 完成身份核验，加密配置 GitHub Secrets（`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`），此时尚未 git push，远端 Actions 跨工作流触发与真实 Telegram 发送仍待验证。
   - **上游健康状态与假绿缺陷修复** (`scripts/audit_pipeline.py`)：移除重复定义的死代码；新增 `assess_upstream_health` 判定，精确区分新鲜抓取 (`fresh`)、缓存降级 (`cache`) 与无缓存失败 (`failed`)。首次失败/无缓存失败绝不伪造 `last_synced_at`（保持 None）；内容 hash 未变时保留原内容变化时间；低于 `expected_min_rules` 判定失败；连续两次及以上缓存或无缓存失败标记 `attention_required`，单次缓存降级继续旁路评估；报告标明 `DEGRADED / INCOMPLETE`，出现不可用源或持续缓存降级时显式非零退出 (`exit 1`)，消除假绿风险。
