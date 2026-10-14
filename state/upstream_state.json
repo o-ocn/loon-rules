@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-13T12:05:54.060380+00:00",
+  "last_updated": "2026-10-14T06:59:16.373072+00:00",
   "sources": {
     "blackmatrix7_china": {
       "name": "blackmatrix7-China",
@@ -15,9 +15,9 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-10-12T08:25:15.621191+00:00",
-      "content_hash": "c91a00128a071c6a3fa94c11cf7448ed1552a691e84ffb30a43b5838b9e39abc",
-      "rule_count": 110874,
+      "last_synced_at": "2026-10-14T06:59:16.373072+00:00",
+      "content_hash": "8b5a1eb6595bd1c23e39f65df75e2129ca65c0b6273024dcf725ef4d999438fa",
+      "rule_count": 110564,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
