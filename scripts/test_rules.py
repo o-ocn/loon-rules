@@ -3059,10 +3059,60 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
         self.assertTrue(any("Red line violation" in e or "illegally routed" in e for e in err_mutant),
                         f"Expected red line violation error for mutant '*.com', got: {err_mutant}")
 
+    def test_56_apple_init_ess_exact_classification_and_isolation(self):
+        """Exercise exact-host classification, widening mutations, and static DNS exclusion."""
+        import fnmatch
+        import check_conflicts
+
+        rules = simulate_hit.load_dist_rules()
+        host = "init.ess.apple.com"
+        hits = simulate_hit.match_target(host, rules)
+        self.assertTrue(hits, f"Expected an exact classification for {host}")
+        self.assertEqual(
+            (hits[0]["ruleset"], hits[0]["type"], hits[0]["value"], hits[0]["rule"]),
+            ("Apple-Direct.lsr", "DOMAIN", host, f"DOMAIN,{host}"),
+        )
+
+        negative_targets = [
+            "probe.init.ess.apple.com", "ess.apple.com",
+            "init.ess.apple.com.evil.example", "gsas.apple.com",
+            "kt-prod.ess.apple.com",
+        ]
+        domestic_sets = {"Apple-Direct.lsr", "China-Direct.lsr", "AI-China-Direct.lsr"}
+
+        def assert_isolated(candidate_rules):
+            for target in negative_targets:
+                domestic_hits = [
+                    h for h in simulate_hit.match_target(target, candidate_rules)
+                    if h["ruleset"] in domestic_sets
+                ]
+                self.assertEqual(domestic_hits, [], f"Unexpected domestic match for {target}")
+
+        assert_isolated(rules)
+        # The same negative assertion must fail when the exact rule is widened.
+        for widened_host in (host, "ess.apple.com"):
+            mutant = []
+            for name, entries in rules:
+                if name == "Apple-Direct.lsr":
+                    entries = [
+                        ("DOMAIN-SUFFIX", widened_host, f"DOMAIN-SUFFIX,{widened_host}", line)
+                        if kind == "DOMAIN" and value == host else (kind, value, raw, line)
+                        for kind, value, raw, line in entries
+                    ]
+                mutant.append((name, entries))
+            with self.subTest(widened_host=widened_host), self.assertRaises(AssertionError):
+                assert_isolated(mutant)
+
+        # Static exact/wildcard DNS exclusions; this does not simulate phone DNS.
+        dns_path = os.path.join(BASE_DIR, "plugins", "Loon-China-DNS.lpx")
+        patterns = check_conflicts.load_dns_plugin_hosts(dns_path, preserve_patterns=True)
+        for target in (host, "gsas.apple.com", "kt-prod.ess.apple.com"):
+            matches = [p for p in patterns if fnmatch.fnmatchcase(target, p)]
+            self.assertEqual(matches, [], f"Unexpected domestic DNS pattern for {target}")
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)
 
 if __name__ == "__main__":
     unittest.main()
-

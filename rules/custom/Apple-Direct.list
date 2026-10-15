@@ -61,6 +61,10 @@ DOMAIN,iphone-ld.apple.com
 # Target: Apple StoreKit & IAP sandbox testing environment
 # Source: Loon log trace 2026-09-30 | Reason: amp-api.sandbox.apple.com falling to FINAL
 DOMAIN-SUFFIX,sandbox.apple.com
+# Target: Exact Apple host observed in the owner log
+# Source: v2fly data/apple (@cn) / felixonmars apple.china.conf (2026-10-15 exact classification parity)
+# Reason: Exact host classification parity; strictly no domestic DNS mapping or wildcard
+DOMAIN,init.ess.apple.com
 
 # --- Apple Maps & MapKit Ecosystem ---
 # Target: Apple MapKit tiles and vector graphics CDN (MapKit JS / Find My / HomeKit geolocation)

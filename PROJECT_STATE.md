@@ -18,6 +18,11 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-15 init.ess.apple.com 精确分类补漏：本地门禁通过，远端发布与手机生效待验**：
+  - **目标与依据**：所有者批准将截图中的 `init.ess.apple.com` 补入现有 Apple 分类；v2fly `data/apple` 标为 `full:init.ess.apple.com @cn`，来源含 felixonmars `apple.china.conf`。两者可能同源，不当作独立共识；未取得该精确主机官方业务用途或本次卡顿因果证明。
+  - **实际范围**：仅新增 `DOMAIN,init.ess.apple.com`；Apple-Direct 173→174，19集本地候选合计23,861条，内容版本 `ff130a2e109f`。Gemini实施4文件并交接，Codex中性化注释、强化同一隔离断言对扩大范围变异的失败验证，完成实际产物复核。无DNS新增，131映射、策略组/绑定/AI All、私人配置及gsas/kt-prod.ess等其余截图主机保持。
+  - **验证与范围隔离**：Codex串行完整56规则测试通过（262.731秒），最终产物test_56复验、strict/pre-release均通过；真实首命中Apple-Direct精确DOMAIN，子域/父域/伪后缀及未批准同族负例隔离，两个后缀扩大变异由同一断言捕获。构建顺带GeoIP、缓存及锁已恢复至本任务起点，18个其他规则集逐字节保留；115个非本批跟踪文件、3份私人件哈希相同。仅保留原生builder的Apple产物，用原有build签名函数重算匹配基线的包元数据；本批不宣称全量上游重新同步。证据在 `E:\Document\AI-Workspace\loon-rules\2026-10-15-init-ess-exact-rule\` 的01～05号日志/回执；CLI超时和SUCCESS未作为验证证据。
+  - **下一步与恢复**：正常提交推送并核对远端CI/主源，再更新本条验收状态；手机随后只需更新原Apple-Direct远端资源，实际加载与体验待日常反馈。恢复起点 `47b368ca1ba1352fced36d55528fdb8bd835d2b7`，回退仅撤本批精确分类/对应测试与产物；Hub身份/路径/阶段未变，不更新地图。
 * **2026-10-13 App Store 首屏/搜索延迟：两项精确 DNS 已发布，手机反馈明显恢复正常，远端门禁通过**：
   - **确认现象与范围**：所有者反馈关闭 Loon 立即恢复；此前关闭国内 DNS 插件、切全局直连未确认清缓存。随后恢复规则模式、启用国内 DNS 插件并重启 Loon/App Store，仍然慢或无法加载。原始截图中商店 API、itunes 与图片域名已命中 DIRECT；`gsa-gpk.apple.com`、`dejavu.apple.com` 落 FINAL。连接记录总时长及零下行不能单独证明握手故障或阻塞因果。
   - **独立证据与决定**：Gemini核查公开插件，Codex复核5份当前源文及规则/DNS命中；Prevent_DNS_Leaks仅23条检测站代理规则，无Host/General，不以插件名称推断全局DNS干预。Codex默认TLS、有效DNS报文的电脑查询中，两个新API主机的CF结果为Fastly地址151.101.*.6（当前CN表未覆盖），Ali结果沿CN CNAME到121.17.252.7/121.18.236.10（当前CN表覆盖）；确认复查4次报文见 `E:\Document\AI-Workspace\loon-rules\2026-10-13-appstore-api-dns\02-Codex-DNS-evidence.json`。这是定向试用依据，不等于手机实际解析、物理CDN位置或唯一根因。10月9日暂缓的两项现有本日真实调用及解析证据，转为最小试用；原宽itunes与认证DNS禁令保留。
@@ -94,7 +99,7 @@
     - 发布后执行 `python scripts/verify_mirrors.py --branch main --soft-cdn` 对 GitHub Raw 主源及 jsDelivr CDN 备用源进行镜像连通与内容一致性巡检；
   * **本日发布 CI 已核验**：App Store两项精确DNS功能提交 `a2af126` 的 [Run 38402917871](https://github.com/o-ocn/loon-rules/actions/runs/38402917871) completed/success，55规则、22通知/健康、19诊断及发布前后门禁通过；实际源/dist与手机反馈见第二节。
   * **此前已核验发布 CI 运行归档**：此前 Siri/搜索 (`guzzoni.smoot.apple.com`) 精确优化代码 `9b52b0a` 的 [Run #85](https://github.com/o-ocn/loon-rules/actions/runs/37767776142)（ID `37767776142`）completed/success，实际 51 项规则、19 项诊断及前置门禁通过，主源 GitHub Raw 3 项资产一致，副源 CDN 传播待复核。此前 Apple 精确两主机代码 `85a8327` 的 [Run #84](https://github.com/o-ocn/loon-rules/actions/runs/37733112204) completed/success，实际 50/19 及前置门禁通过，普通主备 12 项一致。此前晚间服务族补齐代码 `8cf4d07` 的 [Run #83](https://github.com/o-ocn/loon-rules/actions/runs/37643102870) completed/success，规则 49 项、诊断 19 项与发布前门禁通过；普通主备资产 10/10 一致。以下为此前发布历史：前轮 GitHub Actions Run **#80**（ID `37336844815`，针对 `aa29325d6c53b469f353fed594bba909a141e9b9`）为 completed/success；本轮最终代码发布 [Run #82](https://github.com/o-ocn/loon-rules/actions/runs/37568672941)（ID `37568672941`，针对 `00ce6ba3b3f7b1317a7ae3b38f74e115db5be183`）completed/success；后续独立主备资产核验 10/10 一致，手机生效未验。
-* **规则集架构定型**：全库定型为 **19 个独立规则集**（当前生产内容版本 `7a66cea4eb53`，动态数量以 manifest 为准，当前合计 **23,860 条有效规则**，其中 China-GeoIP 现为 19,214 条；历史定型曾为 21,323 条快照），已全量构建至 `dist/`；当前本地门禁与主源发布核对通过，副源待自然传播复核；手机生效仍须正常使用确认。
+* **规则集架构定型**：19个独立规则集；本批待发布候选内容版本 `ff130a2e109f`，合计23,861条（Apple-Direct 174、China-GeoIP 19,214）；动态数量以实际manifest为准。历史21,323等为当时快照；远端与手机状态以本节最新专项记录为准。
   * `Gaming.lsr` 合并 Steam 与 Epic（65 条规则），消除 404 故障；
   * `China-GeoIP.lsr` 引入成熟 GPL-2.0 `ChinaIPs`（当时19,243条规则，当前动态数量见manifest），提供中国 IPv4/IPv6 底层防跌落兜底；
   * 字节跳动直播源站 (`bytegecko.com`)、核心图床 (`bytemaimg.com`) 及调度探针 (`ndcpp.com`) 纳入直连与国内 DNS 分流，彻底根除 120 秒超时卡死；
@@ -140,7 +145,7 @@
 | **`TestFlight.lsr`** | 3 | Apple TestFlight 内测分发平台 | 100% 策略中立 |
 | **`Apple-Media.lsr`** | 18 | Apple TV+, Apple News, Fitness+ 锁区媒体 | 100% 策略中立 |
 | **`AI-China-Direct.lsr`** | 19 | DeepSeek、Kimi、通义千问、豆包等国内大模型 | 100% 策略中立 |
-| **`Apple-Direct.lsr`** | 173 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
+| **`Apple-Direct.lsr`** | 174 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
 | **`China-Direct.lsr`** | 3,239 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 109条、已审定China-Baseline静态基线层2,599条（净增+2,559条）；暂缓已识别共享基础设施、出海服务与歧义家族；覆盖非穷举 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
 | **`China-GeoIP.lsr`** | 19,214 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
@@ -164,7 +169,7 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **55/55 全部通过**（当前插件源/dist均131项，129既有键保留与2项精确新增另经任务基线核验；test_53校验源/dist字节等价性、已批准Apple精确主机、真实strict与UDP/HTTP/非信端点/端口/参数/畸形行变异，以及海外独占、Apple/itunes通配/父域和认证负例；test_54验证AI-Overseas 7项官方端点及策略中立；test_55验证7项国内媒体DoH与负向隔离；test_52验证China-Baseline静态层与哈希锁；test_51验证guzzoni.smoot.apple.com；test_50验证pancake/tr.iadsdk；历史53/53为DoH初次迁移时点基线）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **56/56 全部通过**（本批test_56精确分类与扩大范围变异门禁通过；此前55项继续保留）（当前插件源/dist均131项，129既有键保留与2项精确新增另经任务基线核验；test_53校验源/dist字节等价性、已批准Apple精确主机、真实strict与UDP/HTTP/非信端点/端口/参数/畸形行变异，以及海外独占、Apple/itunes通配/父域和认证负例；test_54验证AI-Overseas 7项官方端点及策略中立；test_55验证7项国内媒体DoH与负向隔离；test_52验证China-Baseline静态层与哈希锁；test_51验证guzzoni.smoot.apple.com；test_50验证pancake/tr.iadsdk；历史53/53为DoH初次迁移时点基线）；
 - **Telegram 告警与通知看门狗专项测试**：`python -B -m unittest tests.test_telegram_alerts tests.test_notification_guards` **22/22 全部通过**（覆盖事件过滤、去重抑制、失败告警与恢复静默边界）；
 - **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
 - **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、340唯一参考主机（273已知/67候选）、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
@@ -365,7 +370,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-13（App Store两项精确API DNS已推送并通过本地门禁、主源、范围及远端CI核验；手机更新后反馈明显恢复正常；Gemini执行者收尾与Codex独立审核完成，最终Git核验见08号回执；Telegram正常成功静默继续运行，私人配置与策略主权保持）
+* **最后更新**：2026-10-15（init.ess.apple.com一条精确分类本地已实施并通过56规则/边界/strict/pre-release；远端发布与手机效果待验；DNS、策略组、绑定及私人件保留）
 
   * **2026-10-09 DNS 迁移与 2026-10-13 Telegram 实施阶段记录（历史实施时点；最终验收见第二节）**：
     - 新增 `.github/workflows/notify-exceptions.yml` 与 `scripts/notify_telegram.py`，支持 `workflow_run completed` 监听（仅限本仓库 main push/schedule/workflow_dispatch，排除 fork/PR/其他分支/主动取消）；
