@@ -12,7 +12,7 @@ This phase does not modify:
 
 AUTO_PASS means simulated production eligibility only.
 
-> ⏱ **生成时间**: `2026-10-15T06:50:58.230644+00:00`  
+> ⏱ **生成时间**: `2026-10-16T06:38:59.099518+00:00`  
 > 🛡 **运行模式**: 只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状  
 
 ---
@@ -21,12 +21,12 @@ AUTO_PASS means simulated production eligibility only.
 
 | 指标项 | 规则数量 | 占比 | 说明 |
 | :--- | :---: | :---: | :--- |
-| **上游去重聚合总量** | **110721** | 100% | 多源清洗规范化后的全局规则集 |
+| **上游去重聚合总量** | **110668** | 100% | 多源清洗规范化后的全局规则集 |
 | **生产已有覆盖 (In Prod)** | **2868** | - | 当前 `China-Direct.lsr` 已稳定纳管的规则 |
-| **新增候选差集 (Delta)** | **107853** | 100% | 上游存在但未纳入当前生产的域名/网段 |
+| **新增候选差集 (Delta)** | **107800** | 100% | 上游存在但未纳入当前生产的域名/网段 |
 | ├─ **拟自动放行 (`AUTO_PASS`)** | **50** | 0.0% | 模拟生产放行（高置信度/双重凭证/大陆核心App） |
 | ├─ **拟隔离待审 (`REVIEW`)** | **120** | 0.1% | 拟入隔离池（需 AI 会审或观察中候选） |
-| └─ **拟彻底阻断 (`BLOCK`)** | **107683** | 99.8% | 彻底剔除（海外代理碰撞/低分/禁止类型如 IP-CIDR） |
+| └─ **拟彻底阻断 (`BLOCK`)** | **107630** | 99.8% | 彻底剔除（海外代理碰撞/低分/禁止类型如 IP-CIDR） |
 
 > 🎯 **自动决策覆盖率**: **`99.89%`**  
 > （自动决策覆盖率达到 99.89%，其中主要来自自动 BLOCK 与类型过滤。明确区分：自动处理 ≠ 自动放行。）
@@ -81,7 +81,7 @@ AUTO_PASS means simulated production eligibility only.
 | `USER-AGENT,%e4%bc%98%e9%85%b7*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
 | `USER-AGENT,%e5%8d%b3%e5%88%bb*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
 
-*(其余 107668 条详见 shadow_report.json)*
+*(其余 107615 条详见 shadow_report.json)*
 
 ---
 

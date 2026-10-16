@@ -1,13 +1,13 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-10-15T06:50:58.230644+00:00",
+  "generated_at": "2026-10-16T06:38:59.099518+00:00",
   "kpi": {
-    "total_aggregated_upstream": 110721,
+    "total_aggregated_upstream": 110668,
     "production_covered_count": 2868,
-    "new_candidate_count": 107853,
+    "new_candidate_count": 107800,
     "simulated_auto_pass_count": 50,
     "simulated_review_count": 120,
-    "simulated_block_count": 107683,
+    "simulated_block_count": 107630,
     "auto_decision_coverage_pct": 99.89
   },
   "health_status": {
@@ -30,9 +30,9 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-10-14T06:59:16.373072+00:00",
-      "content_hash": "8b5a1eb6595bd1c23e39f65df75e2129ca65c0b6273024dcf725ef4d999438fa",
-      "rule_count": 110564,
+      "last_synced_at": "2026-10-16T06:38:59.099518+00:00",
+      "content_hash": "d2d9549f28bfe21802d2ec31352bb45bfbfc59549e14fdd7f94c9d0f93fdde59",
+      "rule_count": 110510,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
@@ -20343,28 +20343,6 @@
       "rule": "DOMAIN-SUFFIX,01zhuanche.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "01zhuanche.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,01zk.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "01zk.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -114720,28 +114698,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,46ps.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "46ps.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,46xs.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "46xs.com",
@@ -156938,28 +156894,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,618day.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "618day.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,618ky.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "618ky.com",
@@ -163912,28 +163846,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,68978.net",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "68978.net",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,68apk.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "68apk.com",
@@ -168139,28 +168051,6 @@
       "rule": "DOMAIN-SUFFIX,70524.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "70524.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,706net.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "706net.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -184067,28 +183957,6 @@
       "rule": "DOMAIN-SUFFIX,83753751.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "83753751.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,8379888.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "8379888.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -222237,28 +222105,6 @@
       "rule": "DOMAIN-SUFFIX,acirno.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "acirno.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,acjw.net",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "acjw.net",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -296088,28 +295934,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,ax196.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "ax196.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,ax2nc4.ren",
       "type": "DOMAIN-SUFFIX",
       "pattern": "ax2nc4.ren",
@@ -320379,28 +320203,6 @@
       "rule": "DOMAIN-SUFFIX,bbgdex.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "bbgdex.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,bbgsite.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "bbgsite.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -381455,28 +381257,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,bscdnweb.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "bscdnweb.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,bscea.org",
       "type": "DOMAIN-SUFFIX",
       "pattern": "bscea.org",
@@ -424025,28 +423805,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,cdn.samsung.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "cdn.samsung.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,cdn.shanghai.nyu.edu",
       "type": "DOMAIN-SUFFIX",
       "pattern": "cdn.shanghai.nyu.edu",
@@ -437250,28 +437008,6 @@
       "rule": "DOMAIN-SUFFIX,cgicop.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "cgicop.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,cgiumuo.xyz",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "cgiumuo.xyz",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -512719,28 +512455,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,cnfiberhome.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "cnfiberhome.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,cnfin.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "cnfin.com",
@@ -534920,6 +534634,28 @@
       "rule": "DOMAIN-SUFFIX,corex-design.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "corex-design.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,corexpertdata.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "corexpertdata.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -583804,28 +583540,6 @@
       "rule": "DOMAIN-SUFFIX,dahongba.net",
       "type": "DOMAIN-SUFFIX",
       "pattern": "dahongba.net",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,dahongtec.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "dahongtec.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -717731,28 +717445,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,famoustone.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "famoustone.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,fan-lun.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "fan-lun.com",
@@ -727084,28 +726776,6 @@
       "rule": "DOMAIN-SUFFIX,fcpawn.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "fcpawn.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,fcpiao.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "fcpiao.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -748490,28 +748160,6 @@
       "rule": "DOMAIN-SUFFIX,floatingislandapps.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "floatingislandapps.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,floatmaze.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "floatmaze.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -804612,28 +804260,6 @@
       "rule": "DOMAIN-SUFFIX,gewuzhixiang.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "gewuzhixiang.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,gexiao.me",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "gexiao.me",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -890959,28 +890585,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,gxzdyg.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "gxzdyg.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,gxzecai.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "gxzecai.com",
@@ -950139,28 +949743,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,heijiao.net",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "heijiao.net",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,heijiaovip.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "heijiaovip.com",
@@ -973330,28 +972912,6 @@
       "rule": "DOMAIN-SUFFIX,hk.uy",
       "type": "DOMAIN-SUFFIX",
       "pattern": "hk.uy",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,hk0523.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "hk0523.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1023443,28 +1023003,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,huicx7.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "huicx7.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,huida18.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "huida18.com",
@@ -1066013,28 +1065551,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,ictdns.icu",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "ictdns.icu",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,ictdns.store",
       "type": "DOMAIN-SUFFIX",
       "pattern": "ictdns.store",
@@ -1079543,28 +1079059,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,ikncn.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "ikncn.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,ikonfx.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "ikonfx.com",
@@ -1086168,28 +1085662,6 @@
       "rule": "DOMAIN-SUFFIX,imtedge.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "imtedge.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,imtics.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "imtics.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1148821,28 +1148293,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,jingshistudy.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "jingshistudy.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,jingshizyy.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "jingshizyy.com",
@@ -1195109,28 +1194559,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,jufengwuxi.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "jufengwuxi.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,jufu.vip",
       "type": "DOMAIN-SUFFIX",
       "pattern": "jufu.vip",
@@ -1199314,28 +1198742,6 @@
       "rule": "DOMAIN-SUFFIX,junziqian.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "junziqian.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,junziyize.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "junziyize.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1264711,28 +1264117,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,lamwatch.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "lamwatch.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,lamyu.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "lamyu.com",
@@ -1265088,28 +1264472,6 @@
       "rule": "DOMAIN-SUFFIX,lancong.net",
       "type": "DOMAIN-SUFFIX",
       "pattern": "lancong.net",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,lanconvey.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "lanconvey.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1436151,28 +1435513,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,na.ci",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "na.ci",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,naaln.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "naaln.com",
@@ -1446098,28 +1445438,6 @@
       "rule": "DOMAIN-SUFFIX,ncnynl.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "ncnynl.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,ncogvki.xyz",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "ncogvki.xyz",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1524158,28 +1523476,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,pansousuo.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "pansousuo.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,pantherhealthcare.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "pantherhealthcare.com",
@@ -1532848,28 +1532144,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,pengliao.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "pengliao.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,pengpailaw.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "pengpailaw.com",
@@ -1536789,28 +1536063,6 @@
       "rule": "DOMAIN-SUFFIX,phonegap100.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "phonegap100.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,phonelinksoft.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "phonelinksoft.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1550099,28 +1549351,6 @@
       "rule": "DOMAIN-SUFFIX,pondernext.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "pondernext.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,ponging.store",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "ponging.store",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1619050,28 +1618280,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,qyhgsb.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "qyhgsb.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,qyhl.vip",
       "type": "DOMAIN-SUFFIX",
       "pattern": "qyhl.vip",
@@ -1645167,28 +1644375,6 @@
       "rule": "DOMAIN-SUFFIX,rongbiz.net",
       "type": "DOMAIN-SUFFIX",
       "pattern": "rongbiz.net",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,rongbst.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "rongbst.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1704828,28 +1704014,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,shancui1688.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "shancui1688.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,shanda960.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "shanda960.com",
@@ -1758904,6 +1758068,28 @@
       }
     },
     {
+      "rule": "DOMAIN-SUFFIX,siriser.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "siriser.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
       "rule": "DOMAIN-SUFFIX,sirweara.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "sirweara.com",
@@ -1764052,28 +1763238,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,skd6.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "skd6.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,skd62.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "skd62.com",
@@ -1766626,28 +1765790,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,skyxvpn.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "skyxvpn.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,skyyin.org",
       "type": "DOMAIN-SUFFIX",
       "pattern": "skyyin.org",
@@ -1767487,6 +1766629,28 @@
       "rule": "DOMAIN-SUFFIX,sllai.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "sllai.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,slldbs641.vip",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "slldbs641.vip",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1769753,28 +1768917,6 @@
       "rule": "DOMAIN-SUFFIX,smartyoke.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "smartyoke.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,smartyun8.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "smartyun8.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1785219,28 +1784361,6 @@
       "rule": "DOMAIN-SUFFIX,soyoung.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "soyoung.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,soyouso.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "soyouso.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1823477,28 +1822597,6 @@
       "rule": "DOMAIN-SUFFIX,syoits.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "syoits.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,syoker.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "syoker.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1882742,28 +1881840,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,tiannbo.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "tiannbo.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,tiannilaw.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "tiannilaw.com",
@@ -1924762,28 +1923838,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,tuirice.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "tuirice.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,tuishao.net",
       "type": "DOMAIN-SUFFIX",
       "pattern": "tuishao.net",
@@ -1924875,28 +1923929,6 @@
       "rule": "DOMAIN-SUFFIX,tuisnake.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "tuisnake.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,tuistone.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "tuistone.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1936557,28 +1935589,6 @@
       "rule": "DOMAIN-SUFFIX,tzxingtang.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "tzxingtang.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,tzxwzx.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "tzxwzx.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -2000370,28 +1999380,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,weareing.store",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "weareing.store",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,wearemanner.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "wearemanner.com",
@@ -2003431,28 +2002419,6 @@
       "rule": "DOMAIN-SUFFIX,wedfairy.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "wedfairy.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,wedn.net",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "wedn.net",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -2082210,28 +2081176,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,xegymyb.xyz",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "xegymyb.xyz",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,xehedu.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "xehedu.com",
@@ -2142930,28 +2141874,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,xtxbemp.xyz",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "xtxbemp.xyz",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,xtxcm.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "xtxcm.com",
@@ -2143769,28 +2142691,6 @@
       "rule": "DOMAIN-SUFFIX,xuanshu.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "xuanshu.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,xuanshu.org",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "xuanshu.org",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -2265734,28 +2264634,6 @@
       }
     },
     {
-      "rule": "DOMAIN-SUFFIX,yzjdgs88.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "yzjdgs88.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
       "rule": "DOMAIN-SUFFIX,yzjj120.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "yzjj120.com",
@@ -2283733,28 +2282611,6 @@
       "rule": "DOMAIN-SUFFIX,zgjxjjw.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "zgjxjjw.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,zgjymg.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "zgjymg.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -2344629,28 +2343485,6 @@
       "rule": "DOMAIN-SUFFIX,zoassetmanagement.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "zoassetmanagement.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,zobmxcfw.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "zobmxcfw.com",
       "sources": [
         "loyalsoldier_direct"
       ],
