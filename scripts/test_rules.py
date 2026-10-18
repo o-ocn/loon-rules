@@ -3110,6 +3110,81 @@ https://raw.githubusercontent.com/.../dist/Apple-Push.lsr, policy=DIRECT, tag=Ap
             matches = [p for p in patterns if fnmatch.fnmatchcase(target, p)]
             self.assertEqual(matches, [], f"Unexpected domestic DNS pattern for {target}")
 
+    def test_57_china_geoip_cidr_overlap_exclusions(self):
+        """Keep existing Alibaba CIDRs covered while rejecting unreviewed overlaps."""
+        reviewed = {
+            "IP-CIDR,14.1.112.0/22,no-resolve",
+            "IP-CIDR,161.117.0.0/16,no-resolve",
+            "IP-CIDR,205.204.96.0/19,no-resolve",
+            "IP-CIDR,47.240.0.0/14,no-resolve",
+            "IP-CIDR,47.254.0.0/16,no-resolve",
+            "IP-CIDR,47.52.0.0/16,no-resolve",
+            "IP-CIDR,47.74.0.0/15,no-resolve",
+        }
+        production = build.load_sources(SOURCES_FILE)
+        alibaba = next(s for s in production["rulesets"]["China-Direct"]["sources"]
+                       if s["name"] == "Alibaba")
+        china_ips = next(s for s in production["rulesets"]["China-GeoIP"]["sources"]
+                         if s["name"] == "ChinaIPs")
+        cfg = {"rulesets": {
+            "China-Direct": {"sources": [copy.deepcopy(alibaba)]},
+            "China-GeoIP": {"sources": [copy.deepcopy(china_ips)]},
+        }}
+        control = "IP-CIDR,192.0.2.0/24,no-resolve"
+        fixtures = {
+            alibaba["url"]: "\n".join(sorted(reviewed)),
+            china_ips["url"]: "\n".join(sorted(reviewed | {control})),
+        }
+        with tempfile.TemporaryDirectory(prefix="test_geoip_overlap_", dir=TEST_TMP_DIR) as tmp:
+            t_sources = os.path.join(tmp, "sources.yml")
+            t_dist = os.path.join(tmp, "dist")
+            t_lock = os.path.join(tmp, "lock.json")
+
+            def run_config(config):
+                with open(t_sources, "w", encoding="utf-8") as f:
+                    yaml.safe_dump(config, f, sort_keys=False)
+                return build.build_rulesets(sources_file=t_sources, dist_dir=t_dist,
+                                            lock_file=t_lock, allow_new_baseline=True)
+
+            def snapshot():
+                paths = [os.path.join(root, name)
+                         for root, _, names in os.walk(t_dist) for name in names] + [t_lock]
+                contents = {}
+                for path in paths:
+                    with open(path, "rb") as f:
+                        contents[path] = f.read()
+                return contents
+
+            with patch.object(build, "BASE_DIR", tmp), \
+                 patch.object(build, "DIST_DIAGNOSTICS_DIR", os.path.join(t_dist, "diagnostics")), \
+                 patch.object(build, "fetch_upstream_strict",
+                              side_effect=lambda url, **kwargs: (fixtures[url], False)):
+                result = run_config(cfg)
+                self.assertEqual(result["rulesets"]["China-Direct.lsr"]["total_rules"], len(reviewed))
+                self.assertEqual(result["rulesets"]["China-GeoIP.lsr"]["total_rules"], 1)
+                with open(os.path.join(t_dist, "China-Direct.lsr"), encoding="utf-8") as f:
+                    direct = set(f.read().splitlines())
+                with open(os.path.join(t_dist, "China-GeoIP.lsr"), encoding="utf-8") as f:
+                    geoip = set(f.read().splitlines())
+                self.assertTrue(reviewed <= direct)
+                self.assertFalse(reviewed & geoip)
+                self.assertIn(control, geoip)
+                before = snapshot()
+
+                # Removing any reviewed exclusion must trip the original fatal gate.
+                for rule in sorted(reviewed):
+                    mutant = copy.deepcopy(cfg)
+                    mutant["rulesets"]["China-GeoIP"]["sources"][0]["filter_excluded"].remove(rule)
+                    with self.subTest(rule=rule), self.assertRaisesRegex(ValueError, "FATAL CONFLICT"):
+                        run_config(mutant)
+                    self.assertEqual(snapshot(), before, "Rejected build changed the previous release")
+
+                # Future overlaps remain blocked; this is not a blanket exception.
+                fixtures[alibaba["url"]] += "\n" + control
+                with self.assertRaisesRegex(ValueError, "FATAL CONFLICT"):
+                    run_config(cfg)
+                self.assertEqual(snapshot(), before)
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_TMP_DIR, ignore_errors=True)

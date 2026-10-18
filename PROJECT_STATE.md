@@ -18,6 +18,12 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-18 定时更新重复网段故障：本地全部门禁通过，待远端发布验收**：
+  - **原因与修复**：今日 [CI 39088855855](https://github.com/o-ocn/loon-rules/actions/runs/39088855855) 在构建阶段报告 `IP-CIDR,14.1.112.0/22` 重复归属，后续测试、提交与发布均跳过；Telegram 异常通知已有所有者截图确认送达。新鲜上游本地复现同一失败，完整差集确认共7项既有 Alibaba 网段与 ChinaIPs 重叠。仅在 `sources.yml` 现有 ChinaIPs `filter_excluded` 中补7项精确排除，保留原 China-Direct 归属和全部覆盖，编译器与原冲突门禁未改。
+  - **实际产物与范围**：在线构建通过，正常上游更新同时令 China-GeoIP 19,211→19,588（净增377），19集合计24,235，内容版本 `ea02f434c268`。独立核对 GeoIP 正文与当前源缓存及完整排除清单完全一致；其余18个规则集、构建器和DNS字节与起点一致，共113个非本批跟踪文件未变。不修改策略绑定、私人配置或 Hub 地图。
+  - **本地验证**：57规则测试（224.599秒）、26通知/健康/评分测试、19诊断测试、strict及pre-release全部通过。新增离线真实构建回归覆盖7项原分类保留、无关网段保留、逐项撤排除与额外未知重叠；8项负向构建均触发原 FATAL CONFLICT，失败前后成品和锁字节不变。
+  - **发布与恢复**：当前待正常推送、远端CI及主源核验，不将本地通过冒称远端闭环。任务恢复起点 `f22609db5c7c0329b06e5005b909ea2a07a39cfa`；证据保存于 `E:\Document\ChatGPT\loon-rules\2026-10-18-build-cidr-conflict\` 的构建/测试日志与 `10-scope-audit.json`。如需撤回，撤本轮提交及相应产物，保留其他任务成果；恢复旧版会同时恢复已知定时构建阻塞，不能只撤排除清单后宣称更新正常。
+
 * **2026-10-15 init.ess.apple.com 精确分类补漏：已发布，远端全部门禁通过，双AI收尾完成**：
   - **目标与依据**：所有者批准将截图中的 `init.ess.apple.com` 补入现有 Apple 分类；v2fly `data/apple` 标为 `full:init.ess.apple.com @cn`，来源含 felixonmars `apple.china.conf`。两者可能同源，不当作独立共识；未取得该精确主机官方业务用途或本次卡顿因果证明。
   - **实际范围**：仅新增 `DOMAIN,init.ess.apple.com`；Apple-Direct 173→174。初始范围隔离产物为19集23,861条/`ff130a2e109f`；正常CI随后同步成熟上游GeoIP，现生产为23,858条/`a9aea464e215`（GeoIP 19,211）。Gemini实施并复核，Codex中性化未验证业务用途注释、强化同一隔离断言捕获范围扩大变异，独立验收实际产物。无DNS新增，131映射、策略组/绑定/AI All、私人配置及gsas/kt-prod.ess等其余截图主机保持。
@@ -148,7 +154,7 @@
 | **`Apple-Direct.lsr`** | 174 | iCloud, CloudKit, App Store, Apple ID, 定位, 天气, OTA 目录 (含 ADOS), MapKit 地图瓦片 (apple-mapkit.com) | 100% 策略中立 |
 | **`China-Direct.lsr`** | 3,239 | 国内服务与自有CDN、银行支付、政务出行、China-Personal 109条、已审定China-Baseline静态基线层2,599条（净增+2,559条）；暂缓已识别共享基础设施、出海服务与歧义家族；覆盖非穷举 | 100% 策略中立 |
 | **`Lan.lsr`** | 9 | RFC 局域网与保留网段直连旁路（排在 GeoIP 之前） | 100% 策略中立 |
-| **`China-GeoIP.lsr`** | 19,211 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6） | 100% 策略中立 |
+| **`China-GeoIP.lsr`** | 19,588 | 中国大陆 IP-CIDR 兜底防线（引入 ChinaIPs IPv4/IPv6；2026-10-18本地构建值，发布状态见第二节） | 100% 策略中立 |
 
 ---
 
@@ -169,7 +175,7 @@
 ## 五、验证状态与自动化门禁基线
 
 ### 1. 离线全量测试基线（100% PASS）
-- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **56/56 全部通过**（本批test_56精确分类与扩大范围变异门禁通过；此前55项继续保留）（当前插件源/dist均131项，129既有键保留与2项精确新增另经任务基线核验；test_53校验源/dist字节等价性、已批准Apple精确主机、真实strict与UDP/HTTP/非信端点/端口/参数/畸形行变异，以及海外独占、Apple/itunes通配/父域和认证负例；test_54验证AI-Overseas 7项官方端点及策略中立；test_55验证7项国内媒体DoH与负向隔离；test_52验证China-Baseline静态层与哈希锁；test_51验证guzzoni.smoot.apple.com；test_50验证pancake/tr.iadsdk；历史53/53为DoH初次迁移时点基线）；
+- **Python 规则单元测试**：`python -B -m unittest scripts.test_rules` **57/57 全部通过**（2026-10-18新增test_57验证GeoIP精确排除后的覆盖及8项真实构建冲突负例；此前test_56精确Apple分类与扩大范围变异门禁保留）（当前插件源/dist均131项，129既有键保留与2项精确新增另经任务基线核验；test_53校验源/dist字节等价性、已批准Apple精确主机、真实strict与UDP/HTTP/非信端点/端口/参数/畸形行变异，以及海外独占、Apple/itunes通配/父域和认证负例；test_54验证AI-Overseas 7项官方端点及策略中立；test_55验证7项国内媒体DoH与负向隔离；test_52验证China-Baseline静态层与哈希锁；test_51验证guzzoni.smoot.apple.com；test_50验证pancake/tr.iadsdk；历史53/53为DoH初次迁移时点基线）；
 - **Telegram 告警与通知看门狗专项测试**：`python -B -m unittest tests.test_telegram_alerts tests.test_notification_guards` **22/22 全部通过**（覆盖事件过滤、去重抑制、失败告警与恢复静默边界）；
 - **归档配置只读核验（2026-10-07）**：登记的2026-10-03候选归档（包含子目录检查）含19个启用远程集，China-Direct/Apple-Direct/China-GeoIP启用且绑定DIRECT；10个重点主机在本地+远程顺序下首命中预期分类；结构验收在允许未验插件的条件下通过。归档不是当前手机加载证明；36个启用插件的运行时注入未验；未写私人配置或凭据。
 - **公开服务样本复核**：`python -B scripts/audit_common_apps.py --output <任务目录>/common-apps.csv`：90行服务登记、340唯一参考主机（273已知/67候选）、0已知样本退化；候选没有域名命中时不伪报手机FINAL或App故障。
@@ -187,6 +193,8 @@
 ---
 
 ## 六、关键架构决策
+
+- **2026-10-18 重复 CIDR 沿用来源精确排除**：ChinaIPs 新增内容与既有 Alibaba 分类出现7个精确重叠，只扩充已有兜底源排除清单；保留优先分类及覆盖，不把所有跨集 IP 重叠改为自动吞并，不取消 FATAL CONFLICT，不改变策略绑定。真实构建回归逐项撤回排除及注入未知重叠，验证门禁继续拒绝未审冲突。
 
 - **2026-10-09 DNS 临时恢复与加密分流决策**：停用全局 Google DoH 后 App Store 已由所有者确认恢复；system仅作为手机实际DoH尚未验收时的临时恢复设置。公开国内 Host 已迁移 AliDNS DoH；私人V1双IP全球DoH文本未在手机DNS页显示，后续V2改用官方Cloudflare域名DoH、显式普通CF基础DNS、精确Host/域名路由；订阅专用AliDNS双IP DoH及其他节点/策略保留。两版均不因文件存在认定手机成功；暂不加Google是排查选择，不是已证实Google服务故障或Cloudflare绝不会复现。系统 DNS 与查询回落需在手机 GUI 关闭，DoH 模式保持 Rule；删除文本行不证明 GUI 状态已生效，普通 Host CNAME/失败路径及手机体验仍待验。不能仅凭代理出口、一次网页DNS测试或加密字样宣称所有海外查询已验证；不将国内 DoH 加入全局并发列表，不恢复原 Google 默认，不泛绑定 apple/icloud。
 
@@ -282,6 +290,7 @@
   - 连续日常使用 1~2 周无超时、无误伤、无漂移报错，且自动化 CI 巡航稳定，即可正式解除观察期，冻结日常手动干预。
 
 ### 2. 待办事项
+- [ ] **优先恢复定时构建（2026-10-18）**：7个精确重复的本地构建与回归已通过；继续完成全量门禁、正常推送、远端 CI 及主源核验，发布闭环后再标完成。
 - [x] **轻量 Telegram 异常通知与审计健康修复**：真实测试/故障告警/恢复静默与远端完整门禁通过，继续正常运行；不要求手机换配置，通知范围与未验边界见当前状态。
 - [x] **本批 AI 7 条与国内媒体 DoH 7 项实施及独立审核**：AI 45、Host 129、账本 146；全部策略保持；来源/锁/红线未改；完整门禁及私人可逆差异通过，发布状态见当前状态。
 - [ ] **V3 手机日常验收**：2026-10-10 所有者已确认选中新配置与 OFF/OFF/Rule，不再重复安排切换；2026-10-13 App Store 经更新国内 DNS 插件后已有明显恢复正常反馈，但抖音新件、其他 App、不同网络环境及全机海外隐私仍未全部验收，保持观察。仅更新公开规则或插件时刷新外部资源即可，替换整份私人配置才需要另选新文件；文件经 iCloud 同步可见不等于已选中。原 V2 的 CF 条目及旧空列表问题已关闭。无 Host 证据或插件路径证据时，不承诺全 App 零卡顿、全机 DNS 零泄漏。
@@ -370,7 +379,7 @@
 * **运行环境**：PowerShell, Python 3.12+, Node.js 20+
 * **主工作区路径**：`E:\Document\Gemini\loon-rules`
 * **版本控制**：Git（GitHub 远程公开仓库 `o-ocn/loon-rules`，分支 `main`）
-* **最后更新**：2026-10-15（init.ess.apple.com精确分类已发布，56规则/22通知健康/19诊断及远端发布前后门禁通过；双AI收尾，主源及Git同步验收见本任务最终回执；手机效果未验；DNS、策略组、绑定及私人件保留）
+* **最后更新**：2026-10-18（修复ChinaIPs与既有Alibaba分类的7项精确网段重叠；在线构建、57规则/26通知健康评分/19诊断、strict及pre-release通过；远端发布验收进行中；DNS、策略组、绑定及私人件保留）
 
   * **2026-10-09 DNS 迁移与 2026-10-13 Telegram 实施阶段记录（历史实施时点；最终验收见第二节）**：
     - 新增 `.github/workflows/notify-exceptions.yml` 与 `scripts/notify_telegram.py`，支持 `workflow_run completed` 监听（仅限本仓库 main push/schedule/workflow_dispatch，排除 fork/PR/其他分支/主动取消）；
