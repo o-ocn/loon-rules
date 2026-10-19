@@ -9,6 +9,7 @@ Thumbs.db
 loon_dist_staging_*
 *.lcf
 .test_tmp/
+.release_tmp/
 
 # Logs, HAR files and diagnostic data (Strictly ignored to prevent sensitive leaks)
 *.log

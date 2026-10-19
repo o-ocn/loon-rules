@@ -36,7 +36,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install Dependencies
         run: |
@@ -56,11 +56,14 @@ jobs:
 
       - name: Run Diagnostic Plugin Fixture Tests
         run: |
-          node --test tests/test_diagnostic.js
+          node --test tests/test_diagnostic.js tests/test_pages_functions.js
 
       - name: Run Telegram Alert Suite and Health Contract Tests
         run: |
-          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py tests/test_pages_release.py
+          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py tests/test_pages_release.py tests/test_release_gates.py
+
+      - name: Compile tested Pages Functions
+        run: npx --yes wrangler@4.151.1 pages functions build functions --outfile .release_tmp/functions-check.js
 
       - name: Pre-Release Local Integrity Gate (Fail-Stop Release Barrier)
         # Strict local barrier: stops pipeline BEFORE git commit or push if any rule,
@@ -94,15 +97,20 @@ jobs:
           sleep 10
           python scripts/verify_mirrors.py --branch ${{ github.ref_name }} --soft-cdn
 
+      - name: Package tested assets and Functions
+        if: github.event_name != 'pull_request' && github.repository == 'o-ocn/loon-rules' && github.ref == 'refs/heads/main'
+        run: python -B -m scripts.pages_bundle --output .release_tmp/pages-release
+
       - name: Upload Verified Pages Bundle
         if: github.event_name != 'pull_request' && github.repository == 'o-ocn/loon-rules' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: loon-rules-dist
-          path: dist/
+          path: .release_tmp/pages-release/
           if-no-files-found: error
           retention-days: 7
           overwrite: true
+          include-hidden-files: true
 
   pages-deploy:
     name: Cloudflare Pages deployment
@@ -144,25 +152,26 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: loon-rules-dist
-          path: pages-dist
+          path: pages-release
 
       - name: Verify downloaded release integrity
         run: |
-          python -B -c "from scripts.verify_mirrors import verify_local_pre_release; verify_local_pre_release(dist_dir='pages-dist', manifest_path='pages-dist/diagnostics/manifest.json')"
+          python -B -c "from scripts.pages_bundle import verify_bundle; verify_bundle('pages-release')"
+          python -B -c "from scripts.verify_mirrors import verify_local_pre_release; verify_local_pre_release(dist_dir='pages-release/dist', manifest_path='pages-release/dist/diagnostics/manifest.json')"
 
       - name: Check release is current before deployment
         id: current
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python -B scripts/verify_pages_release.py --dist-dir pages-dist --check-current
+        run: python -B scripts/verify_pages_release.py --dist-dir pages-release/dist --check-current
 
       - name: Deploy verified release to Cloudflare Pages
         if: steps.current.outputs.current == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4.151.1 pages deploy pages-dist --project-name loon-rules --branch main --commit-dirty=true
+        run: python -B -m scripts.deploy_pages --bundle pages-release
 
       - name: Verify public Cloudflare Pages release
         if: steps.current.outputs.current == 'true'
-        run: python -B scripts/verify_pages_release.py --dist-dir pages-dist
+        run: python -B scripts/verify_pages_release.py --dist-dir pages-release/dist

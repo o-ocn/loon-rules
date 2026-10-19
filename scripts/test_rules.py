@@ -420,31 +420,9 @@ rulesets:
 
     def test_13_security_scan_no_secrets(self):
         """Verify zero credentials, tokens, private keys, or passwords in repo."""
-        forbidden_patterns = [
-            ("BEGIN" + " PRIVATE KEY", "Private Key"),
-            ("BEGIN" + " RSA PRIVATE KEY", "RSA Private Key"),
-            ("BEGIN" + " CERTIFICATE", "Certificate"),
-            ("pass" + "word = ", "Password field"),
-            ("tok" + "en=[a-zA-Z0-9_-]{16,}", "Subscription token"),
-        ]
-        import re
-        scanned_exts = {".py", ".js", ".lpx", ".list", ".lsr", ".yml", ".yaml", ".json", ".md", ".txt", ".sh"}
-        for root, dirs, files in os.walk(BASE_DIR):
-            for d in [".git", "__pycache__", ".pytest_cache", "node_modules", "tmp_build", ".tmp_staging"]:
-                if d in dirs:
-                    dirs.remove(d)
-            for fname in files:
-                fpath = os.path.join(root, fname)
-                ext = os.path.splitext(fname)[1].lower()
-                if ext not in scanned_exts:
-                    continue
-                if os.path.abspath(fpath) == os.path.abspath(__file__):
-                    continue
-                with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read()
-                for pat, desc in forbidden_patterns:
-                    if re.search(pat, content):
-                        self.fail(f"Security leak detected ({desc}) in {fpath}")
+        from scripts.scan_secrets import scan_tree
+        findings = list(scan_tree(BASE_DIR))
+        self.assertFalse(findings, f"Security leak detected (file/type only): {findings}")
 
     def test_14_boundary_01_gemini_vs_google(self):
         """Boundary 1: Gemini vs Ordinary Google. Gemini endpoints in AI-Overseas, broad google in Google."""

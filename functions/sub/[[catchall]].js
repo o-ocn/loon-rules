@@ -3,49 +3,41 @@ const VMISS_SUB_ORIGIN = "https://38-207-167-188.sslip.io:8443";
 export async function onRequest(context) {
   const { request, params } = context;
   const url = new URL(request.url);
-
-  // params.catchall is an array of path segments after /sub/
-  // e.g. ["03c12794a786246b181ffa52410f5fd0", "clash.yaml"]
-  const subPath = Array.isArray(params.catchall)
-    ? params.catchall.join("/")
-    : (params.catchall || "");
-
-  const upstreamUrl = `${VMISS_SUB_ORIGIN}/${subPath}${url.search}`;
-
-  const headers = new Headers(request.headers);
-  headers.set("Host", "38-207-167-188.sslip.io:8443");
-  headers.set("X-Forwarded-Host", url.hostname);
-  headers.set("X-Forwarded-Proto", "https");
-
+  const parts = Array.isArray(params.catchall) ? params.catchall : (params.catchall || "").split("/");
+  // Only the two subscription resources linked by the unlock interface are proxied.
+  if (parts.length !== 2 || !/^[A-Za-z0-9_-]{16,128}$/.test(parts[0]) ||
+      !["loon.txt", "clash.yaml"].includes(parts[1]) || url.search) {
+    return new Response("Invalid subscription path", { status: 404, headers: { "Cache-Control": "no-store" } });
+  }
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: {
+      "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS"
+    } });
+  }
+  if (!["GET", "HEAD"].includes(request.method)) {
+    return new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD, OPTIONS" } });
+  }
+  const upstreamUrl = VMISS_SUB_ORIGIN + "/" + parts.map(encodeURIComponent).join("/");
+  const headers = new Headers();
+  for (const name of ["Accept", "User-Agent"]) {
+    if (request.headers.has(name)) headers.set(name, request.headers.get(name));
+  }
   try {
-    const upstreamResponse = await fetch(upstreamUrl, {
-      method: request.method,
-      headers,
-      redirect: "follow"
-    });
-
-    const respHeaders = new Headers(upstreamResponse.headers);
+    const upstreamResponse = await fetch(upstreamUrl, { method: request.method, headers, redirect: "manual" });
+    if (upstreamResponse.status >= 300 && upstreamResponse.status < 400) {
+      return new Response("Subscription redirect rejected", { status: 502, headers: { "Cache-Control": "no-store" } });
+    }
+    const respHeaders = new Headers();
+    for (const name of ["Content-Type", "Content-Disposition", "Subscription-Userinfo", "Profile-Update-Interval"]) {
+      if (upstreamResponse.headers.has(name)) respHeaders.set(name, upstreamResponse.headers.get(name));
+    }
     respHeaders.set("Access-Control-Allow-Origin", "*");
     respHeaders.set("X-Gateway-By", "Cloudflare-Pages-Edge-Sub");
-
-    return new Response(upstreamResponse.body, {
-      status: upstreamResponse.status,
-      statusText: upstreamResponse.statusText,
-      headers: respHeaders
+    respHeaders.set("Cache-Control", "no-store");
+    return new Response(request.method === "HEAD" ? null : upstreamResponse.body, {
+      status: upstreamResponse.status, headers: respHeaders
     });
-  } catch (err) {
-    return new Response(
-      JSON.stringify({
-        error: "Subscription Gateway Proxy Error",
-        message: "无法连接上游订阅源，请稍后重试"
-      }),
-      {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Cache-Control": "no-store"
-        }
-      }
-    );
+  } catch (_error) {
+    return new Response("Subscription upstream unavailable", { status: 502, headers: { "Cache-Control": "no-store" } });
   }
 }

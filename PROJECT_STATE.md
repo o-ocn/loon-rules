@@ -18,6 +18,13 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-19 晚间发布门禁修复：本地完整验证及独立审核通过，待远端CI实际发布验收**：
+  - **确认原因**：新门户提交 `fef50fb` 的 [CI 39269616438](https://github.com/o-ocn/loon-rules/actions/runs/39269616438) 构建成功，57规则测试仅安全扫描1项失败：将读取请求的变量判为硬编码密码。自动部署被跳过，但现场公开门户已与该新提交相同，Cloudflare另有CI外生产上传记录；不能用自动门禁被拦住推断生产未更新。
+  - **实际修复**：安全扫描区分非空密码字面量与动态输入/空默认值，保留私钥、证书和订阅令牌拦截；补HTML及真实交付目录扫描，仓库临时件仅按精确路径豁免。网页与Functions同次封包，完整集合/哈希核验；当前main核对覆盖静态资产和Functions增删改；部署入口只接受受信main/job，在repo外runner临时目录从该包编译固定Wrangler上传，并写实际提交元数据。不再把Functions源码副本发布到静态dist；拒绝可覆盖已测接口的_worker.js及dotenv文件。代理收紧为双文件/两段路径/GET或HEAD，不转发Cookie或Authorization、不跟随重定向、不缓存订阅；返回地址仅信任固定公共主机白名单。
+  - **已验证**：57规则测试（281.255秒）、40项通知/健康/Pages/扫描/发布包/评分测试、23项诊断与Functions离线测试、strict与pre-release通过；固定Wrangler4.151.1实际编译通过；本地27件发布包核验通过，普通本机生产入口实际非零拒绝且未上传。独立Reviewer复核及14项独立测试通过，合成负例确认HTML/临时名称交付件仍被扫描、自洽清单下的Worker覆盖文件和目录均被拒绝。规则、DNS、策略和私人配置未变。尚未把这些本地结果登记为远端发布完成。
+  - **发布决策与边界**：生产入口统一为完整CI或该工作流manual dispatch，AGENTS/README禁止常规直接上传及先发布后补检查；这是工程约定与入口保护，不改变所有者Cloudflare账号权限，不能阻止有意另用控制台或原始Wrangler。公共域名的共享 `domains-portal-proxy` 仍可能前置处理解锁/订阅请求，本轮未修改或部署该共享网关；动态测试只用合成输入与mock加密/上游，真实密码、私人订阅和手机体验未验，静态24件不能替代动态验收。未创建、轮换或读取真实凭据。
+  - **下一步与恢复**：推送修复，验收远端完整CI、同次27件包、隔离生产上传与公开24件检查，再更新最终回执。任务恢复基线 `fef50fb8057747d5c9b4a47bb5542f37a029d143`，恢复前须注意会重新引入已知扫描失败；证据及哈希在 `E:\Document\ChatGPT\loon-rules\2026-10-19-release-gates\`，Hub本轮仅同步域名部署边界指针，不改地图与其他工程。
+
 * **2026-10-19 Cloudflare Pages 自动部署：现有凭据部署已恢复，独立部署 job 与公开文件验证已通过远端验收**：
   - **确认故障与恢复**：[CI 39217166529](https://github.com/o-ocn/loon-rules/actions/runs/39217166529) 的规则构建与测试通过，新Pages步骤缺少 `CLOUDFLARE_API_TOKEN` 导致失败并跳过后续主备源检查；此前绿色运行实际跳过部署，不能作为部署完成证据。现有凭据配置后，旧单job工作流 [39220139772](https://github.com/o-ocn/loon-rules/actions/runs/39220139772) 实际上传并生成部署 `d2a83fee`（08:09 UTC），恢复部署已证实；该运行不验证后续新加入的独立job。
   - **凭据核验与授权边界**：所有者已批准当前Cloudflare账号Pages Edit长期部署凭据及仅向本仓库Secrets保存。浏览器只读核实既有 `Pages-Deploy-Token` 为Pages Edit / All accounts / Active，且本仓库已有 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID` Secrets；无法从名称反查Secret真实值对应哪枚令牌，实际可用性以部署结果为准。本轮未读取真实值、未创建或轮换令牌、未改其他仓库凭据。两个Workers令牌权限更广，不作为本轮部署替代凭据。

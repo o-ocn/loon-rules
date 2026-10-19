@@ -979,12 +979,6 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
                 if os.path.isfile(static_src):
                     shutil.copy2(static_src, os.path.join(dist_new, static_name))
 
-            functions_src = os.path.join(BASE_DIR, "functions")
-            if os.path.isdir(functions_src):
-                shutil.copytree(functions_src, os.path.join(dist_new, "functions"), dirs_exist_ok=True)
-            elif os.path.isdir(os.path.join(dist_dir, "functions")):
-                shutil.copytree(os.path.join(dist_dir, "functions"), os.path.join(dist_new, "functions"), dirs_exist_ok=True)
-
             # Generate and write new manifest.json atomically to dist_new
             manifest_data = {
                 "schema_version": "1.0",

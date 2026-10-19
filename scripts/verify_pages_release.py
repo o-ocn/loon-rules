@@ -68,19 +68,35 @@ def is_current_release(dist_dir, *, opener=urllib.request.urlopen):
         sha = json.loads(response.read())["object"]["sha"]
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("GitHub returned an invalid main revision")
-    files = release_files(root)
-    files += [p for name in ("_headers", "_redirects", "favicon.ico", "robots.txt")
-              if (p := root / name).is_file()]
-    for path in files:
-        relative = path.relative_to(root).as_posix()
-        url = f"https://raw.githubusercontent.com/o-ocn/loon-rules/{sha}/dist/{relative}"
+    release_files(root)
+    tree_url = f"https://api.github.com/repos/o-ocn/loon-rules/git/trees/{sha}?recursive=1"
+    with opener(urllib.request.Request(tree_url, headers=headers), timeout=15) as response:
+        tree = json.loads(response.read())
+    if tree.get('truncated'):
+        raise ValueError('GitHub release file listing is incomplete')
+    expected = {entry['path'] for entry in tree['tree'] if entry['type'] == 'blob'
+                and entry['path'].startswith(('dist/', 'functions/'))}
+    if any(entry.get('mode') == '120000' for entry in tree['tree'] if entry['path'] in expected):
+        raise ValueError('Release sources cannot contain symlinks')
+    files = {}
+    for prefix, directory in (('dist', root), ('functions', root.parent / 'functions')):
+        for path in directory.rglob('*'):
+            if path.is_symlink():
+                raise ValueError('Release sources cannot contain symlinks')
+            if path.is_file():
+                files[prefix + '/' + path.relative_to(directory).as_posix()] = path
+    if set(files) != expected:
+        print('[SKIP] Current main has a different asset or Functions file set; deployment skipped.')
+        return False
+    for relative, path in sorted(files.items()):
+        url = f"https://raw.githubusercontent.com/o-ocn/loon-rules/{sha}/{relative}"
         # The GitHub token is never sent to Raw or Cloudflare.
         with opener(urllib.request.Request(url, headers=REQUEST_HEADERS), timeout=15) as response:
             remote = response.read()
         if remote.replace(b"\r\n", b"\n") != path.read_bytes().replace(b"\r\n", b"\n"):
             print("[SKIP] This bundle is superseded by the current main release; deployment skipped.")
             return False
-    print("[PASS] Bundle matches the current main rule and portal release.")
+    print("[PASS] Bundle matches the current main assets and Functions, including the complete file set.")
     return True
 
 

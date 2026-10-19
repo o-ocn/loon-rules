@@ -83,20 +83,29 @@ class PagesReleaseTests(unittest.TestCase):
 
     def test_old_run_cannot_overwrite_new_rule_or_portal_release(self):
         with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(io.StringIO()):
-            root = Path(directory)
+            root = Path(directory) / 'dist'
+            root.mkdir()
             self.make_bundle(root)
             sha = "a" * 40
-            current_files = {p.relative_to(root).as_posix(): p.read_bytes()
+            current_files = {'dist/' + p.relative_to(root).as_posix(): p.read_bytes()
                              for p in root.rglob("*") if p.is_file()}
+            current_files['functions/api/unlock.js'] = b'export const fixture = 1;\n'
+            for name, body in current_files.items():
+                path = root.parent / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(body)
 
             def open_current(request, **kwargs):
                 response = MagicMock()
                 response.status = 200
                 if request.full_url == pages.MAIN_REF_API:
                     body = json.dumps({"object": {"sha": sha}}).encode()
+                elif '/git/trees/' in request.full_url:
+                    body = json.dumps({'truncated': False, 'tree': [
+                        {'path': name, 'type': 'blob'} for name in current_files]}).encode()
                 else:
                     self.assertIsNone(request.get_header("Authorization"))
-                    prefix = f"https://raw.githubusercontent.com/o-ocn/loon-rules/{sha}/dist/"
+                    prefix = f"https://raw.githubusercontent.com/o-ocn/loon-rules/{sha}/"
                     self.assertTrue(request.full_url.startswith(prefix))
                     body = current_files[request.full_url.removeprefix(prefix)]
                 response.read.return_value = body
@@ -104,11 +113,17 @@ class PagesReleaseTests(unittest.TestCase):
                 return response
 
             self.assertTrue(pages.is_current_release(root, opener=open_current))
-            for relative in ("rule-0.lsr", "index.html"):
+            for relative in ("dist/rule-0.lsr", "dist/index.html", "functions/api/unlock.js"):
                 original = current_files[relative]
                 current_files[relative] = b"newer validated release\n"
                 self.assertFalse(pages.is_current_release(root, opener=open_current))
                 current_files[relative] = original
+            current_files['functions/new-handler.js'] = b'newer function'
+            self.assertFalse(pages.is_current_release(root, opener=open_current))
+            del current_files['functions/new-handler.js']
+            removed = current_files.pop('functions/api/unlock.js')
+            self.assertFalse(pages.is_current_release(root, opener=open_current))
+            current_files['functions/api/unlock.js'] = removed
             with self.assertRaises(urllib.error.URLError):
                 pages.is_current_release(root, opener=MagicMock(side_effect=urllib.error.URLError("offline")))
 
@@ -117,7 +132,9 @@ class PagesReleaseTests(unittest.TestCase):
         jobs = workflow["jobs"]
         build_steps = jobs["build-and-validate"]["steps"]
         names = [s["name"] for s in build_steps]
-        self.assertFalse(any("wrangler" in s.get("run", "") for s in build_steps))
+        self.assertFalse(any("pages deploy" in s.get("run", "") for s in build_steps))
+        self.assertLess(names.index('Compile tested Pages Functions'), names.index('Pre-Release Local Integrity Gate (Fail-Stop Release Barrier)'))
+        self.assertTrue(any(s.get('with', {}).get('path') == '.release_tmp/pages-release/' for s in build_steps))
         self.assertLess(names.index("Post-Release Mirrors and CDN Health Alert Gate"), names.index("Upload Verified Pages Bundle"))
         deployment = jobs["pages-deploy"]
         self.assertEqual(deployment["needs"], "build-and-validate")

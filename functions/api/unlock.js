@@ -96,7 +96,9 @@ export async function onRequestPost(context) {
     let subUrl = "";
     let importUrl = "";
 
-    const host = request.headers.get("x-forwarded-host") || url.hostname;
+    // This gateway header is accepted only for our known public entry.
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const host = forwardedHost === "loon.rules.o-ous.com" ? forwardedHost : url.hostname;
 
     if (client === "loon" || host.startsWith("loon.")) {
       subFile = "loon.txt";
