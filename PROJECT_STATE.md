@@ -18,10 +18,13 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-19 Cloudflare Pages 自动部署：凭证配置就绪，独立部署 Job 与发布验证门禁已发布并全量验收**：
-  - **凭证与自动化就绪**：所有者授权创建了具备 `Cloudflare Pages: Edit` 权限的 Custom Token，并通过 Libsodium 安全加密注入 `o-ocn/loon-rules` 与 `o-ocn/icons` 仓库的 GitHub Actions Secrets（`CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID`）。
-  - **部署架构升级与隔离**：在 `.github/workflows/sync-and-build.yml` 中将 Pages 部署解耦为独立的 `pages-deploy` job，通过 `upload-artifact` 传递经测试验证的发布包，前置执行 `is_current_release` 防止覆盖新版本，后置执行 `verify_release` 逐文件核验公开端点。异常通知按 job 区分“规则更新异常”与“网站部署异常”。
-  - **实测验收与闭环**：远端 CI [Run 39220139772](https://github.com/o-ocn/loon-rules/actions/runs/39220139772) completed/success，生成 Cloudflare Pages 部署 `d2a83fee`（`2026-10-19T08:09:17Z`）；生产端点全部 24 个发布文件与本地构建完全一致，通过 Python 实测验收。
+* **2026-10-19 Cloudflare Pages 自动部署：现有凭据部署已恢复，独立部署 job 与公开文件验证已通过远端验收**：
+  - **确认故障与恢复**：[CI 39217166529](https://github.com/o-ocn/loon-rules/actions/runs/39217166529) 的规则构建与测试通过，新Pages步骤缺少 `CLOUDFLARE_API_TOKEN` 导致失败并跳过后续主备源检查；此前绿色运行实际跳过部署，不能作为部署完成证据。现有凭据配置后，旧单job工作流 [39220139772](https://github.com/o-ocn/loon-rules/actions/runs/39220139772) 实际上传并生成部署 `d2a83fee`（08:09 UTC），恢复部署已证实；该运行不验证后续新加入的独立job。
+  - **凭据核验与授权边界**：所有者已批准当前Cloudflare账号Pages Edit长期部署凭据及仅向本仓库Secrets保存。浏览器只读核实既有 `Pages-Deploy-Token` 为Pages Edit / All accounts / Active，且本仓库已有 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID` Secrets；无法从名称反查Secret真实值对应哪枚令牌，实际可用性以部署结果为准。本轮未读取真实值、未创建或轮换令牌、未改其他仓库凭据。两个Workers令牌权限更广，不作为本轮部署替代凭据。
+  - **部署架构升级与隔离**：将Pages移至依赖规则job成功的独立job，规则主备检查先完成，再传递同次运行原样产物；部署前核对当前main固定提交下的规则及门户文件，过期包不覆盖新版本，网络失败不伪装跳过成功；部署后逐文件核验公开入口。失败通知区分“规则更新异常”与“网站部署异常”，缺凭据仍明确失败。未改规则、DNS、策略绑定或私人配置。
+  - **验证与发布结果**：本地33项Pages/通知/健康/评分测试、strict及pre-release通过，独立Reviewer复核通过。提交 `0e0bc854a16beca1e92956180885981d9ce2d8ef` 已推送；新 [CI 39221396609](https://github.com/o-ocn/loon-rules/actions/runs/39221396609) 两个job均completed/success：57规则、19诊断、29通知/健康/Pages测试、strict、pre-release及主备源门禁通过，构建无内容变化；同次产物 `12171912105` 下载与完整性检查通过，当前main检查实际通过后部署 `loon-rules/main`，生成生产部署 `da635bb2`，公开24件检查通过。发布后本机独立复验24件通过，118个原非本批跟踪文件哈希保持。
+  - **验证边界与后续**：公开HTML仅精确适配实际观察到的官方Cloudflare空统计脚本尾部注入，拒绝其他脚本或正文差异，main新鲜度比对仍原样；使用显式发布检查UA避免现有Cloudflare默认Python UA的403/1010，未改安全设置。不扩展为手机体验验收或Icons部署审核；正常成功继续静默，后续按实际失败定位规则job或网站job，无需修改手机配置。
+  - **保存与恢复**：恢复起点 `141ee173fdfb03e3c5d9a6404045b5cef2f4f834`；证据及两库恢复哈希在 `E:\Document\ChatGPT\loon-rules\2026-10-19-pages-recovery\`，实际CI证据见 `15-ci-release-evidence.json`、独立线上检查见 `16-public-after-deployment.log`，最终提交/推送/远端同步及clean状态见 `17-final-receipt.json`。回退仅撤本轮工作流、验证与通知修改，保留既有凭据和其他任务成果。
 
 
 * **2026-10-18 定时更新重复网段故障：修复已发布，远端完整门禁通过**：
