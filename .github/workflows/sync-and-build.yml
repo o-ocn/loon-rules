@@ -84,6 +84,22 @@ jobs:
             git push origin HEAD --tags
           fi
 
+      - name: Deploy dist to Cloudflare Pages (loon-rules)
+        # Deploys verified dist/ to Cloudflare Pages upon successful build and test pass on main
+        if: github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '18fa061db5a3468e2b7b94f73412630e' }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning ::CLOUDFLARE_API_TOKEN is not configured in repository Secrets. Cloudflare Pages auto-deployment skipped."
+            echo "::notice ::To enable automated deployment on rules update, add CLOUDFLARE_API_TOKEN (with Pages:Edit permission) to repository Secrets."
+          else
+            echo "Deploying dist/ to Cloudflare Pages project 'loon-rules'..."
+            npx wrangler pages deploy dist --project-name loon-rules --commit-dirty=true
+            echo "Cloudflare Pages deployment for loon-rules succeeded."
+          fi
+
       - name: Post-Release Mirrors and CDN Health Alert Gate
         # Health check & alert gate: Runs after push to verify edge propagation and CDN mirror consistency.
         # Uses --soft-cdn: GitHub Raw is the primary hard gate; jsDelivr CDN propagation latency emits
