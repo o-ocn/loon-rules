@@ -106,12 +106,14 @@ jobs:
                                   if step.get("conclusion") in ("failure", "timed_out", "action_required"):
                                       step_name = step.get("name", "generic")
                                       break
+                              if job.get("name") == "Cloudflare Pages deployment":
+                                  step_name = "Cloudflare Pages - " + step_name
                               break
               except Exception:
                   pass
           # 清洗 step_name 确保安全
           import re
-          safe_step = re.sub(r"[^a-zA-Z0-9_\- ]", "", step_name)[:50]
+          safe_step = re.sub(r"[^a-zA-Z0-9_\- ]", "", step_name)[:80]
           print(f"step={safe_step}")
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"step={safe_step}\n")

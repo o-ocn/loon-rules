@@ -342,12 +342,21 @@ def build_alert_message(event_type, context):
             f"• 来源: {run_url or 'Manual Dispatch'}"
         )
     else:  # workflow_failure
+        if failed_step.startswith("Cloudflare Pages - "):
+            title = "网站部署异常"
+            detail = "Cloudflare 网站更新未完成；规则发布结果请查看独立的规则检查任务。"
+        elif workflow_name == "Sync Upstream and Build Loon Rules":
+            title = "规则更新异常"
+            detail = "规则构建、测试或发布检查未完成，请核对失败步骤。"
+        else:
+            title = "工作流异常告警"
+            detail = "流水线执行未完全通过，请核验门禁与健康状态"
         step_line = f"\n• 失败步骤: {failed_step}" if failed_step else ""
         return (
-            f"🚨 [Loon Rules 工作流异常告警]\n"
+            f"🚨 [Loon Rules {title}]\n"
             f"• 流水线: {workflow_name}\n"
             f"• 结果: {conclusion}{step_line}\n"
-            f"• 详情: {custom_desc or '流水线执行未完全通过，请核验门禁与健康状态'}\n"
+            f"• 详情: {custom_desc or detail}\n"
             f"• 时间: {now_str}\n"
             f"• 链接: {run_url}"
         )

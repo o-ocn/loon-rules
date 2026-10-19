@@ -60,7 +60,7 @@ jobs:
 
       - name: Run Telegram Alert Suite and Health Contract Tests
         run: |
-          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py
+          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py tests/test_pages_release.py
 
       - name: Pre-Release Local Integrity Gate (Fail-Stop Release Barrier)
         # Strict local barrier: stops pipeline BEFORE git commit or push if any rule,
@@ -84,21 +84,6 @@ jobs:
             git push origin HEAD --tags
           fi
 
-      - name: Deploy dist to Cloudflare Pages (loon-rules)
-        # Deploys verified dist/ to Cloudflare Pages upon successful build and test pass on main
-        if: github.event_name != 'pull_request'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '18fa061db5a3468e2b7b94f73412630e' }}
-        run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error ::Missing CLOUDFLARE_API_TOKEN in GitHub Actions Secrets. Production Cloudflare Pages deployment halted."
-            exit 1
-          fi
-          echo "Deploying dist/ to Cloudflare Pages project 'loon-rules'..."
-          npx wrangler pages deploy dist --project-name loon-rules --commit-dirty=true
-          echo "Cloudflare Pages deployment for loon-rules succeeded."
-
       - name: Post-Release Mirrors and CDN Health Alert Gate
         # Health check & alert gate: Runs after push to verify edge propagation and CDN mirror consistency.
         # Uses --soft-cdn: GitHub Raw is the primary hard gate; jsDelivr CDN propagation latency emits
@@ -108,3 +93,76 @@ jobs:
           # Grace period for GitHub Raw edge cache replication
           sleep 10
           python scripts/verify_mirrors.py --branch ${{ github.ref_name }} --soft-cdn
+
+      - name: Upload Verified Pages Bundle
+        if: github.event_name != 'pull_request' && github.repository == 'o-ocn/loon-rules' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: loon-rules-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  pages-deploy:
+    name: Cloudflare Pages deployment
+    needs: build-and-validate
+    if: github.event_name != 'pull_request' && github.repository == 'o-ocn/loon-rules' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: loon-rules-pages-production
+      cancel-in-progress: false
+    steps:
+      - name: Check deployment credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Cloudflare Pages deployment credentials are missing. The separate rule publication job has completed."
+            exit 1
+          fi
+
+      - name: Checkout verification tools
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Download verified release from this run
+        uses: actions/download-artifact@v4
+        with:
+          name: loon-rules-dist
+          path: pages-dist
+
+      - name: Verify downloaded release integrity
+        run: |
+          python -B -c "from scripts.verify_mirrors import verify_local_pre_release; verify_local_pre_release(dist_dir='pages-dist', manifest_path='pages-dist/diagnostics/manifest.json')"
+
+      - name: Check release is current before deployment
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -B scripts/verify_pages_release.py --dist-dir pages-dist --check-current
+
+      - name: Deploy verified release to Cloudflare Pages
+        if: steps.current.outputs.current == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.151.1 pages deploy pages-dist --project-name loon-rules --branch main --commit-dirty=true
+
+      - name: Verify public Cloudflare Pages release
+        if: steps.current.outputs.current == 'true'
+        run: python -B scripts/verify_pages_release.py --dist-dir pages-dist

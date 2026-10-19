@@ -18,6 +18,12 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-19 Cloudflare Pages 自动部署：凭证配置就绪，独立部署 Job 与发布验证门禁已发布并全量验收**：
+  - **凭证与自动化就绪**：所有者授权创建了具备 `Cloudflare Pages: Edit` 权限的 Custom Token，并通过 Libsodium 安全加密注入 `o-ocn/loon-rules` 与 `o-ocn/icons` 仓库的 GitHub Actions Secrets（`CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID`）。
+  - **部署架构升级与隔离**：在 `.github/workflows/sync-and-build.yml` 中将 Pages 部署解耦为独立的 `pages-deploy` job，通过 `upload-artifact` 传递经测试验证的发布包，前置执行 `is_current_release` 防止覆盖新版本，后置执行 `verify_release` 逐文件核验公开端点。异常通知按 job 区分“规则更新异常”与“网站部署异常”。
+  - **实测验收与闭环**：远端 CI [Run 39220139772](https://github.com/o-ocn/loon-rules/actions/runs/39220139772) completed/success，生成 Cloudflare Pages 部署 `d2a83fee`（`2026-10-19T08:09:17Z`）；生产端点全部 24 个发布文件与本地构建完全一致，通过 Python 实测验收。
+
+
 * **2026-10-18 定时更新重复网段故障：修复已发布，远端完整门禁通过**：
   - **原因与修复**：今日 [CI 39088855855](https://github.com/o-ocn/loon-rules/actions/runs/39088855855) 在构建阶段报告 `IP-CIDR,14.1.112.0/22` 重复归属，后续测试、提交与发布均跳过；Telegram 异常通知已有所有者截图确认送达。新鲜上游本地复现同一失败，完整差集确认共7项既有 Alibaba 网段与 ChinaIPs 重叠。仅在 `sources.yml` 现有 ChinaIPs `filter_excluded` 中补7项精确排除，保留原 China-Direct 归属和全部覆盖，编译器与原冲突门禁未改。
   - **实际产物与范围**：在线构建通过，正常上游更新同时令 China-GeoIP 19,211→19,588（净增377），19集合计24,235，内容版本 `ea02f434c268`。独立核对 GeoIP 正文与当前源缓存及完整排除清单完全一致；其余18个规则集、构建器和DNS字节与起点一致，共113个非本批跟踪文件未变。不修改策略绑定、私人配置或 Hub 地图。
