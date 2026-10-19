@@ -1,6 +1,6 @@
-const VAULT_SALT_HEX = "8c2e1859ad86e35f57b7b7fe10f2102c";
-const VAULT_IV_HEX = "0567d10e76cb285cf33755fc";
-const VAULT_CIPHER_WITH_TAG_HEX = "8e3ea4cdd3a721dbde695e1e8dea5e8e919d2bd110a7420209a5467c109c72fe5543505251b91d3d3c405d3d9a2fa866";
+const VAULT_SALT_HEX = "3210fdfd5e3fa478a72340ec9d153eec";
+const VAULT_IV_HEX = "d51dfa6abe2d45d40f393e29";
+const VAULT_CIPHER_WITH_TAG_HEX = "89da17b8209f1df1e6cc86408fb751593aa53eecb305881e65b401049a379d77ef0f0b1c983f6c726dba4feafbf0e646";
 
 function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
