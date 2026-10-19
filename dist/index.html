@@ -192,9 +192,220 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
-      z-index: 999;
+      z-index: 1100;
     }
     .toast.show { opacity: 1; }
+    .hero-unlock {
+      background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(63, 185, 80, 0.08) 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.8rem;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    .hero-unlock h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .hero-unlock p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      max-width: 640px;
+      line-height: 1.5;
+    }
+    .unlock-btn {
+      padding: 0.7rem 1.6rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(88, 166, 255, 0.3);
+    }
+    .unlock-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 460px;
+      padding: 1.8rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      transform: translateY(10px);
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+    .modal-backdrop.active .modal {
+      transform: translateY(0);
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.3rem;
+    }
+    .modal-close:hover {
+      color: var(--text);
+    }
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .modal-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.4;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .input-field {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .input-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+    .modal-error {
+      color: #f85149;
+      font-size: 0.85rem;
+      margin-bottom: 0.8rem;
+      display: none;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 0.65rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-submit:hover {
+      background: var(--accent-hover);
+    }
+    .unlocked-container {
+      display: none;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .sub-box {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .sub-input {
+      flex: 1;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: monospace;
+    }
+    .btn-copy {
+      padding: 0.55rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #fff;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-copy:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .btn-import {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 0.65rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--success);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-import:hover {
+      opacity: 0.9;
+    }
+    .unlocked-tip {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      background: var(--tag-bg);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -205,11 +416,21 @@
       <p class="subtitle">Cloudflare Anycast 边缘直连加速 · 支持 .lsr 分流规则与 .lpx 专属插件</p>
       <div class="nav-bar">
         <a href="https://rules.o-ous.com" class="nav-link">← 规则体系门户</a>
+        <a href="https://clash.rules.o-ous.com" class="nav-link">🐱 Clash 规则中心</a>
         <a href="https://icons.o-ous.com" class="nav-link">🎨 资产图标库</a>
         <a href="https://monitor.o-ous.com" class="nav-link">📊 监控看板</a>
         <a href="https://github.com/o-ocn/loon-rules" class="nav-link" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
       </div>
     </header>
+
+    <!-- 私有节点订阅解锁 Hero -->
+    <div class="hero-unlock">
+      <h2>🔐 私有节点统一订阅</h2>
+      <p>包含 VMISS 9929 优化直连出口与 Taipei101 LAX1 落地中转出口双节点，支持 VLESS Reality 与 XUDP 数据承载，自动同步流量与到期时间。</p>
+      <button class="unlock-btn" onclick="openUnlockModal()">
+        <span>🔑 获取我的私有节点订阅</span>
+      </button>
+    </div>
 
     <div class="section-title">📦 Loon 专属插件 (.lpx)</div>
     <div class="grid">
@@ -342,16 +563,131 @@
     </footer>
   </div>
 
+  <!-- 解锁 Modal -->
+  <div id="unlockModal" class="modal-backdrop">
+    <div class="modal">
+      <button class="modal-close" onclick="closeUnlockModal()">×</button>
+      <div class="modal-title">🔐 解锁私有节点订阅</div>
+      <div class="modal-subtitle">请输入统一访问密码以获取 Loon 私有节点订阅链接</div>
+      
+      <!-- 密码输入表单 -->
+      <div id="formSection">
+        <div class="input-group">
+          <input type="password" id="passwordInput" class="input-field" placeholder="输入访问密码..." autocomplete="current-password">
+        </div>
+        <div id="modalError" class="modal-error"></div>
+        <button id="btnVerify" class="btn-submit" onclick="submitPassword()">验证并获取订阅</button>
+      </div>
+
+      <!-- 解锁成功展示 -->
+      <div id="unlockedSection" class="unlocked-container">
+        <div class="sub-box">
+          <input type="text" id="subUrlInput" class="sub-input" readonly>
+          <button class="btn-copy" onclick="copySubUrl()">复制</button>
+        </div>
+        <a id="btnImportLoon" href="#" class="btn-import">🚀 一键导入到 Loon</a>
+        <div class="unlocked-tip">
+          💡 <b>提示：</b>在客户端导入一次后即可开启定时自动更新，后续客户端后台更新节点时无需再次输入密码。
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast">已复制到剪贴板</div>
 
   <script>
     function copyUrl(url) {
       navigator.clipboard.writeText(url).then(() => {
-        const toast = document.getElementById('toast');
-        toast.innerText = '已复制订阅链接: ' + url;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
+        showToast('已复制订阅链接: ' + url);
       });
+    }
+
+    const modal = document.getElementById('unlockModal');
+    const passInput = document.getElementById('passwordInput');
+    const modalError = document.getElementById('modalError');
+    const formSection = document.getElementById('formSection');
+    const unlockedSection = document.getElementById('unlockedSection');
+    const subUrlInput = document.getElementById('subUrlInput');
+    const btnImportLoon = document.getElementById('btnImportLoon');
+    const btnVerify = document.getElementById('btnVerify');
+
+    function openUnlockModal() {
+      modal.classList.add('active');
+      modalError.style.display = 'none';
+      if (unlockedSection.style.display !== 'flex') {
+        passInput.value = '';
+        setTimeout(() => passInput.focus(), 100);
+      }
+    }
+
+    function closeUnlockModal() {
+      modal.classList.remove('active');
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeUnlockModal();
+    });
+
+    passInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitPassword();
+    });
+
+    async function submitPassword() {
+      const password = passInput.value.trim();
+      if (!password) {
+        showError('请输入访问密码');
+        return;
+      }
+
+      btnVerify.disabled = true;
+      btnVerify.innerText = '正在验证...';
+      modalError.style.display = 'none';
+
+      try {
+        const resp = await fetch('/api/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password, client: 'loon' })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok || !data.success) {
+          showError(data.error || '访问密码错误，请核对后重试');
+          btnVerify.disabled = false;
+          btnVerify.innerText = '验证并获取订阅';
+          return;
+        }
+
+        // 解锁成功
+        formSection.style.display = 'none';
+        unlockedSection.style.display = 'flex';
+        subUrlInput.value = data.subscription_url;
+        btnImportLoon.href = data.import_url;
+        showToast('🎉 解锁成功！');
+      } catch (err) {
+        showError('网络请求失败，请稍后重试');
+        btnVerify.disabled = false;
+        btnVerify.innerText = '验证并获取订阅';
+      }
+    }
+
+    function showError(msg) {
+      modalError.innerText = msg;
+      modalError.style.display = 'block';
+    }
+
+    function copySubUrl() {
+      navigator.clipboard.writeText(subUrlInput.value).then(() => {
+        showToast('已复制私有订阅链接到剪贴板');
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
     }
   </script>
 </body>
