@@ -973,6 +973,12 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
             if os.path.isdir(plugins_src):
                 shutil.copytree(plugins_src, os.path.join(dist_new, "plugins"), dirs_exist_ok=True)
 
+            # Preserve web portal and Cloudflare Pages static assets in dist/
+            for static_name in ("index.html", "_headers", "_redirects", "favicon.ico", "robots.txt"):
+                static_src = os.path.join(dist_dir, static_name)
+                if os.path.isfile(static_src):
+                    shutil.copy2(static_src, os.path.join(dist_new, static_name))
+
             # Generate and write new manifest.json atomically to dist_new
             manifest_data = {
                 "schema_version": "1.0",

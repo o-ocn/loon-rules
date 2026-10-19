@@ -21,3 +21,6 @@ logs/
 # Upstream cache
 .upstream_cache/
 scripts/.upstream_cache/
+
+# Cloudflare Pages / Wrangler
+.wrangler/
