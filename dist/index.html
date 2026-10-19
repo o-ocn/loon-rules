@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loon 规则与插件中心 | loon.rules.o-ous.com</title>
+  <meta name="description" content="精选 Loon 分流规则集与插件订阅中心，全链路支持 HTTPS 与边缘 CDN 加速。">
+  <link rel="icon" href="https://icons.o-ous.com/icons/Loon.png" type="image/png">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: rgba(22, 27, 34, 0.85);
+      --border: #30363d;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-hover: #79c0ff;
+      --success: #3fb950;
+      --tag-bg: #21262d;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f8fa;
+        --card-bg: rgba(255, 255, 255, 0.9);
+        --border: #d0d7de;
+        --text: #1f2328;
+        --text-muted: #656d76;
+        --accent: #0969da;
+        --accent-hover: #218bff;
+        --success: #1a7f37;
+        --tag-bg: #eaeef2;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      max-width: 960px;
+      width: 100%;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    .nav-bar {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .nav-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.35rem 0.85rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: all 0.2s ease;
+    }
+    .nav-link:hover {
+      border-color: var(--accent);
+      background: var(--tag-bg);
+    }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .card-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      background: var(--tag-bg);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .card-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      line-height: 1.4;
+      flex-grow: 1;
+    }
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn {
+      flex: 1;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.825rem;
+      font-weight: 500;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--tag-bg);
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    footer {
+      margin-top: 3.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2328;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="https://icons.o-ous.com/icons/Loon.png" alt="Loon Logo" class="logo" onerror="this.style.display='none'">
+      <h1>Loon 规则与插件订阅中心</h1>
+      <p class="subtitle">Cloudflare Anycast 边缘直连加速 · 支持 .lsr 分流规则与 .lpx 专属插件</p>
+      <div class="nav-bar">
+        <a href="https://rules.o-ous.com" class="nav-link">← 规则体系门户</a>
+        <a href="https://icons.o-ous.com" class="nav-link">🎨 资产图标库</a>
+        <a href="https://monitor.o-ous.com" class="nav-link">📊 监控看板</a>
+        <a href="https://github.com/o-ocn/loon-rules" class="nav-link" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+      </div>
+    </header>
+
+    <div class="section-title">📦 Loon 专属插件 (.lpx)</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-name">Loon-China-DNS</div>
+          <span class="badge">插件</span>
+        </div>
+        <div class="card-desc">中国大陆精选 DNS 配置与精准防污染分流策略插件。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/plugins/Loon-China-DNS.lpx')">复制链接</button>
+          <a class="btn btn-primary" href="loon://import?plugin=https%3A%2F%2Floon.rules.o-ous.com%2Fplugins%2FLoon-China-DNS.lpx">一键导入</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">🛡️ Loon 分流规则集 (.lsr)</div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-name">AI-Overseas</div><span class="badge">AI 服务</span></div>
+        <div class="card-desc">OpenAI、Claude、Gemini、Copilot 等海外主流 AI 服务分流。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/AI-Overseas.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/AI-Overseas.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">AI-China-Direct</div><span class="badge">AI 服务</span></div>
+        <div class="card-desc">国内主流大模型服务直连分流。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/AI-China-Direct.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/AI-China-Direct.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">Google</div><span class="badge">海外全家桶</span></div>
+        <div class="card-desc">Google 全系服务精准域名与路由规则。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Google.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Google.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">YouTube</div><span class="badge">流媒体</span></div>
+        <div class="card-desc">YouTube 视频流量及相关域专属分流规则。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/YouTube.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/YouTube.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">Telegram</div><span class="badge">即时通讯</span></div>
+        <div class="card-desc">Telegram IP-CIDR 与全系通信域名路由。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Telegram.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Telegram.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">Twitter</div><span class="badge">社交平台</span></div>
+        <div class="card-desc">X (Twitter) 域名及 CDN 规则集。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Twitter.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Twitter.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">GitHub</div><span class="badge">开发者</span></div>
+        <div class="card-desc">GitHub 网页、API、Raw 及 Release 资产代理分流。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/GitHub.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/GitHub.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">China-Direct</div><span class="badge">直连路由</span></div>
+        <div class="card-desc">中国大陆主要网站及 CDN 高速直连分流。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/China-Direct.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/China-Direct.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">China-GeoIP</div><span class="badge">直连路由</span></div>
+        <div class="card-desc">中国大陆 IPv4 / IPv6 官方分配段直连。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/China-GeoIP.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/China-GeoIP.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">Apple-Direct</div><span class="badge">苹果生态</span></div>
+        <div class="card-desc">Apple 国内直连 CDN 与系统同步服务。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Apple-Direct.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Apple-Direct.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">Discord</div><span class="badge">社区通信</span></div>
+        <div class="card-desc">Discord 客户端、网关与语音网段路由。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Discord.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Discord.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-name">Gaming</div><span class="badge">游戏平台</span></div>
+        <div class="card-desc">Steam、Epic、PlayStation、Nintendo 等游戏生态分流。</div>
+        <div class="card-actions">
+          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Gaming.lsr')">复制链接</button>
+          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Gaming.lsr" target="_blank">查看规则</a>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2026 o-ous.com. 部署于 Cloudflare Pages Edge · 强效 CORS 兼容</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast">已复制到剪贴板</div>
+
+  <script>
+    function copyUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        const toast = document.getElementById('toast');
+        toast.innerText = '已复制订阅链接: ' + url;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    }
+  </script>
+</body>
+</html>

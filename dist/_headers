@@ -1,0 +1,19 @@
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+  Access-Control-Max-Age: 86400
+
+/*.lsr
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
+
+/*.lpx
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
+
+/plugins/*
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
