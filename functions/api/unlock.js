@@ -103,7 +103,7 @@ export async function onRequestPost(context) {
     if (client === "loon" || host.startsWith("loon.")) {
       subFile = "loon.txt";
       subUrl = `https://${host}/sub/${token}/${subFile}`;
-      importUrl = `loon://import?url=${encodeURIComponent(subUrl)}`;
+      importUrl = `loon://import?nodelist=${encodeURIComponent(subUrl)}`;
     } else {
       subFile = "clash.yaml";
       subUrl = `https://${host}/sub/${token}/${subFile}`;

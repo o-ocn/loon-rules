@@ -71,6 +71,16 @@ test('unlock does not trust arbitrary forwarded hosts; happy path uses synthetic
     const data = await response.json();
     assert.equal(response.status, 200);
     assert.equal(new URL(data.subscription_url).hostname, forwarded === 'outside.invalid' ? 'loon-rules-ctp.pages.dev' : forwarded);
+    assert.ok(data.import_url.startsWith('loon://import?nodelist='));
     assert.equal(response.headers.get('Cache-Control'), 'no-store');
   }
+
+  // Also verify clash client produces clash:// URL scheme
+  const fixtureClashPassword = 'fixture';
+  const clashResponse = await unlock.onRequestPost({ request: new Request('https://loon-rules-ctp.pages.dev/api/unlock', {
+    method: 'POST', body: JSON.stringify({ password: fixtureClashPassword, client: 'clash' }),
+  }) });
+  const clashData = await clashResponse.json();
+  assert.equal(clashResponse.status, 200);
+  assert.ok(clashData.import_url.startsWith('clash://install-config?url='));
 });
