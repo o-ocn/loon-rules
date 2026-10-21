@@ -1,4 +1,4 @@
-const VMISS_SUB_ORIGIN = "https://38-207-167-188.sslip.io:8443";
+const VMISS_SUB_ORIGIN = "https://68-68-250-223.sslip.io:8443";
 
 export async function onRequest(context) {
   const { request, params } = context;
