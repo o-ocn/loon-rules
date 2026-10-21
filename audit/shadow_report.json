@@ -1,13 +1,13 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-10-20T07:00:07.212265+00:00",
+  "generated_at": "2026-10-21T06:53:20.414090+00:00",
   "kpi": {
-    "total_aggregated_upstream": 110624,
+    "total_aggregated_upstream": 110626,
     "production_covered_count": 2868,
-    "new_candidate_count": 107756,
+    "new_candidate_count": 107758,
     "simulated_auto_pass_count": 50,
     "simulated_review_count": 120,
-    "simulated_block_count": 107586,
+    "simulated_block_count": 107588,
     "auto_decision_coverage_pct": 99.89
   },
   "health_status": {
@@ -30,9 +30,9 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-10-17T06:27:42.966238+00:00",
-      "content_hash": "887a3e47bd7d47629a62e6d7a55f420a960e83ee4cbcabe70bd8b4ef54ca912b",
-      "rule_count": 110466,
+      "last_synced_at": "2026-10-21T06:53:20.414090+00:00",
+      "content_hash": "3a49ab7a5daa5a92895c65bd5f7c71b61f4b9ea8c548bf73225c207c3bf06ceb",
+      "rule_count": 110468,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
@@ -1839097,6 +1839097,50 @@
       "rule": "DOMAIN-SUFFIX,sztzzs.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "sztzzs.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,szu.app",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "szu.app",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,szu.moe",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "szu.moe",
       "sources": [
         "loyalsoldier_direct"
       ],
