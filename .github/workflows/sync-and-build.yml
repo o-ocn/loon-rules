@@ -22,11 +22,21 @@ permissions:
 jobs:
   build-and-validate:
     runs-on: ubuntu-latest
+    outputs:
+      release_commit: ${{ steps.release.outputs.commit }}
+    # Shared with shadow-audit: lock BEFORE checkout/build, not only at push.
+    concurrency:
+      group: loon-rules-repository-${{ github.ref }}
+      cancel-in-progress: false
+      queue: max
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # A queued main run must test the latest main, not the triggering SHA.
+          # PRs still test their own merge ref and never publish.
+          ref: ${{ github.event_name == 'pull_request' && github.ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -60,7 +70,7 @@ jobs:
 
       - name: Run Telegram Alert Suite and Health Contract Tests
         run: |
-          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py tests/test_pages_release.py tests/test_release_gates.py
+          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py tests/test_pages_release.py tests/test_release_gates.py tests/test_publication.py
 
       - name: Compile tested Pages Functions
         run: npx --yes wrangler@4.151.1 pages functions build functions --outfile .release_tmp/functions-check.js
@@ -73,19 +83,8 @@ jobs:
           python scripts/verify_mirrors.py --pre-release
 
       - name: Commit and Push if Changed
-        if: github.event_name != 'pull_request'
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add dist/ sources.yml scripts/upstream_lock.json
-          if git diff --staged --quiet; then
-            echo "No rule changes detected. Skipping commit."
-          else
-            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-            git commit -m "chore(rules): sync upstream and rebuild rules [$TIMESTAMP]"
-            git tag "release-$(date -u +"%Y%m%d-%H%M%S")"
-            git push origin HEAD --tags
-          fi
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: python -B -m scripts.publish_generated --kind rules
 
       - name: Post-Release Mirrors and CDN Health Alert Gate
         # Health check & alert gate: Runs after push to verify edge propagation and CDN mirror consistency.
@@ -98,8 +97,11 @@ jobs:
           python scripts/verify_mirrors.py --branch ${{ github.ref_name }} --soft-cdn
 
       - name: Package tested assets and Functions
+        id: release
         if: github.event_name != 'pull_request' && github.repository == 'o-ocn/loon-rules' && github.ref == 'refs/heads/main'
-        run: python -B -m scripts.pages_bundle --output .release_tmp/pages-release
+        run: |
+          python -B -m scripts.pages_bundle --output .release_tmp/pages-release
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Upload Verified Pages Bundle
         if: github.event_name != 'pull_request' && github.repository == 'o-ocn/loon-rules' && github.ref == 'refs/heads/main'
@@ -122,6 +124,7 @@ jobs:
     concurrency:
       group: loon-rules-pages-production
       cancel-in-progress: false
+      queue: max
     steps:
       - name: Check deployment credentials
         env:
@@ -137,6 +140,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ needs.build-and-validate.outputs.release_commit }}
 
       - name: Set up Python
         uses: actions/setup-python@v5

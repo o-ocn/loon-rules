@@ -11,13 +11,19 @@ permissions:
 
 jobs:
   shadow-audit:
-    if: github.ref_name == 'main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Both generated-file writers use the same lock before reading main.
+    concurrency:
+      group: loon-rules-repository-${{ github.ref }}
+      cancel-in-progress: false
+      queue: max
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,7 +44,7 @@ jobs:
 
       - name: Run Telegram Alert Suite and Health Contract Tests
         run: |
-          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py
+          python -B -m unittest tests/test_telegram_alerts.py tests/test_notification_guards.py tests/test_publication.py
 
       - name: Prepare Clean Report Workspace
         run: |
@@ -113,20 +119,8 @@ jobs:
           key: shadow-upstream-cache-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Commit and Push Verified Shadow Audit and Health State
-        run: |
-          # Only commit when valid audit reports and state were freshly produced in this run
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add audit/ state/
-          if git diff --staged --quiet; then
-            echo "No shadow audit or health state changes detected."
-            echo "Skip commit."
-          else
-            echo "Substantive shadow audit changes detected. Committing..."
-            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-            git commit -m "chore(audit): update shadow audit report and upstream state [$TIMESTAMP] [skip ci]"
-            git push origin main
-          fi
+        # Only reached after this run's report/state evidence and tests pass.
+        run: python -B -m scripts.publish_generated --kind audit
 
       - name: Shadow Audit Final Quality Gate
         run: |
