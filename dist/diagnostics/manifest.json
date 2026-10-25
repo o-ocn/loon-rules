@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-21T08:30:51.717701+00:00",
-  "content_revision": "b5bf688ce70c",
-  "package_sha256": "b5bf688ce70cb57400aa9b5649a8cd4347f4755c91207654409b9a4c3e92c6b0",
+  "build_timestamp": "2026-10-25T02:16:59.819204+00:00",
+  "content_revision": "d1b7072a95ab",
+  "package_sha256": "d1b7072a95abcb4a1545e6af7aa47a0af42c3ed9899188bbdaefc20dc32c9195",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -68,9 +68,9 @@
       "description": "PayPal payment services (curated operational domains only)"
     },
     "Gaming.lsr": {
-      "total_rules": 65,
-      "revision": "06b2809abf75",
-      "sha256": "06b2809abf759c898d09756382672d04b2ed94b96bf35d968455d5ccbfc22a28",
+      "total_rules": 80,
+      "revision": "ff6d0c3ecd13",
+      "sha256": "ff6d0c3ecd1310b30ee8d4905431b55da13c4eb4a94e1f2d576b95a8a90ac1b3",
       "description": "Gaming platforms (Steam and Epic Games, third-party piracy and stores purged)"
     },
     "GitHub.lsr": {
@@ -116,9 +116,9 @@
       "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
     },
     "China-GeoIP.lsr": {
-      "total_rules": 19590,
-      "revision": "3561dfb9b9f2",
-      "sha256": "3561dfb9b9f29b4ce57ca043955cca9d4f8d57d8b4b63e0100ddf29522472c45",
+      "total_rules": 19597,
+      "revision": "8c4ec6751840",
+      "sha256": "8c4ec6751840f8b361c6f7bebd3f3bfe0be8efb4a8f65f6be17af151bea09c70",
       "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
     }
   },

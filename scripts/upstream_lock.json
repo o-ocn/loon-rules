@@ -26,7 +26,7 @@
     "Discord": 29
   },
   "Gaming": {
-    "Steam": 54,
+    "Steam": 69,
     "Epic": 15
   },
   "GitHub": {
@@ -56,6 +56,6 @@
     "BaiDuTieBa": 32
   },
   "China-GeoIP": {
-    "ChinaIPs": 19611
+    "ChinaIPs": 19618
   }
 }
