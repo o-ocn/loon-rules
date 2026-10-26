@@ -1,6 +1,6 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-10-25T07:10:49.805103+00:00",
+  "generated_at": "2026-10-26T07:18:47.842463+00:00",
   "kpi": {
     "total_aggregated_upstream": 110349,
     "production_covered_count": 2868,
