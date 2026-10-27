@@ -1,13 +1,13 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-10-26T07:18:47.842463+00:00",
+  "generated_at": "2026-10-27T07:10:34.589813+00:00",
   "kpi": {
-    "total_aggregated_upstream": 110349,
+    "total_aggregated_upstream": 110351,
     "production_covered_count": 2868,
-    "new_candidate_count": 107481,
+    "new_candidate_count": 107483,
     "simulated_auto_pass_count": 52,
     "simulated_review_count": 120,
-    "simulated_block_count": 107309,
+    "simulated_block_count": 107311,
     "auto_decision_coverage_pct": 99.89
   },
   "health_status": {
@@ -30,9 +30,9 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-10-25T07:10:49.805103+00:00",
-      "content_hash": "5b193df91a8c4cd56d67f7a749b4fa2f48c42c647d49d72612b2206f75fb4fa5",
-      "rule_count": 110191,
+      "last_synced_at": "2026-10-27T07:10:34.589813+00:00",
+      "content_hash": "7913d262b6df457bcbe7a71f85401ff83a4af5cf6664962e8a4c77199d3881ab",
+      "rule_count": 110193,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
@@ -735243,6 +735243,28 @@
       }
     },
     {
+      "rule": "DOMAIN-SUFFIX,filmorigin.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "filmorigin.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
       "rule": "DOMAIN-SUFFIX,fily.fun",
       "type": "DOMAIN-SUFFIX",
       "pattern": "fily.fun",
@@ -1211260,6 +1211282,28 @@
       "rule": "DOMAIN-SUFFIX,kakatx.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "kakatx.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,kakaxing.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "kakaxing.com",
       "sources": [
         "loyalsoldier_direct"
       ],
