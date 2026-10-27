@@ -4,9 +4,9 @@ export async function onRequest(context) {
   const { request, params } = context;
   const url = new URL(request.url);
   const parts = Array.isArray(params.catchall) ? params.catchall : (params.catchall || "").split("/");
-  // Only the two subscription resources linked by the unlock interface are proxied.
+  // Only the subscription resources linked by the unlock interface are proxied.
   if (parts.length !== 2 || !/^[A-Za-z0-9_-]{16,128}$/.test(parts[0]) ||
-      !["loon.txt", "clash.yaml"].includes(parts[1]) || url.search) {
+      !["loon.txt", "clash.yaml", "loon.conf", "loon.lcf"].includes(parts[1]) || url.search) {
     return new Response("Invalid subscription path", { status: 404, headers: { "Cache-Control": "no-store" } });
   }
   if (request.method === "OPTIONS") {

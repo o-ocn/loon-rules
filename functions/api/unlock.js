@@ -95,6 +95,8 @@ export async function onRequestPost(context) {
     let subFile = "clash.yaml";
     let subUrl = "";
     let importUrl = "";
+    let configUrl = "";
+    let configImportUrl = "";
 
     // This gateway header is accepted only for our known public entry.
     const forwardedHost = request.headers.get("x-forwarded-host");
@@ -104,19 +106,28 @@ export async function onRequestPost(context) {
       subFile = "loon.txt";
       subUrl = `https://${host}/sub/${token}/${subFile}`;
       importUrl = `loon://import?nodelist=${encodeURIComponent(subUrl)}`;
+      configUrl = `https://${host}/sub/${token}/loon.conf`;
+      configImportUrl = `loon://import?configuration=${encodeURIComponent(configUrl)}`;
     } else {
       subFile = "clash.yaml";
       subUrl = `https://${host}/sub/${token}/${subFile}`;
-      importUrl = `clash://install-config?url=${encodeURIComponent(subUrl)}&name=VMISS%209929`;
+      importUrl = `clash://install-config?url=${encodeURIComponent(subUrl)}&name=o.o`;
+    }
+
+    const payload = {
+      success: true,
+      client: client || "clash",
+      subscription_url: subUrl,
+      import_url: importUrl
+    };
+
+    if (configUrl) {
+      payload.config_url = configUrl;
+      payload.config_import_url = configImportUrl;
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        client: client || "clash",
-        subscription_url: subUrl,
-        import_url: importUrl
-      }),
+      JSON.stringify(payload),
       {
         status: 200,
         headers: {

@@ -72,6 +72,8 @@ test('unlock does not trust arbitrary forwarded hosts; happy path uses synthetic
     assert.equal(response.status, 200);
     assert.equal(new URL(data.subscription_url).hostname, forwarded === 'outside.invalid' ? 'loon-rules-ctp.pages.dev' : forwarded);
     assert.ok(data.import_url.startsWith('loon://import?nodelist='));
+    assert.ok(data.config_url.endsWith('/loon.conf'));
+    assert.ok(data.config_import_url.startsWith('loon://import?configuration='));
     assert.equal(response.headers.get('Cache-Control'), 'no-store');
   }
 

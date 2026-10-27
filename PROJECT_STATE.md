@@ -18,6 +18,12 @@
 
 ## 二、当前状态与基线定型
 
+* **2026-10-28 东方素雅纸质画卷美学重构与全量配置双轨支持：本地门禁全部通过，准备发布**：
+  - **美学统一与体验升级**：对齐 `o-ous.com` 东方纸质山水画卷美学，重塑 `dist/index.html`。全面支持 Warm Rice Paper（暖宣纸白昼）与 Deep Pine Ink Night（墨松幽夜）双主题无缝切换；集成 Noto Serif SC、Cinzel、Plus Jakarta Sans、JetBrains Mono 与微点阵纸质底纹、赤金描边及氛围晕光。
+  - **9929 全面下线与架构校准**：移除所有 9929 骨干网过时表述，统一上线 US-VMISS-TRI（洛杉矶优化直连）、US-VMISS-TRI-LAX1（HAProxy 中转落地）与 US-Taipei101-LAX1-Direct（大流量直连）三节点矩阵。
+  - **全量配置与节点双轨解锁**：`functions/sub/[[catchall]].js` 增补放行 `loon.conf` 与 `loon.lcf`；`functions/api/unlock.js` 为 Loon 客户端返回 `config_url` 与 `config_import_url`（`loon://import?configuration=...`），形成“完整专属配置 + 节点列表订阅”双层交付。
+  - **本地严苛验证**：Node.js Functions 单元测试（4/4 PASS）、Pytest 门禁测试（20/20 PASS）、严格冲突检查（`check_conflicts.py --strict`）、Wrangler Functions 编译、以及预发布完整性校验（`verify_mirrors.py --pre-release`）全部 100% 绿色通过。
+
 * **2026-10-21 抖音静态资源精确 DNS 覆盖试行：已发布，工程验收通过，手机收益未验**：
   - **范围与依据**：本轮范围限定一项；实际请求记录出现 `lf3-static.bytednsdoc.com`，现有成熟上游及 China-Direct 已包含其精确 DOMAIN。本轮只为该主机增加 AliDNS DoH 映射并更新插件日期，源文件与dist副本同步；不扩展到父域、子域或其余四项候选，不改分流规则、策略组、绑定或私人配置。
   - **真机边界**：所有者确认关闭Loon后抖音拖动与App Store头像页明显正常；分别关闭HTTPDNS拦截器、关闭国内DNS插件并重连后，抖音未稳定改善。随后反馈拖动基本秒开；正常时详情显示视频域名命中DIRECT及阿里DoH映射，规则匹配小于1ms。当前Loon为3.5.2(1005)；未取得卡顿时DNS、建连或传输阶段耗时，不能认定根因或把暂时恢复登记为修复。上游DouYin.list仅列分流域名，不提供这五项的DNS服务器建议。

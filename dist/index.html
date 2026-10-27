@@ -1,612 +1,1246 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loon 规则与插件中心 | loon.rules.o-ous.com</title>
-  <meta name="description" content="精选 Loon 分流规则集与插件订阅中心，全链路支持 HTTPS 与边缘 CDN 加速。">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Loon 规则与配置中心 | loon.rules.o-ous.com</title>
+  <meta name="description" content="浮屿 · Loon 规则与配置中心 - 精选 19 套原生分流规则集、DNS 防污染插件与私有节点订阅一键导入中心。">
   <link rel="icon" href="https://icons.o-ous.com/icons/loon.png" type="image/png">
+
+  <!-- Web Fonts: Noto Serif SC, Cinzel, Plus Jakarta Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
+    /* ================= 0. CSS VARIABLES & THEMES (o-ous.com Aesthetic) ================= */
     :root {
-      --bg: #0d1117;
-      --card-bg: rgba(22, 27, 34, 0.85);
-      --border: #30363d;
-      --text: #f0f6fc;
-      --text-muted: #8b949e;
-      --accent: #58a6ff;
-      --accent-hover: #79c0ff;
-      --success: #3fb950;
-      --tag-bg: #21262d;
+      /* Warm Rice Paper Palette (Light Master) */
+      --bg: #F7F3EA;
+      --bg-surface: #FDFBF7;
+      --bg-card: rgba(253, 251, 247, 0.90);
+      --bg-card-hover: #FFFFFF;
+      --text-main: #1C2D27;
+      --text-body: #4A5A53;
+      --text-muted: #7E8D86;
+      --gold-primary: #C5A059;
+      --gold-deep: #9D7B38;
+      --gold-glow: rgba(197, 160, 89, 0.22);
+      --border-card: rgba(197, 160, 89, 0.32);
+      --border-subtle: rgba(197, 160, 89, 0.18);
+      --shadow-sm: 0 2px 10px rgba(28, 45, 39, 0.04);
+      --shadow-md: 0 8px 24px rgba(197, 160, 89, 0.14);
+      --shadow-hover: 0 12px 32px rgba(197, 160, 89, 0.22);
+      --seal-red: #A93226;
+      --seal-red-bg: rgba(169, 50, 38, 0.08);
+      --success-jade: #2E7D5B;
+      --success-bg: rgba(46, 125, 91, 0.10);
+      
+      --font-main: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+      --font-literary: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+      --font-display: "Cinzel", "Noto Serif SC", serif;
+      --font-code: "JetBrains Mono", "Fira Code", monospace;
     }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #f6f8fa;
-        --card-bg: rgba(255, 255, 255, 0.9);
-        --border: #d0d7de;
-        --text: #1f2328;
-        --text-muted: #656d76;
-        --accent: #0969da;
-        --accent-hover: #218bff;
-        --success: #1a7f37;
-        --tag-bg: #eaeef2;
-      }
+
+    [data-theme="dark"] {
+      /* Deep Pine Ink Night Palette (Dark Master) */
+      --bg: #0D1914;
+      --bg-surface: #13241C;
+      --bg-card: rgba(19, 36, 28, 0.88);
+      --bg-card-hover: #192F25;
+      --text-main: #EAE6DF;
+      --text-body: #A8B8B0;
+      --text-muted: #6B7F76;
+      --gold-primary: #D4AF37;
+      --gold-deep: #F6AD55;
+      --gold-glow: rgba(212, 175, 55, 0.30);
+      --border-card: rgba(212, 175, 55, 0.30);
+      --border-subtle: rgba(212, 175, 55, 0.18);
+      --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.48);
+      --shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.65);
+      --seal-red: #E06C75;
+      --seal-red-bg: rgba(224, 108, 117, 0.14);
+      --success-jade: #3FB950;
+      --success-bg: rgba(63, 185, 80, 0.14);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
     body {
-      background: var(--bg);
-      color: var(--text);
+      background-color: var(--bg);
+      color: var(--text-body);
+      font-family: var(--font-main);
+      line-height: 1.6;
       min-height: 100vh;
-      padding: 2.5rem 1rem;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      background-image: radial-gradient(rgba(197, 160, 89, 0.06) 1px, transparent 1px);
+      background-size: 32px 32px;
     }
-    .container {
-      max-width: 960px;
+
+    /* Ambient Lighting */
+    .ambience {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ambience-gold {
+      position: absolute;
+      top: -8rem;
+      right: 8%;
+      width: 48rem;
+      height: 48rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold-glow) 0%, transparent 68%);
+      filter: blur(80px);
+      opacity: 0.85;
+    }
+    .ambience-pine {
+      position: absolute;
+      bottom: 12%;
+      left: -10rem;
+      width: 42rem;
+      height: 42rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(28, 45, 39, 0.08) 0%, transparent 70%);
+      filter: blur(80px);
+    }
+    [data-theme="dark"] .ambience-pine {
+      background: radial-gradient(circle, rgba(56, 102, 89, 0.16) 0%, transparent 70%);
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
       width: 100%;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-    .logo {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      margin-bottom: 1rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
-    }
-    p.subtitle {
-      color: var(--text-muted);
-      font-size: 1rem;
-    }
-    .nav-bar {
       display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1.25rem;
-      flex-wrap: wrap;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    .nav-link {
-      color: var(--accent);
+
+    /* ================= 1. HEADER ================= */
+    header.site-header {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      padding: 0.9rem 0;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(247, 243, 234, 0.85);
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] header.site-header {
+      background: rgba(13, 25, 20, 0.88);
+    }
+    .header-container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+    .brand-logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(197, 160, 89, 0.2);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .brand-wrap:hover .brand-logo-img {
+      transform: scale(1.08) rotate(-4deg);
+    }
+    .brand-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title {
+      font-family: var(--font-literary);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+    .brand-sub {
+      font-family: var(--font-code);
+      font-size: 0.68rem;
+      letter-spacing: 0.16em;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+    }
+    .nav-text-link {
       text-decoration: none;
       font-size: 0.9rem;
       font-weight: 500;
-      padding: 0.35rem 0.85rem;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      color: var(--text-body);
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
       transition: all 0.2s ease;
     }
-    .nav-link:hover {
-      border-color: var(--accent);
-      background: var(--tag-bg);
+    .nav-text-link:hover {
+      color: var(--gold-primary);
+      border-color: var(--border-subtle);
+      background: var(--bg-card);
     }
-    .section-title {
-      font-size: 1.25rem;
+    .theme-toggle-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.4rem 0.65rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.25s ease;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--gold-primary);
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px var(--gold-glow);
+    }
+
+    /* ================= 2. MAIN CONTAINER ================= */
+    .main-content {
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.8rem 1.5rem 4rem 1.5rem;
+      flex: 1;
+    }
+
+    /* ================= 3. HERO SCROLL BANNER ================= */
+    .hero-banner {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 2.4rem 2rem;
+      margin-bottom: 3.2rem;
+      position: relative;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.25rem;
+    }
+    .hero-banner::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--gold-primary), var(--gold-deep));
+    }
+    .hero-seal-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-family: var(--font-literary);
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      color: var(--seal-red);
+      background: var(--seal-red-bg);
+      border: 1px solid rgba(169, 50, 38, 0.2);
+      border-radius: 6px;
+      padding: 0.25rem 0.65rem;
       font-weight: 600;
-      margin: 2rem 0 1rem;
+    }
+    [data-theme="dark"] .hero-seal-tag {
+      border-color: rgba(224, 108, 117, 0.3);
+    }
+    .hero-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .hero-heading {
+      font-family: var(--font-literary);
+      font-size: clamp(1.8rem, 3.2vw, 2.35rem);
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.06em;
+      line-height: 1.3;
+    }
+    .hero-quote {
+      font-family: var(--font-literary);
+      font-size: 0.95rem;
+      color: var(--gold-deep);
+      letter-spacing: 0.15em;
+      font-weight: 600;
+    }
+    .hero-desc {
+      font-size: 0.96rem;
+      line-height: 1.8;
+      color: var(--text-body);
+      max-width: 820px;
+    }
+    .btn-gold-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.8rem 1.8rem;
+      background: var(--text-main);
+      color: var(--bg);
+      border: 1px solid var(--text-main);
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 18px rgba(28, 45, 39, 0.2);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin-top: 0.5rem;
+    }
+    .btn-gold-action:hover {
+      transform: translateY(-2px);
+      background: var(--gold-deep);
+      border-color: var(--gold-deep);
+      box-shadow: 0 8px 24px var(--gold-glow);
+    }
+
+    /* ================= 4. SECTION TITLES & GRIDS ================= */
+    .section-wrap {
+      margin-bottom: 3.5rem;
+    }
+    .section-header-bar {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1.6rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 0.8rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .section-title-wrap {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
-    .grid {
+    .section-gold-bar {
+      width: 3px;
+      height: 1.35rem;
+      background: var(--gold-primary);
+      border-radius: 2px;
+    }
+    .section-title {
+      font-family: var(--font-literary);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-main);
+    }
+    .section-subtitle-en {
+      font-family: var(--font-code);
+      font-size: 0.72rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .grid-3 {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
     }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.2rem;
+    .grid-rules {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* Master Card */
+    .zen-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      padding: 1.35rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
     }
-    .card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
+    .zen-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold-primary);
+      background: var(--bg-card-hover);
+      box-shadow: var(--shadow-md);
     }
-    .card-header {
+    .card-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.65rem;
+      gap: 0.5rem;
     }
     .card-name {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--text);
+      font-family: var(--font-literary);
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.04em;
     }
-    .badge {
+    .badge-status {
       font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
+      padding: 0.2rem 0.55rem;
       border-radius: 6px;
-      background: var(--tag-bg);
-      color: var(--text-muted);
-      font-weight: 500;
+      background: var(--success-bg);
+      color: var(--success-jade);
+      border: 1px solid rgba(46, 125, 91, 0.25);
+      font-weight: 600;
+      white-space: nowrap;
     }
-    .card-desc {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      line-height: 1.4;
-      flex-grow: 1;
+    .badge-category {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      background: rgba(197, 160, 89, 0.10);
+      color: var(--gold-deep);
+      border: 1px solid var(--border-subtle);
+      font-weight: 600;
+      white-space: nowrap;
     }
-    .card-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .btn {
-      flex: 1;
+    .card-endpoint {
+      background: rgba(197, 160, 89, 0.08);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
       padding: 0.45rem 0.75rem;
       font-size: 0.825rem;
-      font-weight: 500;
+      font-family: var(--font-code);
+      color: var(--text-main);
+      margin-bottom: 0.85rem;
+      word-break: break-all;
+    }
+    .card-desc {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text-body);
+      margin-bottom: 1.1rem;
+      flex-grow: 1;
+    }
+    .card-action-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+    .btn-card-action {
+      flex: 1;
+      padding: 0.5rem 0.65rem;
+      font-size: 0.825rem;
+      font-weight: 600;
       text-align: center;
       text-decoration: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--tag-bg);
-      color: var(--text);
       transition: all 0.2s ease;
     }
-    .btn:hover {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
+    .btn-card-action.secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
     }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
+    .btn-card-action.secondary:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
     }
-    .btn-primary:hover {
-      background: var(--accent-hover);
+    .btn-card-action.primary {
+      background: var(--text-main);
+      border: 1px solid var(--text-main);
+      color: var(--bg);
     }
-    footer {
-      margin-top: 3.5rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-muted);
+    .btn-card-action.primary:hover {
+      background: var(--gold-deep);
+      border-color: var(--gold-deep);
     }
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1f2328;
-      color: #fff;
-      padding: 0.6rem 1.2rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-      z-index: 1100;
-    }
-    .toast.show { opacity: 1; }
-    .hero-unlock {
-      background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(63, 185, 80, 0.08) 100%);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.8rem;
-      margin-bottom: 2rem;
+    .feature-list {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 1rem;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      gap: 0.45rem;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--border-subtle);
+      padding-top: 0.75rem;
     }
-    .hero-unlock h2 {
-      font-size: 1.35rem;
-      font-weight: 600;
+    .feature-item {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
-    .hero-unlock p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      max-width: 640px;
-      line-height: 1.5;
-    }
-    .unlock-btn {
-      padding: 0.7rem 1.6rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-      background: var(--accent);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 14px rgba(88, 166, 255, 0.3);
-    }
-    .unlock-btn:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
+
+    /* ================= 5. UNLOCK MODAL ================= */
     .modal-backdrop {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
+      background: rgba(13, 25, 20, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1rem;
+      padding: 1.25rem;
       z-index: 1000;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s ease;
+      transition: opacity 0.25s ease;
     }
     .modal-backdrop.active {
       opacity: 1;
       pointer-events: auto;
     }
-    .modal {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+    .modal-window {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
       width: 100%;
-      max-width: 460px;
-      padding: 1.8rem;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
-      transform: translateY(10px);
-      transition: transform 0.2s ease;
+      max-width: 540px;
+      padding: 2.2rem 2rem;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+      transform: translateY(12px);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
     }
-    .modal-backdrop.active .modal {
+    .modal-backdrop.active .modal-window {
       transform: translateY(0);
     }
-    .modal-close {
+    .modal-close-btn {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
+      top: 1.2rem;
+      right: 1.2rem;
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       cursor: pointer;
       line-height: 1;
       padding: 0.3rem;
+      transition: color 0.2s ease;
     }
-    .modal-close:hover {
-      color: var(--text);
+    .modal-close-btn:hover {
+      color: var(--gold-primary);
+    }
+    .modal-header-tag {
+      font-family: var(--font-code);
+      font-size: 0.7rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
     }
     .modal-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-family: var(--font-literary);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.4rem;
     }
     .modal-subtitle {
-      font-size: 0.875rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
-      margin-bottom: 1.25rem;
-      line-height: 1.4;
+      margin-bottom: 1.6rem;
+      line-height: 1.5;
     }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+    .input-wrap {
+      margin-bottom: 1.2rem;
     }
-    .input-field {
+    .password-input {
       width: 100%;
-      padding: 0.65rem 0.85rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border-card);
       background: var(--bg);
-      color: var(--text);
+      color: var(--text-main);
       font-size: 0.95rem;
       outline: none;
-      transition: border-color 0.2s ease;
+      font-family: var(--font-main);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    .input-field:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    .password-input:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 0 3px var(--gold-glow);
     }
     .modal-error {
-      color: #f85149;
+      color: var(--seal-red);
       font-size: 0.85rem;
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.85rem;
       display: none;
     }
-    .btn-submit {
+    .btn-verify-submit {
       width: 100%;
-      padding: 0.65rem;
+      padding: 0.8rem;
       font-size: 0.95rem;
       font-weight: 600;
-      color: #fff;
-      background: var(--accent);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
+      color: var(--bg);
+      background: var(--text-main);
+      border: 1px solid var(--text-main);
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
-    .btn-submit:hover {
-      background: var(--accent-hover);
+    .btn-verify-submit:hover {
+      background: var(--gold-deep);
+      border-color: var(--gold-deep);
     }
-    .unlocked-container {
+
+    /* Unlocked Tier Cards */
+    .unlocked-group {
       display: none;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.25rem;
     }
-    .sub-box {
+    .sub-tier-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .sub-tier-card.highlight {
+      border-color: var(--gold-primary);
+      background: linear-gradient(180deg, rgba(197, 160, 89, 0.08) 0%, var(--bg-card) 100%);
+    }
+    .tier-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tier-title-text {
+      font-family: var(--font-literary);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .tier-badge {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+      background: var(--seal-red-bg);
+      color: var(--seal-red);
+      border: 1px solid rgba(169, 50, 38, 0.2);
+    }
+    .tier-badge.gold {
+      background: var(--gold-glow);
+      color: var(--gold-deep);
+      border-color: var(--gold-primary);
+    }
+    .tier-desc {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .url-copy-box {
       display: flex;
       gap: 0.5rem;
     }
-    .sub-input {
+    .url-display-input {
       flex: 1;
-      padding: 0.55rem 0.75rem;
-      font-size: 0.85rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
+      padding: 0.55rem 0.8rem;
+      font-size: 0.825rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
       background: var(--bg);
-      color: var(--text);
-      font-family: monospace;
+      color: var(--text-main);
+      font-family: var(--font-code);
     }
-    .btn-copy {
-      padding: 0.55rem 0.9rem;
+    .btn-copy-tag {
+      padding: 0.55rem 1rem;
       font-size: 0.85rem;
-      font-weight: 500;
-      color: #fff;
-      background: var(--tag-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      font-weight: 600;
+      color: var(--text-main);
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
       cursor: pointer;
       white-space: nowrap;
+      transition: all 0.2s ease;
     }
-    .btn-copy:hover {
-      background: var(--accent);
-      border-color: var(--accent);
+    .btn-copy-tag:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
     }
-    .btn-import {
+    .btn-import-primary {
       display: block;
       width: 100%;
       text-align: center;
-      padding: 0.65rem;
-      font-size: 0.95rem;
+      padding: 0.7rem;
+      font-size: 0.92rem;
       font-weight: 600;
-      color: #fff;
-      background: var(--success);
-      border: 1px solid var(--success);
+      color: var(--bg);
+      background: var(--gold-deep);
+      border: 1px solid var(--gold-deep);
       border-radius: 8px;
       text-decoration: none;
       transition: all 0.2s ease;
     }
-    .btn-import:hover {
-      opacity: 0.9;
+    .btn-import-primary:hover {
+      opacity: 0.92;
+      box-shadow: 0 4px 16px var(--gold-glow);
     }
-    .unlocked-tip {
+    .btn-import-secondary {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 0.65rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-import-secondary:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+    .modal-tip-box {
       font-size: 0.8rem;
       color: var(--text-muted);
-      line-height: 1.4;
-      background: var(--tag-bg);
-      padding: 0.6rem 0.8rem;
-      border-radius: 6px;
+      line-height: 1.5;
+      background: rgba(197, 160, 89, 0.08);
+      border: 1px solid var(--border-subtle);
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+    }
+
+    /* Toast */
+    .zen-toast {
+      position: fixed;
+      bottom: 2.2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text-main);
+      color: var(--bg);
+      padding: 0.65rem 1.4rem;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 1200;
+    }
+    .zen-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ================= 6. FOOTER ================= */
+    footer.site-footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 2.4rem 1.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: rgba(247, 243, 234, 0.5);
+    }
+    [data-theme="dark"] footer.site-footer {
+      background: rgba(13, 25, 20, 0.5);
+    }
+    .footer-seal {
+      font-family: var(--font-literary);
+      font-size: 0.95rem;
+      color: var(--gold-primary);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.4rem;
+    }
+
+    @media (max-width: 768px) {
+      .header-container { padding: 0 1rem; }
+      .site-nav .nav-text-link { display: none; }
+      .hero-banner { padding: 1.8rem 1.25rem; }
+      .modal-window { padding: 1.6rem 1.2rem; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <img src="https://icons.o-ous.com/icons/loon.png" alt="Loon Logo" class="logo">
-      <h1>Loon 规则与插件订阅中心</h1>
-      <p class="subtitle">Cloudflare Anycast 边缘直连加速 · 支持 .lsr 分流规则与 .lpx 专属插件</p>
-      <div class="nav-bar">
-        <a href="https://rules.o-ous.com" class="nav-link">← 规则体系门户</a>
-        <a href="https://clash.rules.o-ous.com" class="nav-link">🐱 Clash 规则中心</a>
-        <a href="https://icons.o-ous.com" class="nav-link">🎨 资产图标库</a>
-        <a href="https://monitor.o-ous.com" class="nav-link">📊 监控看板</a>
-        <a href="https://github.com/o-ocn/loon-rules" class="nav-link" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+  <!-- Ambient background lighting -->
+  <div class="ambience">
+    <div class="ambience-gold"></div>
+    <div class="ambience-pine"></div>
+  </div>
+
+  <div class="app-shell">
+    <!-- Header -->
+    <header class="site-header">
+      <div class="header-container">
+        <a href="https://loon.rules.o-ous.com" class="brand-wrap">
+          <img src="https://icons.o-ous.com/icons/loon.png" alt="Loon Logo" class="brand-logo-img">
+          <div class="brand-title-wrap">
+            <span class="brand-title">Loon 规则与配置中心</span>
+            <span class="brand-sub">o-ous · rules portal</span>
+          </div>
+        </a>
+
+        <div class="site-nav">
+          <a href="https://o-ous.com" class="nav-text-link">← 浮屿空间</a>
+          <a href="https://rules.o-ous.com" class="nav-text-link">规则体系</a>
+          <a href="https://clash.rules.o-ous.com" class="nav-text-link">🐱 Clash 规则</a>
+          <a href="https://icons.o-ous.com" class="nav-text-link">🎨 资产图标</a>
+          <a href="https://monitor.o-ous.com" class="nav-text-link">📊 监控看板</a>
+          <a href="https://github.com/o-ocn/loon-rules" class="nav-text-link" target="_blank" rel="noopener">GitHub ↗</a>
+          <button id="themeToggleBtn" class="theme-toggle-btn" title="切换昼夜美学主题">
+            <span id="themeIcon">🌓</span>
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- 私有节点订阅解锁 Hero -->
-    <div class="hero-unlock">
-      <h2>🔐 私有节点统一订阅</h2>
-      <p>包含 VMISS 9929 优化直连出口与 Taipei101 LAX1 落地中转出口双节点，支持 VLESS Reality 与 XUDP 数据承载，自动同步流量与到期时间。</p>
-      <button class="unlock-btn" onclick="openUnlockModal()">
-        <span>🔑 获取我的私有节点订阅</span>
-      </button>
-    </div>
-
-    <div class="section-title">📦 Loon 专属插件 (.lpx)</div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-name">Loon-China-DNS</div>
-          <span class="badge">插件</span>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-seal-tag">
+          <span>印</span>
+          <span>o-ous · 专享配置</span>
         </div>
-        <div class="card-desc">中国大陆精选 DNS 配置与精准防污染分流策略插件。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/plugins/Loon-China-DNS.lpx')">复制链接</button>
-          <a class="btn btn-primary" href="loon://import?plugin=https%3A%2F%2Floon.rules.o-ous.com%2Fplugins%2FLoon-China-DNS.lpx">一键导入</a>
+        <div class="hero-title-group">
+          <h1 class="hero-heading">私有节点与专属配置订阅</h1>
+          <div class="hero-quote">浮云万里 · 驭风而行</div>
         </div>
-      </div>
-    </div>
+        <p class="hero-desc">
+          包含全新 VMISS TRI 优化直连出口、Taipei101 LAX1 直连出口以及 HAProxy 落地中转双栈节点矩阵，支持 VLESS Reality 与 XUDP 数据承载。支持一键导入 Loon 专属完整配置（19 套分流规则集 + DNS 插件 + 策略组）及轻量节点订阅列表。
+        </p>
+        <button class="btn-gold-action" onclick="openUnlockModal()">
+          <span>🔑 获取配置与节点订阅</span>
+        </button>
+      </section>
 
-    <div class="section-title">🛡️ Loon 分流规则集 (.lsr)</div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-header"><div class="card-name">AI-Overseas</div><span class="badge">AI 服务</span></div>
-        <div class="card-desc">OpenAI、Claude、Gemini、Copilot 等海外主流 AI 服务分流。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/AI-Overseas.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/AI-Overseas.lsr" target="_blank">查看规则</a>
+      <!-- Section: Node Infrastructure Matrix -->
+      <section class="section-wrap">
+        <div class="section-header-bar">
+          <div class="section-title-wrap">
+            <div class="section-gold-bar"></div>
+            <h2 class="section-title">统一节点矩阵 (TRI & LAX1 架构)</h2>
+          </div>
+          <span class="section-subtitle-en">UNIFIED NODE INFRASTRUCTURE</span>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-name">AI-China-Direct</div><span class="badge">AI 服务</span></div>
-        <div class="card-desc">国内主流大模型服务直连分流。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/AI-China-Direct.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/AI-China-Direct.lsr" target="_blank">查看规则</a>
+        <div class="grid-3">
+          <!-- Card 1: VMISS TRI -->
+          <div class="zen-card">
+            <div>
+              <div class="card-top">
+                <div class="card-name">US-VMISS-TRI</div>
+                <span class="badge-status">🟢 优化直连出口</span>
+              </div>
+              <div class="card-endpoint">vmiss.o-ous.com:443</div>
+              <div class="card-desc">VMISS 洛杉矶 TRI 优化回程原生双栈直连落地，提供极低延迟与稳定带宽。</div>
+            </div>
+            <div class="feature-list">
+              <div class="feature-item"><span>🛡️</span><span>协议：VLESS + Reality + Vision</span></div>
+              <div class="feature-item"><span>🚀</span><span>承载：Packet-Encoding: XUDP</span></div>
+              <div class="feature-item"><span>📍</span><span>出口：68.68.250.223 / IPv6 双栈</span></div>
+            </div>
+          </div>
+
+          <!-- Card 2: VMISS TRI LAX1 Relay -->
+          <div class="zen-card">
+            <div>
+              <div class="card-top">
+                <div class="card-name">US-VMISS-TRI-LAX1</div>
+                <span class="badge-status">🟢 VMISS 中转落地</span>
+              </div>
+              <div class="card-endpoint">vmiss.o-ous.com:20443</div>
+              <div class="card-desc">国内流量经 TRI 优化入口四层转发至 Taipei101 LAX1 落地，兼顾优质入口与独立落地出口。</div>
+            </div>
+            <div class="feature-list">
+              <div class="feature-item"><span>🛡️</span><span>协议：VLESS + Reality + Vision</span></div>
+              <div class="feature-item"><span>🚀</span><span>中转：HAProxy 四层 TCP 透明转交</span></div>
+              <div class="feature-item"><span>📍</span><span>出口：64.49.28.143</span></div>
+            </div>
+          </div>
+
+          <!-- Card 3: LAX1 Direct -->
+          <div class="zen-card">
+            <div>
+              <div class="card-top">
+                <div class="card-name">US-Taipei101-LAX1-Direct</div>
+                <span class="badge-status">🟢 LAX1 直连双栈</span>
+              </div>
+              <div class="card-endpoint">lax.o-ous.com:443</div>
+              <div class="card-desc">Taipei101 LAX1 原生双栈直连出口，5TB 大流量直连，不消耗 VMISS 入口流量。</div>
+            </div>
+            <div class="feature-list">
+              <div class="feature-item"><span>🛡️</span><span>协议：VLESS + Reality + Vision</span></div>
+              <div class="feature-item"><span>🚀</span><span>分流：原生双栈 Happy Eyeballs</span></div>
+              <div class="feature-item"><span>📍</span><span>出口：64.49.28.143 / IPv6 双栈</span></div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <div class="card-header"><div class="card-name">Google</div><span class="badge">海外全家桶</span></div>
-        <div class="card-desc">Google 全系服务精准域名与路由规则。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Google.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Google.lsr" target="_blank">查看规则</a>
+      <!-- Section: Loon Exclusive Plugins -->
+      <section class="section-wrap">
+        <div class="section-header-bar">
+          <div class="section-title-wrap">
+            <div class="section-gold-bar"></div>
+            <h2 class="section-title">Loon 专属插件 (.lpx)</h2>
+          </div>
+          <span class="section-subtitle-en">EXCLUSIVE PLUGINS</span>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-name">YouTube</div><span class="badge">流媒体</span></div>
-        <div class="card-desc">YouTube 视频流量及相关域专属分流规则。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/YouTube.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/YouTube.lsr" target="_blank">查看规则</a>
+        <div class="grid-3">
+          <div class="zen-card">
+            <div class="card-top">
+              <div class="card-name">Loon-China-DNS</div>
+              <span class="badge-category">精选插件</span>
+            </div>
+            <div class="card-desc">中国大陆精选 DNS 配置与精准防污染分流策略插件，全面支持阿里公共 DoH 端点与常用服务无污染解析。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/plugins/Loon-China-DNS.lpx')">复制链接</button>
+              <a class="btn-card-action primary" href="loon://import?plugin=https%3A%2F%2Floon.rules.o-ous.com%2Fplugins%2FLoon-China-DNS.lpx">一键导入</a>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <div class="card-header"><div class="card-name">Telegram</div><span class="badge">即时通讯</span></div>
-        <div class="card-desc">Telegram IP-CIDR 与全系通信域名路由。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Telegram.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Telegram.lsr" target="_blank">查看规则</a>
+      <!-- Section: 19 Loon Remote Rulesets -->
+      <section class="section-wrap">
+        <div class="section-header-bar">
+          <div class="section-title-wrap">
+            <div class="section-gold-bar"></div>
+            <h2 class="section-title">Loon 原生分流规则集 (19 套精选 .lsr)</h2>
+          </div>
+          <span class="section-subtitle-en">19 REMOTE RULESETS</span>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-name">Twitter</div><span class="badge">社交平台</span></div>
-        <div class="card-desc">X (Twitter) 域名及 CDN 规则集。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Twitter.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Twitter.lsr" target="_blank">查看规则</a>
+        <div class="grid-rules">
+          <!-- 1. AI-Overseas -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">AI-Overseas</div><span class="badge-category">海外 AI</span></div>
+            <div class="card-desc">OpenAI、Claude、Gemini、Copilot 等海外主流 AI 服务精准分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/AI-Overseas.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/AI-Overseas.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 2. AI-China-Direct -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">AI-China-Direct</div><span class="badge-category">国内大模型</span></div>
+            <div class="card-desc">国内主流大语言模型服务与 API 接口高速直连分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/AI-China-Direct.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/AI-China-Direct.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 3. Google -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Google</div><span class="badge-category">海外生态</span></div>
+            <div class="card-desc">Google 全系服务精准域名与基础依赖路由规则。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Google.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Google.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 4. YouTube -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">YouTube</div><span class="badge-category">流媒体</span></div>
+            <div class="card-desc">YouTube 视频流量及 CDN 域专属分流规则。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/YouTube.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/YouTube.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 5. Telegram -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Telegram</div><span class="badge-category">即时通讯</span></div>
+            <div class="card-desc">Telegram 全球官方 IP-CIDR 与通信域名路由。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Telegram.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Telegram.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 6. Twitter -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Twitter</div><span class="badge-category">社交平台</span></div>
+            <div class="card-desc">X (Twitter) 域名及媒体 CDN 加速规则集。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Twitter.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Twitter.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 7. GitHub -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">GitHub</div><span class="badge-category">开发者</span></div>
+            <div class="card-desc">GitHub 网页、API、Raw 及 Release 资产代理分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/GitHub.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/GitHub.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 8. China-Direct -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">China-Direct</div><span class="badge-category">直连路由</span></div>
+            <div class="card-desc">中国大陆主要网站及 CDN 高速直连分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/China-Direct.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/China-Direct.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 9. China-GeoIP -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">China-GeoIP</div><span class="badge-category">国内网段</span></div>
+            <div class="card-desc">中国大陆 IPv4 / IPv6 官方分配网段直连。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/China-GeoIP.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/China-GeoIP.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 10. Apple-Direct -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Apple-Direct</div><span class="badge-category">苹果直连</span></div>
+            <div class="card-desc">Apple 国内直连 CDN 与系统同步高速服务。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Apple-Direct.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Apple-Direct.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 11. Apple-Media -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Apple-Media</div><span class="badge-category">苹果媒体</span></div>
+            <div class="card-desc">Apple Music、TV+、Podcasts 等媒体服务专属分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Apple-Media.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Apple-Media.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 12. Apple-Push -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Apple-Push</div><span class="badge-category">APNs 推送</span></div>
+            <div class="card-desc">Apple 推送通知服务（APNs）系统核心信令通道。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Apple-Push.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Apple-Push.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 13. GoogleDrive -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">GoogleDrive</div><span class="badge-category">云端存储</span></div>
+            <div class="card-desc">Google Drive 云端硬盘专属大流量分流规则。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/GoogleDrive.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/GoogleDrive.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 14. OneDrive -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">OneDrive</div><span class="badge-category">微软云盘</span></div>
+            <div class="card-desc">Microsoft OneDrive 客户端同步与网页数据流分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/OneDrive.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/OneDrive.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 15. Discord -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Discord</div><span class="badge-category">社区通信</span></div>
+            <div class="card-desc">Discord 客户端、网关通信与语音信令网段路由。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Discord.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Discord.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 16. PayPal -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">PayPal</div><span class="badge-category">跨境支付</span></div>
+            <div class="card-desc">PayPal 全球结算与风控网段稳定分流规则。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/PayPal.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/PayPal.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 17. Gaming -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Gaming</div><span class="badge-category">游戏平台</span></div>
+            <div class="card-desc">Steam、Epic Games、PlayStation、Nintendo 等游戏平台分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Gaming.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Gaming.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 18. TestFlight -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">TestFlight</div><span class="badge-category">测试生态</span></div>
+            <div class="card-desc">Apple TestFlight 测试应用下载与沙盒 API 分流。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/TestFlight.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/TestFlight.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
+
+          <!-- 19. Lan -->
+          <div class="zen-card">
+            <div class="card-top"><div class="card-name">Lan</div><span class="badge-category">局域网内网</span></div>
+            <div class="card-desc">RFC1918 局域网私有网段与本地回环绝对直连规则。</div>
+            <div class="card-action-bar">
+              <button class="btn-card-action secondary" onclick="copyUrl('https://loon.rules.o-ous.com/Lan.lsr')">复制链接</button>
+              <a class="btn-card-action primary" href="https://loon.rules.o-ous.com/Lan.lsr" target="_blank" rel="noopener">查看规则</a>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+    </main>
 
-      <div class="card">
-        <div class="card-header"><div class="card-name">GitHub</div><span class="badge">开发者</span></div>
-        <div class="card-desc">GitHub 网页、API、Raw 及 Release 资产代理分流。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/GitHub.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/GitHub.lsr" target="_blank">查看规则</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-name">China-Direct</div><span class="badge">直连路由</span></div>
-        <div class="card-desc">中国大陆主要网站及 CDN 高速直连分流。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/China-Direct.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/China-Direct.lsr" target="_blank">查看规则</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-name">China-GeoIP</div><span class="badge">直连路由</span></div>
-        <div class="card-desc">中国大陆 IPv4 / IPv6 官方分配段直连。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/China-GeoIP.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/China-GeoIP.lsr" target="_blank">查看规则</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-name">Apple-Direct</div><span class="badge">苹果生态</span></div>
-        <div class="card-desc">Apple 国内直连 CDN 与系统同步服务。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Apple-Direct.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Apple-Direct.lsr" target="_blank">查看规则</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-name">Discord</div><span class="badge">社区通信</span></div>
-        <div class="card-desc">Discord 客户端、网关与语音网段路由。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Discord.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Discord.lsr" target="_blank">查看规则</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-name">Gaming</div><span class="badge">游戏平台</span></div>
-        <div class="card-desc">Steam、Epic、PlayStation、Nintendo 等游戏生态分流。</div>
-        <div class="card-actions">
-          <button class="btn" onclick="copyUrl('https://loon.rules.o-ous.com/Gaming.lsr')">复制链接</button>
-          <a class="btn btn-primary" href="https://loon.rules.o-ous.com/Gaming.lsr" target="_blank">查看规则</a>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      <p>© 2026 o-ous.com. 部署于 Cloudflare Pages Edge · 强效 CORS 兼容</p>
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-seal">浮屿 · 东方纸质山水画卷</div>
+      <p>© 2026 o-ous.com · 部署于 Cloudflare Pages Edge · 统一规则与节点矩阵体系</p>
     </footer>
   </div>
 
-  <!-- 解锁 Modal -->
+  <!-- Unlock Modal -->
   <div id="unlockModal" class="modal-backdrop">
-    <div class="modal">
-      <button class="modal-close" onclick="closeUnlockModal()">×</button>
-      <div class="modal-title">🔐 解锁私有节点订阅</div>
-      <div class="modal-subtitle">请输入统一访问密码以获取 Loon 私有节点订阅链接</div>
+    <div class="modal-window">
+      <button class="modal-close-btn" onclick="closeUnlockModal()">×</button>
+      <div class="modal-header-tag">SECURITY ENCLAVE</div>
+      <div class="modal-title">🔐 解锁私有节点与专属配置</div>
+      <div class="modal-subtitle">请输入统一访问密码以获取 Loon 专属配置与节点订阅链接</div>
       
-      <!-- 密码输入表单 -->
+      <!-- Password Input Form -->
       <div id="formSection">
-        <div class="input-group">
-          <input type="password" id="passwordInput" class="input-field" placeholder="输入访问密码..." autocomplete="current-password">
+        <div class="input-wrap">
+          <input type="password" id="passwordInput" class="password-input" placeholder="输入访问密码..." autocomplete="current-password">
         </div>
         <div id="modalError" class="modal-error"></div>
-        <button id="btnVerify" class="btn-submit" onclick="submitPassword()">验证并获取订阅</button>
+        <button id="btnVerify" class="btn-verify-submit" onclick="submitPassword()">验证并获取订阅</button>
       </div>
 
-      <!-- 解锁成功展示 -->
-      <div id="unlockedSection" class="unlocked-container">
-        <div class="sub-box">
-          <input type="text" id="subUrlInput" class="sub-input" readonly>
-          <button class="btn-copy" onclick="copySubUrl()">复制</button>
+      <!-- Unlocked State -->
+      <div id="unlockedSection" class="unlocked-group">
+        <!-- Tier 1: Full Profile Configuration (Recommended) -->
+        <div class="sub-tier-card highlight">
+          <div class="tier-header">
+            <span class="tier-title-text">完整专属配置 (Full Profile)</span>
+            <span class="tier-badge gold">⭐ 推荐 · 开箱即用</span>
+          </div>
+          <div class="tier-desc">包含 19 套原生分流规则集、DNS 防泄漏插件与策略组。新设备首选一键导入此项。</div>
+          <div class="url-copy-box">
+            <input type="text" id="configUrlInput" class="url-display-input" readonly>
+            <button class="btn-copy-tag" onclick="copyConfigUrl()">复制</button>
+          </div>
+          <a id="btnImportConfig" href="#" class="btn-import-primary">🚀 一键导入完整配置 (Loon)</a>
         </div>
-        <a id="btnImportLoon" href="#" class="btn-import">🚀 一键导入到 Loon</a>
-        <div class="unlocked-tip">
-          💡 <b>提示：</b>在客户端导入一次后即可开启定时自动更新，后续客户端后台更新节点时无需再次输入密码。
+
+        <!-- Tier 2: Pure Node List Subscription -->
+        <div class="sub-tier-card">
+          <div class="tier-header">
+            <span class="tier-title-text">私有节点订阅 (Node List)</span>
+            <span class="tier-badge">⚡ 轻量 · 纯节点集合</span>
+          </div>
+          <div class="tier-desc">仅下发私有 Reality 节点列表，适用于保留用户原有规则或引入第三方分流配置。</div>
+          <div class="url-copy-box">
+            <input type="text" id="subUrlInput" class="url-display-input" readonly>
+            <button class="btn-copy-tag" onclick="copySubUrl()">复制</button>
+          </div>
+          <a id="btnImportLoon" href="#" class="btn-import-secondary">📥 仅导入节点列表 (Loon)</a>
+        </div>
+
+        <div class="modal-tip-box">
+          💡 <b>提示：</b>在 Loon 导入后开启定时自动更新，后续后台同步节点时无需再次输入密码。
         </div>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="toast">已复制到剪贴板</div>
+  <!-- Toast -->
+  <div id="toast" class="zen-toast">已复制到剪贴板</div>
 
   <script>
-    function copyUrl(url) {
-      navigator.clipboard.writeText(url).then(() => {
-        showToast('已复制订阅链接: ' + url);
+    // Theme Management
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('o_ous_theme', theme);
+      if (themeIcon) {
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+      }
+    }
+
+    const savedTheme = localStorage.getItem('o_ous_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(savedTheme);
+
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        setTheme(current === 'dark' ? 'light' : 'dark');
       });
     }
 
+    // Modal & Unlock Logic
     const modal = document.getElementById('unlockModal');
     const passInput = document.getElementById('passwordInput');
     const modalError = document.getElementById('modalError');
     const formSection = document.getElementById('formSection');
     const unlockedSection = document.getElementById('unlockedSection');
+    const configUrlInput = document.getElementById('configUrlInput');
+    const btnImportConfig = document.getElementById('btnImportConfig');
     const subUrlInput = document.getElementById('subUrlInput');
     const btnImportLoon = document.getElementById('btnImportLoon');
     const btnVerify = document.getElementById('btnVerify');
@@ -662,10 +1296,30 @@
         // 解锁成功
         formSection.style.display = 'none';
         unlockedSection.style.display = 'flex';
+
+        // 1. 完整专属配置
+        const configUrl = data.config_url || (data.subscription_url ? data.subscription_url.replace('/loon.txt', '/loon.conf') : '');
+        configUrlInput.value = configUrl;
+        btnImportConfig.href = data.config_import_url || `loon://import?configuration=${encodeURIComponent(configUrl)}`;
+
+        // 2. 节点列表订阅
         subUrlInput.value = data.subscription_url;
-        btnImportLoon.href = data.import_url;
+        btnImportLoon.href = data.import_url || `loon://import?nodelist=${encodeURIComponent(data.subscription_url)}`;
         showToast('🎉 解锁成功！');
       } catch (err) {
+        // 本地离线预览兜底容错（方便在本地无后端时检验解锁状态）
+        if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+          formSection.style.display = 'none';
+          unlockedSection.style.display = 'flex';
+          const mockConfig = 'https://loon.rules.o-ous.com/sub/DEMO_PREVIEW_TOKEN/loon.conf';
+          const mockSub = 'https://loon.rules.o-ous.com/sub/DEMO_PREVIEW_TOKEN/loon.txt';
+          configUrlInput.value = mockConfig;
+          btnImportConfig.href = `loon://import?configuration=${encodeURIComponent(mockConfig)}`;
+          subUrlInput.value = mockSub;
+          btnImportLoon.href = `loon://import?nodelist=${encodeURIComponent(mockSub)}`;
+          showToast('已进入本地离线预览模式');
+          return;
+        }
         showError('网络请求失败，请稍后重试');
         btnVerify.disabled = false;
         btnVerify.innerText = '验证并获取订阅';
@@ -677,9 +1331,21 @@
       modalError.style.display = 'block';
     }
 
+    function copyConfigUrl() {
+      navigator.clipboard.writeText(configUrlInput.value).then(() => {
+        showToast('已复制完整配置链接到剪贴板');
+      });
+    }
+
     function copySubUrl() {
       navigator.clipboard.writeText(subUrlInput.value).then(() => {
-        showToast('已复制私有订阅链接到剪贴板');
+        showToast('已复制节点列表链接到剪贴板');
+      });
+    }
+
+    function copyUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('已复制链接到剪贴板: ' + url);
       });
     }
 
@@ -687,7 +1353,7 @@
       const toast = document.getElementById('toast');
       toast.innerText = msg;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      setTimeout(() => toast.classList.remove('show'), 2200);
     }
   </script>
 </body>
