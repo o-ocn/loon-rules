@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "build_timestamp": "2026-10-28T06:46:50.474705+00:00",
-  "content_revision": "cc6dba602066",
-  "package_sha256": "cc6dba6020663bde98952749599fe284a3fa48bb6a6a66e93324cc6c9eca4729",
+  "build_timestamp": "2026-10-28T06:54:25.351219+00:00",
+  "content_revision": "6d169e736b81",
+  "package_sha256": "6d169e736b816314a622915f1c3f3531246665cd7e9d2063411605b25db1a9dc",
   "repository": "https://github.com/o-ocn/loon-rules",
   "primary_base": "https://raw.githubusercontent.com/o-ocn/loon-rules/main/dist",
   "backup_base": "https://fastly.jsdelivr.net/gh/o-ocn/loon-rules@main/dist",
@@ -116,9 +116,9 @@
       "description": "LAN, private, and reserved network bypass (RFC 1918, RFC 6598, RFC 6890, RFC 2544, RFC 4291, RFC 4193)"
     },
     "China-GeoIP.lsr": {
-      "total_rules": 19595,
-      "revision": "770d1c0565fc",
-      "sha256": "770d1c0565fcfce4d71c4e84b7c2fe3fed7bd512f1b78cf9646b10c6ba707af9",
+      "total_rules": 19598,
+      "revision": "75b805cf8583",
+      "sha256": "75b805cf8583a61ae989312a05a08af75ce841054aba4e704e48a231d788bda6",
       "description": "Mainland China IP traffic and GeoIP fallback (safety net)"
     }
   },
