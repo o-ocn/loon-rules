@@ -18,11 +18,12 @@
 
 ## 二、当前状态与基线定型
 
-* **2026-10-28 init-p01md.apple.com 精确分类补漏：本地完整门禁通过，待正式CI发布**：
+* **2026-10-28 init-p01md.apple.com 精确分类补漏：已发布，远端验收通过，手机收益未验**：
   - **授权与范围**：所有者明确要求补齐该精确主机；仅在 `rules/custom/Apple-Direct.list` 增加 `DOMAIN,init-p01md.apple.com`，沿用现有分类，不改 DNS、其他 Apple 主机、策略组、节点、绑定、私人配置或共享网关。
   - **依据与边界**：v2fly `data/apple` 将该精确主机标记 `@cn`，felixonmars `apple.china.conf` 也列入；两来源可能同源，不视为独立共识。不把手机截图的目标 IP 当成 DNS 结果，不认定本批能改善延迟或解决 HomeKit 卡顿。
   - **本地验证与范围隔离**：原生在线构建得到 Apple-Direct 175 条（原174条）；57项规则测试（226.449秒）、46项通知/发布测试、23项诊断/Functions测试、Wrangler 4.151.1编译、strict与pre-release均通过。真实模拟器首命中精确DOMAIN，7项子域/父域/别名/其他服务负例保持隔离，同一断言可捕获扩大为DOMAIN-SUFFIX的变异。在线构建顺带刷新的GeoIP、Gaming、缓存与锁已恢复到本轮起点；18个其他规则集与129个保护文件逐字节保持，使用原生包签名函数重算范围隔离后的manifest，内容版本 `cc6dba602066`。完整在线上游同步仍由正式CI正常执行。
-  - **恢复与待办**：恢复起点 `3ac4c596d6ca89dd080b26b5d68b0aee2a01e358`（起点工作树clean，已保留此前门户及合法自动更新）。基线、来源与验证回执存于 `E:\Document\ChatGPT\loon-rules\2026-10-28-init-p01md-exact\`；下一步推送并等待正式CI/Pages发布，再回读公开文件；手机效果待更新原Apple-Direct订阅后观察。本轮不改变Hub地图。
+  - **发布与远端验证**：功能提交 `5fd6b7ad8ce613b10d49740239566515027d4cd1` 已正常推送；[CI 40646694568](https://github.com/o-ocn/loon-rules/actions/runs/40646694568) completed/success，日志实证57项规则测试（218.489秒）、46项通知/发布测试、诊断/Functions门禁、编译、strict、pre-release、主源检查、不可变打包与独立Pages部署通过。发布包包含27件测试过的静态/Functions文件（artifact `12797224843`）；部署 `962f36c4`，CI与本机分别回读验证24件公开文件一致。GitHub Raw的Apple-Direct已HTTP200并与本地规范化字节一致，精确规则仅一条。保留并快进CI正常上游提交 `226a7653ad846c4823021dcc0051560318ca12eb`（仅GeoIP、manifest、upstream_lock）；生产内容版本 `6d169e736b81`，Apple-Direct仍为175条；DNS插件和门户字节保持。
+  - **恢复与下一步**：恢复起点 `3ac4c596d6ca89dd080b26b5d68b0aee2a01e358`（起点工作树clean，已保留此前门户及合法自动更新）。基线、来源、本地及远端验证、最终Git回执存于 `E:\Document\ChatGPT\loon-rules\2026-10-28-init-p01md-exact\`。手机更新原Apple-Direct远端规则即可沿用既有绑定，实际体验继续日常观察；未认定HomeKit卡顿原因或提速收益。如需回退，仅撤本批精确DOMAIN及对应产物元数据，保留合法自动更新与其他成果。本轮不改变Hub地图。
 
 * **2026-10-28 东方素雅纸质画卷美学重构与全量配置双轨支持：本地门禁全部通过，准备发布**：
   - **美学统一与体验升级**：对齐 `o-ous.com` 东方纸质山水画卷美学，重塑 `dist/index.html`。全面支持 Warm Rice Paper（暖宣纸白昼）与 Deep Pine Ink Night（墨松幽夜）双主题无缝切换；集成 Noto Serif SC、Cinzel、Plus Jakarta Sans、JetBrains Mono 与微点阵纸质底纹、赤金描边及氛围晕光。
