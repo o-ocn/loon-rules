@@ -1,6 +1,6 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-10-27T07:10:34.589813+00:00",
+  "generated_at": "2026-10-28T07:49:16.395273+00:00",
   "kpi": {
     "total_aggregated_upstream": 110351,
     "production_covered_count": 2868,
@@ -30,8 +30,8 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-10-27T07:10:34.589813+00:00",
-      "content_hash": "7913d262b6df457bcbe7a71f85401ff83a4af5cf6664962e8a4c77199d3881ab",
+      "last_synced_at": "2026-10-28T07:49:16.395273+00:00",
+      "content_hash": "e6dadb814ef091fda49a3bd7d2502771fcd995b8d1986ef318af10e11187982d",
       "rule_count": 110193,
       "used_cache": false,
       "consecutive_cache_count": 0,
@@ -14260,9 +14260,53 @@
       }
     },
     {
+      "rule": "DOMAIN-SUFFIX,sh-pod1-smp-device.apple.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "sh-pod1-smp-device.apple.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
       "rule": "DOMAIN-SUFFIX,sh-pod2-smp-device.apple.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "sh-pod2-smp-device.apple.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,sh-pod3-smp-device.apple.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "sh-pod3-smp-device.apple.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1315374,50 +1315418,6 @@
       "rule": "DOMAIN-SUFFIX,longbenren.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "longbenren.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,longbridgeapp.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "longbridgeapp.com",
-      "sources": [
-        "loyalsoldier_direct"
-      ],
-      "decision": "BLOCK",
-      "confidence_score": 45,
-      "stage": "CONFIDENCE_SCORE",
-      "reason": "Low confidence (45 < 50), dropped",
-      "already_in_production": false,
-      "score_details": {
-        "consensus_score": 25,
-        "conflict_safety_score": 20,
-        "matrix_score": 0,
-        "dns_score": 0,
-        "total_confidence": 45,
-        "required_threshold": 85,
-        "quarantine_floor": 50
-      }
-    },
-    {
-      "rule": "DOMAIN-SUFFIX,longbridgehk.com",
-      "type": "DOMAIN-SUFFIX",
-      "pattern": "longbridgehk.com",
       "sources": [
         "loyalsoldier_direct"
       ],
