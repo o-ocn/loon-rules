@@ -1,13 +1,13 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-11-15T08:43:03.612311+00:00",
+  "generated_at": "2026-11-16T08:53:37.881474+00:00",
   "kpi": {
-    "total_aggregated_upstream": 110347,
+    "total_aggregated_upstream": 110351,
     "production_covered_count": 2860,
-    "new_candidate_count": 107487,
+    "new_candidate_count": 107491,
     "simulated_auto_pass_count": 52,
     "simulated_review_count": 120,
-    "simulated_block_count": 107315,
+    "simulated_block_count": 107319,
     "auto_decision_coverage_pct": 99.89
   },
   "health_status": {
@@ -30,9 +30,9 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-11-15T08:43:03.612311+00:00",
-      "content_hash": "4912af85f480d65a79734c72235bd451e71cc394f7f2979b556ad584e7711fe8",
-      "rule_count": 110189,
+      "last_synced_at": "2026-11-16T08:53:37.881474+00:00",
+      "content_hash": "66fcabd34a05f1865e2b658fa0f6f7ccb0c297b9feb7721685f038ac17dd93c2",
+      "rule_count": 110193,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
@@ -7098,6 +7098,28 @@
       }
     },
     {
+      "rule": "DOMAIN-SUFFIX,configuration.ls.apple.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "configuration.ls.apple.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
       "rule": "DOMAIN-SUFFIX,connectivitycheck.gstatic.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "connectivitycheck.gstatic.com",
@@ -11662,6 +11684,28 @@
       }
     },
     {
+      "rule": "DOMAIN-SUFFIX,musicstatus.itunes.apple.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "musicstatus.itunes.apple.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
       "rule": "DOMAIN-SUFFIX,musicstatus.music.apple.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "musicstatus.music.apple.com",
@@ -11731,6 +11775,28 @@
       "rule": "DOMAIN-SUFFIX,myvs.download.prss.microsoft.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "myvs.download.prss.microsoft.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,mzstorekit.itunes.apple.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "mzstorekit.itunes.apple.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -399960,6 +400026,28 @@
       "rule": "DOMAIN-SUFFIX,captainbi.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "captainbi.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,captive.apple.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "captive.apple.com",
       "sources": [
         "loyalsoldier_direct"
       ],
