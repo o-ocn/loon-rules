@@ -1,13 +1,13 @@
 {
   "audit_version": "1.0",
-  "generated_at": "2026-11-18T09:37:25.560270+00:00",
+  "generated_at": "2026-11-19T09:44:13.257609+00:00",
   "kpi": {
-    "total_aggregated_upstream": 110351,
+    "total_aggregated_upstream": 110355,
     "production_covered_count": 2860,
-    "new_candidate_count": 107491,
+    "new_candidate_count": 107495,
     "simulated_auto_pass_count": 52,
     "simulated_review_count": 120,
-    "simulated_block_count": 107319,
+    "simulated_block_count": 107323,
     "auto_decision_coverage_pct": 99.89
   },
   "health_status": {
@@ -30,9 +30,9 @@
     "loyalsoldier_direct": {
       "name": "Loyalsoldier-Direct",
       "url": "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt",
-      "last_synced_at": "2026-11-16T08:53:37.881474+00:00",
-      "content_hash": "66fcabd34a05f1865e2b658fa0f6f7ccb0c297b9feb7721685f038ac17dd93c2",
-      "rule_count": 110193,
+      "last_synced_at": "2026-11-19T09:44:13.257609+00:00",
+      "content_hash": "dfd64ace84a824ff520d8c442979213ccc794b00eb353c523627c437264c9997",
+      "rule_count": 110197,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
@@ -1276057,6 +1276057,28 @@
       }
     },
     {
+      "rule": "DOMAIN-SUFFIX,lenovofuturecenter.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "lenovofuturecenter.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
       "rule": "DOMAIN-SUFFIX,lenovogame.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "lenovogame.com",
@@ -1589853,6 +1589875,28 @@
       "rule": "DOMAIN-SUFFIX,qplusstatic.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "qplusstatic.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,qpmcn.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "qpmcn.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -1907517,6 +1907561,28 @@
       "rule": "DOMAIN-SUFFIX,trpc.tech",
       "type": "DOMAIN-SUFFIX",
       "pattern": "trpc.tech",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,trpcdn.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "trpcdn.com",
       "sources": [
         "loyalsoldier_direct"
       ],
@@ -2284261,6 +2284327,28 @@
       "rule": "DOMAIN-SUFFIX,zhaoliangji.com",
       "type": "DOMAIN-SUFFIX",
       "pattern": "zhaoliangji.com",
+      "sources": [
+        "loyalsoldier_direct"
+      ],
+      "decision": "BLOCK",
+      "confidence_score": 45,
+      "stage": "CONFIDENCE_SCORE",
+      "reason": "Low confidence (45 < 50), dropped",
+      "already_in_production": false,
+      "score_details": {
+        "consensus_score": 25,
+        "conflict_safety_score": 20,
+        "matrix_score": 0,
+        "dns_score": 0,
+        "total_confidence": 45,
+        "required_threshold": 85,
+        "quarantine_floor": 50
+      }
+    },
+    {
+      "rule": "DOMAIN-SUFFIX,zhaoliangjipc.com",
+      "type": "DOMAIN-SUFFIX",
+      "pattern": "zhaoliangjipc.com",
       "sources": [
         "loyalsoldier_direct"
       ],
