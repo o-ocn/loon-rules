@@ -384,6 +384,120 @@ class TestIsolatedAuditPipelineIntegration(unittest.TestCase):
             self.assertTrue(r3["health_status"]["is_complete"])
             self.assertFalse(r3["health_status"]["has_degraded_cache"])
 
+    @patch("scripts.audit_pipeline.ScoreEngine")
+    @patch("scripts.audit_pipeline.fetch_source_text")
+    def test_summary_cap_full_artifact_and_idempotent_reruns_after_clean_workspace(self, mock_fetch, mock_engine_cls):
+        """验证：
+        1. main 侧 shadow_report.json 只保留受控摘要，完整明细写入 SHADOW_FULL_REPORT_PATH；
+        2. 模拟工作流先备份旧报告到 SHADOW_PREV_REPORT_PATH 再删除 audit/shadow_report.* 后重跑，
+           输入和健康状态相同时两次运行输出逐字节一致（零无实质变化提交）；
+        3. 上游内容真实变化时，时间戳与摘要同步更新。
+        """
+        mock_engine = MagicMock()
+        mock_engine.evaluate.return_value = {
+            "decision": "BLOCK",
+            "confidence_score": 0,
+            "reason": "Blocked by policy",
+            "stage": "STAGE_0"
+        }
+        mock_engine_cls.return_value = mock_engine
+
+        import scripts.audit_pipeline as ap
+
+        good_lines = "\n".join(f"DOMAIN-SUFFIX,good{i:03d}.example.com" for i in range(80)) + "\n"
+        flaky_lines_v1 = "\n".join(f"DOMAIN-SUFFIX,flaky{i:03d}.example.com" for i in range(40)) + "\n"
+        flaky_lines_v2 = flaky_lines_v1 + "DOMAIN-SUFFIX,flaky999.example.com\n"
+
+        prev_snapshot = os.path.join(self.test_dir, "prev_shadow_report.json")
+        full_artifact = os.path.join(self.test_dir, "shadow_report_full.json")
+        receipt_path = os.path.join(self.test_dir, "receipt.json")
+
+        def fetch_v1(url, min_rules=100, timeout=15, max_retries=3):
+            if "good.list" in url:
+                return good_lines, False
+            return flaky_lines_v1, False
+
+        def fetch_v2(url, min_rules=100, timeout=15, max_retries=3):
+            if "good.list" in url:
+                return good_lines, False
+            return flaky_lines_v2, False
+
+        report_json_path = os.path.join(self.audit_dir, "shadow_report.json")
+        report_md_path = os.path.join(self.audit_dir, "shadow_report.md")
+        state_json_path = os.path.join(self.state_dir, "upstream_state.json")
+
+        with patch.object(ap, "BASE_DIR", self.test_dir), \
+             patch.object(ap, "AUDIT_DIR", self.audit_dir), \
+             patch.object(ap, "STATE_DIR", self.state_dir):
+
+            # 第 1 次运行：生成摘要报告与完整报告
+            mock_fetch.side_effect = fetch_v1
+            with patch.dict(os.environ, {
+                "SHADOW_FULL_REPORT_PATH": full_artifact,
+                "SHADOW_HEALTH_RECEIPT": receipt_path,
+                "GITHUB_RUN_ID": "run-1",
+            }, clear=False):
+                ap.run_shadow_audit()
+
+            with open(report_json_path, "r", encoding="utf-8") as f:
+                summary_1 = json.load(f)
+            with open(full_artifact, "r", encoding="utf-8") as f:
+                full_1 = json.load(f)
+            self.assertEqual(summary_1["report_mode"], "summary")
+            self.assertEqual(full_1["report_mode"], "full")
+            self.assertEqual(summary_1["kpi"]["simulated_block_count"], 120)
+            self.assertEqual(len(summary_1["simulated_block"]), ap.SUMMARY_SAMPLE_LIMITS["block"])
+            self.assertEqual(len(full_1["simulated_block"]), 120)
+
+            with open(report_json_path, "rb") as f:
+                bytes_json_1 = f.read()
+            with open(report_md_path, "rb") as f:
+                bytes_md_1 = f.read()
+            with open(state_json_path, "rb") as f:
+                bytes_state_1 = f.read()
+
+            # 模拟工作流：先快照旧报告，再清理工作区旧产物，稍后以相同输入再次运行
+            shutil.copyfile(report_json_path, prev_snapshot)
+            os.remove(report_json_path)
+            os.remove(report_md_path)
+            time.sleep(0.02)
+
+            mock_fetch.side_effect = fetch_v1
+            with patch.dict(os.environ, {
+                "SHADOW_PREV_REPORT_PATH": prev_snapshot,
+                "SHADOW_FULL_REPORT_PATH": full_artifact,
+                "SHADOW_HEALTH_RECEIPT": receipt_path,
+                "GITHUB_RUN_ID": "run-2",
+            }, clear=False):
+                ap.run_shadow_audit()
+
+            with open(report_json_path, "rb") as f:
+                self.assertEqual(f.read(), bytes_json_1, "相同输入与健康状态下摘要 JSON 必须逐字节一致")
+            with open(report_md_path, "rb") as f:
+                self.assertEqual(f.read(), bytes_md_1, "相同输入与健康状态下 Markdown 必须逐字节一致")
+            with open(state_json_path, "rb") as f:
+                self.assertEqual(f.read(), bytes_state_1, "相同输入与健康状态下 upstream_state 必须逐字节一致")
+
+            # 第 3 次运行：上游真实新增一条规则，必须刷新时间戳与 KPI
+            shutil.copyfile(report_json_path, prev_snapshot)
+            os.remove(report_json_path)
+            os.remove(report_md_path)
+            time.sleep(0.02)
+
+            mock_fetch.side_effect = fetch_v2
+            with patch.dict(os.environ, {
+                "SHADOW_PREV_REPORT_PATH": prev_snapshot,
+                "SHADOW_FULL_REPORT_PATH": full_artifact,
+                "SHADOW_HEALTH_RECEIPT": receipt_path,
+                "GITHUB_RUN_ID": "run-3",
+            }, clear=False):
+                ap.run_shadow_audit()
+
+            with open(report_json_path, "r", encoding="utf-8") as f:
+                summary_3 = json.load(f)
+            self.assertEqual(summary_3["kpi"]["simulated_block_count"], 121)
+            self.assertNotEqual(summary_3["generated_at"], summary_1["generated_at"])
+
 
 class TestWorkflowFilesIntegrity(unittest.TestCase):
     """核验 GitHub Actions 工作流声明与安全性"""

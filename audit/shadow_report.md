@@ -12,7 +12,7 @@ This phase does not modify:
 
 AUTO_PASS means simulated production eligibility only.
 
-> ⏱ **生成时间**: `2026-11-21T09:04:06.892448+00:00`  
+> ⏱ **生成时间**: `2026-11-21T13:02:24.620945+00:00`  
 > 🛡 **运行模式**: 只读旁路测试 | 零生产侵入 | `dist/` 100% 保持现状  
 
 ---
@@ -39,7 +39,6 @@ AUTO_PASS means simulated production eligibility only.
 
 | 候选规则 | 来源 | 置信度得分 | 判定阶段 | 拦截原因 |
 | :--- | :--- | :---: | :---: | :--- |
-| `DOMAIN-SUFFIX,cn` | acl4ssr_china, blackmatrix7_china | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,00cdn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,13th.tech` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,163yun.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
@@ -54,8 +53,9 @@ AUTO_PASS means simulated production eligibility only.
 | `DOMAIN-SUFFIX,aliyuncdn.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,aliyuncs.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 | `DOMAIN-SUFFIX,allawnfs.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
+| `DOMAIN-SUFFIX,allawno.com` | acl4ssr_china, loyalsoldier_direct | 55 | `CONFIDENCE_SCORE` | Intermediate confidence (55 in [50, 85)), routed to Quarantine |
 
-*(其余 105 条详见 shadow_report.json)*
+*(其余 105 条详见 Actions Artifact `shadow-audit-reports` 中的完整报告 `shadow_report_full.json`)*
 
 ---
 
@@ -65,23 +65,23 @@ AUTO_PASS means simulated production eligibility only.
 
 | 阻断规则 | 来源 | 判定阶段 | 阻断依据 |
 | :--- | :--- | :---: | :--- |
-| `DOMAIN-SUFFIX,ms` | blackmatrix7_china | `CONFIDENCE_SCORE` | Low confidence (45 < 50), dropped |
+| `DOMAIN,dl.steam.clngaa.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,dl.steam.ksyna.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,st.dl.bscstorage.net` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,st.dl.eccdnx.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,st.dl.pinyuncloud.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,steampipe.steamcontent.tnkjmec.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,steampowered.com.8686c.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,steamstatic.com.8686c.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,wmsjsteam.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,xz.pphimalayanrt.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
+| `DOMAIN,ye.dun.163yun.com` | acl4ssr_china | `CONFIDENCE_SCORE` | Low confidence (35 < 50), dropped |
 | `DOMAIN-KEYWORD,.tmall.com` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
+| `DOMAIN-KEYWORD,360buy` | acl4ssr_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
 | `DOMAIN-KEYWORD,alicdn` | acl4ssr_china, blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,alipay` | acl4ssr_china, blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,aliyun` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,baidu` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,beplay` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,microsoft` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,officecdn` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `DOMAIN-KEYWORD,taobao` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
-| `USER-AGENT,%e4%b8%ad%e5%9b%bd%e5%b7%a5%e5%95%86%e9%93%b6%e8%a1%8c*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
-| `USER-AGENT,%e4%ba%ac%e4%b8%9c%e5%88%b0%e5%ae%b6*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
-| `USER-AGENT,%e4%bc%81%e4%b8%9a%e5%be%ae%e4%bf%a1*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
-| `USER-AGENT,%e4%bc%98%e9%85%b7*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
-| `USER-AGENT,%e5%8d%b3%e5%88%bb*` | blackmatrix7_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'USER-AGENT' |
+| `DOMAIN-KEYWORD,alimama` | acl4ssr_china | `TYPE_FILTER` | forbidden_type: First phase strictly forbids auto-adding rule type 'DOMAIN-KEYWORD' |
 
-*(其余 107311 条详见 shadow_report.json)*
+*(其余 107311 条详见 Actions Artifact `shadow-audit-reports` 中的完整报告 `shadow_report_full.json`)*
 
 ---
 

@@ -18,6 +18,14 @@
 
 ## 二、当前状态与基线定型
 
+- **2026-11-21 影子审计产物摘要化与零空提交修复（仅调整审计产物与发布流程，不改 dist/规则/DNS/策略）**：
+  - **背景与问题**：原 `audit/shadow_report.json` 全量写入 107,300+ 条 `simulated_block` 明细（约 62.6–64.8 MiB），逼近 GitHub 100 MiB 硬限；且 `.github/workflows/shadow-audit.yml` 在运行前直接删除旧报告，导致 `scripts/audit_pipeline.py` 丢失基线比对、每天都生成新时间戳并产生无实质变化提交。
+  - **实际改动**：
+    - `scripts/audit_pipeline.py`：引入确定性排序与 `SUMMARY_SAMPLE_LIMITS`（各 50 条抽样），`audit/shadow_report.json` 仅保留受控摘要（`report_mode: "summary"`，含完整 `kpi`、`health_status`、`sources_health` 及抽样，实测约 104 KiB）；完整全量报告通过 `SHADOW_FULL_REPORT_PATH` 写到工作树外路径（`${{ runner.temp }}/shadow_report_full.json`），不入库 `main`；支持通过 `SHADOW_PREV_REPORT_PATH` 读取旧摘要基线比对，仅在上游/健康状态/摘要载荷真实变化时刷新 `generated_at`。
+    - `.github/workflows/shadow-audit.yml`：清理工作区前先快照旧 `audit/shadow_report.json` 至 `${{ runner.temp }}/prev_shadow_report.json`；校验步增加摘要 `< 1 MiB`、`summary/full` 一致性与 4 文件 SHA-256 回执校验；`shadow-audit-reports` Artifact 附带 `shadow_report_full.json`，按双周回溯恢复需求留存由 7 天调整为 **14 天**。
+    - `tests/test_telegram_alerts.py`：新增集成回归覆盖摘要受控、完整报告输出、清工作区后双次同输入字节级幂等（零 diff）以及真实变更刷新时间戳；保留单次缓存降级/连续缓存失败/告警路径不变。
+  - **本地验证**：真实 `audit_pipeline.py` 双跑实测 `summary=106,782 B`（完整报告 `67,977,462 B`），第二次清工作区重跑 `json/md/state` 三文件 SHA-256 100% 相同；37 项通知/健康/发布/评分单测、`check_conflicts.py --strict`、23 项诊断/Functions 测试与 `verify_mirrors.py --pre-release` 全部通过。远端工作流运行结果以本次推送后的实际 Actions 记录为准。
+
 - **阶段收束（2026-10-28）**：本阶段构建/发布修复、精确DNS试行及Apple分类补漏已完成工程验收，转入生产稳定与日常观察；保留现有定时同步和正常成功静默机制，不新增功能或扩大候选范围。手机体验与硬件推流未验项继续保留，不将阶段结束写成全部体验问题已解决。
 - **当前生产快照**：`main`，19个策略中立规则集，共24,261条，内容版本 `6d169e736b81`；正式发布提交 `226a7653ad846c4823021dcc0051560318ca12eb`。CI `40646694568` 成功，本阶段收尾时再次独立核对本地产物完整性和发布域名24件文件一致。动态数量以 `dist/diagnostics/manifest.json` 为准；详细成果、恢复锚点与验证分别见下列里程碑。
 - **收尾资产边界**：正式成果、原始附件、来源快照、验证日志/回执和恢复包继续保留；本轮文档保存与远端同步验收后，仅清理已闭环的临时编译检查文件及一次性执行辅助件。未决问题材料不清理，实际清单、哈希及保留资产核验结果见本机本阶段证据目录的收尾回执。

@@ -36,6 +36,11 @@ from scripts.score_engine import ScoreEngine
 AUDIT_DIR = os.path.join(BASE_DIR, "audit")
 STATE_DIR = os.path.join(BASE_DIR, "state")
 UPSTREAM_CACHE_DIR = os.path.join(BASE_DIR, "scripts", ".upstream_cache")
+SUMMARY_SAMPLE_LIMITS = {
+    "auto_pass": 50,
+    "review": 50,
+    "block": 50,
+}
 
 def compute_sha256(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -368,6 +373,11 @@ def run_shadow_audit():
             else:
                 simulated_block.append(item_record)
 
+    # 确定性排序，确保相同输入下摘要与完整报告字节级一致
+    simulated_auto_pass.sort(key=lambda item: item["rule"])
+    simulated_review.sort(key=lambda item: item["rule"])
+    simulated_block.sort(key=lambda item: item["rule"])
+
     # 4. 指标统计
     total_new = len(simulated_auto_pass) + len(simulated_review) + len(simulated_block)
     auto_resolved = len(simulated_auto_pass) + len(simulated_block)
@@ -384,23 +394,21 @@ def run_shadow_audit():
     print(f"• 🎯 自动决策覆盖率 (Auto Decision Coverage): {automation_rate:.2f}% (主要来自自动 BLOCK 与类型过滤，自动处理 ≠ 自动放行)")
     print("=" * 70)
 
-    # 5. 输出详细报告
+    # 5. 输出受控摘要报告（入库 main）与完整明细报告（仅按需写入独立路径供 Artifact 上传）
     os.makedirs(AUDIT_DIR, exist_ok=True)
     report_json_path = os.path.join(AUDIT_DIR, "shadow_report.json")
     report_md_path = os.path.join(AUDIT_DIR, "shadow_report.md")
+    full_report_json_path = os.environ.get("SHADOW_FULL_REPORT_PATH")
 
-    existing_report_kpi = None
-    existing_generated_at = now_iso
-    existing_health_status = None
-    if os.path.isfile(report_json_path):
+    # 优先读取工作流保留的上次报告基线，避免清理工作区后丢失差异比对依据
+    prev_report_path = os.environ.get("SHADOW_PREV_REPORT_PATH") or report_json_path
+    existing_report = None
+    if prev_report_path and os.path.isfile(prev_report_path):
         try:
-            with open(report_json_path, "r", encoding="utf-8") as f:
-                old_rep = json.load(f)
-                existing_report_kpi = old_rep.get("kpi")
-                existing_generated_at = old_rep.get("generated_at", now_iso)
-                existing_health_status = old_rep.get("health_status", {})
+            with open(prev_report_path, "r", encoding="utf-8") as f:
+                existing_report = json.load(f)
         except Exception:
-            pass
+            existing_report = None
 
     current_kpi = {
         "total_aggregated_upstream": len(aggregated),
@@ -419,24 +427,68 @@ def run_shadow_audit():
         "unhealthy_reasons": unhealthy_reasons
     }
 
-    # 若上游未变动、核心 KPI 结果一致且健康状态一致，保留先前时间戳，消除 Git 无实质变动提交
-    health_changed = (existing_health_status != current_health_summary)
-    report_generated_at = now_iso if (upstream_has_changed or existing_report_kpi != current_kpi or health_changed) else existing_generated_at
-
-    report_data = {
-        "audit_version": "1.0",
-        "generated_at": report_generated_at,
+    summary_core = {
+        "audit_version": "1.1",
+        "report_mode": "summary",
+        "full_report_artifact": "shadow-audit-reports",
+        "sample_limits": dict(SUMMARY_SAMPLE_LIMITS),
         "kpi": current_kpi,
         "health_status": current_health_summary,
         "sources_health": sync_states,
-        "simulated_auto_pass": simulated_auto_pass,
-        "simulated_review": simulated_review,
-        "simulated_block": simulated_block
+        "simulated_auto_pass": simulated_auto_pass[:SUMMARY_SAMPLE_LIMITS["auto_pass"]],
+        "simulated_review": simulated_review[:SUMMARY_SAMPLE_LIMITS["review"]],
+        "simulated_block": simulated_block[:SUMMARY_SAMPLE_LIMITS["block"]]
+    }
+
+    existing_core = None
+    existing_generated_at = None
+    if isinstance(existing_report, dict):
+        existing_generated_at = existing_report.get("generated_at")
+        existing_core = {k: v for k, v in existing_report.items() if k != "generated_at"}
+
+    # 若上游未变动且摘要核心载荷（含 KPI、健康状态、源状态与抽样）与上次完全一致，保留先前时间戳，消除无实质变动提交
+    summary_changed = (existing_core != summary_core)
+    if (not upstream_has_changed) and (not summary_changed) and existing_generated_at:
+        report_generated_at = existing_generated_at
+    else:
+        report_generated_at = now_iso
+
+    report_data = {
+        "audit_version": summary_core["audit_version"],
+        "report_mode": summary_core["report_mode"],
+        "full_report_artifact": summary_core["full_report_artifact"],
+        "sample_limits": summary_core["sample_limits"],
+        "generated_at": report_generated_at,
+        "kpi": summary_core["kpi"],
+        "health_status": summary_core["health_status"],
+        "sources_health": summary_core["sources_health"],
+        "simulated_auto_pass": summary_core["simulated_auto_pass"],
+        "simulated_review": summary_core["simulated_review"],
+        "simulated_block": summary_core["simulated_block"]
     }
 
     with open(report_json_path, "w", encoding="utf-8") as f:
         json.dump(report_data, f, indent=2, ensure_ascii=False)
         f.write("\n")
+
+    if full_report_json_path:
+        full_parent = os.path.dirname(os.path.abspath(full_report_json_path))
+        if full_parent:
+            os.makedirs(full_parent, exist_ok=True)
+        full_report_data = {
+            "audit_version": "1.1",
+            "report_mode": "full",
+            "generated_at": report_generated_at,
+            "kpi": current_kpi,
+            "health_status": current_health_summary,
+            "sources_health": sync_states,
+            "simulated_auto_pass": simulated_auto_pass,
+            "simulated_review": simulated_review,
+            "simulated_block": simulated_block
+        }
+        with open(full_report_json_path, "w", encoding="utf-8") as f:
+            json.dump(full_report_data, f, indent=2, ensure_ascii=False)
+            f.write("\n")
 
     # 格式化生成 Markdown 报告
     with open(report_md_path, "w", encoding="utf-8") as f:
@@ -478,7 +530,7 @@ def run_shadow_audit():
         for item in simulated_review[:15]:
             f.write(f"| `{item['rule']}` | {', '.join(item['sources'])} | {item['confidence_score']} | `{item['stage']}` | {item['reason']} |\n")
         if len(simulated_review) > 15:
-            f.write(f"\n*(其余 {len(simulated_review) - 15} 条详见 shadow_report.json)*\n\n")
+            f.write(f"\n*(其余 {len(simulated_review) - 15} 条详见 Actions Artifact `shadow-audit-reports` 中的完整报告 `shadow_report_full.json`)*\n\n")
             
         f.write("---\n\n")
         f.write("## 三、安全阻断红线抽样 (BLOCK 验证证据)\n\n")
@@ -488,7 +540,7 @@ def run_shadow_audit():
         for item in simulated_block[:15]:
             f.write(f"| `{item['rule']}` | {', '.join(item['sources'])} | `{item['stage']}` | {item['reason']} |\n")
         if len(simulated_block) > 15:
-            f.write(f"\n*(其余 {len(simulated_block) - 15} 条详见 shadow_report.json)*\n\n")
+            f.write(f"\n*(其余 {len(simulated_block) - 15} 条详见 Actions Artifact `shadow-audit-reports` 中的完整报告 `shadow_report_full.json`)*\n\n")
 
         f.write("---\n\n")
         f.write("## 四、Phase 0 准出标准评估 (Exit Criteria Check)\n\n")
@@ -500,12 +552,17 @@ def run_shadow_audit():
             f.write("- [x] **已执行配置中的红线与类型过滤**：结果仅为旁路分类，不等同于全网覆盖或真机验收。\n")
 
     print(f"[+] 审计报告已生成:")
-    print(f"    - JSON 数据: {report_json_path}")
+    print(f"    - JSON 摘要: {report_json_path}")
+    if full_report_json_path:
+        print(f"    - JSON 完整: {full_report_json_path}")
     print(f"    - Markdown: {report_md_path}")
     receipt_path = os.environ.get("SHADOW_HEALTH_RECEIPT")
     if receipt_path:
         receipt = {"run_id": os.environ.get("GITHUB_RUN_ID"), "files": {}}
-        for name, path in {"report": report_json_path, "markdown": report_md_path, "state": state_file}.items():
+        receipt_files = {"report": report_json_path, "markdown": report_md_path, "state": state_file}
+        if full_report_json_path:
+            receipt_files["full_report"] = full_report_json_path
+        for name, path in receipt_files.items():
             with open(path, "rb") as f:
                 receipt["files"][name] = hashlib.sha256(f.read()).hexdigest()
         with open(receipt_path, "w", encoding="utf-8") as f:

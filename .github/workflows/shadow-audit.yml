@@ -48,6 +48,10 @@ jobs:
 
       - name: Prepare Clean Report Workspace
         run: |
+          rm -f "${{ runner.temp }}/prev_shadow_report.json" "${{ runner.temp }}/shadow_report_full.json" "${{ runner.temp }}/shadow-health-receipt.json"
+          if [ -f audit/shadow_report.json ]; then
+            cp audit/shadow_report.json "${{ runner.temp }}/prev_shadow_report.json"
+          fi
           # Clean previous run generated files to avoid stale artifacts masquerading as fresh
           rm -f audit/shadow_report.md audit/shadow_report.json
 
@@ -56,6 +60,8 @@ jobs:
         continue-on-error: true
         env:
           SHADOW_HEALTH_RECEIPT: ${{ runner.temp }}/shadow-health-receipt.json
+          SHADOW_PREV_REPORT_PATH: ${{ runner.temp }}/prev_shadow_report.json
+          SHADOW_FULL_REPORT_PATH: ${{ runner.temp }}/shadow_report_full.json
         run: |
           python scripts/audit_pipeline.py
 
@@ -63,9 +69,10 @@ jobs:
         id: verified_reports
         env:
           SHADOW_HEALTH_RECEIPT: ${{ runner.temp }}/shadow-health-receipt.json
+          SHADOW_FULL_REPORT_PATH: ${{ runner.temp }}/shadow_report_full.json
         run: |
-          if [ ! -f audit/shadow_report.md ] || [ ! -f audit/shadow_report.json ] || [ ! -f state/upstream_state.json ]; then
-            echo "CRITICAL: Shadow audit report or state files were not generated!"
+          if [ ! -f audit/shadow_report.md ] || [ ! -f audit/shadow_report.json ] || [ ! -f state/upstream_state.json ] || [ ! -f "$SHADOW_FULL_REPORT_PATH" ]; then
+            echo "CRITICAL: Shadow audit report, full artifact, or state files were not generated!"
             exit 1
           fi
           python - <<'PY'
@@ -73,11 +80,23 @@ jobs:
           from pathlib import Path
           receipt = json.loads(Path(os.environ['SHADOW_HEALTH_RECEIPT']).read_text())
           assert receipt['run_id'] == os.environ['GITHUB_RUN_ID'], 'stale audit receipt'
-          files = {'report': 'audit/shadow_report.json', 'markdown': 'audit/shadow_report.md', 'state': 'state/upstream_state.json'}
+          files = {
+              'report': 'audit/shadow_report.json',
+              'full_report': os.environ['SHADOW_FULL_REPORT_PATH'],
+              'markdown': 'audit/shadow_report.md',
+              'state': 'state/upstream_state.json',
+          }
           for name, path in files.items():
-              assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == receipt['files'][name], 'audit evidence mismatch'
+              assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == receipt['files'][name], f'audit evidence mismatch: {name}'
+          summary_size = Path(files['report']).stat().st_size
+          assert summary_size < 1_048_576, f'summary report exceeds 1 MiB limit: {summary_size}'
           report = json.loads(Path(files['report']).read_text())
+          full_report = json.loads(Path(files['full_report']).read_text())
           state = json.loads(Path(files['state']).read_text())
+          assert report.get('report_mode') == 'summary', 'main report must be summary mode'
+          assert full_report.get('report_mode') == 'full', 'artifact report must be full mode'
+          assert full_report['kpi'] == report['kpi'], 'summary and full KPI mismatch'
+          assert full_report['health_status'] == report['health_status'], 'summary and full health mismatch'
           health = report['health_status']
           sources = state['sources']
           assert isinstance(sources, dict) and sources, 'missing source health'
@@ -98,11 +117,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shadow-audit-reports
-          retention-days: 7
+          retention-days: 14
           path: |
             audit/shadow_report.md
             audit/shadow_report.json
             state/upstream_state.json
+            ${{ runner.temp }}/shadow_report_full.json
             ${{ runner.temp }}/shadow-health-receipt.json
           if-no-files-found: error
 
