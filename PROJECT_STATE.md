@@ -18,7 +18,7 @@
 
 ## 二、当前状态与基线定型
 
-- **2026-11-24 豆瓣图片 DNS 试行**：手机开 Loon 时豆瓣图片直连但加载慢，关闭后恢复。电脑对 `img9.doubanio.com` 的 Cloudflare 和阿里 DNS 查询返回不同地址，阿里 `https://223.5.5.5/dns-query` 通过 HTTPS 实际返回有效 DNS 应答。按所有者授权，仅在既有国内 DNS 插件添加 `*.doubanio.com` 的阿里 DoH 映射，源文件与发布版一致。在线构建确认 19 套分流规则字节一致，豆瓣继续归入 `China-Direct`。本地 57 项规则、47 项通知与发布、23 项诊断与 Functions 测试及严格冲突检查、Wrangler 编译和预发布检查通过。手机通过刷新已有插件获得更新，实际图片加载速度待验证。恢复起点 `67c555c`，回退仅撤该项映射。
+- **2026-11-24 豆瓣图片 DNS 试行**：手机开 Loon 时豆瓣图片直连但加载慢，关闭后恢复。电脑对 `img9.doubanio.com` 的 Cloudflare 和阿里 DNS 查询返回不同地址，阿里 `https://223.5.5.5/dns-query` 通过 HTTPS 实际返回有效 DNS 应答。按所有者授权，仅在既有国内 DNS 插件添加 `*.doubanio.com` 的阿里 DoH 映射，源文件与发布版一致。在线构建确认 19 套分流规则字节一致，豆瓣继续归入 `China-Direct`。本地 57 项规则、47 项通知与发布、23 项诊断与 Functions 测试及严格冲突检查、Wrangler 编译和预发布检查通过。提交 `517e31d` 已推送，[发布 #119](https://github.com/o-ocn/loon-rules/actions/runs/45424183737)的构建及 Cloudflare Pages 部署均成功，独立回读核对线上 24 个公开文件一致。手机通过刷新已有插件获得更新，实际图片加载速度待验证。恢复起点 `67c555c`，回退仅撤该项映射。
 
 - **2026-11-21 影子审计产物摘要化与零空提交修复（仅调整审计产物与发布流程，不改 dist/规则/DNS/策略）**：
   - **背景与问题**：原 `audit/shadow_report.json` 全量写入 107,300+ 条 `simulated_block` 明细（约 62.6–64.8 MiB），逼近 GitHub 100 MiB 硬限；且 `.github/workflows/shadow-audit.yml` 在运行前直接删除旧报告，导致 `scripts/audit_pipeline.py` 丢失基线比对、每天都生成新时间戳并产生无实质变化提交。
