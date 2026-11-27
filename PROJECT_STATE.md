@@ -18,7 +18,7 @@
 
 ## 二、当前状态与基线定型
 
-- **2026-11-28 Muse App 精确分流补漏**：真机请求记录显示 `graph.meta.ai`、`hatch-api.meta.ai` 和 `hatch.metaaivm.com` 的 TCP 请求落入 `FINAL`。将 3 个完整域名精确归入 `AI-Overseas`，覆盖 Muse 的 AI 接口与 VM 入口。Facebook 和 Meta 的通用接口继续沿用原分流。本地构建 `AI-Overseas` 从 45 增至 48 条，内容版本 `c0daa59bce83`。57 项规则、47 项通知与发布、23 项诊断与 Functions 测试、严格冲突检查、编译和预发布校验通过。模拟确认 3 个新域名命中 AI，通用 Meta 接口和新域名的子域保持隔离。手机刷新现有 `AI-Overseas` 后可复核，恢复起点 `4b32845`。
+- **2026-11-28 Muse App 精确分流补漏**：真机请求记录显示 `graph.meta.ai`、`hatch-api.meta.ai` 和 `hatch.metaaivm.com` 的 TCP 请求落入 `FINAL`。将 3 个完整域名精确归入 `AI-Overseas`，覆盖 Muse 的 AI 接口与 VM 入口。Facebook 和 Meta 的通用接口继续沿用原分流。本地构建 `AI-Overseas` 从 45 增至 48 条，内容版本 `c0daa59bce83`。57 项规则、47 项通知与发布、23 项诊断与 Functions 测试、严格冲突检查、编译和预发布校验通过。模拟确认 3 个新域名命中 AI，通用 Meta 接口和新域名的子域保持隔离。提交 `75b3087` 已推送，[发布 #120](https://github.com/o-ocn/loon-rules/actions/runs/46064530583)的构建与 Cloudflare Pages 部署成功，GitHub Raw 下载内容与本地一致，自有域名公开 24 件文件回读通过。手机端刷新现有 `AI-Overseas` 后的命中待复核，恢复起点 `4b32845`。
 
 - **2026-11-24 豆瓣图片 DNS 试行**：手机开 Loon 时豆瓣图片直连但加载慢，关闭后恢复。电脑对 `img9.doubanio.com` 的 Cloudflare 和阿里 DNS 查询返回不同地址，阿里 `https://223.5.5.5/dns-query` 通过 HTTPS 实际返回有效 DNS 应答。按所有者授权，仅在既有国内 DNS 插件添加 `*.doubanio.com` 的阿里 DoH 映射，源文件与发布版一致。在线构建确认 19 套分流规则字节一致，豆瓣继续归入 `China-Direct`。本地 57 项规则、47 项通知与发布、23 项诊断与 Functions 测试及严格冲突检查、Wrangler 编译和预发布检查通过。提交 `517e31d` 已推送，[发布 #119](https://github.com/o-ocn/loon-rules/actions/runs/45424183737)的构建及 Cloudflare Pages 部署均成功，独立回读核对线上 24 个公开文件一致。该插件发布后，所有者在手机上实测反馈豆瓣图片加载明显变快，后续照常使用观察。恢复起点 `67c555c`，回退仅撤该项映射。
 
@@ -31,7 +31,7 @@
   - **本地验证**：真实 `audit_pipeline.py` 双跑实测 `summary=106,782 B`（完整报告 `67,977,462 B`），第二次清工作区重跑 `json/md/state` 三文件 SHA-256 100% 相同；37 项通知/健康/发布/评分单测、`check_conflicts.py --strict`、23 项诊断/Functions 测试与 `verify_mirrors.py --pre-release` 全部通过。远端工作流运行结果以本次推送后的实际 Actions 记录为准。
 
 - **阶段收束（2026-10-28）**：本阶段构建/发布修复、精确DNS试行及Apple分类补漏已完成工程验收，转入生产稳定与日常观察；保留现有定时同步和正常成功静默机制，不新增功能或扩大候选范围。手机体验与硬件推流未验项继续保留，不将阶段结束写成全部体验问题已解决。
-- **当前生产快照**：`main`，19个策略中立规则集，共24,261条，内容版本 `6d169e736b81`；正式发布提交 `226a7653ad846c4823021dcc0051560318ca12eb`。CI `40646694568` 成功，本阶段收尾时再次独立核对本地产物完整性和发布域名24件文件一致。动态数量以 `dist/diagnostics/manifest.json` 为准；详细成果、恢复锚点与验证分别见下列里程碑。
+- **当前生产快照**：`main`，19 个策略中立规则集，共 24,264 条，内容版本 `c0daa59bce83`。发布提交 `75b3087391441698b991ff3b7edf117243cb36f2`，[CI #120](https://github.com/o-ocn/loon-rules/actions/runs/46064530583)成功，线上 24 件文件与发布产物一致。动态数量以 `dist/diagnostics/manifest.json` 为准。
 - **收尾资产边界**：正式成果、原始附件、来源快照、验证日志/回执和恢复包继续保留；本轮文档保存与远端同步验收后，仅清理已闭环的临时编译检查文件及一次性执行辅助件。未决问题材料不清理，实际清单、哈希及保留资产核验结果见本机本阶段证据目录的收尾回执。
 
 * **2026-10-28 init-p01md.apple.com 精确分类补漏：已发布，远端验收通过，手机收益未验**：
