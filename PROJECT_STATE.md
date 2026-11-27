@@ -18,6 +18,8 @@
 
 ## 二、当前状态与基线定型
 
+- **2026-11-28 Muse App 精确分流补漏**：真机请求记录显示 `graph.meta.ai`、`hatch-api.meta.ai` 和 `hatch.metaaivm.com` 的 TCP 请求落入 `FINAL`。将 3 个完整域名精确归入 `AI-Overseas`，覆盖 Muse 的 AI 接口与 VM 入口。Facebook 和 Meta 的通用接口继续沿用原分流。本地构建 `AI-Overseas` 从 45 增至 48 条，内容版本 `c0daa59bce83`。57 项规则、47 项通知与发布、23 项诊断与 Functions 测试、严格冲突检查、编译和预发布校验通过。模拟确认 3 个新域名命中 AI，通用 Meta 接口和新域名的子域保持隔离。手机刷新现有 `AI-Overseas` 后可复核，恢复起点 `4b32845`。
+
 - **2026-11-24 豆瓣图片 DNS 试行**：手机开 Loon 时豆瓣图片直连但加载慢，关闭后恢复。电脑对 `img9.doubanio.com` 的 Cloudflare 和阿里 DNS 查询返回不同地址，阿里 `https://223.5.5.5/dns-query` 通过 HTTPS 实际返回有效 DNS 应答。按所有者授权，仅在既有国内 DNS 插件添加 `*.doubanio.com` 的阿里 DoH 映射，源文件与发布版一致。在线构建确认 19 套分流规则字节一致，豆瓣继续归入 `China-Direct`。本地 57 项规则、47 项通知与发布、23 项诊断与 Functions 测试及严格冲突检查、Wrangler 编译和预发布检查通过。提交 `517e31d` 已推送，[发布 #119](https://github.com/o-ocn/loon-rules/actions/runs/45424183737)的构建及 Cloudflare Pages 部署均成功，独立回读核对线上 24 个公开文件一致。该插件发布后，所有者在手机上实测反馈豆瓣图片加载明显变快，后续照常使用观察。恢复起点 `67c555c`，回退仅撤该项映射。
 
 - **2026-11-21 影子审计产物摘要化与零空提交修复（仅调整审计产物与发布流程，不改 dist/规则/DNS/策略）**：
@@ -199,7 +201,7 @@
 | 规则集名称 | 规则条数 | 涵盖核心服务说明 | 策略中立保证 |
 | :--- | :---: | :--- | :---: |
 | **`Apple-Push.lsr`** | 10 | APNs 官方最小推送通道（默认建议关闭） | 100% 策略中立 |
-| **`AI-Overseas.lsr`** | 45 | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse | 100% 策略中立 |
+| **`AI-Overseas.lsr`** | 48 | ChatGPT, Claude, Gemini (含 iOS WebChannel), Grok, Muse | 100% 策略中立 |
 | **`YouTube.lsr`** | 190 | YouTube 视频流媒体、图片与 CDN（排在 Google 前） | 100% 策略中立 |
 | **`GoogleDrive.lsr`** | 8 | Google Drive 云端硬盘专属服务（排在 Google 前） | 100% 策略中立 |
 | **`Google.lsr`** | 690 | 普通 Google 服务、搜索与基础设施（含共享 googleapis） | 100% 策略中立 |

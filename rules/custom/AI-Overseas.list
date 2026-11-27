@@ -5,7 +5,7 @@
 #   - Gemini: Uses exact DOMAIN rules. Prohibits broad googleapis.com or google.com
 #   - Grok: Uses grok.com and x.ai. Strictly separated from twitter.com / x.com
 #   - Muse from Meta (App Store ID: 6760173601): Meta 于 2026-09-08 官方发布的个人 AI 代理 (Personal AI Agent)，
-#     在 iOS、Android 与 muse.ai 发布。使用 muse.ai。严格与 Meta 社交全家桶 (facebook, instagram, meta.com) 隔离。
+#     覆盖 muse.ai 网站与经真机记录确认的 App 端点，避免将 Meta 社交平台和通用域名整体归入 AI。
 # ==============================================================================
 
 # --- Google Gemini Endpoints (Public developer endpoints & web frontend) ---
@@ -57,6 +57,11 @@ DOMAIN,api.x.ai
 # Evidence: Meta official release announcement (2026-09-08) & App Store official listing (ID: 6760173601)
 # Reason: Personal AI agent routing; strictly segregated from Meta social suites (facebook.com, instagram.com, meta.com)
 DOMAIN-SUFFIX,muse.ai
+
+# Muse iOS 请求记录（2026-11-28）：精确匹配 AI 接口及 Muse VM 入口。
+DOMAIN,graph.meta.ai
+DOMAIN,hatch-api.meta.ai
+DOMAIN,hatch.metaaivm.com
 
 # --- Other Confirmed Overseas AI Services ---
 # Target: Perplexity AI search

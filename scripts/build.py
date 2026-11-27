@@ -773,7 +773,7 @@ def build_rulesets(sources_file=SOURCES_FILE, dist_dir=DIST_DIR, lock_file=UPSTR
         "DOMAIN-SUFFIX,googleusercontent.com",
         "DOMAIN-SUFFIX,x.com", "DOMAIN-SUFFIX,twitter.com",
         "DOMAIN-SUFFIX,facebook.com", "DOMAIN-SUFFIX,instagram.com", "DOMAIN-SUFFIX,meta.com",
-        "DOMAIN-SUFFIX,whatsapp.com",
+        "DOMAIN-SUFFIX,whatsapp.com", "DOMAIN-SUFFIX,meta.ai", "DOMAIN-SUFFIX,metaaivm.com",
         "DOMAIN-SUFFIX,stripe.com", "DOMAIN-SUFFIX,auth0.com", "DOMAIN-SUFFIX,sentry.io",
         "DOMAIN-SUFFIX,intercom.io", "DOMAIN-SUFFIX,launchdarkly.com", "IP-ASN,20473,no-resolve",
         "DOMAIN-KEYWORD,openai",

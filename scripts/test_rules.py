@@ -132,7 +132,6 @@ class TestLoonRulesSuite(unittest.TestCase):
         self.assertIn("grok.com", content)
         self.assertIn("x.ai", content)
         self.assertIn("muse.ai", content)
-        self.assertNotIn("meta.ai", content)
 
         # Gemini iOS specific endpoints
         self.assertIn("webchannel-robinfrontend-pa.googleapis.com", content)
@@ -150,6 +149,8 @@ class TestLoonRulesSuite(unittest.TestCase):
             "DOMAIN-SUFFIX,twitter.com",
             "DOMAIN-SUFFIX,x.com",
             "DOMAIN-SUFFIX,meta.com",
+            "DOMAIN-SUFFIX,meta.ai",
+            "DOMAIN-SUFFIX,metaaivm.com",
             "DOMAIN-SUFFIX,facebook.com",
             "DOMAIN-SUFFIX,instagram.com",
             "DOMAIN-SUFFIX,whatsapp.com",
@@ -268,9 +269,8 @@ class TestLoonRulesSuite(unittest.TestCase):
         self.assertNotIn("DOMAIN-SUFFIX,twitter.com", ai_c)
         self.assertNotIn("DOMAIN-SUFFIX,x.com", ai_c)
 
-        # Muse in AI without broad Meta platforms or unevidenced meta.ai
+        # Muse in AI without broad Meta platforms
         self.assertIn("muse.ai", ai_c)
-        self.assertNotIn("meta.ai", ai_c)
         self.assertNotIn("facebook.com", ai_c)
         self.assertNotIn("instagram.com", ai_c)
         self.assertNotIn("DOMAIN-SUFFIX,meta.com", ai_c)
@@ -556,29 +556,25 @@ rulesets:
         self.assertEqual(matches_twitter[0]["ruleset"], "Twitter.lsr")
 
     def test_19_boundary_06_muse_vs_meta(self):
-        """Boundary 6: Muse vs Meta. Muse from Meta (App Store ID 6760173601) on muse.ai."""
-        with open(os.path.join(DIST_DIR, "AI-Overseas.lsr"), "r", encoding="utf-8") as f:
-            ai_c = f.read()
-
-        # muse.ai in AI-Overseas; meta.ai excluded due to lack of Muse-specific evidence
-        self.assertIn("muse.ai", ai_c)
-        self.assertNotIn("meta.ai", ai_c)
-
-        # Meta broad platforms strictly forbidden
-        forbidden_meta = [
-            "facebook.com", "instagram.com", "meta.com", "whatsapp.com", "fbcdn.net"
-        ]
-        for fm in forbidden_meta:
-            self.assertNotIn(f"DOMAIN-SUFFIX,{fm}", ai_c)
-
+        """Route Muse web and observed app hosts without capturing shared Meta services."""
         rules_by_file = simulate_hit.load_dist_rules()
-        matches_muse = simulate_hit.match_domain("muse.ai", rules_by_file)
-        self.assertEqual(matches_muse[0]["ruleset"], "AI-Overseas.lsr")
+        ai_ruleset = "AI-Overseas.lsr"
+        muse_hosts = ("graph.meta.ai", "hatch-api.meta.ai", "hatch.metaaivm.com")
+        for host in ("muse.ai", *muse_hosts):
+            with self.subTest(host=host):
+                matches = simulate_hit.match_domain(host, rules_by_file)
+                self.assertTrue(matches, f"{host} has no matching rule")
+                self.assertEqual(matches[0]["ruleset"], ai_ruleset)
 
-        # api.meta.ai does not match AI-Overseas
-        matches_meta_ai = simulate_hit.match_domain("api.meta.ai", rules_by_file)
-        if matches_meta_ai:
-            self.assertNotEqual(matches_meta_ai[0]["ruleset"], "AI-Overseas.lsr")
+        other_meta_hosts = (
+            "meta.ai", "api.meta.ai", "metaaivm.com",
+            "www.facebook.com", "graph.facebook.com", "www.instagram.com",
+            "meta.graph.meta.com", "ar.graph.meta.com", "www.whatsapp.com", "static.fbcdn.net",
+        )
+        for host in (*other_meta_hosts, *(f"probe.{host}" for host in muse_hosts)):
+            with self.subTest(host=host):
+                matches = simulate_hit.match_domain(host, rules_by_file)
+                self.assertFalse(any(match["ruleset"] == ai_ruleset for match in matches))
 
     def test_20_boundary_07_testflight_vs_apple_media_vs_apple_direct(self):
         """Boundary 7: TestFlight vs Apple Media vs Apple Direct."""
