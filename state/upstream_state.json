@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-11-21T09:04:06.892448+00:00",
+  "last_updated": "2026-11-28T09:41:54.885495+00:00",
   "sources": {
     "blackmatrix7_china": {
       "name": "blackmatrix7-China",
@@ -25,9 +25,9 @@
     "acl4ssr_china": {
       "name": "ACL4SSR-ChinaDomain",
       "url": "https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list",
-      "last_synced_at": "2026-10-01T09:52:49.807160+00:00",
-      "content_hash": "362edd1f605742b360eaf138f151d7eea96cc17f20ef12da73acbfb80c350e08",
-      "rule_count": 635,
+      "last_synced_at": "2026-11-28T09:41:54.885495+00:00",
+      "content_hash": "92f90e75ffc64dd2996552593a66e0d46a841ee0ff50c0efecbfc9d7cd6e2ed4",
+      "rule_count": 643,
       "used_cache": false,
       "consecutive_cache_count": 0,
       "status": "synced_shadow"
